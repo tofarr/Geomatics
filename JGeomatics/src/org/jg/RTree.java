@@ -46,7 +46,7 @@ public final class RTree<E> {
             @Override
             public boolean process(SpatialNode<E> leaf, int index) {
                 System.arraycopy(leaf.itemBounds, index << 2, root.itemBounds, rootIndex << 2, 4);
-                leaf.itemValues[rootIndex++] = leaf.itemValues[index];
+                root.itemValues[rootIndex++] = leaf.itemValues[index];
                 return true;
             }
 
@@ -127,7 +127,7 @@ public final class RTree<E> {
             return a;
         } else if (ea > eb) {
             return b;
-        } else if ((ea == 0) && (eb == 0)) { // within both - choose closer
+        } else if (ea == 0) { // within both - choose closer
             double dax = maxX - a.bounds.minX;
             double dbx = b.bounds.maxX - minX;
             double day = maxY - a.bounds.minY;

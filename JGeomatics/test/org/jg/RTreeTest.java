@@ -30,6 +30,48 @@ public class RTreeTest {
     }
 
     @Test
+    public void testConstructor_A(){
+        int depth = staticTree.getRoot().getDepth();
+        RTree<String> tree = new RTree<>(staticTree.getRoot());
+        assertEquals(depth, staticTree.getRoot().getDepth());
+        assertTrue(tree.getRoot().getDepth() < depth);
+        checkIntegrity(tree.getRoot());
+        checkIntegrity(staticTree.getRoot());
+        assertEquals(2500, tree.size());
+        assertEquals(2500, staticTree.size());
+    }
+    
+    @Test
+    public void testConstructor_B(){
+        RTree<String> tree = new RTree<>(new Rect[]{new Rect(0, 0, 4, 1),new Rect(3, 0, 7, 1),new Rect(6, 0, 10, 1)}, new String[]{"A","B","C"});
+        assertEquals(1, tree.getRoot().getDepth());
+        assertEquals(3, tree.size());
+        Map<Rect, String> expected = new HashMap<>();
+        expected.put(new Rect(0, 0, 4, 1), "A");
+        expected.put(new Rect(3, 0, 7, 1), "B");
+        expected.put(new Rect(6, 0, 10, 1), "C");
+        Iter iter = tree.iterator();
+        while(iter.next()){
+            assertEquals(expected.remove(iter.getBounds(new Rect())), iter.getValue());
+        }
+    }
+    
+    @Test
+    public void testConstructor_C(){
+        RTree<String> tree = new RTree<>(new double[]{0, 0, 4, 1, 3, 0, 7, 1, 6, 0, 10, 1}, new String[]{"A","B","C"});
+        assertEquals(1, tree.getRoot().getDepth());
+        assertEquals(3, tree.size());
+        Map<Rect, String> expected = new HashMap<>();
+        expected.put(new Rect(0, 0, 4, 1), "A");
+        expected.put(new Rect(3, 0, 7, 1), "B");
+        expected.put(new Rect(6, 0, 10, 1), "C");
+        Iter iter = tree.iterator();
+        while(iter.next()){
+            assertEquals(expected.remove(iter.getBounds(new Rect())), iter.getValue());
+        }
+    }
+    
+    @Test
     public void testAddBranchSingleSplit() {
         RTree<Integer> tree = new RTree<>();
         Map<Rect, Integer> map = new HashMap<>();
@@ -293,6 +335,8 @@ public class RTreeTest {
         SpatialNode<Integer> node = new SpatialNode<>(itemBounds, itemValues);
         RTree.trySplit(node);
         assertFalse(node.isBranch());
+        RTree.tryRecursiveSplit(node);
+        assertFalse(node.isBranch());
 
         node.bounds.set(1, 3, 2, 3);
         RTree.trySplit(node);
@@ -305,7 +349,6 @@ public class RTreeTest {
         node.bounds.set(0, 3, 1, 3);
         RTree.trySplit(node);
         assertFalse(node.isBranch());
-
     }
 
     @Test
@@ -466,5 +509,15 @@ public class RTreeTest {
 
         }));
         assertTrue(map.isEmpty());
+    }
+    
+    @Test
+    public void testGetBestCandidateForAdd(){
+        SpatialNode<Integer> a = new SpatialNode<>();
+        SpatialNode<Integer> b = new SpatialNode<>();
+        a.bounds.set(0, 0, 20, 10);
+        b.bounds.set(10, 0, 30, 10);
+        assertSame(a, RTree.getBestCandidateForAdd(0, 0, 10, 10, a, b));
+        assertSame(b, RTree.getBestCandidateForAdd(20, 0, 30, 10, a, b));
     }
 }
