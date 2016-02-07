@@ -23,20 +23,42 @@ public final class Rect implements Cloneable, Externalizable {
     double maxX;
     double maxY;
 
+    /**
+     * Crreate a new invalid Rect
+     */
     public Rect() {
         reset();
     }
 
+    /**
+     * Reset this rect to empty
+     * [Double.MAX_VALUE,Double.MAX_VALUE,-Double.MAX_VALUE,-Double.MAX_VALUE]
+     *
+     * @return this
+     */
     public Rect reset() {
         minX = minY = Double.MAX_VALUE;
         maxX = maxY = -Double.MAX_VALUE;
         return this;
     }
 
-    public Rect(Rect rect) {
+    /**
+     * Create a new rect based on that given
+     *
+     * @param rect
+     * @throws NullPointerException if rect was null
+     */
+    public Rect(Rect rect) throws NullPointerException {
         set(rect);
     }
 
+    /**
+     * Set the ordinates of this rect to match those given
+     *
+     * @param rect
+     * @return this
+     * @throws NullPointerException if rect was null
+     */
     public Rect set(Rect rect) throws NullPointerException {
         this.minX = rect.minX;
         this.minY = rect.minY;
@@ -100,22 +122,47 @@ public final class Rect implements Cloneable, Externalizable {
         return this;
     }
 
+    /**
+     * Get minX
+     *
+     * @return
+     */
     public double getMinX() {
         return minX;
     }
 
+    /**
+     * Get minY
+     *
+     * @return
+     */
     public double getMinY() {
         return minY;
     }
 
+    /**
+     * Get maxX
+     *
+     * @return
+     */
     public double getMaxX() {
         return maxX;
     }
 
+    /**
+     * Get maxY
+     *
+     * @return
+     */
     public double getMaxY() {
         return maxY;
     }
 
+    /**
+     * Determine if this Rect is valid (minX <= maxX) && (minY <= maxY)
+     *
+     * @return
+     */
     @Transient
     public boolean isValid() {
         return (minX <= maxX) && (minY <= maxY);
@@ -244,6 +291,16 @@ public final class Rect implements Cloneable, Externalizable {
         return contains(minX, minY, maxX, maxY, vect.getX(), vect.getY());
     }
 
+    /**
+     * Determine if the rect given contains the point given. (Is inside or touching)
+     * @param aMinX
+     * @param aMinY
+     * @param aMaxX
+     * @param aMaxY
+     * @param x
+     * @param y
+     * @return
+     */
     public static boolean contains(double aMinX, double aMinY, double aMaxX, double aMaxY,
             double x, double y) {
         return (aMinX <= x) && (aMinY <= y) && (aMaxX >= x) && (aMaxY >= y);
@@ -313,15 +370,34 @@ public final class Rect implements Cloneable, Externalizable {
         return result;
     }
 
+    /**
+     * Get the union of this rect and the rect given
+     * @param rect
+     * @return this
+     * @throws NullPointerException if rect was null
+     */
     public Rect union(Rect rect) throws NullPointerException {
         return union(rect, this);
     }
 
+    /**
+     * Get the union of this rect and the vect given
+     * @param vect
+     * @return this
+     * @throws NullPointerException if vect was null
+     */
     public Rect union(Vect vect) throws NullPointerException {
         return unionInternal(vect.getX(), vect.getY());
     }
 
-    public Rect union(double x, double y) throws NullPointerException {
+    /**
+     * Get the union of this rect and the vector given
+     * @param x
+     * @param y
+     * @return this
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     */
+    public Rect union(double x, double y) throws IllegalArgumentException {
         Vect.check(x, y);
         return unionInternal(x, y);
     }
@@ -334,17 +410,26 @@ public final class Rect implements Cloneable, Externalizable {
         return this;
     }
 
-    public Rect unionAll(double[] ords, int startOffset, int endOffset) {
+    /**
+     * Get the unoin of this rect and the range of ordinates given
+     * @param ords
+     * @param startOffset start offset within array
+     * @param endOffset end offset within array
+     * @return this
+     * @throws IndexOutOfBoundsException if startOffset or endOffset was out of bounds
+     * @throws IllegalArgumentException if startOffset - endOffset is an odd (not even) number.
+     */
+    public Rect unionAll(double[] ords, int startOffset, int endOffset) throws IndexOutOfBoundsException, IllegalArgumentException {
         if (endOffset < startOffset) {
             int tmp = startOffset;
             startOffset = endOffset;
             endOffset = tmp;
         }
         if (startOffset < 0) {
-            throw new IndexOutOfBoundsException("startOffset out of rect : " + startOffset);
+            throw new IndexOutOfBoundsException("startOffset out of array : " + startOffset);
         }
         if (endOffset > ords.length) {
-            throw new IndexOutOfBoundsException("endOffset out of rect : " + endOffset);
+            throw new IndexOutOfBoundsException("endOffset out of array : " + endOffset);
         }
         int len = endOffset - startOffset;
         if ((len & 1) == 1) {
@@ -431,6 +516,14 @@ public final class Rect implements Cloneable, Externalizable {
                 + Util.ordToStr(maxX) + ',' + Util.ordToStr(maxY) + ']';
     }
 
+    /**
+     * Convert this rect to a string in the format [minX,minY,maxX,maxY] and add it to
+     * the appendable given
+     *
+     * @param appendable
+     * @throws IOException if there was an output error
+     * @throws NullPointerException if appendable was null
+     */
     public void toString(Appendable appendable) throws IOException {
         appendable.append('[').append(Util.ordToStr(minX)).append(',')
                 .append(Util.ordToStr(minY)).append(',')
@@ -448,24 +541,45 @@ public final class Rect implements Cloneable, Externalizable {
         writeData(out);
     }
 
-    public void writeData(DataOutput out) throws IOException {
+    /**
+     * Write this rect to the output given
+     *
+     * @param out
+     * @throws IOException if out was null
+     * @throws NullPointerException if out was null
+     */
+    public void writeData(DataOutput out) throws IOException, NullPointerException {
         out.writeDouble(minX);
         out.writeDouble(minY);
         out.writeDouble(maxX);
         out.writeDouble(maxY);
     }
-    
+
     @Override
     public void readExternal(ObjectInput in) throws IOException {
         readData(in);
     }
 
-    public Rect readData(DataInput in) throws IOException {
+    /**
+     * Set the ordinates for this line from the input given
+     * @param in
+     * @return this
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public Rect readData(DataInput in) throws IOException, NullPointerException {
         return set(in.readDouble(), in.readDouble(),
                 in.readDouble(), in.readDouble());
     }
 
-    public static Rect read(DataInput in) throws IOException {
+    /**
+     * Read a line from the input given
+     * @param in
+     * @return a line
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public static Rect read(DataInput in) throws IOException, NullPointerException {
         return new Rect().readData(in);
     }
 

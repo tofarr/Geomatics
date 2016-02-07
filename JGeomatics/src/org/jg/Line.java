@@ -10,6 +10,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
+ * Class representing a 2D line. A line is considered invalid if the two end
+ * points are the same
  *
  * @author tim.ofarrell
  */
@@ -20,18 +22,47 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
     double bx;
     double by;
 
+    /**
+     * Create a new instance of Line.
+     */
     public Line() {
     }
 
+    /**
+     * Create a new instance of Line
+     *
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
     @ConstructorProperties({"ax", "ay", "bx", "by"})
-    public Line(double ax, double ay, double bx, double by) throws IllegalArgumentException, NullPointerException {
+    public Line(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         set(ax, ay, bx, by);
     }
 
+    /**
+     * Set the line to that given
+     *
+     * @param a
+     * @param b
+     * @throws NullPointerException if a or b was null
+     */
     public Line(Vect a, Vect b) throws NullPointerException {
         set(a, b);
     }
 
+    /**
+     * Set the line to that given
+     *
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @return
+     * @throws IllegalArgumentException if any ordinate was Infinite or NaN
+     */
     public Line set(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         Util.check(ax, "Invalid ax : {0}");
         Util.check(ay, "Invalid ay : {0}");
@@ -44,6 +75,13 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
         return this;
     }
 
+    /**
+     *
+     * @param a
+     * @param b
+     * @return
+     * @throws NullPointerException
+     */
     public Line set(Vect a, Vect b) throws NullPointerException {
         this.ax = a.getX();
         this.ay = a.getY();
@@ -52,65 +90,130 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
         return this;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getAx() {
         return ax;
     }
 
+    /**
+     *
+     * @param ax
+     * @throws IllegalArgumentException
+     */
     public void setAx(double ax) throws IllegalArgumentException {
         Util.check(ax, "Invalid ax : {0}");
         this.ax = ax;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getAy() {
         return ay;
     }
 
+    /**
+     *
+     * @param ay
+     * @throws IllegalArgumentException
+     */
     public void setAy(double ay) throws IllegalArgumentException {
         Util.check(ay, "Invalid ay : {0}");
         this.ay = ay;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getBx() {
         return bx;
     }
 
+    /**
+     *
+     * @param bx
+     * @throws IllegalArgumentException
+     */
     public void setBx(double bx) throws IllegalArgumentException {
         Util.check(bx, "Invalid bx : {0}");
         this.bx = bx;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getBy() {
         return by;
     }
 
+    /**
+     *
+     * @param by
+     * @throws IllegalArgumentException
+     */
     public void setBy(double by) throws IllegalArgumentException {
         Util.check(by, "Invalid by : {0}");
         this.by = by;
     }
 
+    /**
+     *
+     * @param target
+     * @return
+     */
     public Vect getA(Vect target) {
         target.set(ax, ay);
         return target;
     }
 
+    /**
+     *
+     * @param target
+     * @return
+     */
     public Vect getB(Vect target) {
         target.set(bx, by);
         return target;
     }
 
+    /**
+     *
+     * @param target
+     * @return
+     */
     public Vect getMid(Vect target) {
         target.set((ax + bx) / 2, (ay + by) / 2);
         return target;
     }
 
+    /**
+     *
+     * @param target
+     * @return
+     */
     public Rect getBounds(Rect target) {
         return target.reset().unionInternal(ax, ay).unionInternal(bx, by);
     }
 
+    /**
+     *
+     * @param tolerance
+     * @return
+     */
     public boolean isValid(Tolerance tolerance) {
         return (!tolerance.match(ax, ay, bx, by));
     }
 
+    /**
+     *
+     * @return
+     */
     public Line normalize() {
         if (Vect.compare(ax, ay, bx, by) > 0) {
             double t;
@@ -593,7 +696,15 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
         return '[' + Util.ordToStr(ax) + ',' + Util.ordToStr(ay) + ',' + Util.ordToStr(bx) + ',' + Util.ordToStr(by) + ']';
     }
 
-    public void toString(Appendable appendable) throws IOException {
+    /**
+     * Convert this line to a string in the format [ax,ay,bx,by] and add it to
+     * the appendable given
+     *
+     * @param appendable
+     * @throws IOException if there was an output error
+     * @throws NullPointerException if appendable was null
+     */
+    public void toString(Appendable appendable) throws IOException, NullPointerException {
         appendable.append('[')
                 .append(Util.ordToStr(ax)).append(',')
                 .append(Util.ordToStr(ay)).append(',')
@@ -611,7 +722,14 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
         writeData(out);
     }
 
-    public void writeData(DataOutput out) throws IOException {
+    /**
+     * Write this line to the output given
+     *
+     * @param out
+     * @throws IOException if out was null
+     * @throws NullPointerException if out was null
+     */
+    public void writeData(DataOutput out) throws IOException, NullPointerException {
         out.writeDouble(ax);
         out.writeDouble(ay);
         out.writeDouble(bx);
@@ -623,11 +741,25 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
         readData(in);
     }
 
-    public Line readData(DataInput in) throws IOException {
+    /**
+     * Set the ordinates for this line from the input given
+     * @param in
+     * @return this
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public Line readData(DataInput in) throws IOException, NullPointerException {
         return set(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
     }
-    
-    public static Line read(DataInput in) throws IOException{
+
+    /**
+     * Read a line from the input given
+     * @param in
+     * @return a line
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public static Line read(DataInput in) throws IOException, NullPointerException {
         return new Line().readData(in);
     }
 

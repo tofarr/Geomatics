@@ -5,9 +5,10 @@ import java.util.ArrayDeque;
 import java.util.Objects;
 
 /**
- * Class for spatially indexing data for rapid searching. Typically, the more
- * edits applied to an index, the less efficient it is, so indexes should be
- * reoptimised after batchs of edits.
+ * Class for spatially indexing data for rapid searching. Spatially, queries are
+ * performed by bounding box and may result in zero or more results. Typically,
+ * the more edits applied to an index, the less efficient it is, so indexes
+ * should be reoptimised after batchs of edits.
  *
  * @author tofar_000
  * @param <E>
@@ -452,6 +453,11 @@ public final class RTree<E> {
         }
     }
 
+    /**
+     * Get the root node for this RTree
+     *
+     * @return the root node
+     */
     public SpatialNode<E> getRoot() {
         return root;
     }
@@ -460,7 +466,7 @@ public final class RTree<E> {
      * Get the bounds of this tree
      *
      * @param target
-     * @return
+     * @return target
      * @throws NullPointerException if target was null
      */
     public Rect getBounds(Rect target) throws NullPointerException {
@@ -477,29 +483,31 @@ public final class RTree<E> {
     }
 
     /**
-     * Get the number of entries stored in this collection intersecting with the
-     * bounds given
+     * Get the number of entries stored in this collection intersecting (Sharing
+     * internal area or touching) with the bounds given
      *
      * @param bounds
-     * @return
+     * @return the number of interacting entries
+     * @throws NullPointerException if bounds was null
      */
     public int sizeInteracting(Rect bounds) throws NullPointerException {
         return root.sizeInteracting(bounds);
     }
 
     /**
-     * Get the number of entries stored in this collection intersecting with the
-     * bounds given
+     * Get the number of entries stored in this collection overlapping (Sharing
+     * internal area) with the bounds given.
      *
      * @param bounds
-     * @return
+     * @return the number of overlapping entries
+     * @throws NullPointerException if bounds was null
      */
     public int sizeOverlapping(Rect bounds) throws NullPointerException {
         return root.sizeOverlapping(bounds);
     }
 
     /**
-     * Determine if this node is empty
+     * Determine if this tree is empty
      *
      * @return
      */
@@ -508,10 +516,11 @@ public final class RTree<E> {
     }
 
     /**
-     * Determine if the region given overlaps any entries in this tree
+     * Determine if the region given overlaps. (Shares internal area with) any
+     * entries in this tree
      *
      * @param bounds
-     * @return
+     * @return true if bounds overlaps with no entries, false otherwise.
      * @throws NullPointerException if bounds was null
      */
     public boolean isEmpty(Rect bounds) throws NullPointerException {
@@ -519,13 +528,15 @@ public final class RTree<E> {
     }
 
     /**
+     * Determines if the bounds given is disjoint from (is outside of and does
+     * not touch) all entries in this tree
      *
-     * @param rect
+     * @param bounds
      * @return
-     * @throws NullPointerException if rect was null
+     * @throws NullPointerException if bounds was null
      */
-    public boolean isDisjoint(Rect rect) throws NullPointerException {
-        return root.isDisjoint(rect);
+    public boolean isDisjoint(Rect bounds) throws NullPointerException {
+        return root.isDisjoint(bounds);
     }
 
     /**
@@ -534,8 +545,9 @@ public final class RTree<E> {
      * @param rect
      * @param value
      * @return
+     * @throws NullPointerException if rect was null
      */
-    public boolean contains(Rect rect, E value) {
+    public boolean contains(Rect rect, E value) throws NullPointerException {
         return root.contains(rect, value);
     }
 

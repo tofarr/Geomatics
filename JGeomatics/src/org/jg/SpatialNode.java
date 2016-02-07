@@ -7,7 +7,8 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 /**
- * Node for use in spatial trees and indexes
+ * Node for use in spatial trees and indexes. A node may be a branch with 2
+ * child nodes, or a leaf containing a number of bounds and values.
  *
  * @author tim.ofarrell
  * @param <E>
@@ -53,7 +54,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             this.itemBounds[j++] = itemBound.maxY;
         }
     }
-    
+
     /**
      *
      * @param itemBounds
@@ -62,7 +63,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws IllegalArgumentException
      */
     public SpatialNode(double[] itemBounds, E[] itemValues) throws NullPointerException, IllegalArgumentException {
-        if (itemBounds.length != (itemValues.length<<2)) {
+        if (itemBounds.length != (itemValues.length << 2)) {
             throw new IllegalArgumentException("Different numbers of arguments : " + itemBounds.length + "->" + itemValues.length);
         }
         this.size = itemValues.length;
@@ -70,7 +71,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         this.itemBounds = itemBounds.clone();
         this.itemValues = itemValues.clone();
         int j = 0;
-        for(int i = itemBounds.length; i-- > 0;){
+        for (int i = itemBounds.length; i-- > 0;) {
             Util.check(itemBounds[i], "Invalid ordinate : {0}");
         }
         for (int i = 0; i < itemBounds.length;) {
@@ -96,6 +97,9 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         SpatialNode<E> n = this;
     }
 
+    /**
+     * Create a new empty spatial node
+     */
     public SpatialNode() {
         this.bounds = new Rect();
         this.itemBounds = EMPTY_BOUNDS;
@@ -112,10 +116,11 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
+     * Get the bounds for this node
      *
      * @param target
-     * @return
-     * @throws NullPointerException
+     * @return target
+     * @throws NullPointerException if target was null
      */
     public Rect getBounds(Rect target) throws NullPointerException {
         return target.set(bounds);
@@ -155,7 +160,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return ret;
         }
     }
-    
+
     /**
      * Get the number of entries which are not disjoint with the region given
      *
@@ -181,7 +186,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return ret;
         }
     }
-    
+
     /**
      * Determine if this node is empty
      *
@@ -215,7 +220,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return true;
         }
     }
-    
+
     /**
      * Determine if the region given is disjoint all entries in this tree
      *
@@ -243,6 +248,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
 
     /**
      * Process all entries in this node
+     *
      * @param processor
      * @return
      * @throws NullPointerException if processor was null
@@ -262,12 +268,13 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
 
     /**
      * Get any entries not disjoint from the rect given
+     *
      * @param rect
      * @param processor
      * @return false if processor returned false, true otherwise
      * @throws NullPointerException if rect or processor was null
      */
-    public boolean getInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException{
+    public boolean getInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         if (rect.contains(bounds)) {
             return get(processor);
         } else if (rect.isDisjoint(bounds)) {
@@ -289,6 +296,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
 
     /**
      * Get any entries overlapping from the rect given
+     *
      * @param rect
      * @param processor
      * @return false if processor returned false, true otherwise
@@ -320,8 +328,9 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @param rect
      * @param value
      * @return
+     * @throws NullPointerException if rect was null
      */
-    public boolean contains(Rect rect, E value) {
+    public boolean contains(Rect rect, E value) throws NullPointerException {
         if (!bounds.contains(rect)) {
             return false;
         } else if (isBranch()) {
@@ -358,7 +367,20 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         return false;
     }
 
+    /**
+     * Get the bounds of the item at the index given in this leaf
+     *
+     * @param index
+     * @param target
+     * @return target
+     * @throws IllegalStateException if not a leaf node
+     * @throws NullPointerException
+     * @throws IndexOutOfBoundsException
+     */
     public Rect getItemBounds(int index, Rect target) throws NullPointerException, IndexOutOfBoundsException {
+        if (isBranch()) {
+            throw new IllegalStateException("Not a leaf node!");
+        }
         if (index >= size) {
             throw new IndexOutOfBoundsException(index + " is outside range [0," + size + "]");
         }
@@ -366,33 +388,74 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         return target.set(itemBounds[index++], itemBounds[index++], itemBounds[index++], itemBounds[index]);
     }
 
+    /**
+     * Get the value of the item at the index given in this leaf
+     *
+     * @param index
+     * @return target value
+     * @throws IllegalStateException if not a leaf node
+     * @throws NullPointerException
+     * @throws IndexOutOfBoundsException
+     */
     public E getItemValue(int index) throws IndexOutOfBoundsException {
+        if (isBranch()) {
+            throw new IllegalStateException("Not a leaf node!");
+        }
         if (index >= size) {
             throw new IndexOutOfBoundsException(index + " is outside range [0," + size + "]");
         }
         return itemValues[index];
     }
 
+    /**
+     * Get the child a of this node
+     *
+     * @return child, or null if not a branch
+     */
     public SpatialNode<E> getA() {
         return a;
     }
 
+    /**
+     * Get the child b of this node
+     *
+     * @return child, or null if not a branch
+     */
     public SpatialNode<E> getB() {
         return b;
     }
 
+    /**
+     * Determine if this node is a branch. (Has child nodes A and B, and does
+     * not directly contain items).
+     *
+     * @return
+     */
     public boolean isBranch() {
         return (a != null);
     }
 
+    /**
+     * Determine if this node is a leaf. (Directly contains items, and does not
+     * have child nodes A and B).
+     *
+     * @return
+     */
     public boolean isLeaf() {
         return (itemBounds != null);
     }
-    
-    public int getDepth(){
-        if(isBranch()){
+
+    /**
+     * Get the depth of this node - the max number of children one must go
+     * through before reacing a leaf node - Typically for the same entries in a
+     * node, the lower this number the more balanced the tree.
+     *
+     * @return
+     */
+    public int getDepth() {
+        if (isBranch()) {
             return Math.max(a.getDepth(), b.getDepth()) + 1;
-        }else{
+        } else {
             return 1;
         }
     }
@@ -482,7 +545,16 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         return str.toString();
     }
 
-    public void toString(Appendable appendable) throws IllegalStateException {
+    /**
+     * Convert this spatial node to a string and add it to the appendable given.
+     * Leaves are in the format {itemBounds:[...],itemValues:[...]} and branches
+     * are in the format {a:{...},b:{...})
+     *
+     * @param appendable
+     * @throws IllegalStateException if there was an output error
+     * @throws NullPointerException if appendable was null
+     */
+    public void toString(Appendable appendable) throws IllegalStateException, NullPointerException {
         try {
             appendable.append('{');
             if (isBranch()) {
@@ -523,8 +595,22 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         }
     }
 
+    /**
+     * Processor for nodes - a callback function repeatedly accepting a leaf
+     * node and index as parameters
+     *
+     * @param <E>
+     */
     public interface NodeProcessor<E> {
 
+        /**
+         * Process the entry at the index given in the leaf node given
+         *
+         * @param leaf
+         * @param index
+         * @return true if nore entries are acceptable, false if the node should
+         * return no more entries (if present)
+         */
         public boolean process(SpatialNode<E> leaf, int index);
     }
 

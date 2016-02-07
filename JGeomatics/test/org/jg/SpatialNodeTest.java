@@ -510,7 +510,7 @@ public class SpatialNodeTest {
         try {
             c.getItemBounds(0, new Rect());
             fail("Exception expected!");
-        } catch (NullPointerException ex) {
+        } catch (IllegalStateException ex) {
         }
         try {
             c.a.getItemBounds(2, new Rect());
@@ -538,7 +538,7 @@ public class SpatialNodeTest {
         try {
             c.getItemValue(0);
             fail("Exception expected!");
-        } catch (NullPointerException ex) {
+        } catch (IllegalStateException ex) {
         }
         try {
             c.a.getItemValue(2);
