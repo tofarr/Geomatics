@@ -2,6 +2,7 @@ package org.jg;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.Test;
@@ -109,12 +110,22 @@ public class ToleranceTest {
         }
         assertEquals(a, b);
     }
-    
+
     @Test
-    public void testClone(){
+    public void testClone() {
         Tolerance a = new Tolerance(0.001);
         Tolerance b = a.clone();
         assertSame(a, b);
+    }
+
+    @Test
+    public void testToString() throws IOException {
+        Tolerance a = new Tolerance(1.23);
+        assertEquals("1.23", a.toString());
+        Tolerance b = new Tolerance(4);
+        StringBuilder str = new StringBuilder();
+        b.toString(str);
+        assertEquals("4", str.toString());
     }
 
 }

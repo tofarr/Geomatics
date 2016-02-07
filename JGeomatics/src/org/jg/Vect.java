@@ -479,7 +479,14 @@ public final class Vect implements Cloneable, Comparable<Vect>, Externalizable {
         writeData(out);
     }
 
-    public void writeData(DataOutput out) throws IOException {
+    /**
+     * Write this vector to the output given
+     *
+     * @param out
+     * @throws IOException if out was null
+     * @throws NullPointerException if out was null
+     */
+    public void writeData(DataOutput out) throws IOException, NullPointerException {
         out.writeDouble(x);
         out.writeDouble(y);
     }
@@ -489,11 +496,27 @@ public final class Vect implements Cloneable, Comparable<Vect>, Externalizable {
         readData(in);
     }
 
-    public Vect readData(DataInput in) throws IOException {
+    /**
+     * Set the ordinates for this vector from the input given
+     *
+     * @param in
+     * @return this
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public Vect readData(DataInput in) throws IOException, NullPointerException {
         return set(in.readDouble(), in.readDouble());
     }
 
-    public static Vect read(DataInput in) throws IOException {
+    /**
+     * Read a vector from the input given
+     *
+     * @param in
+     * @return a line
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public static Vect read(DataInput in) throws IOException, NullPointerException {
         return new Vect().readData(in);
     }
 

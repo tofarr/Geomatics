@@ -9,14 +9,36 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
+ * Class representing an affine transfomrm. Different to the java affine
+ * transform in that transforms are always applied in forward order, and
+ * provides a fluent interface. (e.g.:
+ * <pre>
+ *  Transform t = new Transform().translate(1,2).scale(2);
+ * //Same as
+ * AffineTransform at = new AffineTransform();
+ * at.scale(2);
+ * at.translate(1,2);
+ * </pre>
  *
  * @author tofar_000
  */
 public final class Transform implements Cloneable, Externalizable {
 
+    /**
+     * Mode indicating identity transform
+     */
     public static final int IDENTITY = 0;
+    /**
+     * Mode indicating translation
+     */
     public static final int TRANSLATE = 1;
+    /**
+     * Mode indicating scaling
+     */
     public static final int SCALE = 2;
+    /**
+     * Mode indicating shearing
+     */
     public static final int SHEAR = 4;
 
     double m00;
@@ -560,7 +582,15 @@ public final class Transform implements Cloneable, Externalizable {
                 + ',' + Util.ordToStr(m02) + ',' + Util.ordToStr(m12) + ']';
     }
 
-    public void toString(Appendable appendable) throws IOException {
+    /**
+     * Convert this transform to a string in the format [m00,m01,m10,m11,m02,m12] and add it to
+     * the appendable given
+     *
+     * @param appendable
+     * @throws IOException if there was an output error
+     * @throws NullPointerException if appendable was null
+     */
+    public void toString(Appendable appendable) throws IOException, NullPointerException {
         appendable.append('[').append(Util.ordToStr(m00)).append(',')
                 .append(Util.ordToStr(m01)).append(',')
                 .append(Util.ordToStr(m10)).append(',')
@@ -606,7 +636,14 @@ public final class Transform implements Cloneable, Externalizable {
         writeData(out);
     }
 
-    public void writeData(DataOutput out) throws IOException {
+    /**
+     * Write this transform to the output given
+     *
+     * @param out
+     * @throws IOException if out was null
+     * @throws NullPointerException if out was null
+     */
+    public void writeData(DataOutput out) throws IOException, NullPointerException {
         out.writeDouble(m00);
         out.writeDouble(m01);
         out.writeDouble(m10);
@@ -620,12 +657,26 @@ public final class Transform implements Cloneable, Externalizable {
         readData(in);
     }
 
-    public Transform readData(DataInput in) throws IOException {
+    /**
+     * Set the ordinates for this transform from the input given
+     * @param in
+     * @return this
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public Transform readData(DataInput in) throws IOException, NullPointerException {
         return set(in.readDouble(), in.readDouble(), in.readDouble(),
                 in.readDouble(), in.readDouble(), in.readDouble());
     }
 
-    public static Transform read(DataInput in) throws IOException {
+    /**
+     * Read a transform from the input given
+     * @param in
+     * @return a line
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public static Transform read(DataInput in) throws IOException, NullPointerException {
         return new Transform().readData(in);
     }
 }

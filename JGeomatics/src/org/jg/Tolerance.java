@@ -106,6 +106,23 @@ public final class Tolerance implements Serializable, Cloneable {
     }
 
     @Override
+    public String toString() {
+        return Util.ordToStr(tolerance);
+    }
+    
+    /**
+     * Convert this tolerance to a string in the format tolerance and add it to
+     * the appendable given
+     *
+     * @param appendable
+     * @throws IOException if there was an output error
+     * @throws NullPointerException if appendable was null
+     */
+    public void toString(Appendable appendable) throws IOException, NullPointerException {
+        appendable.append(Util.ordToStr(tolerance));
+    }
+
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 29 * hash + Util.hash(tolerance);

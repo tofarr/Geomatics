@@ -14,7 +14,7 @@ import java.io.StringWriter;
  */
 public final class VectList implements Externalizable, Cloneable {
 
-    public static final int DEFAULT_INITIAL_CAPACITY = 64;
+    static final int DEFAULT_INITIAL_CAPACITY = 64;
     private double[] ords;
     private int size;
     private Rect cachedRect;
@@ -272,11 +272,23 @@ public final class VectList implements Externalizable, Cloneable {
         this.ords = newOrds;
     }
 
-    //modifications during iteration are permitted - insertions may cause iterators to lose place
+    /**
+     * Create iterator over items in the list modifications during iteration are
+     * permitted - insertions may cause iterators to lose place
+     *
+     * @return iterator
+     */
     public Iter iterator() {
         return new Iter(0);
     }
 
+    /**
+     * Create iterator over items in the list modifications during iteration are
+     * permitted - insertions may cause iterators to lose place
+     *
+     * @param nextIndex the index of the vector focused on after a call to next
+     * @return iterator
+     */
     public Iter iterator(int nextIndex) {
         checkIndex(nextIndex);
         return new Iter(nextIndex);
@@ -428,6 +440,13 @@ public final class VectList implements Externalizable, Cloneable {
         return this;
     }
 
+    /**
+     * Add all the vectors given to this list
+     *
+     * @param vects
+     * @return this
+     * @throws NullPointerException if vects was null or a vector was null
+     */
     public VectList addAll(Vect... vects) throws NullPointerException {
         int oldSize = size;
         try {
@@ -460,21 +479,32 @@ public final class VectList implements Externalizable, Cloneable {
         return addAllInternal(vects.ords, 0, vects.size);
     }
 
-    public VectList addAll(VectList vects, int index, int numVects) {
+    /**
+     * Add the range of vectors given to this list
+     *
+     * @param vects
+     * @param index index within array
+     * @param numVects
+     * @return this
+     * @throws NullPointerException if vects was null
+     * @throws IndexOutOfBoundsException if an index was out of bounds
+     */
+    public VectList addAll(VectList vects, int index, int numVects) throws NullPointerException, IndexOutOfBoundsException {
         vects.checkIndex(index);
         vects.checkLength(numVects);
         return addAllInternal(vects.ords, index << 1, numVects);
     }
 
     /**
+     * Add all the vectors given to this list
      *
      * @param ords
-     * @param startIndex
-     * @param numVects
+     * @param startIndex index of first ordinate in ords
+     * @param numVects number of vectors to add
      * @return this.
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     * @throws IndexOutOfBoundsException
+     * @throws NullPointerException if ords was null
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     * @throws IndexOutOfBoundsException if an index was out of bounds
      */
     public VectList addAll(double[] ords, int startIndex, int numVects) throws NullPointerException, IllegalArgumentException, IndexOutOfBoundsException {
         for (int i = startIndex + (numVects * 2); --i >= startIndex;) {
@@ -537,6 +567,11 @@ public final class VectList implements Externalizable, Cloneable {
         return this;
     }
 
+    /**
+     * Revverse the order of vectors in this list
+     *
+     * @return this
+     */
     public VectList reverse() {
         ensureSize(size);
         int min = 0;
@@ -591,7 +626,7 @@ public final class VectList implements Externalizable, Cloneable {
             int a = (min + max) / 2;
             double ax = vects.getX(a);
             double ay = vects.getY(a);
-            int b = a+1;
+            int b = a + 1;
 
             //check items before partition
             for (int i = min; i < a; i++) {
@@ -606,20 +641,20 @@ public final class VectList implements Externalizable, Cloneable {
                     a--;
                 }
             }
-            
+
             //Check items after partition
             for (int i = b; i < max; i++) {
                 double ix = vects.getX(i);
                 double iy = vects.getY(i);
                 if (Vect.compare(ax, ay, ix, iy) >= 0) {
-                    if((a + 1) != i){
+                    if ((a + 1) != i) {
                         vects.swap(a, (a + 1));
                     }
                     vects.swap(a, i);
                     a++;
                 }
             }
-            
+
             sort(vects, min, a);
             sort(vects, a + 1, max);
         }
@@ -716,7 +751,14 @@ public final class VectList implements Externalizable, Cloneable {
         writeData(out);
     }
 
-    public void writeData(DataOutput out) throws IOException {
+    /**
+     * Write this list of vectors to the output given
+     *
+     * @param out
+     * @throws IOException if out was null
+     * @throws NullPointerException if out was null
+     */
+    public void writeData(DataOutput out) throws IOException, NullPointerException {
         out.writeInt(size);
         int endIndex = size << 1;
         for (int i = 0; i < endIndex; i++) {
@@ -729,7 +771,16 @@ public final class VectList implements Externalizable, Cloneable {
         readData(in);
     }
 
-    public VectList readData(DataInput in) throws IOException {
+    /**
+     * Set the ordinates for this list of vectors from the input given
+     *
+     * @param in
+     * @return this
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public VectList readData(DataInput in) throws IOException, NullPointerException {
+        clear();
         int _size = in.readInt();
         int numOrds = _size << 1;
         double[] _ords = new double[Math.max(numOrds, DEFAULT_INITIAL_CAPACITY)];
@@ -745,12 +796,21 @@ public final class VectList implements Externalizable, Cloneable {
         return this;
     }
 
-    public static VectList read(DataInput in) throws IOException {
+    /**
+     * Read a list of vectors from the input given
+     *
+     * @param in
+     * @return a line
+     * @throws IOException if there was an error
+     * @throws NullPointerException if in was null
+     */
+    public static VectList read(DataInput in) throws IOException, NullPointerException {
         return new VectList().readData(in);
     }
 
     /**
-     * Iterator over a VectList. Concurrent modifications appear as soon as available
+     * Iterator over a VectList. Concurrent modifications appear as soon as
+     * available
      */
     public final class Iter {
 
