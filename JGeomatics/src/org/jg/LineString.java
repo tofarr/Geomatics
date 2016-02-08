@@ -6,6 +6,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -158,12 +159,25 @@ public final class LineString implements Externalizable, Cloneable {
         return changed ? new LineString(_vects, null) : this;
     }
 
-    public void splitOnSelfIntersect(Tolerance tolerance, Collection<LineString> results) {
+    public Collection<LineString> splitOnSelfIntersect(Tolerance tolerance, Collection<LineString> results) {
         Network network = new Network();
         network.addAllLinks(vects);
         network.explicitIntersections(tolerance);
         network.snap(tolerance);
-        network.extractLines(results);
+        ArrayList<VectList> vects = new ArrayList<>();
+        network.extractLines(vects, false);
+        switch(vects.size()){
+            case 0:
+                return results;
+            case 1:
+                results.add(this);
+                return results;
+            default:
+                for(VectList vect : vects){
+                    results.add(new LineString(vect));
+                }
+                return results;
+        }
     }
 
     RTree<Integer> getLineIndex() {

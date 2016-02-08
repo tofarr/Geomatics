@@ -1,8 +1,6 @@
 package org.jg;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Test;
@@ -15,25 +13,47 @@ import static org.junit.Assert.*;
 public class LineStringTest {
 
     @Test
+    public void testConstructor() {
+        LineString ls = new LineString(new VectList(1,2,5,11));
+        assertEquals("[1,2, 5,11]", ls.toString());
+        ls = new LineString(new VectList());
+        try{
+            ls = new LineString(null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        assertFalse(ls.isValid(Tolerance.DEFAULT));
+        assertEquals("[]", ls.toString());
+        ls.getInteractingLines(new Rect(0, 0, 100, 100), new Processor<Line>(){
+            @Override
+            public boolean process(Line value) {
+                throw new IllegalStateException("Impossible!");
+            }
+        
+        }, new Line());
+        
+    }
+
+    @Test
     public void testIsValid() {
-        assertTrue(new LineString(new VectList(0,0, 10,0, 10,10, 0,10)).isValid(Tolerance.DEFAULT));
-        assertFalse(new LineString(new VectList(0,0, 0,0, 10,0, 10,10, 0,10)).isValid(Tolerance.DEFAULT));
-        assertFalse(new LineString(new VectList(0,0, 5,0, 10,0, 10,10, 0,10)).isValid(Tolerance.DEFAULT));
-        assertFalse(new LineString(new VectList(0,0, 5,0, 10,0, 10,10, 0,10, 0,10)).isValid(Tolerance.DEFAULT));
-        assertFalse(new LineString(new VectList(0,0, 5,0, 10,0, 10,10, 5,10, 0,10)).isValid(Tolerance.DEFAULT));
-        assertFalse(new LineString(new VectList(0,0, 5,0, 10,0, 10,10, 5,10.09, 0,10)).isValid(new Tolerance(0.1)));
+        assertTrue(new LineString(new VectList(0, 0, 10, 0, 10, 10, 0, 10)).isValid(Tolerance.DEFAULT));
+        assertFalse(new LineString(new VectList(0, 0, 0, 0, 10, 0, 10, 10, 0, 10)).isValid(Tolerance.DEFAULT));
+        assertFalse(new LineString(new VectList(0, 0, 5, 0, 10, 0, 10, 10, 0, 10)).isValid(Tolerance.DEFAULT));
+        assertFalse(new LineString(new VectList(0, 0, 5, 0, 10, 0, 10, 10, 0, 10, 0, 10)).isValid(Tolerance.DEFAULT));
+        assertFalse(new LineString(new VectList(0, 0, 5, 0, 10, 0, 10, 10, 5, 10, 0, 10)).isValid(Tolerance.DEFAULT));
+        assertFalse(new LineString(new VectList(0, 0, 5, 0, 10, 0, 10, 10, 5, 10.09, 0, 10)).isValid(new Tolerance(0.1)));
     }
 
     @Test
     public void testGetVects() {
-        LineString ls = new LineString(new VectList(0,0, 10,0, 10,10, 0,10));
+        LineString ls = new LineString(new VectList(0, 0, 10, 0, 10, 10, 0, 10));
         VectList a = ls.getVects(new VectList());
         assertEquals("[0,0, 10,0, 10,10, 0,10]", a.toString());
         a.set(0, new Vect(1, 0));
-        try{
+        try {
             ls.getVects(null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
         VectList b = ls.getVects(new VectList());
         assertEquals("[0,0, 10,0, 10,10, 0,10]", b.toString());
@@ -41,160 +61,162 @@ public class LineStringTest {
 
     @Test
     public void testGet_int_Vect() {
-        LineString ls = new LineString(new VectList(1,2, 3,4, 5,6, 7,8));
+        LineString ls = new LineString(new VectList(1, 2, 3, 4, 5, 6, 7, 8));
         Vect vect = ls.get(1, new Vect());
         assertEquals(new Vect(3, 4), vect);
         vect.set(4, 3);
         assertSame(vect, ls.get(1, vect));
-        try{
-            ls.get(0, (Vect)null);
+        try {
+            ls.get(0, (Vect) null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
-        try{
+        try {
             ls.get(-1, vect);
             fail("Exception expected");
-        }catch(IndexOutOfBoundsException ex){
+        } catch (IndexOutOfBoundsException ex) {
         }
-        try{
+        try {
             ls.get(4, vect);
             fail("Exception expected");
-        }catch(IndexOutOfBoundsException ex){
+        } catch (IndexOutOfBoundsException ex) {
         }
         assertEquals(new Vect(3, 4), vect);
     }
 
     @Test
     public void testGet_int_Line() {
-        LineString ls = new LineString(new VectList(7,8, 6,5, 3,4, 2,1));
+        LineString ls = new LineString(new VectList(7, 8, 6, 5, 3, 4, 2, 1));
         Line line = ls.get(1, new Line());
         assertEquals(new Line(6, 5, 3, 4), line);
         line.set(3, 4, 5, 6);
         assertSame(line, ls.get(1, line));
-        try{
+        try {
             ls.getVects(null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
-        try{
+        try {
             ls.get(-1, line);
             fail("Exception expected");
-        }catch(IndexOutOfBoundsException ex){
+        } catch (IndexOutOfBoundsException ex) {
         }
-        try{
+        try {
             ls.get(3, line);
             fail("Exception expected");
-        }catch(IndexOutOfBoundsException ex){
+        } catch (IndexOutOfBoundsException ex) {
         }
         assertEquals(new Line(6, 5, 3, 4), line);
     }
 
     @Test
     public void testGetInteractingLines() {
-        LineString ls = new LineString(new VectList(60,210, 80,200, 100,200, 120,220, 120,240, 100,260, 100,280, 120,280));
+        LineString ls = new LineString(new VectList(60, 210, 80, 200, 100, 200, 120, 220, 120, 240, 100, 260, 100, 280, 120, 280));
         final Set<Line> lines = new HashSet<>();
-        lines.add(new Line(80,200, 100,200));
-        lines.add(new Line(100,200, 120,220));
-        lines.add(new Line(120,220, 120,240));
-        lines.add(new Line(120,240, 100,260));
-        lines.add(new Line(100,260, 100,280));
+        lines.add(new Line(80, 200, 100, 200));
+        lines.add(new Line(100, 200, 120, 220));
+        lines.add(new Line(120, 220, 120, 240));
+        lines.add(new Line(120, 240, 100, 260));
+        lines.add(new Line(100, 260, 100, 280));
         final Line target = new Line();
-        assertTrue(ls.getInteractingLines(new Rect(100,200, 120,260), new Processor<Line>(){
-            
+        assertTrue(ls.getInteractingLines(new Rect(100, 200, 120, 260), new Processor<Line>() {
+
             @Override
             public boolean process(Line value) {
                 assertSame(target, value);
                 assertTrue(lines.remove(value));
                 return true;
             }
-        
+
         }, target));
         assertTrue(lines.isEmpty());
-        
-        Processor processor = new Processor<Line>(){
+
+        Processor processor = new Processor<Line>() {
             boolean called;
+
             @Override
             public boolean process(Line value) {
-                if(called){
+                if (called) {
                     fail("Already called");
                 }
                 called = true;
                 return false;
             }
         };
-        
-        assertFalse(ls.getInteractingLines(new Rect(100,200, 120,260), processor, target));
-        
-        try{
-            ls.getInteractingLines(new Rect(100,200, 120,260), processor, null);
+
+        assertFalse(ls.getInteractingLines(new Rect(100, 200, 120, 260), processor, target));
+
+        try {
+            ls.getInteractingLines(new Rect(100, 200, 120, 260), processor, null);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
-        try{
-            ls.getInteractingLines(new Rect(100,200, 120,260), null, target);
+        try {
+            ls.getInteractingLines(new Rect(100, 200, 120, 260), null, target);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
-        try{
+        try {
             ls.getInteractingLines(null, processor, target);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
     }
 
     @Test
     public void testGetOverlappingLines() {
-        LineString ls = new LineString(new VectList(60,210, 80,200, 100,200, 120,220, 120,240, 100,260, 100,280, 120,280));
+        LineString ls = new LineString(new VectList(60, 210, 80, 200, 100, 200, 120, 220, 120, 240, 100, 260, 100, 280, 120, 280));
         final Set<Line> lines = new HashSet<>();
-        lines.add(new Line(100,200, 120,220));
-        lines.add(new Line(120,240, 100,260));
+        lines.add(new Line(100, 200, 120, 220));
+        lines.add(new Line(120, 240, 100, 260));
         final Line target = new Line();
-        assertTrue(ls.getOverlappingLines(new Rect(100,200, 120,260), new Processor<Line>(){
-            
+        assertTrue(ls.getOverlappingLines(new Rect(100, 200, 120, 260), new Processor<Line>() {
+
             @Override
             public boolean process(Line value) {
                 assertSame(target, value);
                 assertTrue(lines.remove(value));
                 return true;
             }
-        
+
         }, target));
         assertTrue(lines.isEmpty());
-        
-        Processor processor = new Processor<Line>(){
+
+        Processor processor = new Processor<Line>() {
             boolean called;
+
             @Override
             public boolean process(Line value) {
-                if(called){
+                if (called) {
                     fail("Already called");
                 }
                 called = true;
                 return false;
             }
         };
-        
-        assertFalse(ls.getOverlappingLines(new Rect(100,200, 120,260), processor, target));
-        
-        try{
-            ls.getOverlappingLines(new Rect(100,200, 120,260), processor, null);
+
+        assertFalse(ls.getOverlappingLines(new Rect(100, 200, 120, 260), processor, target));
+
+        try {
+            ls.getOverlappingLines(new Rect(100, 200, 120, 260), processor, null);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
-        try{
-            ls.getOverlappingLines(new Rect(100,200, 120,260), null, target);
+        try {
+            ls.getOverlappingLines(new Rect(100, 200, 120, 260), null, target);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
-        try{
+        try {
             ls.getOverlappingLines(null, processor, target);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
     }
 
     @Test
     public void testSize() {
-        LineString ls = new LineString(new VectList(60,210, 80,200, 100,200, 120,220, 120,240, 100,260, 100,280, 120,280));
+        LineString ls = new LineString(new VectList(60, 210, 80, 200, 100, 200, 120, 220, 120, 240, 100, 260, 100, 280, 120, 280));
         assertEquals(7, ls.size());
         ls = new LineString(new VectList());
         assertEquals(0, ls.size());
@@ -202,35 +224,45 @@ public class LineStringTest {
 
     @Test
     public void testNormalize() {
-        LineString a = new LineString(new VectList(0,10, 5,10.09, 10,10, 10,0, 5,0, 0,0, 0,10));
+        LineString a = new LineString(new VectList(0, 10, 5, 10.09, 10, 10, 10, 0, 5, 0, 0, 0, 0, 10));
         LineString b = a.normalize(new Tolerance(0.1));
-        try{
+        try {
             a.normalize(null);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
         }
         assertEquals("[0,10, 5,10.09, 10,10, 10,0, 5,0, 0,0, 0,10]", a.toString());
         assertEquals("[0,10, 0,0, 10,0, 10,10, 0,10]", b.toString());
         assertSame(b, b.normalize(Tolerance.DEFAULT));
         assertEquals("[0,10, 0,0, 10,0, 10,10, 0,10]", b.toString());
         assertEquals("[]", new LineString(new VectList()).normalize(Tolerance.DEFAULT).toString());
-        assertEquals("[0,10, 0,0, 10,0, 10,10, 5,10.09, 0,10]", new LineString(new VectList(0,10, 0,0, 5,0, 10,0, 10,10, 5,10.09, 0,10)).normalize(Tolerance.DEFAULT).toString());
+        assertEquals("[0,10, 0,0, 10,0, 10,10, 5,10.09, 0,10]", new LineString(new VectList(0, 10, 0, 0, 5, 0, 10, 0, 10, 10, 5, 10.09, 0, 10)).normalize(Tolerance.DEFAULT).toString());
+        assertEquals("[0,10, 0,20]", new LineString(new VectList(0, 10, 0, 10, 0, 10, 0, 20)).normalize(Tolerance.DEFAULT).toString());
     }
 
-//    /**
-//     * Test of splitOnSelfIntersect method, of class LineString.
-//     */
-//    @Test
-//    public void testSplitOnSelfIntersect() {
-//        System.out.println("splitOnSelfIntersect");
-//        Tolerance tolerance = null;
-//        Collection<LineString> results = null;
-//        LineString instance = null;
-//        instance.splitOnSelfIntersect(tolerance, results);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
+    @Test
+    public void testSplitOnSelfIntersect() {
+        VectList vects = new VectList(0,0, 100,100, 100,0, 0,100);
+        LineString a = new LineString(vects);
+        //Network network = new Network();
+        //network.addAllLinks(vects);
+        //String str = network.toString();
+        //fail(str);
+        
+        ArrayList<LineString> results = new ArrayList<>();
+        a.splitOnSelfIntersect(Tolerance.DEFAULT, results);
+        System.out.println(results);
+        fail("The test case is a prototype.");
+        
+        fail("Try a shark tooth pattern also");
+        
+        fail("Try repeated intersections of same spot");
+        
+        fail("Try pentagram");
+        
+        fail("Try no intersection");
+    }
+
 //    /**
 //     * Test of splitAgainst method, of class LineString.
 //     */
@@ -341,5 +373,4 @@ public class LineStringTest {
 //        // TODO review the generated test code and remove the default call to fail.
 //        fail("The test case is a prototype.");
 //    }
-
 }
