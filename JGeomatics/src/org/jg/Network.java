@@ -346,7 +346,7 @@ public final class Network implements Externalizable, Cloneable {
         return this;
     }
 
-    public List<VectList> extractLines(List<VectList> results, boolean includePoints) {
+    public Collection<VectList> extractLines(Collection<VectList> results, boolean includePoints) {
         VectList vects = getVects(new VectList());
         HashSet<Line> done = new HashSet<>();
         Vect a = new Vect();
@@ -382,7 +382,6 @@ public final class Network implements Externalizable, Cloneable {
         if (done.size() == (vects.size() - 1)) {
             return results;
         }
-        boolean needsSort = (done.size() != 0);
         Vect d = new Vect();
         for (int i = 0; i < vects.size(); i++) {
             vects.get(i, a);
@@ -408,10 +407,7 @@ public final class Network implements Externalizable, Cloneable {
                 }
             }
         }
-        if (needsSort) {
-            Collections.sort(results, COMPARATOR);
-        }
-
+        
         return results;
     }
 
@@ -722,11 +718,17 @@ public final class Network implements Externalizable, Cloneable {
 
     }
 
-    private static Comparator<VectList> COMPARATOR = new Comparator<VectList>() {
-        @Override
-        public int compare(VectList o1, VectList o2) {
-            return Vect.compare(o1.getX(0), o1.getY(0), o2.getX(0), o2.getY(0));
+    @Override
+    public Network clone() {
+        Network network = new Network();
+        Vect vect = new Vect();
+        for(VectMap<VectList>.Iter iter = map.iterator(); iter.next();){
+            iter.getVect(vect);
+            network.map.put(vect, iter.getValue().clone());
         }
-
-    };
+        network.numLinks = numLinks;
+        return network;
+    }
+    
+    
 }

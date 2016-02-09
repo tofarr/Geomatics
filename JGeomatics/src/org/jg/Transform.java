@@ -1,5 +1,6 @@
 package org.jg;
 
+import java.awt.geom.AffineTransform;
 import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -65,9 +66,21 @@ public final class Transform implements Cloneable, Externalizable {
      * @param m11
      * @param m02
      * @param m12
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
      */
     public Transform(double m00, double m01, double m10, double m11, double m02, double m12) throws IllegalArgumentException {
         set(m00, m01, m10, m11, m02, m12);
+    }
+    
+    /**
+     * Create a new transform based on that given
+     * 
+     * @param transform
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     * @throws NullPointerException if transform was null
+     */
+    public Transform(AffineTransform transform) throws IllegalArgumentException, NullPointerException{
+        set(transform.getScaleX(), transform.getShearX(), transform.getShearY(), transform.getScaleY(), transform.getTranslateX(), transform.getTranslateY());
     }
 
     /**
@@ -575,6 +588,15 @@ public final class Transform implements Cloneable, Externalizable {
         return new double[]{m00, m01, m10, m11, m02, m12};
     }
 
+    /**
+     * Convert this instance to an AffineTransform
+     *
+     * @return
+     */
+    public AffineTransform toAffineTransform() {
+        return new AffineTransform(m00, m10, m01, m11, m02, m12);
+    }
+
     @Override
     public String toString() {
         return "[" + Util.ordToStr(m00) + ',' + Util.ordToStr(m01)
@@ -583,8 +605,8 @@ public final class Transform implements Cloneable, Externalizable {
     }
 
     /**
-     * Convert this transform to a string in the format [m00,m01,m10,m11,m02,m12] and add it to
-     * the appendable given
+     * Convert this transform to a string in the format
+     * [m00,m01,m10,m11,m02,m12] and add it to the appendable given
      *
      * @param appendable
      * @throws IOException if there was an output error
@@ -659,6 +681,7 @@ public final class Transform implements Cloneable, Externalizable {
 
     /**
      * Set the ordinates for this transform from the input given
+     *
      * @param in
      * @return this
      * @throws IOException if there was an error
@@ -671,6 +694,7 @@ public final class Transform implements Cloneable, Externalizable {
 
     /**
      * Read a transform from the input given
+     *
      * @param in
      * @return a line
      * @throws IOException if there was an error

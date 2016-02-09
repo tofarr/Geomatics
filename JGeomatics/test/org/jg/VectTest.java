@@ -1,8 +1,9 @@
 package org.jg;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashSet;
@@ -441,5 +442,37 @@ public class VectTest {
             b = Vect.read(in);
         }
         assertEquals(a, b);
+    }
+    
+    @Test
+    public void testGetBounds(){
+        Vect vect = new Vect(1, 2);
+        Rect bounds = new Rect();
+        vect.getBounds(bounds);
+        assertEquals("[1,2,1,2]", bounds.toString());
+    }
+    
+    @Test
+    public void testGetPathIterator(){
+        double[] coords = new double[6];
+        AffineTransform at = new AffineTransform();
+        at.translate(10, 20);
+        Vect vect = new Vect(1, 2);
+        PathIterator iter = vect.getPathIterator(at, 0);
+        assertEquals(PathIterator.WIND_EVEN_ODD, iter.getWindingRule());
+        
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(11, coords[0], 0.00001);
+        assertEquals(22, coords[1], 0.00001);
+        iter.next();
+        
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(11, coords[0], 0.00001);
+        assertEquals(22, coords[1], 0.00001);
+        iter.next();
+        
+        assertTrue(iter.isDone());
     }
 }

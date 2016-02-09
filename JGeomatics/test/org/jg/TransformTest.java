@@ -1,5 +1,6 @@
 package org.jg;
 
+import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -554,4 +555,18 @@ public class TransformTest {
         assertEquals(a, b);
     }
 
+    @Test
+    public void testToTransform(){
+        AffineTransform a = new AffineTransform();
+        a.translate(1, 2);
+        Transform t = new Transform(a);
+        assertEquals(new Vect(11, 22), t.transform(new Vect(10, 20), new Vect()));
+        AffineTransform b = t.toAffineTransform();
+        assertEquals(a, b);
+        t = new Transform(1, 2, 3, 4, 5, 6);
+        b = t.toAffineTransform();
+        t = new Transform(b);
+        assertEquals("[1,2,3,4,5,6]", t.toString());
+        
+    }
 }

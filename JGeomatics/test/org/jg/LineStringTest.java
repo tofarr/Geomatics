@@ -241,19 +241,27 @@ public class LineStringTest {
     }
 
     @Test
-    public void testSplitOnSelfIntersect() {
-        VectList vects = new VectList(0,0, 100,100, 100,0, 0,100);
-        LineString a = new LineString(vects);
-        //Network network = new Network();
-        //network.addAllLinks(vects);
-        //String str = network.toString();
-        //fail(str);
-        
-        ArrayList<LineString> results = new ArrayList<>();
+    public void testSplitOnSelfIntersect_A() {
+        LineString a = new LineString(new VectList(0,0, 100,100, 100,0, 0,100));
+        Set<LineString> expected = new HashSet<>();
+        expected.add(new LineString(new VectList(0,0, 50,50)));
+        expected.add(new LineString(new VectList(0,100, 50,50)));
+        expected.add(new LineString(new VectList(50,50, 100,0, 100,100, 50,50)));
+        Set<LineString> results = new HashSet<>();
         a.splitOnSelfIntersect(Tolerance.DEFAULT, results);
-        System.out.println(results);
-        fail("The test case is a prototype.");
-        
+        assertEquals(expected, results);
+    }
+
+    @Test
+    public void testSplitOnSelfIntersect_B() {
+        LineString a = new LineString(new VectList(0,50, 100,50, 80,30, 40,70, 0,30, 0,50));
+        Set<LineString> expected = new HashSet<>();
+        expected.add(new LineString(new VectList(20,50, 60,50)));
+        expected.add(new LineString(new VectList(0,100, 50,50)));
+        expected.add(new LineString(new VectList(50,50, 100,0, 100,100, 50,50)));
+        Set<LineString> results = new HashSet<>();
+        a.splitOnSelfIntersect(Tolerance.DEFAULT, results);
+        assertEquals(expected, results);
         fail("Try a shark tooth pattern also");
         
         fail("Try repeated intersections of same spot");

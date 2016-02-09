@@ -1,5 +1,7 @@
 package org.jg;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
 import java.beans.ConstructorProperties;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -13,7 +15,7 @@ import java.io.ObjectOutput;
  *
  * @author tim.ofarrell
  */
-public final class Vect implements Cloneable, Comparable<Vect>, Externalizable {
+public final class Vect implements PathIterable, Cloneable, Comparable<Vect>, Externalizable {
 
     double x;
     double y;
@@ -375,6 +377,71 @@ public final class Vect implements Cloneable, Comparable<Vect>, Externalizable {
         return ret;
     }
 
+    @Override
+    public Rect getBounds(Rect target) {
+        return target.set(x, y, x, y);
+    }
+
+    @Override
+    public PathIterator getPathIterator() {
+        return getPathIterator(null);
+    }
+
+    @Override
+    public PathIterator getPathIterator(final AffineTransform transform) {
+        return new PathIterator(){
+
+            int seg = SEG_MOVETO;
+                
+            @Override
+            public int getWindingRule() {
+                return WIND_EVEN_ODD;
+            }
+
+            @Override
+            public boolean isDone() {
+                return seg == -1;
+            }
+
+            @Override
+            public void next() {
+                switch(seg){
+                    case SEG_MOVETO:
+                        seg = SEG_LINETO;
+                        return;
+                    case SEG_LINETO:
+                        seg = -1;
+                }
+            }
+
+            @Override
+            public int currentSegment(float[] coords) {
+                coords[0] = (float)x;
+                coords[1] = (float)y;
+                if(transform != null){
+                    transform.transform(coords, 0, coords, 0, 1);
+                }
+                return seg;
+            }
+
+            @Override
+            public int currentSegment(double[] coords) {
+                coords[0] = x;
+                coords[1] = y;
+                if(transform != null){
+                    transform.transform(coords, 0, coords, 0, 1);
+                }
+                return seg;
+            }
+                
+        };
+    }
+
+    @Override
+    public PathIterator getPathIterator(AffineTransform transform, double flatness) throws NullPointerException {
+        return getPathIterator(transform);
+    }
+    
     /**
      * Determine if this vect matches a Vect / VectBuilder given, within the
      * tolerance given

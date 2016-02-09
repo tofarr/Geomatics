@@ -143,20 +143,24 @@ public final class LineString implements Externalizable, Cloneable {
             }
         }
 
-        //reverse if required
+        changed |= lowestFirst(_vects); //reverse if required
+        
+        return changed ? new LineString(_vects, null) : this;
+    }
+    
+    static boolean lowestFirst(VectList vects){
         int c = 0;
         int min = 0;
-        int max = _vects.size() - 1;
-        while ((min < max) && ((c = Vect.compare(_vects.getX(min), _vects.getY(min), _vects.getX(max), _vects.getY(max))) == 0)) {
+        int max = vects.size() - 1;
+        while ((min < max) && ((c = Vect.compare(vects.getX(min), vects.getY(min), vects.getX(max), vects.getY(max))) == 0)) {
             min++;
             max--;
         }
         if (c > 0) {
-            _vects.reverse();
-            changed = true;
+            vects.reverse();
+            return true;
         }
-        
-        return changed ? new LineString(_vects, null) : this;
+        return false;
     }
 
     public Collection<LineString> splitOnSelfIntersect(Tolerance tolerance, Collection<LineString> results) {
@@ -164,20 +168,14 @@ public final class LineString implements Externalizable, Cloneable {
         network.addAllLinks(vects);
         network.explicitIntersections(tolerance);
         network.snap(tolerance);
-        ArrayList<VectList> vects = new ArrayList<>();
-        network.extractLines(vects, false);
-        switch(vects.size()){
-            case 0:
-                return results;
-            case 1:
-                results.add(this);
-                return results;
-            default:
-                for(VectList vect : vects){
-                    results.add(new LineString(vect));
-                }
-                return results;
+        ArrayList<VectList> vectList = new ArrayList<>();
+        network.extractLines(vectList, false);
+        for(int i = vectList.size(); i-- > 0;){
+            VectList _vects = vectList.get(i);
+            lowestFirst(_vects);
+            results.add(new LineString(_vects));
         }
+        return results;
     }
 
     RTree<Integer> getLineIndex() {

@@ -1,5 +1,7 @@
 package org.jg;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -598,5 +600,30 @@ public class LineTest {
         assertEquals(-1, b.compareTo(a));
         assertEquals(1, a.compareTo(b.set(0, 2, 3, 4)));
         assertEquals(-1, b.compareTo(a));
+    }
+    
+
+    @Test
+    public void testGetPathIterator(){
+        double[] coords = new double[6];
+        Line line = new Line(1, 3, 7, 13);
+        AffineTransform at = new AffineTransform();
+        at.translate(10, 20);
+        PathIterator iter = line.getPathIterator(at, 0);
+        assertEquals(PathIterator.WIND_EVEN_ODD, iter.getWindingRule());
+        
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(11, coords[0], 0.00001);
+        assertEquals(23, coords[1], 0.00001);
+        iter.next();
+        
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(17, coords[0], 0.00001);
+        assertEquals(33, coords[1], 0.00001);
+        iter.next();
+        
+        assertTrue(iter.isDone());
     }
 }
