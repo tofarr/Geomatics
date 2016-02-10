@@ -18,7 +18,7 @@ import java.io.ObjectOutput;
  *
  * @author tim.ofarrell
  */
-public final class Rect implements PathIterable, Cloneable, Externalizable {
+public final class Rect implements Cloneable, Externalizable {
 
     double minX;
     double minY;
@@ -488,125 +488,7 @@ public final class Rect implements PathIterable, Cloneable, Externalizable {
         maxY += amt;
         return this;
     }
-
-    @Override
-    public Rect getBounds(Rect target) {
-        return target.set(this);
-    }
-
-    @Override
-    public PathIterator getPathIterator() {
-        return getPathIterator(null);
-    }
-
-    @Override
-    public PathIterator getPathIterator(final AffineTransform transform) {
-        return new PathIterator(){
-            int index = 0;
-            
-            @Override
-            public int getWindingRule() {
-                return WIND_EVEN_ODD;
-            }
-
-            @Override
-            public boolean isDone() {
-                return index < 4;
-            }
-
-            @Override
-            public void next() {
-                index++;
-            }
-
-            @Override
-            public int currentSegment(float[] coords) {
-                switch(index){
-                    case 0:
-                        coords[0] = (float)minX;
-                        coords[1] = (float)minY;
-                        transform(coords);
-                        return SEG_MOVETO;
-                    case 1:
-                        coords[0] = (float)maxX;
-                        coords[1] = (float)minY;
-                        transform(coords);
-                        return SEG_LINETO;
-                    case 2:
-                        coords[0] = (float)maxX;
-                        coords[1] = (float)maxY;
-                        transform(coords);
-                        return SEG_LINETO;
-                    case 3:
-                        coords[0] = (float)minX;
-                        coords[1] = (float)maxY;
-                        transform(coords);
-                        return SEG_LINETO;
-                    case 4:
-                        coords[0] = (float)minX;
-                        coords[1] = (float)minY;
-                        transform(coords);
-                        return SEG_CLOSE;
-                    default:
-                        throw new IllegalStateException();
-                }
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
-                switch(index){
-                    case 0:
-                        coords[0] = minX;
-                        coords[1] = minY;
-                        transform(coords);
-                        return SEG_MOVETO;
-                    case 1:
-                        coords[0] = maxX;
-                        coords[1] = minY;
-                        transform(coords);
-                        return SEG_LINETO;
-                    case 2:
-                        coords[0] = maxX;
-                        coords[1] = maxY;
-                        transform(coords);
-                        return SEG_LINETO;
-                    case 3:
-                        coords[0] = minX;
-                        coords[1] = maxY;
-                        transform(coords);
-                        return SEG_LINETO;
-                    case 4:
-                        coords[0] = minX;
-                        coords[1] = minY;
-                        transform(coords);
-                        return SEG_CLOSE;
-                    default:
-                        throw new IllegalStateException();
-                }
-            }
-            
-            void transform(double[] coords){
-                if(transform != null){
-                    transform.transform(coords, 0, coords, 0, 1);
-                }
-            }
-            
-            void transform(float[] coords){
-                if(transform != null){
-                    transform.transform(coords, 0, coords, 0, 1);
-                }
-            }
-                
-        };
-    }
-
-    @Override
-    public PathIterator getPathIterator(AffineTransform transform, double flatness) {
-        return getPathIterator(null);
-    }
-
-    
-    
+        
     @Override
     public int hashCode() {
         int hash = 7;

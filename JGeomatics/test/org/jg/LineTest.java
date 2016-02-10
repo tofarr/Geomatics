@@ -281,17 +281,17 @@ public class LineTest {
         assertFalse(new Line(8, 8, 12, 12).intersectsSeg(new Line(0, 9, 9, 0), Tolerance.DEFAULT));
         assertFalse(new Line(0, 9, 9, 0).intersectsSeg(new Line(0, 0, 4, 4), Tolerance.DEFAULT));
         assertFalse(new Line(0, 9, 9, 0).intersectsSeg(new Line(8, 8, 12, 12), Tolerance.DEFAULT));
-        
+
         assertFalse(new Line(10, 5, 5, 5).intersectsSeg(new Line(0, 10, 0, 0), Tolerance.DEFAULT));
-        assertFalse(new Line(10, 5, 5, 5).intersectsSeg(new Line(0, 4, 0, 0), Tolerance.DEFAULT));        
-        assertTrue(new Line(0,0,10,0).intersectsSeg(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT));
-        assertTrue(new Line(0,0,10,10).intersectsSeg(new Line(0,2,2,2), Tolerance.DEFAULT));
+        assertFalse(new Line(10, 5, 5, 5).intersectsSeg(new Line(0, 4, 0, 0), Tolerance.DEFAULT));
+        assertTrue(new Line(0, 0, 10, 0).intersectsSeg(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT));
+        assertTrue(new Line(0, 0, 10, 10).intersectsSeg(new Line(0, 2, 2, 2), Tolerance.DEFAULT));
         assertFalse(new Line(0, 0, 2, 2).intersectsSeg(new Line(0, 5, 2, 3), Tolerance.DEFAULT));
         assertFalse(new Line(0, 2, 2, 0).intersectsSeg(new Line(0, 3, 2, 5), Tolerance.DEFAULT));
-        
-        assertTrue(new Line(0,0,10,0).intersectsSeg(new Line(1, 0.0000001, 1, 10), Tolerance.DEFAULT));
-        assertTrue(new Line(0,0,10,0).intersectsSeg(new Line(1, -10, 1, -0.0000001), Tolerance.DEFAULT));
-        
+
+        assertTrue(new Line(0, 0, 10, 0).intersectsSeg(new Line(1, 0.0000001, 1, 10), Tolerance.DEFAULT));
+        assertTrue(new Line(0, 0, 10, 0).intersectsSeg(new Line(1, -10, 1, -0.0000001), Tolerance.DEFAULT));
+
         try {
             line.intersectsSeg(null, Tolerance.DEFAULT);
             fail("Exception expected");
@@ -365,11 +365,11 @@ public class LineTest {
         assertTrue(line.set(0, 9, 9, 0).intersectionLine(new Line(8, 8, 12, 12), Tolerance.DEFAULT, vect));
         assertEquals(new Vect(4.5, 4.5), vect);
 
-        assertTrue(new Line(10,0,0,0).intersectionLine(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT, vect));
+        assertTrue(new Line(10, 0, 0, 0).intersectionLine(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT, vect));
         assertEquals(new Vect(0, 0), vect);
-        assertTrue(new Line(0,0,10,10).intersectionLine(new Line(0,2,2,2), Tolerance.DEFAULT, vect));
+        assertTrue(new Line(0, 0, 10, 10).intersectionLine(new Line(0, 2, 2, 2), Tolerance.DEFAULT, vect));
         assertEquals(new Vect(2, 2), vect);
-        
+
         try {
             line.intersectionLine(null, Tolerance.DEFAULT, vect);
             fail("Exception expected");
@@ -428,17 +428,16 @@ public class LineTest {
         assertFalse(new Line(0, 9, 9, 0).intersectionSeg(new Line(0, 0, 4, 4), Tolerance.DEFAULT, vect));
         assertFalse(new Line(0, 9, 9, 0).intersectionSeg(new Line(8, 8, 12, 12), Tolerance.DEFAULT, vect));
 
-        
         assertFalse(new Line(0, 0, 4, 4).intersectionSeg(new Line(0, 9, 9, 0), Tolerance.DEFAULT, vect));
         assertFalse(new Line(8, 8, 12, 12).intersectionSeg(new Line(0, 9, 9, 0), Tolerance.DEFAULT, vect));
         assertFalse(new Line(0, 9, 9, 0).intersectionSeg(new Line(0, 0, 4, 4), Tolerance.DEFAULT, vect));
         assertFalse(new Line(0, 9, 9, 0).intersectionSeg(new Line(8, 8, 12, 12), Tolerance.DEFAULT, vect));
 
         assertFalse(new Line(10, 5, 5, 5).intersectionSeg(new Line(0, 10, 0, 0), Tolerance.DEFAULT, vect));
-        assertFalse(new Line(10, 5, 5, 5).intersectionSeg(new Line(0, 4, 0, 0), Tolerance.DEFAULT, vect));        
-        assertTrue(new Line(0,0,10,0).intersectionSeg(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT, vect));
+        assertFalse(new Line(10, 5, 5, 5).intersectionSeg(new Line(0, 4, 0, 0), Tolerance.DEFAULT, vect));
+        assertTrue(new Line(0, 0, 10, 0).intersectionSeg(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT, vect));
         assertEquals(new Vect(0, 0), vect);
-        assertTrue(new Line(0,0,10,10).intersectionSeg(new Line(0,2,2,2), Tolerance.DEFAULT, vect));
+        assertTrue(new Line(0, 0, 10, 10).intersectionSeg(new Line(0, 2, 2, 2), Tolerance.DEFAULT, vect));
         assertEquals(new Vect(2, 2), vect);
         assertFalse(new Line(0, 0, 2, 2).intersectionSeg(new Line(0, 5, 2, 3), Tolerance.DEFAULT, vect));
         assertFalse(new Line(0, 2, 2, 0).intersectionSeg(new Line(0, 3, 2, 5), Tolerance.DEFAULT, vect));
@@ -604,30 +603,5 @@ public class LineTest {
         assertEquals(-1, b.compareTo(a));
         assertEquals(1, a.compareTo(b.set(0, 2, 3, 4)));
         assertEquals(-1, b.compareTo(a));
-    }
-    
-
-    @Test
-    public void testGetPathIterator(){
-        double[] coords = new double[6];
-        Line line = new Line(1, 3, 7, 13);
-        AffineTransform at = new AffineTransform();
-        at.translate(10, 20);
-        PathIterator iter = line.getPathIterator(at, 0);
-        assertEquals(PathIterator.WIND_EVEN_ODD, iter.getWindingRule());
-        
-        assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
-        assertEquals(11, coords[0], 0.00001);
-        assertEquals(23, coords[1], 0.00001);
-        iter.next();
-        
-        assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
-        assertEquals(17, coords[0], 0.00001);
-        assertEquals(33, coords[1], 0.00001);
-        iter.next();
-        
-        assertTrue(iter.isDone());
     }
 }

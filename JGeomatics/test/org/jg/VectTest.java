@@ -456,7 +456,7 @@ public class VectTest {
     }
     
     @Test
-    public void testGetPathIterator(){
+    public void testGetPathIterator_1(){
         double[] coords = new double[6];
         float[] fcoords = new float[6];
         AffineTransform at = new AffineTransform();
@@ -495,5 +495,31 @@ public class VectTest {
             fail("Exception expected");
         }catch(IllegalStateException ex){
         }
+    }
+
+    @Test
+    public void testGetPathIterator_2(){
+        double[] coords = new double[6];
+        float[] fcoords = new float[6];
+        Vect vect = new Vect(1, 2);
+        PathIterator iter = vect.getPathIterator();
+        assertEquals(PathIterator.WIND_EVEN_ODD, iter.getWindingRule());
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(1, coords[0], 0.00001);
+        assertEquals(2, coords[1], 0.00001);
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(fcoords));
+        assertEquals(1, fcoords[0], 0.00001);
+        assertEquals(2, fcoords[1], 0.00001);
+        iter.next();
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(1, coords[0], 0.00001);
+        assertEquals(2, coords[1], 0.00001);
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(1, fcoords[0], 0.00001);
+        assertEquals(2, fcoords[1], 0.00001);
+        iter.next();
+        assertTrue(iter.isDone());
     }
 }

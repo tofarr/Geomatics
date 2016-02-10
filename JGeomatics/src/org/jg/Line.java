@@ -1,7 +1,5 @@
 package org.jg;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.PathIterator;
 import java.beans.ConstructorProperties;
 import java.beans.Transient;
 import java.io.DataInput;
@@ -17,7 +15,7 @@ import java.io.ObjectOutput;
  *
  * @author tim.ofarrell
  */
-public final class Line implements PathIterable, Externalizable, Cloneable, Comparable<Line> {
+public final class Line implements Externalizable, Cloneable, Comparable<Line> {
 
     double ax;
     double ay;
@@ -199,7 +197,6 @@ public final class Line implements PathIterable, Externalizable, Cloneable, Comp
      * @param target
      * @return
      */
-    @Override
     public Rect getBounds(Rect target) {
         return target.reset().unionInternal(ax, ay).unionInternal(bx, by);
     }
@@ -659,85 +656,6 @@ public final class Line implements PathIterable, Externalizable, Cloneable, Comp
         }
         return false;
     }
-
-    @Override
-    public PathIterator getPathIterator() {
-        return getPathIterator(null);
-    }
-
-    @Override
-    public PathIterator getPathIterator(final AffineTransform transform) {
-        return new PathIterator(){
-
-            int index = 0;
-                
-            @Override
-            public int getWindingRule() {
-                return WIND_EVEN_ODD;
-            }
-
-            @Override
-            public boolean isDone() {
-                return index > 1;
-            }
-
-            @Override
-            public void next() {
-                index++;
-            }
-
-            @Override
-            public int currentSegment(float[] coords) {
-                switch(index){
-                    case 0:
-                        coords[0] = (float)ax;
-                        coords[1] = (float)ay;
-                        if(transform != null){
-                            transform.transform(coords, 0, coords, 0, 1);
-                        }
-                        return SEG_MOVETO;
-                    case 1:
-                        coords[0] = (float)bx;
-                        coords[1] = (float)by;
-                        if(transform != null){
-                            transform.transform(coords, 0, coords, 0, 1);
-                        }
-                        return SEG_LINETO;
-                    default:
-                        throw new IllegalStateException();
-                }
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
-                switch(index){
-                    case 0:
-                        coords[0] = ax;
-                        coords[1] = ay;
-                        if(transform != null){
-                            transform.transform(coords, 0, coords, 0, 1);
-                        }
-                        return SEG_MOVETO;
-                    case 1:
-                        coords[0] = bx;
-                        coords[1] = by;
-                        if(transform != null){
-                            transform.transform(coords, 0, coords, 0, 1);
-                        }
-                        return SEG_LINETO;
-                    default:
-                        throw new IllegalStateException();
-                }
-            }
-                
-        };
-    }
-
-    @Override
-    public PathIterator getPathIterator(AffineTransform transform, double flatness) throws NullPointerException {
-        return getPathIterator(transform);
-    }
-    
     
     @Override
     public int compareTo(Line other) {
