@@ -1,5 +1,8 @@
 package org.jg;
 
+import org.jg.RTree;
+import org.jg.SpatialNode;
+import org.jg.Rect;
 import org.jg.RTree.Iter;
 import org.jg.SpatialNode.NodeProcessor;
 import java.util.HashMap;

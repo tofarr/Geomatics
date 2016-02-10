@@ -411,11 +411,17 @@ public final class Vect implements PathIterable, Cloneable, Comparable<Vect>, Ex
                         return;
                     case SEG_LINETO:
                         seg = -1;
+                        return;
+                    case -1:
+                        throw new IllegalStateException();
                 }
             }
 
             @Override
             public int currentSegment(float[] coords) {
+                if(seg == -1){
+                    throw new IllegalStateException();
+                }
                 coords[0] = (float)x;
                 coords[1] = (float)y;
                 if(transform != null){
@@ -426,6 +432,9 @@ public final class Vect implements PathIterable, Cloneable, Comparable<Vect>, Ex
 
             @Override
             public int currentSegment(double[] coords) {
+                if(seg == -1){
+                    throw new IllegalStateException();
+                }
                 coords[0] = x;
                 coords[1] = y;
                 if(transform != null){

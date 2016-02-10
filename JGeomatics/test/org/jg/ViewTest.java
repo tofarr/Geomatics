@@ -1,5 +1,9 @@
 package org.jg;
 
+import org.jg.View;
+import org.jg.Transform;
+import org.jg.Vect;
+import org.jg.Rect;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

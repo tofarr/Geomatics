@@ -1,8 +1,21 @@
 package org.jg;
 
+import org.jg.Tolerance;
+import org.jg.VectList;
+import org.jg.Vect;
+import org.jg.Processor;
+import org.jg.Rect;
+import org.jg.LineString;
+import org.jg.Line;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import org.jg.Line;
+import org.jg.Processor;
+import org.jg.Rect;
+import org.jg.Tolerance;
+import org.jg.Vect;
+import org.jg.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

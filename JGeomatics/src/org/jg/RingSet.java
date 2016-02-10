@@ -1,5 +1,6 @@
 package org.jg;
 
+import org.jg.Ring;
 import java.util.ArrayList;
 import java.util.List;
 

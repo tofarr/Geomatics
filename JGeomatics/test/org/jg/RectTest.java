@@ -1,5 +1,8 @@
 package org.jg;
 
+import org.jg.Vect;
+import org.jg.Rect;
+import org.jg.Relate;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInput;

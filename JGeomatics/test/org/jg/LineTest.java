@@ -1,5 +1,9 @@
 package org.jg;
 
+import org.jg.Tolerance;
+import org.jg.Vect;
+import org.jg.Rect;
+import org.jg.Line;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;

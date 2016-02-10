@@ -1,5 +1,6 @@
 package org.jg;
 
+import org.jg.LineString;
 import org.jg.SpatialNode.NodeProcessor;
 import java.beans.Transient;
 import java.io.Externalizable;

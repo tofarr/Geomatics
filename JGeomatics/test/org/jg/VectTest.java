@@ -1,5 +1,8 @@
 package org.jg;
 
+import org.jg.Tolerance;
+import org.jg.Vect;
+import org.jg.Rect;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;
@@ -455,6 +458,7 @@ public class VectTest {
     @Test
     public void testGetPathIterator(){
         double[] coords = new double[6];
+        float[] fcoords = new float[6];
         AffineTransform at = new AffineTransform();
         at.translate(10, 20);
         Vect vect = new Vect(1, 2);
@@ -465,14 +469,31 @@ public class VectTest {
         assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
         assertEquals(11, coords[0], 0.00001);
         assertEquals(22, coords[1], 0.00001);
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(fcoords));
+        assertEquals(11, fcoords[0], 0.00001);
+        assertEquals(22, fcoords[1], 0.00001);
         iter.next();
         
         assertFalse(iter.isDone());
         assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
         assertEquals(11, coords[0], 0.00001);
         assertEquals(22, coords[1], 0.00001);
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(11, fcoords[0], 0.00001);
+        assertEquals(22, fcoords[1], 0.00001);
         iter.next();
         
         assertTrue(iter.isDone());
+        
+        try{
+            iter.currentSegment(coords);
+            fail("Exception expected");
+        }catch(IllegalStateException ex){
+        }
+        try{
+            iter.currentSegment(fcoords);
+            fail("Exception expected");
+        }catch(IllegalStateException ex){
+        }
     }
 }

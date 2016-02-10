@@ -1,5 +1,10 @@
 package org.jg;
 
+import org.jg.Transform;
+import org.jg.VectList;
+import org.jg.Vect;
+import org.jg.Rect;
+import org.jg.Line;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;

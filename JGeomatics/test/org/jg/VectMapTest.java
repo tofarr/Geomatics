@@ -1,6 +1,8 @@
 
 package org.jg;
 
+import org.jg.Vect;
+import org.jg.VectMap;
 import org.jg.VectMap.Iter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -1,5 +1,8 @@
 package org.jg;
 
+import org.jg.RingSet;
+import org.jg.Ring;
+import org.jg.LineString;
 import java.io.DataInput;
 import java.io.DataOutput;
 import org.jg.SpatialNode.NodeProcessor;

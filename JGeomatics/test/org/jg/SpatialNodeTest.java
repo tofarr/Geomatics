@@ -1,5 +1,7 @@
 package org.jg;
 
+import org.jg.SpatialNode;
+import org.jg.Rect;
 import org.jg.SpatialNode.NodeProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
