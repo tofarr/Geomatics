@@ -1,7 +1,7 @@
 package org.jg;
 
-import org.jg.Tolerance;
-import org.jg.Transform;
+import org.jg.util.Tolerance;
+import org.jg.util.Transform;
 import org.jg.Vect;
 import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;

@@ -1,6 +1,6 @@
 package org.jg;
 
-import org.jg.Tolerance;
+import org.jg.util.Tolerance;
 import org.jg.Util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

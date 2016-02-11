@@ -1,6 +1,6 @@
 package org.jg;
 
-import org.jg.Tolerance;
+import org.jg.util.Tolerance;
 import org.jg.Vect;
 import org.jg.Rect;
 import org.jg.Line;

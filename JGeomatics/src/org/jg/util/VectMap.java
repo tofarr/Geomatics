@@ -1,20 +1,20 @@
-package org.jg;
+package org.jg.util;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import org.jg.geom.Vect;
 
 /**
  *
  * @author tofar_000
+ * @param <E>
  */
-public final class VectMap<E> implements Externalizable, Cloneable {
+public final class VectMap<E> implements Serializable, Cloneable {
 
     static final int MAX_JUMPS = 4;
     static final int INITIAL_CAPACITY = 16;
@@ -193,10 +193,16 @@ public final class VectMap<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if vects was null
      */
     public VectMap putAll(VectMap vects) {
-        Iter iter = vects.iterator();
-        while (iter.next()) {
-            putInternal(iter.getX(), iter.getY(), iter.getValue());
+        if(vects.isEmpty() || (vects == this)){
+            return this;
         }
+        vects.forEach(new VectMapProcessor<E>(){
+            @Override
+            public boolean process(double x, double y, E value) {
+                putInternal(x, y, value);
+                return true;
+            }        
+        });
         return this;
     }
 
@@ -287,13 +293,24 @@ public final class VectMap<E> implements Externalizable, Cloneable {
         }
     }
 
-    /**
-     * Get iterator over this set
-     *
-     * @return
-     */
-    public Iter iterator() {
-        return new Iter();
+    public boolean forEach(VectMapProcessor<E> processor) {
+        int index = 0;
+        final int storedVersion = version;
+        while (true) {
+            if (index >= ords.length) {
+                return true;
+            }
+            if (Double.isNaN(ords[index])) {
+                index += 2;
+            } else {
+                E value = values[index >> 1];
+                if (!processor.process(ords[index++], ords[index++], value)) {
+                    return false;
+                }else if(storedVersion != version){
+                    throw new ConcurrentModificationException();
+                }
+            }
+        }
     }
 
     /**
@@ -382,9 +399,9 @@ public final class VectMap<E> implements Externalizable, Cloneable {
                 if (i != 0) {
                     appendable.append(", ");
                 }
-                appendable.append(Util.ordToStr(list.getX(i)))
+                appendable.append(Vect.ordToStr(list.getX(i)))
                         .append(',')
-                        .append(Util.ordToStr(list.getY(i)))
+                        .append(Vect.ordToStr(list.getY(i)))
                         .append(',')
                         .append(Objects.toString(getInternal(list.getX(i), list.getY(i))));
             }
@@ -399,25 +416,6 @@ public final class VectMap<E> implements Externalizable, Cloneable {
         VectMap ret = new VectMap(maxJumps, ords, values, size, true);
         copyOnEdit = true;
         return ret;
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(size);
-        Iter iter = iterator();
-        while (iter.next()) {
-            out.writeDouble(iter.getX());
-            out.writeDouble(iter.getY());
-            out.writeObject(iter.getValue());
-        }
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        int _size = in.readInt();
-        for (int s = _size; s-- > 0;) {
-            put(in.readDouble(), in.readDouble(), (E) in.readObject());
-        }
     }
 
     void rehash(int capacity) {
@@ -462,45 +460,8 @@ public final class VectMap<E> implements Externalizable, Cloneable {
         }
     }
 
-    public final class Iter {
+    public interface VectMapProcessor<E> {
 
-        final int storedVersion;
-        int index;
-
-        private Iter() {
-            this.storedVersion = version;
-            index = -2;
-        }
-
-        public boolean next() throws ConcurrentModificationException {
-            if(version != storedVersion){
-                throw new ConcurrentModificationException("Update while iterating");
-            }
-            while (true) {
-                index += 2;
-                if (index >= ords.length) {
-                    return false;
-                }
-                if (!Double.isNaN(ords[index])) {
-                    return true;
-                }
-            }
-        }
-
-        public double getX() {
-            return ords[index];
-        }
-
-        public double getY() {
-            return ords[index + 1];
-        }
-
-        public Vect getVect(Vect target) {
-            return target.set(ords[index], ords[index + 1]);
-        }
-
-        public E getValue() {
-            return values[index >> 1];
-        }
+        boolean process(double x, double y, E value);
     }
 }

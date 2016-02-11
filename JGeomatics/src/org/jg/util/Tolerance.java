@@ -1,9 +1,10 @@
-package org.jg;
+package org.jg.util;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
+import org.jg.geom.Vect;
 
 /**
  * Immutable Tolerance for checking values are within a specified amount. Used for
@@ -30,7 +31,7 @@ public final class Tolerance implements Serializable, Cloneable {
      * @throws IllegalArgumentException if tolerance was infinite or NaN
      */
     public Tolerance(double tolerance) throws IllegalArgumentException {
-        Util.check(tolerance, "Invalid tolerance: {0}");
+        Vect.check(tolerance, "Invalid tolerance: {0}");
         this.tolerance = Math.abs(tolerance);
     }
 
@@ -51,7 +52,7 @@ public final class Tolerance implements Serializable, Cloneable {
      * less than -tolerance, otherwise 0
      */
     public int check(double value) {
-        Util.check(value, "Invalid value {0}");
+        Vect.check(value, "Invalid value {0}");
         if (value > tolerance) {
             return 1;
         } else if (value < -tolerance) {
@@ -107,7 +108,7 @@ public final class Tolerance implements Serializable, Cloneable {
 
     @Override
     public String toString() {
-        return Util.ordToStr(tolerance);
+        return Vect.ordToStr(tolerance);
     }
     
     /**
@@ -119,13 +120,13 @@ public final class Tolerance implements Serializable, Cloneable {
      * @throws NullPointerException if appendable was null
      */
     public void toString(Appendable appendable) throws IOException, NullPointerException {
-        appendable.append(Util.ordToStr(tolerance));
+        appendable.append(Vect.ordToStr(tolerance));
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 29 * hash + Util.hash(tolerance);
+        hash = 29 * hash + Vect.hash(tolerance);
         return hash;
     }
 

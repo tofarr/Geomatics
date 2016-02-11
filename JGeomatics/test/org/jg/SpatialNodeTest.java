@@ -1,8 +1,8 @@
 package org.jg;
 
-import org.jg.SpatialNode;
+import org.jg.util.SpatialNode;
 import org.jg.Rect;
-import org.jg.SpatialNode.NodeProcessor;
+import org.jg.util.SpatialNode.NodeProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

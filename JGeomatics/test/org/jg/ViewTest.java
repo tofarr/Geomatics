@@ -1,7 +1,7 @@
 package org.jg;
 
-import org.jg.View;
-import org.jg.Transform;
+import org.jg.util.View;
+import org.jg.util.Transform;
 import org.jg.Vect;
 import org.jg.Rect;
 import java.io.ByteArrayInputStream;

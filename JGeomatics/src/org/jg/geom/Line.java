@@ -1,165 +1,75 @@
-package org.jg;
+package org.jg.geom;
 
-import java.beans.ConstructorProperties;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.beans.Transient;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import org.jg.util.Tolerance;
 
 /**
- * Class representing a 2D line. A line is considered invalid if the two end
- * points are the same
  *
- * @author tim.ofarrell
+ * @author tofar_000
  */
-public final class Line implements Externalizable, Cloneable, Comparable<Line> {
+public class Line implements Geom, Comparable<Line> {
 
-    double ax;
-    double ay;
-    double bx;
-    double by;
+    final double ax;
+    final double ay;
+    final double bx;
+    final double by;
 
-    /**
-     * Create a new instance of Line.
-     */
-    public Line() {
+    Line(Vect a, Vect b) {
+        ax = a.x;
+        ay = a.y;
+        bx = b.x;
+        by = b.y;
     }
 
-    /**
-     * Create a new instance of Line
-     *
-     * @param ax
-     * @param ay
-     * @param bx
-     * @param by
-     * @throws IllegalArgumentException if an ordinate was infinite or NaN
-     */
-    @ConstructorProperties({"ax", "ay", "bx", "by"})
-    public Line(double ax, double ay, double bx, double by) throws IllegalArgumentException {
-        set(ax, ay, bx, by);
-    }
-
-    /**
-     * Set the line to that given
-     *
-     * @param a
-     * @param b
-     * @throws NullPointerException if a or b was null
-     */
-    public Line(Vect a, Vect b) throws NullPointerException {
-        set(a, b);
-    }
-
-    /**
-     * Set the line to that given
-     *
-     * @param ax
-     * @param ay
-     * @param bx
-     * @param by
-     * @return
-     * @throws IllegalArgumentException if any ordinate was Infinite or NaN
-     */
-    public Line set(double ax, double ay, double bx, double by) throws IllegalArgumentException {
-        Util.check(ax, "Invalid ax : {0}");
-        Util.check(ay, "Invalid ay : {0}");
-        Util.check(bx, "Invalid bx : {0}");
-        Util.check(by, "Invalid by : {0}");
+    Line(double ax, double ay, double bx, double by) {
         this.ax = ax;
         this.ay = ay;
         this.bx = bx;
         this.by = by;
-        return this;
     }
 
-    /**
-     *
-     * @param a
-     * @param b
-     * @return
-     * @throws NullPointerException
-     */
-    public Line set(Vect a, Vect b) throws NullPointerException {
-        this.ax = a.getX();
-        this.ay = a.getY();
-        this.bx = b.getX();
-        this.by = b.getY();
-        return this;
+    public static Line valueOf(double ax, double ay, double bx, double by) throws IllegalArgumentException {
+        Vect.check(ax, ay);
+        Vect.check(bx, by);
+        if ((ax == bx) && (ay == by)) {
+            throw new IllegalArgumentException("Points were the same! [" + ax + "," + ay + "," + bx + "," + by + "]");
+        }
+        return new Line(ax, ay, bx, by);
     }
 
-    /**
-     *
-     * @return
-     */
     public double getAx() {
         return ax;
     }
 
-    /**
-     *
-     * @param ax
-     * @throws IllegalArgumentException
-     */
-    public void setAx(double ax) throws IllegalArgumentException {
-        Util.check(ax, "Invalid ax : {0}");
-        this.ax = ax;
-    }
-
-    /**
-     *
-     * @return
-     */
     public double getAy() {
         return ay;
     }
 
-    /**
-     *
-     * @param ay
-     * @throws IllegalArgumentException
-     */
-    public void setAy(double ay) throws IllegalArgumentException {
-        Util.check(ay, "Invalid ay : {0}");
-        this.ay = ay;
-    }
-
-    /**
-     *
-     * @return
-     */
     public double getBx() {
         return bx;
     }
 
-    /**
-     *
-     * @param bx
-     * @throws IllegalArgumentException
-     */
-    public void setBx(double bx) throws IllegalArgumentException {
-        Util.check(bx, "Invalid bx : {0}");
-        this.bx = bx;
-    }
-
-    /**
-     *
-     * @return
-     */
     public double getBy() {
         return by;
     }
 
     /**
      *
-     * @param by
-     * @throws IllegalArgumentException
+     * @return
      */
-    public void setBy(double by) throws IllegalArgumentException {
-        Util.check(by, "Invalid by : {0}");
-        this.by = by;
+    public Vect getA() {
+        return new Vect(ax, ay);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Vect getB() {
+        return new Vect(bx, by);
     }
 
     /**
@@ -167,7 +77,7 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * @param target
      * @return
      */
-    public Vect getA(Vect target) {
+    public VectBuilder getA(VectBuilder target) {
         target.set(ax, ay);
         return target;
     }
@@ -177,28 +87,17 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * @param target
      * @return
      */
-    public Vect getB(Vect target) {
+    public VectBuilder getB(VectBuilder target) {
         target.set(bx, by);
         return target;
     }
 
     /**
      *
-     * @param target
      * @return
      */
-    public Vect getMid(Vect target) {
-        target.set((ax + bx) / 2, (ay + by) / 2);
-        return target;
-    }
-
-    /**
-     *
-     * @param target
-     * @return
-     */
-    public Rect getBounds(Rect target) {
-        return target.reset().unionInternal(ax, ay).unionInternal(bx, by);
+    public Vect getMid() {
+        return new Vect((ax + bx) / 2, (ay + by) / 2);
     }
 
     /**
@@ -216,13 +115,7 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      */
     public Line normalize() {
         if (Vect.compare(ax, ay, bx, by) > 0) {
-            double t;
-            t = ax;
-            ax = bx;
-            bx = t;
-            t = ay;
-            ay = by;
-            by = t;
+            return new Line(bx, by, ax, ay);
         }
         return this;
     }
@@ -312,7 +205,7 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * @throws IllegalArgumentException if u was infinite or NaN
      * @throws NullPointerException if tolerance or target was null
      */
-    public boolean project(double u, Tolerance tolerance, Vect target) throws NullPointerException, IllegalArgumentException {
+    public boolean project(double u, Tolerance tolerance, VectBuilder target) throws NullPointerException, IllegalArgumentException {
         double x = (u * (bx - ax)) + ax;
         double y = (u * (by - ay)) + ay;
         if (tolerance.match(x, y, ax, ay)) {
@@ -339,7 +232,7 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * @throws IllegalArgumentException if u was infinite or NaN
      * @throws NullPointerException if tolerance or target was null
      */
-    public void projectClosest(double u, Tolerance tolerance, Vect target) throws NullPointerException, IllegalArgumentException {
+    public void projectClosest(double u, Tolerance tolerance, VectBuilder target) throws NullPointerException, IllegalArgumentException {
         double x = (u * (bx - ax)) + ax;
         double y = (u * (by - ay)) + ay;
         if ((u < 0) || tolerance.match(x, y, ax, ay)) {
@@ -509,11 +402,11 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * @throws NullPointerException if line or tolerance was null
      * @throws IllegalStateException if invalid
      */
-    public boolean intersectionLine(Line line, Tolerance tolerance, Vect target) throws NullPointerException {
+    public boolean intersectionLine(Line line, Tolerance tolerance, VectBuilder target) throws NullPointerException {
         return intersectionLineInternal(ax, ay, bx, by, line.ax, line.ay, line.bx, line.by, tolerance, target);
     }
 
-    static boolean intersectionLineInternal(double ax, double ay, double bx, double by, double jax, double jay, double jbx, double jby, Tolerance tolerance, Vect target) throws NullPointerException {
+    static boolean intersectionLineInternal(double ax, double ay, double bx, double by, double jax, double jay, double jbx, double jby, Tolerance tolerance, VectBuilder target) throws NullPointerException {
         if (Vect.compare(ax, ay, bx, by) > 0) {
             double tmp = ax;
             ax = bx;
@@ -583,11 +476,11 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * @throws NullPointerException if tolerance was null
      * @throws IllegalArgumentException if an ordinate was NaN or infinite
      */
-    public boolean intersectionSeg(Line line, Tolerance tolerance, Vect target) throws NullPointerException, IllegalArgumentException {
+    public boolean intersectionSeg(Line line, Tolerance tolerance, VectBuilder target) throws NullPointerException, IllegalArgumentException {
         return intersectionSegInternal(ax, ay, bx, by, line.ax, line.ay, line.bx, line.by, tolerance, target);
     }
 
-    static boolean intersectionSegInternal(double ax, double ay, double bx, double by, double jax, double jay, double jbx, double jby, Tolerance tolerance, Vect target) throws NullPointerException {
+    static boolean intersectionSegInternal(double ax, double ay, double bx, double by, double jax, double jay, double jbx, double jby, Tolerance tolerance, VectBuilder target) throws NullPointerException {
         if (Vect.compare(ax, ay, bx, by) > 0) {
             double tmp = ax;
             ax = bx;
@@ -656,7 +549,32 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
         }
         return false;
     }
-    
+
+    @Override
+    public Rect getBounds() {
+        return new RectBuilder().addInternal(ax, ay).addInternal(bx, by).build();
+    }
+
+    @Override
+    public void addBoundsTo(RectBuilder target) throws NullPointerException {
+        target.addInternal(ax, ay).addInternal(bx, by);
+    }
+
+    @Override
+    public Line transform(Transform transform) throws NullPointerException {
+        Vect ta = transform.transform(getA());
+        Vect tb = transform.transform(getB());
+        return new Line(ta, tb);
+    }
+
+    @Override
+    public PathIterator iterator() {
+        Path2D.Double path = new Path2D.Double();
+        path.moveTo(ax, ay);
+        path.lineTo(bx, by);
+        return path.getPathIterator(null);
+    }
+
     @Override
     public int compareTo(Line other) {
         return compare(ax, ay, bx, by, other.ax, other.ay, other.bx, other.by);
@@ -674,10 +592,10 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 97 * hash + Util.hash(this.ax);
-        hash = 97 * hash + Util.hash(this.ay);
-        hash = 97 * hash + Util.hash(this.bx);
-        hash = 97 * hash + Util.hash(this.by);
+        hash = 97 * hash + Vect.hash(this.ax);
+        hash = 97 * hash + Vect.hash(this.ay);
+        hash = 97 * hash + Vect.hash(this.bx);
+        hash = 97 * hash + Vect.hash(this.by);
         return hash;
     }
 
@@ -693,7 +611,9 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
 
     @Override
     public String toString() {
-        return '[' + Util.ordToStr(ax) + ',' + Util.ordToStr(ay) + ',' + Util.ordToStr(bx) + ',' + Util.ordToStr(by) + ']';
+        StringBuilder str = new StringBuilder();
+        toString(str);
+        return str.toString();
     }
 
     /**
@@ -701,66 +621,24 @@ public final class Line implements Externalizable, Cloneable, Comparable<Line> {
      * the appendable given
      *
      * @param appendable
-     * @throws IOException if there was an output error
+     * @throws GeomException if there was an output error
      * @throws NullPointerException if appendable was null
      */
-    public void toString(Appendable appendable) throws IOException, NullPointerException {
-        appendable.append('[')
-                .append(Util.ordToStr(ax)).append(',')
-                .append(Util.ordToStr(ay)).append(',')
-                .append(Util.ordToStr(bx)).append(',')
-                .append(Util.ordToStr(by)).append(']');
+    public void toString(Appendable appendable) throws GeomException, NullPointerException {
+        try {
+            appendable.append('[')
+                    .append(Vect.ordToStr(ax)).append(',')
+                    .append(Vect.ordToStr(ay)).append(',')
+                    .append(Vect.ordToStr(bx)).append(',')
+                    .append(Vect.ordToStr(by)).append(']');
+        } catch (IOException ex) {
+            throw new GeomException("Error writing", ex);
+        }
     }
 
     @Override
     public Line clone() {
-        return new Line(ax, ay, bx, by);
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        writeData(out);
-    }
-
-    /**
-     * Write this line to the output given
-     *
-     * @param out
-     * @throws IOException if out was null
-     * @throws NullPointerException if out was null
-     */
-    public void writeData(DataOutput out) throws IOException, NullPointerException {
-        out.writeDouble(ax);
-        out.writeDouble(ay);
-        out.writeDouble(bx);
-        out.writeDouble(by);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException {
-        readData(in);
-    }
-
-    /**
-     * Set the ordinates for this line from the input given
-     * @param in
-     * @return this
-     * @throws IOException if there was an error
-     * @throws NullPointerException if in was null
-     */
-    public Line readData(DataInput in) throws IOException, NullPointerException {
-        return set(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
-    }
-
-    /**
-     * Read a line from the input given
-     * @param in
-     * @return a line
-     * @throws IOException if there was an error
-     * @throws NullPointerException if in was null
-     */
-    public static Line read(DataInput in) throws IOException, NullPointerException {
-        return new Line().readData(in);
+        return this;
     }
 
 }

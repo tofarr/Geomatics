@@ -1,7 +1,7 @@
 package org.jg.renderable;
 
 import java.awt.Graphics2D;
-import org.jg.Transform;
+import org.jg.util.Transform;
 
 /**
  *

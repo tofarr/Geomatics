@@ -1,10 +1,12 @@
-package org.jg;
+package org.jg.util;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
+import org.jg.geom.Rect;
+import org.jg.geom.RectBuilder;
 
 /**
  * Node for use in spatial trees and indexes. A node may be a branch with 2
@@ -15,14 +17,14 @@ import java.util.Objects;
  */
 public final class SpatialNode<E> implements Externalizable, Cloneable {
 
-    static double[] EMPTY_BOUNDS = new double[0];
+    static Rect[] EMPTY_BOUNDS = new Rect[0];
     static Object[] EMPTY_VALUES = new Object[0];
     SpatialNode<E> a;
     SpatialNode<E> b;
 
     //private static final int CAPACITY = 16;
-    final Rect bounds;
-    double[] itemBounds;
+    final RectBuilder bounds;
+    Rect[] itemBounds;
     E[] itemValues;
     int size;
 
@@ -38,48 +40,11 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             throw new IllegalArgumentException("Different numbers of arguments : " + itemBounds.length + "->" + itemValues.length);
         }
         this.size = itemBounds.length;
-        this.bounds = new Rect();
-        this.itemBounds = new double[size << 2];
-        this.itemValues = itemValues.clone();
-        int j = 0;
-        for (int i = 0; i < size; i++) {
-            Rect itemBound = itemBounds[i];
-            if (!itemBound.isValid()) {
-                throw new IllegalArgumentException("Invalid item bounds : " + itemBound);
-            }
-            this.bounds.union(itemBound);
-            this.itemBounds[j++] = itemBound.minX;
-            this.itemBounds[j++] = itemBound.minY;
-            this.itemBounds[j++] = itemBound.maxX;
-            this.itemBounds[j++] = itemBound.maxY;
-        }
-    }
-
-    /**
-     *
-     * @param itemBounds
-     * @param itemValues
-     * @throws NullPointerException
-     * @throws IllegalArgumentException
-     */
-    public SpatialNode(double[] itemBounds, E[] itemValues) throws NullPointerException, IllegalArgumentException {
-        if (itemBounds.length != (itemValues.length << 2)) {
-            throw new IllegalArgumentException("Different numbers of arguments : " + itemBounds.length + "->" + itemValues.length);
-        }
-        this.size = itemValues.length;
-        this.bounds = new Rect();
+        this.bounds = new RectBuilder();
         this.itemBounds = itemBounds.clone();
         this.itemValues = itemValues.clone();
-        int j = 0;
-        for (int i = itemBounds.length; i-- > 0;) {
-            Util.check(itemBounds[i], "Invalid ordinate : {0}");
-        }
-        for (int i = 0; i < itemBounds.length;) {
-            double minX = itemBounds[i++];
-            double minY = itemBounds[i++];
-            double maxX = itemBounds[i++];
-            double maxY = itemBounds[i++];
-            this.bounds.union(minX, minY).union(maxY, maxY);
+        for (int i = 0; i < size; i++) {
+            this.bounds.add(itemBounds[i]);
         }
     }
 
@@ -90,7 +55,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if a is null or b is null
      */
     public SpatialNode(SpatialNode<E> a, SpatialNode<E> b) throws NullPointerException {
-        this.bounds = new Rect().union(a.bounds).union(b.bounds);
+        this.bounds = new RectBuilder().add(a.bounds).add(b.bounds);
         this.a = a;
         this.b = b;
         this.size = a.size + b.size;
@@ -101,12 +66,12 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * Create a new empty spatial node
      */
     public SpatialNode() {
-        this.bounds = new Rect();
+        this.bounds = new RectBuilder();
         this.itemBounds = EMPTY_BOUNDS;
         this.itemValues = (E[]) EMPTY_VALUES;
     }
 
-    SpatialNode(SpatialNode<E> a, SpatialNode<E> b, Rect bounds, double[] itemBounds, E[] itemValues, int size) {
+    SpatialNode(SpatialNode<E> a, SpatialNode<E> b, RectBuilder bounds, Rect[] itemBounds, E[] itemValues, int size) {
         this.a = a;
         this.b = b;
         this.bounds = bounds;
@@ -118,12 +83,10 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     /**
      * Get the bounds for this node
      *
-     * @param target
-     * @return target
-     * @throws NullPointerException if target was null
+     * @return
      */
-    public Rect getBounds(Rect target) throws NullPointerException {
-        return target.set(bounds);
+    public Rect getBounds() {
+        return bounds.build();
     }
 
     /**

@@ -1,9 +1,13 @@
-package org.jg;
+package org.jg.util;
 
+import org.jg.util.Transform;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
+import org.jg.Rect;
+import org.jg.Util;
+import org.jg.Vect;
 
 /**
  * Immutable view object.

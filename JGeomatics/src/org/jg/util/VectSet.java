@@ -1,20 +1,17 @@
-package org.jg;
+package org.jg.util;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import org.jg.geom.Vect;
 
 /**
  * Set of vectors backed by an open hash table
  *
  * @author tofar_000
  */
-public final class VectSet implements Externalizable, Cloneable {
+public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
 
     static final int MAX_JUMPS = 4;
     static final int INITIAL_CAPACITY = 16;
@@ -172,7 +169,7 @@ public final class VectSet implements Externalizable, Cloneable {
      * @throws NullPointerException if vects was null
      */
     public VectSet addAll(VectSet vects) throws NullPointerException {
-        if (vects.isEmpty()) {
+        if (vects.isEmpty() || (vects == this)) {
             return this;
         } else if (isEmpty()) {
             this.ords = vects.ords;
@@ -181,10 +178,13 @@ public final class VectSet implements Externalizable, Cloneable {
             this.size = vects.size;
             return this;
         } else {
-            Vect vect = new Vect();
-            for (Iter iter = vects.iterator(); iter.next(vect);) {
-                addInternal(vect.x, vect.y);
-            }
+            vects.forEach(new VectSetProcessor() {
+                @Override
+                public boolean process(double x, double y) {
+                    addInternal(x, y);
+                    return true;
+                }
+            });
             return this;
         }
     }
@@ -204,24 +204,22 @@ public final class VectSet implements Externalizable, Cloneable {
     }
 
     VectSet addInternal(double x, double y) {
-        version++;
         beforeUpdate();
         int capacity = ords.length;
-        while(true){
-             switch (addToOrds(x, y, ords, maxJumps)) {
-                 case 0:
-                     return this; // exists
-                 case -1:
+        while (true) {
+            switch (addToOrds(x, y, ords, maxJumps)) {
+                case 0:
+                    return this; // exists
+                case -1:
                     capacity = capacity << 1;
                     double[] newOrds = rehash(ords, maxJumps, capacity);
-                    //if (newOrds != null) { // rehash only adds bits to address space, so this can never fail
-                        ords = newOrds;
-                    //}
+                    ords = newOrds;
                     break;
-                 default: // case 1
-                     size++;
-                     return this;
-             }
+                default: // case 1
+                    size++;
+                    version++;
+                    return this;
+            }
         }
     }
 
@@ -277,13 +275,26 @@ public final class VectSet implements Externalizable, Cloneable {
         }
     }
 
-    /**
-     * Get iterator over this set
-     *
-     * @return
-     */
-    public Iter iterator() {
-        return new Iter();
+    public boolean forEach(VectSetProcessor processor) {
+        int index = 0;
+        final int storedVersion = version;
+        while (true) {
+            if (index >= ords.length) {
+                return true;
+            }
+            if (Double.isNaN(ords[index])) {
+                index += 2;
+            } else if (!processor.process(ords[index++], ords[index++])) {
+                return false;
+            } else if(storedVersion != version){
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+
+    @Override
+    public Iterator<Vect> iterator() {
+        return new VectSetIterator();
     }
 
     /**
@@ -356,57 +367,6 @@ public final class VectSet implements Externalizable, Cloneable {
         return new VectSet(this);
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        writeData(out);
-    }
-
-    /**
-     * Writer this set to the output given
-     * @param out
-     * @throws IOException
-     */
-    public void writeData(DataOutput out) throws IOException {
-        out.writeInt(size);
-        Vect vect = new Vect();
-        for (Iter iter = iterator(); iter.next(vect);) {
-            vect.writeData(out);
-        }
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        int _size = in.readInt();
-        for (int s = _size; s-- > 0;) {
-            add(in.readDouble(), in.readDouble());
-        }
-    }
-
-    /**
-     * Read this set from the input given
-     * @param in
-     * @return this
-     * @throws IOException
-     */
-    public VectSet readData(DataInput in) throws IOException {
-        clear();
-        int _size = in.readInt();
-        for (int i = _size; i-- > 0;) {
-            add(in.readDouble(), in.readDouble());
-        }
-        return this;
-    }
-
-    /**
-     * Read a vect set from the input given
-     * @param in
-     * @return a vect set
-     * @throws IOException
-     */
-    public static VectSet read(DataInput in) throws IOException {
-        return new VectSet().readData(in);
-    }
-
     static double[] rehash(double[] ords, int maxJumps, int capacity) {
         double[] newOrds = new double[capacity];
         Arrays.fill(newOrds, Double.NaN);
@@ -453,43 +413,51 @@ public final class VectSet implements Externalizable, Cloneable {
         }
     }
 
-    /**
-     * Iterator over a VectSet. Concurrent additions should be avoided, as they may not appear.
-     */
-    public final class Iter {
+    final class VectSetIterator implements Iterator<Vect> {
 
         final int storedVersion;
-        int index;
+        int prevIndex;
+        int nextIndex;
 
-        Iter() {
-            this.storedVersion = version;
+        VectSetIterator() {
+            storedVersion = version;
+            prevIndex = -1;
+            nextIndex = nextIndex();
         }
 
-        /**
-         *
-         * @param target
-         * @return
-         * @throws NullPointerException if target was null
-         * @throws ConcurrentModificationException if an add happened while iterating
-         */
-        public boolean next(Vect target) throws NullPointerException, ConcurrentModificationException {
-            if(target == null){
-                throw new NullPointerException("Target must not be null!");
-            }
-            if(version != storedVersion){
-                throw new ConcurrentModificationException("Update while iterating");
-            }
-            while (true) {
-                if (index >= ords.length) {
-                    return false;
-                }
-                if (!Double.isNaN(ords[index])) {
-                    target.x = ords[index++];
-                    target.y = ords[index++];
-                    return true;
-                }
-                index += 2;
-            }
+        @Override
+        public boolean hasNext() {
+            return nextIndex != -1;
         }
+
+        @Override
+        public Vect next() throws ConcurrentModificationException {
+            if (storedVersion != version) {
+                throw new ConcurrentModificationException();
+            }
+            Vect ret = Vect.valueOf(ords[nextIndex++], ords[nextIndex++]);
+            prevIndex = nextIndex;
+            nextIndex = nextIndex();
+            return ret;
+        }
+
+        int nextIndex() {
+            for (int i = nextIndex; i < ords.length; i += 2) {
+                if (!Double.isNaN(ords[i])) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public void remove() {
+            ords[prevIndex] = Double.NaN;
+        }
+    }
+
+    public interface VectSetProcessor {
+
+        boolean process(double x, double y);
     }
 }

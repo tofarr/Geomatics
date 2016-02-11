@@ -1,6 +1,8 @@
 package org.jg;
 
-import org.jg.SpatialNode.NodeProcessor;
+import org.jg.util.SpatialNode;
+import org.jg.util.Tolerance;
+import org.jg.util.SpatialNode.NodeProcessor;
 import java.beans.ConstructorProperties;
 import java.io.Externalizable;
 import java.io.IOException;

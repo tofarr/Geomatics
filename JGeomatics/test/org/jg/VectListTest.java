@@ -1,6 +1,6 @@
 package org.jg;
 
-import org.jg.Transform;
+import org.jg.util.Transform;
 import org.jg.VectList;
 import org.jg.Vect;
 import org.jg.Rect;

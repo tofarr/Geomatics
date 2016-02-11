@@ -1,18 +1,20 @@
-package org.jg;
+package org.jg.util;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.io.StringWriter;
+import java.util.Iterator;
+import org.jg.geom.Line;
+import org.jg.geom.Rect;
+import org.jg.geom.RectBuilder;
+import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 
 /**
  *
  * @author tofar_000
  */
-public final class VectList implements Externalizable, Cloneable {
+public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
 
     static final int DEFAULT_INITIAL_CAPACITY = 64;
     private double[] ords;
@@ -39,7 +41,7 @@ public final class VectList implements Externalizable, Cloneable {
             throw new IllegalArgumentException("Number of ordinates must be even : " + ords.length);
         }
         for (int i = 0; i < ords.length; i++) {
-            Util.check(ords[i], "Invalid ordinate : {0}");
+            Vect.check(ords[i], "Invalid ordinate : {0}");
         }
         this.ords = (ords.length == 0) ? new double[DEFAULT_INITIAL_CAPACITY] : ords.clone();
         this.size = ords.length >> 1;
@@ -104,6 +106,12 @@ public final class VectList implements Externalizable, Cloneable {
         }
     }
 
+    public Vect getVect(int index) throws IndexOutOfBoundsException {
+        checkIndex(index);
+        int ordIndex = index << 1;
+        return Vect.valueOf(ords[ordIndex], ords[++ordIndex]);
+    }
+
     /**
      * Get the vector at the index given
      *
@@ -113,7 +121,7 @@ public final class VectList implements Externalizable, Cloneable {
      * @throws IndexOutOfBoundsException if index is out of bounds
      * @throws NullPointerException if target was null
      */
-    public Vect get(int index, Vect target) throws IndexOutOfBoundsException, NullPointerException {
+    public VectBuilder getVect(int index, VectBuilder target) throws IndexOutOfBoundsException, NullPointerException {
         checkIndex(index);
         int ordIndex = 0 + (index << 1);
         target.set(ords[ordIndex], ords[++ordIndex]);
@@ -124,21 +132,16 @@ public final class VectList implements Externalizable, Cloneable {
      * Get the line at the index given
      *
      * @param index
-     * @param target target line
      * @return target
      * @throws IndexOutOfBoundsException if index is out of bounds
      * @throws NullPointerException if target was null
      */
-    public Line get(int index, Line target) throws IndexOutOfBoundsException, NullPointerException {
+    public Line getLine(int index) throws IndexOutOfBoundsException, NullPointerException {
         if ((index < 0) || ((index + 1) >= size)) {
             throw new IndexOutOfBoundsException(index + " is not within range [0," + (size - 1) + "]");
         }
         index <<= 1;
-        target.ax = ords[index++];
-        target.ay = ords[index++];
-        target.bx = ords[index++];
-        target.by = ords[index];
-        return target;
+        return Line.valueOf(ords[index++], ords[index++], ords[index++], ords[index]);
     }
 
     /**
@@ -170,18 +173,18 @@ public final class VectList implements Externalizable, Cloneable {
     /**
      * Get the bounds of all vectors in this list
      *
-     * @param target the target rect
      * @return target
      * @throws NullPointerException if target was null
      */
-    public Rect getBounds(Rect target) throws NullPointerException {
-        if (cachedRect == null) {
-            Rect rect = new Rect();
-            rect.unionAll(ords, 0, size << 1);
-            cachedRect = rect;
+    public Rect getBounds() throws NullPointerException {
+        Rect ret = cachedRect;
+        if (ret == null) {
+            RectBuilder builder = new RectBuilder();
+            builder.addAll(ords, 0, size);
+            ret = builder.build();
+            cachedRect = ret;
         }
-        target.set(cachedRect);
-        return target;
+        return ret;
     }
 
     /**
@@ -278,8 +281,9 @@ public final class VectList implements Externalizable, Cloneable {
      *
      * @return iterator
      */
-    public Iter iterator() {
-        return new Iter(0);
+    @Override
+    public Iterator<Vect> iterator() {
+        return new VectListIterator(0);
     }
 
     /**
@@ -289,9 +293,9 @@ public final class VectList implements Externalizable, Cloneable {
      * @param nextIndex the index of the vector focused on after a call to next
      * @return iterator
      */
-    public Iter iterator(int nextIndex) {
+    public Iterator<Vect> iterator(int nextIndex) {
         checkIndex(nextIndex);
-        return new Iter(nextIndex);
+        return new VectListIterator(nextIndex);
     }
 
     /**
@@ -338,9 +342,7 @@ public final class VectList implements Externalizable, Cloneable {
         ords[ordIndex] = x;
         ords[++ordIndex] = y;
         size++;
-        if (cachedRect != null) {
-            cachedRect.unionInternal(x, y);
-        }
+        cachedRect = null;
         return this;
     }
 
@@ -403,9 +405,7 @@ public final class VectList implements Externalizable, Cloneable {
         ords[ordIndex] = vect.getX();
         ords[++ordIndex] = vect.getY();
         size++;
-        if (cachedRect != null) {
-            cachedRect.union(vect);
-        }
+        cachedRect = null;
         return this;
     }
 
@@ -428,6 +428,9 @@ public final class VectList implements Externalizable, Cloneable {
      * @throws NullPointerException if vects was null or a vector was null
      */
     public VectList addAll(Iterable<Vect> vects) throws NullPointerException {
+        if (vects instanceof VectList) {
+            return addAll((VectList) vects);
+        }
         int oldSize = size;
         try {
             for (Vect vect : vects) {
@@ -508,7 +511,7 @@ public final class VectList implements Externalizable, Cloneable {
      */
     public VectList addAll(double[] ords, int startIndex, int numVects) throws NullPointerException, IllegalArgumentException, IndexOutOfBoundsException {
         for (int i = startIndex + (numVects * 2); --i >= startIndex;) {
-            Util.check(ords[i], "Invalid ordinate {0}");
+            Vect.check(ords[i], "Invalid ordinate {0}");
         }
         if (numVects < 0) {
             throw new IllegalArgumentException("Number of vects must be positive : " + numVects);
@@ -522,9 +525,7 @@ public final class VectList implements Externalizable, Cloneable {
         int dstIndex = (this.size << 1);
         System.arraycopy(ords, startIndex, this.ords, dstIndex, numOrds);
         size += numVects;
-        if (cachedRect != null) {
-            cachedRect.unionAll(ords, startIndex, startIndex + numOrds);
-        }
+        cachedRect = null;
         return this;
     }
 
@@ -697,7 +698,7 @@ public final class VectList implements Externalizable, Cloneable {
         int hash = 7;
         int endIndex = (size << 1);
         for (int i = 0; i < endIndex; i++) {
-            hash = 79 * hash + Util.hash(ords[i]);
+            hash = 79 * hash + Vect.hash(ords[i]);
         }
         return hash;
     }
@@ -705,7 +706,7 @@ public final class VectList implements Externalizable, Cloneable {
     @Override
     public String toString() {
         if (size > 50) { //Large list - just print summary
-            return "{size:" + size + ", bounds:" + getBounds(new Rect()) + "}";
+            return "{size:" + size + ", bounds:" + getBounds() + "}";
         } else {
             StringWriter str = new StringWriter();
             toString(str);
@@ -731,7 +732,7 @@ public final class VectList implements Externalizable, Cloneable {
                 } else {
                     comma = true;
                 }
-                appendable.append(Util.ordToStr(ords[i++])).append(',').append(Util.ordToStr(ords[i++]));
+                appendable.append(Vect.ordToStr(ords[i++])).append(',').append(Vect.ordToStr(ords[i++]));
             }
             appendable.append(']');
         } catch (IOException ex) {
@@ -746,104 +747,28 @@ public final class VectList implements Externalizable, Cloneable {
         return ret;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        writeData(out);
-    }
+    class VectListIterator implements Iterator<Vect> {
 
-    /**
-     * Write this list of vectors to the output given
-     *
-     * @param out
-     * @throws IOException if out was null
-     * @throws NullPointerException if out was null
-     */
-    public void writeData(DataOutput out) throws IOException, NullPointerException {
-        out.writeInt(size);
-        int endIndex = size << 1;
-        for (int i = 0; i < endIndex; i++) {
-            out.writeDouble(ords[i]);
-        }
-    }
+        int index;
 
-    @Override
-    public void readExternal(ObjectInput in) throws IOException {
-        readData(in);
-    }
-
-    /**
-     * Set the ordinates for this list of vectors from the input given
-     *
-     * @param in
-     * @return this
-     * @throws IOException if there was an error
-     * @throws NullPointerException if in was null
-     */
-    public VectList readData(DataInput in) throws IOException, NullPointerException {
-        clear();
-        int _size = in.readInt();
-        int numOrds = _size << 1;
-        double[] _ords = new double[Math.max(numOrds, DEFAULT_INITIAL_CAPACITY)];
-        for (int i = 0; i < numOrds; i++) {
-            double ord = in.readDouble();
-            Util.check(ord, "Invalid ordinate : {0}");
-            _ords[i] = ord;
-        }
-        this.ords = _ords;
-        this.size = _size;
-        this.cachedRect = null;
-        this.copyOnEdit = false;
-        return this;
-    }
-
-    /**
-     * Read a list of vectors from the input given
-     *
-     * @param in
-     * @return a line
-     * @throws IOException if there was an error
-     * @throws NullPointerException if in was null
-     */
-    public static VectList read(DataInput in) throws IOException, NullPointerException {
-        return new VectList().readData(in);
-    }
-
-    /**
-     * Iterator over a VectList. Concurrent modifications appear as soon as
-     * available
-     */
-    public final class Iter {
-
-        private int index;
-
-        private Iter(int index) {
+        VectListIterator(int index) {
             this.index = index;
         }
 
-        public int nextIndex() {
-            return index;
+        @Override
+        public boolean hasNext() {
+            return (index < size);
         }
 
-        public int prevIndex() {
-            return index - 1;
+        @Override
+        public Vect next() {
+            return getVect(index++);
         }
 
-        public boolean next(Vect target) {
-            if (index >= size) {
-                return false;
-            }
-            get(index, target);
-            index++;
-            return true;
+        @Override
+        public void remove() {
+            VectList.this.remove(index - 1);
         }
 
-        public boolean prev(Vect target) {
-            if (index <= 0) {
-                return false;
-            }
-            index--;
-            get(index, target);
-            return true;
-        }
     }
 }
