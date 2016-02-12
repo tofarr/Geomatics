@@ -1,4 +1,4 @@
-package org.jg;
+package org.jg.util;
 
 /**
  *

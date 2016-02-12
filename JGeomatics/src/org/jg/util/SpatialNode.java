@@ -9,8 +9,7 @@ import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
 
 /**
- * Node for use in spatial trees and indexes. A node may be a branch with 2
- * child nodes, or a leaf containing a number of bounds and values.
+ * Node for use in spatial trees and indexes. A node may be a branch with 2 child nodes, or a leaf containing a number of bounds and values.
  *
  * @author tim.ofarrell
  * @param <E>
@@ -114,9 +113,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return a.sizeInteracting(rect) + b.sizeInteracting(rect);
         } else {
             int ret = 0;
-            for (int i = 0, max = size << 2; i < max;) {
-                if (!Rect.disjoint(itemBounds[i++], itemBounds[i++], itemBounds[i++], itemBounds[i++],
-                        rect.minX, rect.minY, rect.maxX, rect.maxY)) {
+            for (int i = 0; i < size; i++) {
+                if(!rect.isDisjoint(itemBounds[i])){
                     ret++;
                 }
             }
@@ -140,9 +138,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return a.sizeOverlapping(rect) + b.sizeOverlapping(rect);
         } else {
             int ret = 0;
-            for (int i = 0, max = size << 2; i < max;) {
-                if (Rect.overlaps(itemBounds[i++], itemBounds[i++], itemBounds[i++], itemBounds[i++],
-                        rect.minX, rect.minY, rect.maxX, rect.maxY)) {
+            for (int i = 0; i < size; i++) {
+                if(rect.isOverlapping(itemBounds[i])){
                     ret++;
                 }
             }
@@ -174,9 +171,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else if (isBranch()) {
             return a.isEmpty(rect) && b.isEmpty(rect);
         } else {
-            for (int i = 0, max = size << 2; i < max;) {
-                if (Rect.overlaps(itemBounds[i++], itemBounds[i++], itemBounds[i++], itemBounds[i++],
-                        rect.minX, rect.minY, rect.maxX, rect.maxY)) {
+            for (int i = 0; i < size; i++) {
+                if(rect.isOverlapping(itemBounds[i])){
                     return false;
                 }
             }
@@ -200,8 +196,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return a.isDisjoint(rect) && b.isDisjoint(rect);
         } else {
             for (int i = 0, max = size << 2; i < max;) {
-                if (!Rect.disjoint(itemBounds[i++], itemBounds[i++], itemBounds[i++], itemBounds[i++],
-                        rect.minX, rect.minY, rect.maxX, rect.maxY)) {
+                if (!rect.isDisjoint(itemBounds[i])) {
                     return false;
                 }
             }
@@ -216,12 +211,12 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @return
      * @throws NullPointerException if processor was null
      */
-    public boolean get(NodeProcessor<E> processor) throws NullPointerException {
+    public boolean forEach(NodeProcessor<E> processor) throws NullPointerException {
         if (isBranch()) {
-            return a.get(processor) && b.get(processor);
+            return a.forEach(processor) && b.forEach(processor);
         } else {
             for (int i = 0; i < size; i++) {
-                if (!processor.process(this, i)) {
+                if (!processor.process(itemBounds[i], itemValues[i])) {
                     return false;
                 }
             }
@@ -237,18 +232,17 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @return false if processor returned false, true otherwise
      * @throws NullPointerException if rect or processor was null
      */
-    public boolean getInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
+    public boolean forInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         if (rect.contains(bounds)) {
-            return get(processor);
+            return forEach(processor);
         } else if (rect.isDisjoint(bounds)) {
             return true;
         } else if (isBranch()) {
-            return a.getInteracting(rect, processor) && b.getInteracting(rect, processor);
+            return a.forInteracting(rect, processor) && b.forInteracting(rect, processor);
         } else {
-            for (int i = 0, j = 0, max = size << 2; i < size; i++) {
-                if (!Rect.disjoint(itemBounds[j++], itemBounds[j++], itemBounds[j++], itemBounds[j++],
-                        rect.minX, rect.minY, rect.maxX, rect.maxY)) {
-                    if (!processor.process(this, i)) {
+            for (int i = 0; i < size; i++) {
+                if (!rect.isDisjoint(itemBounds[i])) {
+                    if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }
                 }
@@ -265,18 +259,17 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @return false if processor returned false, true otherwise
      * @throws NullPointerException if rect or processor was null
      */
-    public boolean getOverlapping(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
+    public boolean forOverlapping(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         if (rect.contains(bounds)) {
-            return get(processor);
+            return forEach(processor);
         } else if (rect.isDisjoint(bounds)) {
             return true;
         } else if (isBranch()) {
-            return a.getOverlapping(rect, processor) && b.getOverlapping(rect, processor);
+            return a.forOverlapping(rect, processor) && b.forOverlapping(rect, processor);
         } else {
-            for (int i = 0, j = 0, max = size << 2; i < size; i++) {
-                if (Rect.overlaps(itemBounds[j++], itemBounds[j++], itemBounds[j++], itemBounds[j++],
-                        rect.minX, rect.minY, rect.maxX, rect.maxY)) {
-                    if (!processor.process(this, i)) {
+            for (int i = 0; i < size; i++) {
+                if (rect.isOverlapping(itemBounds[i])) {
+                    if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }
                 }
@@ -294,17 +287,13 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect was null
      */
     public boolean contains(Rect rect, E value) throws NullPointerException {
-        if (!bounds.contains(rect)) {
+        if (!rect.isContainedBy(bounds)) {
             return false;
         } else if (isBranch()) {
             return a.contains(rect, value) || b.contains(rect, value);
         } else {
             for (int i = 0, j = 0, max = size << 2; i < size; i++, j += 4) {
-                if ((itemBounds[j] == rect.minX)
-                        && (itemBounds[j + 1] == rect.minY)
-                        && (itemBounds[j + 2] == rect.maxX)
-                        && (itemBounds[j + 3] == rect.maxY)
-                        && Objects.equals(itemValues[i], value)) {
+                if (itemBounds[j].equals(rect) && Objects.equals(itemValues[i], value)) {
                     return true;
                 }
             }
@@ -334,21 +323,18 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * Get the bounds of the item at the index given in this leaf
      *
      * @param index
-     * @param target
-     * @return target
+     * @return itemBounds
      * @throws IllegalStateException if not a leaf node
-     * @throws NullPointerException
      * @throws IndexOutOfBoundsException
      */
-    public Rect getItemBounds(int index, Rect target) throws NullPointerException, IndexOutOfBoundsException {
+    public Rect getItemBounds(int index) throws IndexOutOfBoundsException {
         if (isBranch()) {
             throw new IllegalStateException("Not a leaf node!");
         }
         if (index >= size) {
             throw new IndexOutOfBoundsException(index + " is outside range [0," + size + "]");
         }
-        index <<= 2;
-        return target.set(itemBounds[index++], itemBounds[index++], itemBounds[index++], itemBounds[index]);
+        return itemBounds[index];
     }
 
     /**
@@ -389,8 +375,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Determine if this node is a branch. (Has child nodes A and B, and does
-     * not directly contain items).
+     * Determine if this node is a branch. (Has child nodes A and B, and does not directly contain items).
      *
      * @return
      */
@@ -399,8 +384,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Determine if this node is a leaf. (Directly contains items, and does not
-     * have child nodes A and B).
+     * Determine if this node is a leaf. (Directly contains items, and does not have child nodes A and B).
      *
      * @return
      */
@@ -409,9 +393,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Get the depth of this node - the max number of children one must go
-     * through before reacing a leaf node - Typically for the same entries in a
-     * node, the lower this number the more balanced the tree.
+     * Get the depth of this node - the max number of children one must go through before reacing a leaf node - Typically for the same
+     * entries in a node, the lower this number the more balanced the tree.
      *
      * @return
      */
@@ -433,7 +416,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             out.writeBoolean(false);
             out.writeInt(size);
             for (int i = 0, max = size << 2; i < max; i++) {
-                out.writeDouble(itemBounds[i]);
+                itemBounds[i].write(out);
             }
             for (int i = 0; i < size; i++) {
                 out.writeObject(itemValues[i]);
@@ -448,21 +431,23 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             b = new SpatialNode();
             a.readExternal(in);
             b.readExternal(in);
-            bounds.reset().union(a.bounds).union(b.bounds);
+            bounds.reset().add(a.bounds).add(b.bounds);
             size = a.size + b.size;
             itemBounds = null;
             itemValues = null;
         } else {
             size = in.readInt();
-            itemBounds = new double[size << 2];
+            itemBounds = new Rect[size];
             itemValues = (E[]) new Object[size];
+            bounds.reset();
             for (int i = 0; i < itemBounds.length; i++) {
-                itemBounds[i] = in.readDouble();
+                Rect rect = Rect.read(in);
+                itemBounds[i] = rect;
+                bounds.add(rect);
             }
             for (int i = 0; i < size; i++) {
                 itemValues[i] = (E) in.readObject();
             }
-            bounds.reset().unionAll(itemBounds, 0, itemBounds.length);
             a = b = null;
         }
     }
@@ -470,7 +455,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     @Override
     public int hashCode() {
         HashCodeProcessor processor = new HashCodeProcessor();
-        get(processor);
+        forEach(processor);
         return processor.hash;
     }
 
@@ -509,9 +494,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Convert this spatial node to a string and add it to the appendable given.
-     * Leaves are in the format {itemBounds:[...],itemValues:[...]} and branches
-     * are in the format {a:{...},b:{...})
+     * Convert this spatial node to a string and add it to the appendable given. Leaves are in the format
+     * {itemBounds:[...],itemValues:[...]} and branches are in the format {a:{...},b:{...})
      *
      * @param appendable
      * @throws IllegalStateException if there was an output error
@@ -527,12 +511,11 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
                 b.toString(appendable);
             } else {
                 appendable.append("itemBounds:[");
-                int max = size << 2;
-                for (int i = 0; i < max; i++) {
+                for (int i = 0; i < size; i++) {
                     if (i != 0) {
                         appendable.append(',');
                     }
-                    appendable.append(Util.ordToStr(itemBounds[i]));
+                    itemBounds[i].toString(appendable);
                 }
                 appendable.append("],itemValues:[");
                 for (int i = 0; i < size; i++) {
@@ -554,13 +537,12 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         if (isBranch()) {
             return new SpatialNode<>(a.clone(), b.clone());
         } else {
-            return new SpatialNode<>(null, null, new Rect(bounds), itemBounds.clone(), itemValues.clone(), size);
+            return new SpatialNode<>(null, null, bounds.clone(), itemBounds.clone(), itemValues.clone(), size);
         }
     }
 
     /**
-     * Processor for nodes - a callback function repeatedly accepting a leaf
-     * node and index as parameters
+     * Processor for nodes - a callback function repeatedly accepting a leaf node and index as parameters
      *
      * @param <E>
      */
@@ -569,12 +551,11 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         /**
          * Process the entry at the index given in the leaf node given
          *
-         * @param leaf
-         * @param index
-         * @return true if nore entries are acceptable, false if the node should
-         * return no more entries (if present)
+         * @param bounds
+         * @param value
+         * @return true if more entries are acceptable, false if the node should return no more entries (if present)
          */
-        public boolean process(SpatialNode<E> leaf, int index);
+        public boolean process(Rect bounds, E value);
     }
 
     static class HashCodeProcessor<E> implements NodeProcessor<E> {
@@ -582,13 +563,9 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         int hash = 5;
 
         @Override
-        public boolean process(SpatialNode<E> leaf, int index) {
-            int j = index << 2;
-            hash = 79 * hash + Util.hash(leaf.itemBounds[j++]);
-            hash = 79 * hash + Util.hash(leaf.itemBounds[j++]);
-            hash = 79 * hash + Util.hash(leaf.itemBounds[j++]);
-            hash = 79 * hash + Util.hash(leaf.itemBounds[j]);
-            hash = 79 * hash + Objects.hashCode(leaf.itemValues[index]);
+        public boolean process(Rect bounds, E value) {
+            hash = 79 * hash + bounds.hashCode();
+            hash = 79 * hash + Objects.hashCode(value);
             return true;
         }
     }

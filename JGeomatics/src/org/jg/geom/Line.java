@@ -4,7 +4,9 @@ import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
+import org.jg.util.Network;
 import org.jg.util.Tolerance;
+import org.jg.util.Transform;
 
 /**
  *
@@ -568,11 +570,16 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public PathIterator iterator() {
+    public PathIterator pathIterator() {
         Path2D.Double path = new Path2D.Double();
         path.moveTo(ax, ay);
         path.lineTo(bx, by);
         return path.getPathIterator(null);
+    }
+
+    @Override
+    public void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException {
+        network.addLink(ax, ay, bx, by);
     }
 
     @Override

@@ -9,12 +9,12 @@ import org.jg.geom.Vect;
  */
 public final class TransformBuilder {
 
-     double m00;
-     double m01;
-     double m10;
-     double m11;
-     double m02;
-     double m12;
+    double m00;
+    double m01;
+    double m10;
+    double m11;
+    double m02;
+    double m12;
 
     /**
      * Create a new identity matrix
@@ -37,16 +37,20 @@ public final class TransformBuilder {
     public TransformBuilder(double m00, double m01, double m10, double m11, double m02, double m12) throws IllegalArgumentException {
         set(m00, m01, m10, m11, m02, m12);
     }
-    
+
     /**
      * Create a new transform based on that given
-     * 
+     *
      * @param transform
      * @throws IllegalArgumentException if an ordinate was infinite or NaN
      * @throws NullPointerException if transform was null
      */
-    public TransformBuilder(AffineTransform transform) throws IllegalArgumentException, NullPointerException{
+    public TransformBuilder(AffineTransform transform) throws IllegalArgumentException, NullPointerException {
         set(transform.getScaleX(), transform.getShearX(), transform.getShearY(), transform.getScaleY(), transform.getTranslateX(), transform.getTranslateY());
+    }
+
+    public Transform build() {
+        return Transform.valueOf(m00, m01, m10, m11, m02, m12);
     }
 
     /**
@@ -123,7 +127,8 @@ public final class TransformBuilder {
      */
     public TransformBuilder set(Transform transform) throws NullPointerException {
         return setInternal(transform.m00, transform.m01, transform.m10, transform.m11, transform.m02, transform.m12);
-    } 
+    }
+
     /**
      * Set the internal state of this transform to match that given
      *
@@ -167,8 +172,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Translate by vector given. Effect of this operation is as if a matrix
-     * [1,0,0,1,tx,ty] was created and then added to this matrix
+     * Translate by vector given. Effect of this operation is as if a matrix [1,0,0,1,tx,ty] was created and then added to this matrix
      *
      * @param tx
      * @param ty
@@ -182,8 +186,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale by value given. Effect of this operation is as if a matrix
-     * [scale,0,0,scale,0,0] was created and then added to this matrix
+     * Scale by value given. Effect of this operation is as if a matrix [scale,0,0,scale,0,0] was created and then added to this matrix
      *
      * @param scale
      * @return this
@@ -194,8 +197,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale by values given. Effect of this operation is as if a matrix
-     * [sx,0,0,sy,0,0] was created and then added to this matrix
+     * Scale by values given. Effect of this operation is as if a matrix [sx,0,0,sy,0,0] was created and then added to this matrix
      *
      * @param sx
      * @param sy
@@ -214,8 +216,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale around the point given :
-     * translate(-ox,-oy).scale(scale).translate(ox,oy)
+     * Scale around the point given : translate(-ox,-oy).scale(scale).translate(ox,oy)
      *
      * @param scale
      * @param ox
@@ -228,8 +229,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale around the point given : same as
-     * translate(-ox,-oy).scale(scale).translate(ox,oy)
+     * Scale around the point given : same as translate(-ox,-oy).scale(scale).translate(ox,oy)
      *
      * @param sx scale x
      * @param sy scale y
@@ -250,8 +250,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around origin. Effect of this operation is as if a matrix
-     * [cos,-sin,sin,cos,0,0] was created and then added to this matrix
+     * Rotate degrees around origin. Effect of this operation is as if a matrix [cos,-sin,sin,cos,0,0] was created and then added to this
+     * matrix
      *
      * @param degrees
      * @return
@@ -262,8 +262,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around origin. Effect of this operation is as if a matrix
-     * [cos,-sin,sin,cos,0,0] was created and then added to this matrix
+     * Rotate degrees around origin. Effect of this operation is as if a matrix [cos,-sin,sin,cos,0,0] was created and then added to this
+     * matrix
      *
      * @param radians
      * @return
@@ -277,8 +277,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around the point given:
-     * translate(-ox,-oy).rotate(degrees).translate(ox,oy)
+     * Rotate degrees around the point given: translate(-ox,-oy).rotate(degrees).translate(ox,oy)
      *
      * @param degrees
      * @param ox
@@ -291,8 +290,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around the point given:
-     * translate(-ox,-oy).rotate(radians).translate(ox,oy)
+     * Rotate degrees around the point given: translate(-ox,-oy).rotate(radians).translate(ox,oy)
      *
      * @param radians
      * @param ox
@@ -315,8 +313,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Flip x axis for any points transformed points around the x value given
-     * translate(-ox,0).flipX().translate(ox,0)
+     * Flip x axis for any points transformed points around the x value given translate(-ox,0).flipX().translate(ox,0)
      *
      * @param ox
      * @return this
@@ -335,8 +332,7 @@ public final class TransformBuilder {
     }
 
     /**
-     * Flip x axis for any points transformed points around the x value given
-     * translate(0,-oy).flipY().translate(0,oy)
+     * Flip x axis for any points transformed points around the x value given translate(0,-oy).flipY().translate(0,oy)
      *
      * @param oy
      * @return this
@@ -360,8 +356,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Add the transform given to this matrix. Order is this then the given
-     * matrix. (Unlike affine transform where order is given then this.)
+     * Add the transform given to this matrix. Order is this then the given matrix. (Unlike affine transform where order is given then
+     * this.)
      *
      * @param matrix
      * @return this
@@ -410,4 +406,5 @@ public final class TransformBuilder {
     @Override
     public TransformBuilder clone() {
         return new TransformBuilder(m00, m01, m10, m11, m02, m12);
-    }}
+    }
+}

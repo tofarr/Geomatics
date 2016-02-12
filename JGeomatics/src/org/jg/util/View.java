@@ -1,13 +1,8 @@
 package org.jg.util;
 
-import org.jg.util.Transform;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.io.Serializable;
-import org.jg.Rect;
-import org.jg.Util;
-import org.jg.Vect;
+import org.jg.geom.Rect;
+import org.jg.geom.Vect;
 
 /**
  * Immutable view object.
@@ -45,7 +40,7 @@ public class View implements Serializable, Cloneable {
         this.bounds = bounds;
         this.widthPx = widthPx;
         this.heightPx = heightPx;
-        this.center = bounds.getCentroid(new Vect());
+        this.center = bounds.getCentroid();
         this.resolutionX = bounds.getWidth() / widthPx;
         this.resolutionY = bounds.getHeight() / heightPx;
         this.transform = buildTransform(bounds, resolutionX, resolutionY);
@@ -56,11 +51,11 @@ public class View implements Serializable, Cloneable {
     }
 
     public View(Vect center, double resolutionX, double resolutionY, int widthPx, int heightPx) throws NullPointerException, IllegalArgumentException {
-        Util.check(resolutionX, "Invalid resolutionX : {0}");
+        Vect.check(resolutionX, "Invalid resolutionX : {0}");
         if (resolutionX <= 0) {
             throw new IllegalArgumentException("Invalid resolutionX : " + resolutionX);
         }
-        Util.check(resolutionY, "Invalid resolutionY : {0}");
+        Vect.check(resolutionY, "Invalid resolutionY : {0}");
         if (resolutionY <= 0) {
             throw new IllegalArgumentException("Invalid resolutionY : " + resolutionY);
         }
@@ -76,22 +71,21 @@ public class View implements Serializable, Cloneable {
         double minY = center.getY() - (height / 2);
         double maxX = minX + width;
         double maxY = minY + height;
-        this.bounds = new Rect(minX, minY, maxX, maxY);
+        this.bounds = Rect.valueOf(minX, minY, maxX, maxY);
         this.widthPx = widthPx;
         this.heightPx = heightPx;
-        this.center = new Vect(center);
+        this.center = center;
         this.resolutionX = resolutionX;
         this.resolutionY = resolutionY;
         this.transform = buildTransform(bounds, resolutionX, resolutionY);
     }
 
-    public Rect getBounds(Rect target) {
-        return target.set(bounds);
+    public Rect getBounds() {
+        return bounds;
     }
 
-    public Vect getCenter(Vect target) {
-        target.set(center);
-        return target;
+    public Vect getCenter() {
+        return center;
     }
 
     public double getResolutionX() {
@@ -111,11 +105,11 @@ public class View implements Serializable, Cloneable {
     }
 
     static Transform buildTransform(Rect bounds, double resolutionX, double resolutionY) {
-        return new Transform().translate(-bounds.getMinX(), -bounds.getMaxY()).scale(1 / resolutionX, -1 / resolutionY);
+        return new TransformBuilder().translate(-bounds.minX, -bounds.maxY).scale(1 / resolutionX, -1 / resolutionY).build();
     }
 
-    public Transform getTransform(Transform target) {
-        return target.set(transform);
+    public Transform getTransform() {
+        return transform;
     }
 
     public View zoom(double amt) {
@@ -163,22 +157,4 @@ public class View implements Serializable, Cloneable {
     public View clone() {
         return this;
     }
-
-    public void writeData(DataOutput out) throws IOException {
-        center.writeData(out);
-        out.writeDouble(resolutionX);
-        out.writeDouble(resolutionY);
-        out.writeInt(widthPx);
-        out.writeInt(heightPx);
-    }
-
-    public static View read(DataInput in) throws IOException {
-        Vect center = Vect.read(in);
-        double resolutionX = in.readDouble();
-        double resolutionY = in.readDouble();
-        int widthPx = in.readInt();
-        int heightPx = in.readInt();
-        return new View(center, resolutionX, resolutionY, widthPx, heightPx);
-    }
-
 }

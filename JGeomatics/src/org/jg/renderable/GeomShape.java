@@ -3,51 +3,52 @@ package org.jg.renderable;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.FlatteningPathIterator;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import org.jg.PathIterable;
-import org.jg.Rect;
+import org.jg.geom.Geom;
+import org.jg.geom.Rect;
 
 /**
  *
  * @author tofar_000
  */
-public class PathIterableShape implements Shape {
+public class GeomShape implements Shape {
 
-    private final PathIterable iterable;
+    private final Geom geom;
     private final Rect bounds;
     private Shape shape;
 
-    public PathIterableShape(PathIterable iterable) throws NullPointerException {
-        if (iterable == null) {
-            throw new NullPointerException("Iterable must not be null");
+    public GeomShape(Geom geom) throws NullPointerException {
+        if (geom == null) {
+            throw new NullPointerException("Geom must not be null");
         }
-        this.iterable = iterable;
-        bounds = iterable.getBounds(new Rect());
+        this.geom = geom;
+        bounds = geom.getBounds();
     }
 
     @Override
     public Rectangle getBounds() {
         Rectangle ret = new Rectangle();
-        ret.add(bounds.getMinX(), bounds.getMinY());
-        ret.add(bounds.getMaxX(), bounds.getMaxY());
+        ret.add(bounds.minX, bounds.minY);
+        ret.add(bounds.maxX, bounds.maxY);
         return ret;
     }
 
     @Override
     public Rectangle2D getBounds2D() {
         Rectangle2D.Double ret = new Rectangle2D.Double();
-        ret.add(bounds.getMinX(), bounds.getMinY());
-        ret.add(bounds.getMaxX(), bounds.getMaxY());
+        ret.add(bounds.minX, bounds.minY);
+        ret.add(bounds.maxX, bounds.maxY);
         return ret;
     }
     
     protected Shape getShape(){
         if(shape == null){
             Path2D.Double path = new Path2D.Double();
-            PathIterator iter = iterable.getPathIterator();
+            PathIterator iter = geom.pathIterator();
             double[] coords = new double[6];
             while(!iter.isDone()){
                 switch(iter.currentSegment(coords)){
@@ -106,12 +107,23 @@ public class PathIterableShape implements Shape {
 
     @Override
     public PathIterator getPathIterator(AffineTransform at) {
-        return iterable.getPathIterator(at);
+        PathIterator ret = geom.pathIterator();
+        if((at != null) && (!at.isIdentity())){
+            ret = new TransformingPathIterator(ret, at);
+        }
+        return ret;
     }
 
     @Override
     public PathIterator getPathIterator(AffineTransform at, double flatness) {
-        return iterable.getPathIterator(at, flatness);
+        PathIterator ret = geom.pathIterator();
+        if((at != null) && (!at.isIdentity())){
+            ret = new TransformingPathIterator(ret, at);
+        }
+        if(flatness > 0){
+            ret = new FlatteningPathIterator(ret, flatness);
+        }
+        return ret;
     }
 
 }

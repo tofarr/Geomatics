@@ -1,5 +1,6 @@
 package org.jg.geom;
 
+import java.beans.Transient;
 import java.io.Serializable;
 
 /**
@@ -24,6 +25,20 @@ public final class RectBuilder implements Cloneable, Serializable {
 
     public RectBuilder set(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
         Rect.check(minX, minY, maxX, maxY);
+        return setInternal(minX, minY, maxX, maxY);
+    }
+       
+    public RectBuilder set(Rect rect) throws NullPointerException {
+        return setInternal(rect.minX, rect.minY, rect.maxX, rect.maxY);
+    }
+    
+    public RectBuilder set(RectBuilder rect) throws NullPointerException {
+        setInternal(rect.minX, rect.minY, rect.maxX, rect.maxY);
+        this.empty = rect.empty;
+        return this;
+    }
+    
+    RectBuilder setInternal(double minX, double minY, double maxX, double maxY) {
         this.minX = minX;
         this.minY = minY;
         this.maxX = maxX;
@@ -86,12 +101,97 @@ public final class RectBuilder implements Cloneable, Serializable {
         }
         return this;
     }
+    
+    public RectBuilder addAll(Rect... rects) throws NullPointerException{
+        for(Rect rect : rects){
+            add(rect);
+        }
+        return this;
+    }
+
+    public RectBuilder addAll(Rect[] rects, int startOffset, int numRects) throws NullPointerException, IndexOutOfBoundsException{
+        int endOffset = startOffset + numRects;
+        for(int i = startOffset; i < endOffset; i++){
+            if(rects[i] == null){
+                throw new NullPointerException("Null rect at index : "+i);
+            }
+        }
+        for(int i = startOffset; i < endOffset; i++){
+            add(rects[i]);
+        }
+        return this;
+    }
+
+    public double getMinX() {
+        return minX;
+    }
+
+    public double getMinY() {
+        return minY;
+    }
+
+    public double getMaxX() {
+        return maxX;
+    }
+
+    public double getMaxY() {
+        return maxY;
+    }
 
     public boolean isEmpty() {
         return empty;
     }
+
+    /**
+     * Get width. Note: May be invalid if rect is invalid
+     *
+     * @return
+     */
+    @Transient
+    public double getWidth() {
+        return maxX - minX;
+    }
+
+    /**
+     * Get height Note: May be invalid if rect is invalid
+     *
+     * @return
+     */
+    @Transient
+    public double getHeight() {
+        return maxY - minY;
+    }
     
+    /**
+     * Get area Note: May be invalid if rect is invalid
+     *
+     * @return
+     */
+    @Transient
+    public double getArea() {
+        return getWidth() * getHeight();
+    }
     
+    /**
+     * Get centroid x
+     *
+     * @return
+     */
+    @Transient
+    public double getCx() {
+        return (minX + maxX) / 2;
+    }
+
+    /**
+     * Get centroid y
+     *
+     * @return
+     */
+    @Transient
+    public double getCy() {
+        return (minY + maxY) / 2;
+    }
+
     /**
      * Get a Rect based on this buffered by the amount given
      *
@@ -117,7 +217,6 @@ public final class RectBuilder implements Cloneable, Serializable {
         return this;
     }
 
-
     //produces null
     public Rect build() {
         return empty ? null : new Rect(minX, minY, maxX, maxY);
@@ -129,8 +228,8 @@ public final class RectBuilder implements Cloneable, Serializable {
     }
 
     @Override
-    protected RectBuilder clone() {
+    public RectBuilder clone() {
         return empty ? new RectBuilder() : new RectBuilder(minX, minY, maxX, maxY);
     }
-    
+
 }

@@ -4,8 +4,9 @@ import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.text.MessageFormat;
-import org.jg.Network;
+import org.jg.util.Network;
 import org.jg.util.Tolerance;
+import org.jg.util.Transform;
 
 /**
  * Immutable vector

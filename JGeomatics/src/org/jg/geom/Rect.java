@@ -3,9 +3,11 @@ package org.jg.geom;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import org.jg.Network;
-import org.jg.Relate;
+import org.jg.util.Network;
+import org.jg.util.Relate;
 import org.jg.util.Transform;
 
 /**
@@ -39,6 +41,22 @@ public class Rect implements Geom {
             maxY = tmp;
         }
         return new Rect(minX, minY, maxX, maxY);
+    }
+
+    public double getMinX() {
+        return minX;
+    }
+
+    public double getMinY() {
+        return minY;
+    }
+
+    public double getMaxX() {
+        return maxX;
+    }
+
+    public double getMaxY() {
+        return maxY;
     }
 
     /**
@@ -97,8 +115,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or
-     * share any internal area). Invalid rects are considered disjoint.
+     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
+     * disjoint.
      *
      * @param rect
      * @return true if rects are disjoint or rect was null, false otherwise
@@ -109,8 +127,19 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect overlaps (Shares some internal area with) that
-     * given. Invalid rects are considered disjoint, and never overlap
+     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
+     * disjoint.
+     *
+     * @param rect
+     * @return true if rects are disjoint or rect was null, false otherwise
+     * @throws NullPointerException if rect was null
+     */
+    public boolean isDisjoint(RectBuilder rect) throws NullPointerException {
+        return rect.isEmpty() ? false : disjoint(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY());
+    }
+
+    /**
+     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects are considered disjoint, and never overlap
      *
      * @param rect
      * @return true if overlapping, false otherwise
@@ -120,9 +149,18 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is
-     * outside this) Invalid rects cannot overlap, and so cannot contain other
-     * rects or be contained within other rects
+     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects are considered disjoint, and never overlap
+     *
+     * @param rect
+     * @return true if overlapping, false otherwise
+     */
+    public boolean isOverlapping(RectBuilder rect) {
+        return overlaps(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY());
+    }
+
+    /**
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -132,9 +170,45 @@ public class Rect implements Geom {
         return contains(minX, minY, maxX, maxY, rect.minX, rect.minY, rect.maxX, rect.maxY);
     }
 
+    /**
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
+     *
+     * @param rect
+     * @return true if contains rect, false otherwise or if rect was invalid
+     * @throws NullPointerException if rect was null
+     */
+    public boolean contains(RectBuilder rect) throws NullPointerException {
+        return rect.isEmpty() ? false : contains(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY());
+    }
+
     static boolean contains(double aMinX, double aMinY, double aMaxX, double aMaxY,
             double bMinX, double bMinY, double bMaxX, double bMaxY) {
         return (aMinX <= bMinX) && (aMinY <= bMinY) && (aMaxX >= bMaxX) && (aMaxY >= bMaxY);
+    }
+
+    /**
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
+     *
+     * @param rect
+     * @return true if contains rect, false otherwise or if rect was invalid
+     * @throws NullPointerException if rect was null
+     */
+    public boolean isContainedBy(Rect rect) throws NullPointerException {
+        return contains(rect.minX, rect.minY, rect.maxX, rect.maxY, minX, minY, maxX, maxY);
+    }
+
+    /**
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
+     *
+     * @param rect
+     * @return true if contains rect, false otherwise or if rect was invalid
+     * @throws NullPointerException if rect was null
+     */
+    public boolean isContainedBy(RectBuilder rect) throws NullPointerException {
+        return rect.isEmpty() ? false : contains(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY(), minX, minY, maxX, maxY);
     }
 
     /**
@@ -149,8 +223,7 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if the rect given contains the point given. (Is inside or
-     * touching)
+     * Determine if the rect given contains the point given. (Is inside or touching)
      *
      * @param aMinX
      * @param aMinY
@@ -218,8 +291,7 @@ public class Rect implements Geom {
                 Math.max(maxX, rect.maxX),
                 Math.max(maxY, rect.maxY));
     }
-    
-    
+
     /**
      * Get a Rect based on this buffered by the amount given
      *
@@ -242,7 +314,6 @@ public class Rect implements Geom {
                 maxX + amt,
                 maxY + amt);
     }
-
 
     @Override
     @Transient
@@ -288,7 +359,6 @@ public class Rect implements Geom {
         network.addLink(maxX, minY, maxX, maxY);
     }
 
-    
     @Override
     public void addBoundsTo(RectBuilder target) throws NullPointerException {
         target.addInternal(minX, minY);
@@ -321,6 +391,17 @@ public class Rect implements Geom {
         } else {
             return false;
         }
+    }
+
+    public void write(DataOutput out) throws IOException {
+        out.writeDouble(minX);
+        out.writeDouble(minY);
+        out.writeDouble(maxX);
+        out.writeDouble(maxY);
+    }
+
+    public static Rect read(DataInput in) throws IOException {
+        return valueOf(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
     }
 
     @Override

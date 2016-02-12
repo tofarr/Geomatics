@@ -1,5 +1,6 @@
-package org.jg;
+package org.jg.geom;
 
+import org.jg.util.Relate;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.LineString;
@@ -9,6 +10,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import org.jg.LineString;
 
 /**
  *

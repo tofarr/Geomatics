@@ -2,7 +2,7 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.io.Serializable;
-import org.jg.Network;
+import org.jg.util.Network;
 import org.jg.util.Transform;
 
 /**

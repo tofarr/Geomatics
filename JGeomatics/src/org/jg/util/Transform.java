@@ -148,6 +148,41 @@ public final class Transform implements Cloneable, Serializable {
                         (m10 * x) + (m11 * y) + m12);
         }
     }
+    
+    /**
+     * Place a transformed version of the source vector given in the destination
+     * vector given
+     *
+     * @param src
+     * @throws NullPointerException if src was null
+     */
+    public Vect transform(Vect src) throws NullPointerException {
+        double x = src.getX();
+        double y = src.getY();
+        switch (mode) {
+            case NO_OP:
+                return src;
+            case (SCALE | SHEAR):
+                return Vect.valueOf((m00 * x) + (m01 * y),
+                        (m10 * x) + (m11 * y));
+            case (SCALE | TRANSLATE):
+                return Vect.valueOf((m00 * x) + m02,
+                        (m11 * y) + m12);
+            case SCALE:
+                return Vect.valueOf((m00 * x), (m11 * y));
+            case (SHEAR | TRANSLATE):
+                return Vect.valueOf(x + (m01 * y) + m02,
+                        y + (m10 * x) + m12);
+            case SHEAR:
+                return Vect.valueOf(x + (m01 * y), y + (m10 * x));
+            case TRANSLATE:
+                return Vect.valueOf(x + m02,
+                        y + m12);
+            default: // apply all
+                return Vect.valueOf((m00 * x) + (m01 * y) + m02,
+                        (m10 * x) + (m11 * y) + m12);
+        }
+    }
 
     /**
      * Transform vectors from the src array given and place them in the dst

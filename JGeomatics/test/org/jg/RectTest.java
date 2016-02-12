@@ -1,5 +1,6 @@
 package org.jg;
 
+import org.jg.util.Relate;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;

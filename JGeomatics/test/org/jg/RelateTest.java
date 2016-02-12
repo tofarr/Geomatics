@@ -5,7 +5,7 @@
  */
 package org.jg;
 
-import org.jg.Relate;
+import org.jg.util.Relate;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

@@ -256,7 +256,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
      * @throws NullPointerException if matrix or target was null
      */
     public VectList transform(Transform transform) throws NullPointerException {
-        if (transform.getMode() != Transform.IDENTITY) {
+        if (transform.mode != Transform.NO_OP) {
             ensureSize(size);
             transform.transformOrds(ords, 0, ords, 0, size);
             cachedRect = null;
