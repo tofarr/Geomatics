@@ -135,7 +135,7 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public boolean isDisjoint(RectBuilder rect) throws NullPointerException {
-        return rect.isEmpty() ? false : disjoint(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY());
+        return rect.isValid() ? disjoint(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()) : false;
     }
 
     /**
@@ -179,7 +179,7 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public boolean contains(RectBuilder rect) throws NullPointerException {
-        return rect.isEmpty() ? false : contains(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY());
+        return rect.isValid() ? contains(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()) : false;
     }
 
     static boolean contains(double aMinX, double aMinY, double aMaxX, double aMaxY,
@@ -208,7 +208,7 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public boolean isContainedBy(RectBuilder rect) throws NullPointerException {
-        return rect.isEmpty() ? false : contains(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY(), minX, minY, maxX, maxY);
+        return rect.isValid() ? contains(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY(), minX, minY, maxX, maxY) : false;
     }
 
     /**
@@ -249,6 +249,17 @@ public class Rect implements Geom {
         return relate(minX, minY, maxX, maxY, vect.getX(), vect.getY());
     }
 
+    /**
+     * Get the relation between this rect and the vect given
+     *
+     * @param vect
+     * @return relation
+     * @throws NullPointerException if vect was null
+     */
+    public Relate relate(VectBuilder vect) throws NullPointerException {
+        return relate(minX, minY, maxX, maxY, vect.getX(), vect.getY());
+    }
+    
     static Relate relate(double minX, double minY, double maxX, double maxY,
             double x, double y) {
         if ((x < minX) || (y < minY) || (x > maxX) || (y > maxY)) {
@@ -426,8 +437,7 @@ public class Rect implements Geom {
                     .append(Vect.ordToStr(minX)).append(',')
                     .append(Vect.ordToStr(minY)).append(',')
                     .append(Vect.ordToStr(maxX)).append(',')
-                    .append(Vect.ordToStr(maxY)).append(',')
-                    .append(']');
+                    .append(Vect.ordToStr(maxY)).append(']');
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
         }

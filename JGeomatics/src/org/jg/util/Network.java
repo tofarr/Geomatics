@@ -1,8 +1,6 @@
 package org.jg.util;
 
-import org.jg.RingSet;
 import org.jg.geom.Ring;
-import org.jg.LineString;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.Externalizable;
@@ -11,14 +9,14 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
+import org.jg.geom.GeomException;
 import org.jg.geom.Line;
+import org.jg.geom.LineString;
+import org.jg.geom.RingSet;
 import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 
 /**
  *
@@ -100,14 +98,34 @@ public final class Network implements Externalizable, Cloneable {
     }
 
     public boolean addVertex(Vect vect) throws NullPointerException {
-        throw new UnsupportedOperationException();
-//        VectList links = map.get(vect);
-//        if (links == null) {
-//            links = new VectList(2);
-//            map.put(new Vect(vect), links);
-//            return true;
-//        }
-//        return false;
+        VectList links = map.get(vect);
+        if (links == null) {
+            links = new VectList(2);
+            map.put(vect, links);
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean addVertex(double x, double y) throws IllegalArgumentException{
+        Vect.check(x, y);
+        VectList links = map.get(x, y);
+        if (links == null) {
+            links = new VectList(2);
+            map.put(x, y, links);
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean addVertex(VectBuilder vect) throws NullPointerException{
+        VectList links = map.get(vect.getX(), vect.getY());
+        if (links == null) {
+            links = new VectList(2);
+            map.put(vect.getX(), vect.getY(), links);
+            return true;
+        }
+        return false;
     }
 
     public boolean removeVertex(Vect vect) throws NullPointerException {
@@ -394,69 +412,72 @@ public final class Network implements Externalizable, Cloneable {
     }
 
     public Collection<VectList> extractLines(Collection<VectList> results, boolean includePoints) {
-        throw new UnsupportedOperationException();
-//        VectList vects = getVects(new VectList());
-//        HashSet<Line> done = new HashSet<>();
-//        Vect a = new Vect();
-//        Vect b = new Vect();
-//        Vect c = new Vect();
-//        Line testLine = new Line();
-//        for (int i = 0; i < vects.size(); i++) {
-//            vects.get(i, a);
-//            VectList links = map.get(a);
-//            switch (links.size()) {
-//                case 0:
-//                    if(includePoints){
-//                        results.add(new VectList().add(a));
-//                    }
-//                    break;
-//                case 2:
-//                    //this misses rings! Need to get these on second pass
-//                    break;
-//                default:
-//                    for (int j = 0; j < links.size(); j++) {
-//                        links.get(j, b);
-//                        testLine.set(a, b).normalize();
-//                        if (!done.contains(testLine)) {
-//                            VectList result = followLine(a, b, c, new VectList().add(a));
-//                            for (int k = result.size() - 1; k-- > 0;) {
-//                                done.add(result.get(k, new Line()).normalize());
-//                            }
-//                            results.add(result);
-//                        }
-//                    }
-//            }
-//        }
-//        if (done.size() == (vects.size() - 1)) {
-//            return results;
-//        }
-//        Vect d = new Vect();
-//        for (int i = 0; i < vects.size(); i++) {
-//            vects.get(i, a);
-//            VectList links = map.get(a);
-//            if (links.size() == 2) {
-//                links.get(0, c);
-//                testLine.set(a, c).normalize();
-//                if (!done.contains(testLine)) {
-//                    VectList result = new VectList().add(a).add(c);
-//                    b.set(a);
-//                    while (!c.equals(a)) {
-//                        links = map.get(c);
-//                        links.get(1, d);
-//                        if (d.equals(b)) {
-//                            links.get(0, d);
-//                        }
-//                        result.add(d);
-//                        Vect e = b; // rotate
-//                        b = c;
-//                        c = d;
-//                        d = e;
-//                    }
-//                }
-//            }
-//        }
-//        
-//        return results;
+        VectList vects = getVects(new VectList());
+        HashSet<Line> done = new HashSet<>();
+        VectBuilder a = new VectBuilder();
+        VectBuilder b = new VectBuilder();
+        VectBuilder c = new VectBuilder();
+        for (int i = 0; i < vects.size(); i++) {
+            vects.getVect(i, a);
+            VectList links = map.get(a.getX(), a.getY());
+            switch (links.size()) {
+                case 0:
+                    if(includePoints){
+                        results.add(new VectList().add(a.getX(), a.getY()));
+                    }
+                    break;
+                case 2:
+                    //this misses rings! Need to get these on second pass
+                    break;
+                default:
+                    for (int j = 0; j < links.size(); j++) {
+                        links.getVect(j, b);
+                        Line testLine = (Vect.compare(a.getX(), a.getY(), b.getX(), b.getY()) < 0) ? 
+                                Line.valueOf(a.getX(), a.getY(), b.getX(), b.getY()) :
+                                Line.valueOf(b.getX(), b.getY(), a.getX(), a.getY());
+                        //OR DO WE NEED A LINESET TOO?
+                        if (!done.contains(testLine)) {
+                            VectList result = followLine(a, b, c, new VectList().add(a.getX(), a.getY()));
+                            for (int k = result.size() - 1; k-- > 0;) {
+                                done.add(result.getLine(k).normalize());
+                            }
+                            results.add(result);
+                        }
+                    }
+            }
+        }
+        if (done.size() == (vects.size() - 1)) {
+            return results;
+        }
+        VectBuilder d = new VectBuilder();
+        for (int i = 0; i < vects.size(); i++) {
+            vects.getVect(i, a);
+            VectList links = map.get(vects.getX(i), vects.getY(i));
+            if (links.size() == 2) {
+                links.getVect(0, c);
+                Line testLine = (Vect.compare(a.getX(), a.getY(), c.getX(), c.getY()) < 0) ? 
+                                Line.valueOf(a.getX(), a.getY(), c.getX(), c.getY()) :
+                                Line.valueOf(c.getX(), c.getY(), a.getX(), a.getY());
+                if (!done.contains(testLine)) {
+                    VectList result = new VectList().add(a.getX(), a.getY()).add(c.getX(), c.getY());
+                    b.set(a);
+                    while (!c.equals(a)) {
+                        links = map.get(c.getX(), c.getY());
+                        links.getVect(1, d);
+                        if (d.equals(b)) {
+                            links.getVect(0, d);
+                        }
+                        result.add(d.getX(), d.getY());
+                        VectBuilder e = b; // rotate
+                        b = c;
+                        c = d;
+                        d = e;
+                    }
+                }
+            }
+        }
+        
+        return results;
     }
 
     public VectList extractPoints(VectList results) {
@@ -567,23 +588,22 @@ public final class Network implements Externalizable, Cloneable {
 //        return ret;
     }
 
-    private VectList followLine(Vect a, Vect b, Vect c, VectList results) {
-        throw new UnsupportedOperationException();
-//        while (true) {
-//            results.add(b);
-//            VectList links = map.get(b);
-//            if (links.size() != 2) {
-//                return results;
-//            }
-//            links.get(1, c);
-//            if (c.equals(a)) {
-//                links.get(0, c);
-//            }
-//            Vect d = a;
-//            a = b;
-//            b = c;
-//            c = d;
-//        }
+    private VectList followLine(VectBuilder a, VectBuilder b, VectBuilder c, VectList results) {
+        while (true) {
+            results.add(b.getX(), b.getY());
+            VectList links = map.get(b.getX(), b.getY());
+            if (links.size() != 2) {
+                return results;
+            }
+            links.getVect(1, c);
+            if (c.equals(a)) {
+                links.getVect(0, c);
+            }
+            VectBuilder d = a;
+            a = b;
+            b = c;
+            c = d;
+        }
     }
 
     @Override
@@ -624,33 +644,28 @@ public final class Network implements Externalizable, Cloneable {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toStringInternal(str);
+        toString(str);
         return str.toString();
     }
 
-    void toStringInternal(Appendable appendable) {
-        throw new UnsupportedOperationException();
-//        try {
-//            toString(appendable);
-//        } catch (IOException ex) {
-//            throw new IllegalStateException(ex);
-//        }
-    }
-
-    public void toString(Appendable appendable) throws IOException {
-        ArrayList<VectList> linesAndPoints = new ArrayList<>();
-        extractLines(linesAndPoints, true);
-        appendable.append('[');
-        boolean comma = false;
-        for (int i = 0; i < linesAndPoints.size(); i++) {
-            if (comma) {
-                appendable.append(',');
-            } else {
-                comma = true;
+    public void toString(Appendable appendable) throws GeomException {
+        try{
+            ArrayList<VectList> linesAndPoints = new ArrayList<>();
+            extractLines(linesAndPoints, true);
+            appendable.append('[');
+            boolean comma = false;
+            for (int i = 0; i < linesAndPoints.size(); i++) {
+                if (comma) {
+                    appendable.append(',');
+                } else {
+                    comma = true;
+                }
+                linesAndPoints.get(i).toString(appendable);
             }
-            linesAndPoints.get(i).toString(appendable);
+            appendable.append(']');
+        }catch(IOException ex){
+            throw new GeomException("Error writing network", ex);
         }
-        appendable.append(']');
     }
 
     @Override

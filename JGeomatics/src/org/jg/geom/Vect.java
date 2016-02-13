@@ -2,6 +2,8 @@ package org.jg.geom;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
 import org.jg.util.Network;
@@ -15,8 +17,17 @@ import org.jg.util.Transform;
  */
 public final class Vect implements Geom, Comparable<Vect> {
 
+    /**
+     * Vector [0,0]
+     */
     public static final Vect ZERO = new Vect(0, 0);
+    /**
+     * x ordinate
+     */
     public final double x;
+    /**
+     * y ordinate
+     */
     public final double y;
 
     Vect(double x, double y) {
@@ -24,6 +35,14 @@ public final class Vect implements Geom, Comparable<Vect> {
         this.y = y;
     }
 
+    /**
+     * Get / create a vector with the values given
+     *
+     * @param x
+     * @param y
+     * @return a vector
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     */
     public static Vect valueOf(double x, double y) throws IllegalArgumentException {
         check(x, y);
         if ((x == 0) && (y == 0)) {
@@ -32,14 +51,29 @@ public final class Vect implements Geom, Comparable<Vect> {
         return new Vect(x, y);
     }
 
+    /**
+     * Get the x value
+     *
+     * @return x;
+     */
     public double getX() {
         return x;
     }
 
+    /**
+     * Get the y value
+     *
+     * @return y;
+     */
     public double getY() {
         return y;
     }
 
+    /**
+     * Create a builder based on this vector
+     *
+     * @return
+     */
     public VectBuilder toBuilder() {
         return new VectBuilder(x, y);
     }
@@ -79,6 +113,7 @@ public final class Vect implements Geom, Comparable<Vect> {
      *
      * @param vect
      * @return
+     * @throws NullPointerException if vect was null
      */
     public double dist(Vect vect) throws NullPointerException {
         return Math.sqrt(distSq(vect));
@@ -89,6 +124,7 @@ public final class Vect implements Geom, Comparable<Vect> {
      *
      * @param vect
      * @return
+     * @throws NullPointerException if vect was null
      */
     public double distSq(Vect vect) throws NullPointerException {
         return distSq(x, y, vect.x, vect.y);
@@ -137,7 +173,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public Rect getBounds() {
-        return new Rect(x, y, 0, 0);
+        return new Rect(x, y, x, y);
     }
 
     @Override
@@ -162,15 +198,15 @@ public final class Vect implements Geom, Comparable<Vect> {
     public void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException {
         network.addVertex(this);
     }
-        
+
     /**
-     * Determine if this vect matches a Vect / VectBuilder given, within the
-     * tolerance given
+     * Determine if this vect matches the vector given within the tolerance
+     * given
      *
      * @param vect
      * @param tolerance
      * @return
-     * @throws NullPointerException if tolerance was null
+     * @throws NullPointerException if vect or tolerance was null
      */
     public boolean match(Vect vect, Tolerance tolerance) throws NullPointerException {
         return tolerance.match(x, y, vect.x, vect.y);
@@ -205,7 +241,6 @@ public final class Vect implements Geom, Comparable<Vect> {
         return compare(x, y, vect.x, vect.y);
     }
 
-
     @Override
     public int hashCode() {
         return hashCode(x, y);
@@ -235,17 +270,84 @@ public final class Vect implements Geom, Comparable<Vect> {
         toString(x, y, appendable);
     }
 
+    /**
+     * Write this vect to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, GeomException {
+        write(x, y, out);
+    }
+
+    /**
+     * Write the vector given to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public static void write(double x, double y, DataOutput out) throws NullPointerException, GeomException {
+        try {
+            out.writeDouble(x);
+            out.writeDouble(y);
+        } catch (IOException ex) {
+            throw new GeomException("Error writing vector", ex);
+        }
+    }
+
+    /**
+     * Read a vector from to the DataInput given
+     *
+     * @param in
+     * @return a vector
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws GeomException if there was an IO error
+     */
+    public static Vect read(DataInput in) throws NullPointerException, IllegalArgumentException, 
+        GeomException {
+        try {
+            return Vect.valueOf(in.readDouble(), in.readDouble());
+        } catch (IOException ex) {
+            throw new GeomException("Error reading vector", ex);
+        }
+    }
+
+    /**
+     * Check the vector given
+     *
+     * @param x
+     * @param y
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     */
     public static void check(double x, double y) throws IllegalArgumentException {
         check(x, "Invalid x : {0}");
         check(y, "Invalid y : {0}");
     }
 
-    public static void check(double ord, String pattern) throws IllegalArgumentException {
+    /**
+     * Check the ordinate given
+     *
+     * @param ord
+     * @param pattern pattern for error message of there was an error
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     * @throws NullPointerException if pattern was null
+     */
+    public static void check(double ord, String pattern) throws IllegalArgumentException, NullPointerException {
         if (Double.isInfinite(ord) || Double.isNaN(ord)) {
             throw new IllegalArgumentException(MessageFormat.format(pattern, Double.toString(ord)));
         }
     }
 
+    /**
+     * Convert the ordinate given to a string. If there is no decimal component
+     * (string ends with .0) style as integer
+     *
+     * @param ord
+     * @return
+     */
     public static String ordToStr(double ord) {
         String ret = Double.toString(ord);
         if (ret.endsWith(".0")) {
@@ -254,6 +356,13 @@ public final class Vect implements Geom, Comparable<Vect> {
         return ret;
     }
 
+    /**
+     * Get a hash for the value given, suitable for use in open hash maps
+     *
+     * @param value
+     * @parma value
+     * @return
+     */
     public static int hash(double value) {
         long val = Double.doubleToLongBits(value);
         int ret = (int) (val ^ (val >>> 32));
@@ -266,6 +375,13 @@ public final class Vect implements Geom, Comparable<Vect> {
         return ret;
     }
 
+    /**
+     * Get a hash for the vector given, suitable for use in open hash maps
+     *
+     * @param x
+     * @param y
+     * @return
+     */
     public static int hashCode(double x, double y) {
         int hash = 5;
         hash = 47 * hash + hash(x);
@@ -273,11 +389,29 @@ public final class Vect implements Geom, Comparable<Vect> {
         return hash;
     }
 
+    /**
+     * Get the dot product of the vectors given
+     *
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @return
+     */
     public static double dot(double ax, double ay, double bx, double by) {
         double ret = (ax * bx) + (ay * by);
         return ret;
     }
 
+    /**
+     * Get the square of the distance between the vectors given
+     *
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @return
+     */
     public static double distSq(double ax, double ay, double bx, double by) {
         double dx = bx - ax;
         double dy = by - ay;
@@ -285,6 +419,15 @@ public final class Vect implements Geom, Comparable<Vect> {
         return ret;
     }
 
+    /**
+     * Get the dydx of the line between the vectors given
+     *
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @return
+     */
     public static double dydxTo(double ax, double ay, double bx, double by) {
         double dx = bx - ax;
         double dy = by - ay;
@@ -292,6 +435,14 @@ public final class Vect implements Geom, Comparable<Vect> {
         return ret;
     }
 
+    /**
+     * Get the direction in radians of the vector given
+     *
+     * @param x
+     * @param y
+     * @return
+     * @throws IllegalArgumentException if the vector is 0,0
+     */
     public static double directionInRadians(double x, double y) throws IllegalArgumentException {
         if ((x == 0) && (y == 0)) {
             throw new IllegalArgumentException("Non directional vector!");
@@ -303,7 +454,17 @@ public final class Vect implements Geom, Comparable<Vect> {
         return ret;
     }
 
-    public static double directionInRadiansTo(double ax, double ay, double bx, double by) {
+    /**
+     * Get the direction of the vector from a to b
+     *
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @return
+     * @throws IllegalArgumentException if the vectors were the same
+     */
+    public static double directionInRadiansTo(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         return directionInRadians(bx - ax, by - ay);
     }
 

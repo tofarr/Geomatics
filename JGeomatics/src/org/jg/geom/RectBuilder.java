@@ -13,10 +13,10 @@ public final class RectBuilder implements Cloneable, Serializable {
     private double minY;
     private double maxX;
     private double maxY;
-    private boolean empty;
+    private boolean valid;
 
     public RectBuilder() {
-        empty = true;
+        valid = false;
     }
 
     public RectBuilder(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
@@ -25,30 +25,39 @@ public final class RectBuilder implements Cloneable, Serializable {
 
     public RectBuilder set(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
         Rect.check(minX, minY, maxX, maxY);
+        if (minX > maxX) {
+            double tmp = minX;
+            minX = maxX;
+            maxX = tmp;
+        } else if (minY > maxY) {
+            double tmp = minY;
+            minY = maxY;
+            maxY = tmp;
+        }
         return setInternal(minX, minY, maxX, maxY);
     }
-       
+
     public RectBuilder set(Rect rect) throws NullPointerException {
         return setInternal(rect.minX, rect.minY, rect.maxX, rect.maxY);
     }
-    
+
     public RectBuilder set(RectBuilder rect) throws NullPointerException {
         setInternal(rect.minX, rect.minY, rect.maxX, rect.maxY);
-        this.empty = rect.empty;
+        this.valid = rect.valid;
         return this;
     }
-    
+
     RectBuilder setInternal(double minX, double minY, double maxX, double maxY) {
         this.minX = minX;
         this.minY = minY;
         this.maxX = maxX;
         this.maxY = maxY;
-        this.empty = false;
+        this.valid = true;
         return this;
     }
 
     public RectBuilder reset() {
-        empty = true;
+        valid = false;
         return this;
     }
 
@@ -71,7 +80,7 @@ public final class RectBuilder implements Cloneable, Serializable {
     }
 
     public RectBuilder add(RectBuilder rect) throws NullPointerException {
-        if (!rect.isEmpty()) {
+        if (rect.isValid()) {
             addInternal(rect.minX, rect.minY);
             addInternal(rect.maxX, rect.maxY);
         }
@@ -79,14 +88,15 @@ public final class RectBuilder implements Cloneable, Serializable {
     }
 
     RectBuilder addInternal(double x, double y) {
-        if (empty) {
-            minX = maxX = x;
-            minY = maxY = y;
-        } else {
+        if (valid) {
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
             maxX = Math.max(maxX, x);
             maxY = Math.max(maxY, y);
+        } else {
+            minX = maxX = x;
+            minY = maxY = y;
+            valid = true;
         }
         return this;
     }
@@ -101,22 +111,22 @@ public final class RectBuilder implements Cloneable, Serializable {
         }
         return this;
     }
-    
-    public RectBuilder addAll(Rect... rects) throws NullPointerException{
-        for(Rect rect : rects){
+
+    public RectBuilder addAll(Rect... rects) throws NullPointerException {
+        for (Rect rect : rects) {
             add(rect);
         }
         return this;
     }
 
-    public RectBuilder addAll(Rect[] rects, int startOffset, int numRects) throws NullPointerException, IndexOutOfBoundsException{
+    public RectBuilder addAll(Rect[] rects, int startOffset, int numRects) throws NullPointerException, IndexOutOfBoundsException {
         int endOffset = startOffset + numRects;
-        for(int i = startOffset; i < endOffset; i++){
-            if(rects[i] == null){
-                throw new NullPointerException("Null rect at index : "+i);
+        for (int i = startOffset; i < endOffset; i++) {
+            if (rects[i] == null) {
+                throw new NullPointerException("Null rect at index : " + i);
             }
         }
-        for(int i = startOffset; i < endOffset; i++){
+        for (int i = startOffset; i < endOffset; i++) {
             add(rects[i]);
         }
         return this;
@@ -138,8 +148,8 @@ public final class RectBuilder implements Cloneable, Serializable {
         return maxY;
     }
 
-    public boolean isEmpty() {
-        return empty;
+    public boolean isValid() {
+        return valid;
     }
 
     /**
@@ -161,7 +171,7 @@ public final class RectBuilder implements Cloneable, Serializable {
     public double getHeight() {
         return maxY - minY;
     }
-    
+
     /**
      * Get area Note: May be invalid if rect is invalid
      *
@@ -171,7 +181,7 @@ public final class RectBuilder implements Cloneable, Serializable {
     public double getArea() {
         return getWidth() * getHeight();
     }
-    
+
     /**
      * Get centroid x
      *
@@ -219,7 +229,30 @@ public final class RectBuilder implements Cloneable, Serializable {
 
     //produces null
     public Rect build() {
-        return empty ? null : new Rect(minX, minY, maxX, maxY);
+        return valid ? new Rect(minX, minY, maxX, maxY) : null;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 43 * hash + Vect.hash(minX);
+        hash = 43 * hash + Vect.hash(minY);
+        hash = 43 * hash + Vect.hash(maxX);
+        hash = 43 * hash + Vect.hash(maxY);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof RectBuilder) {
+            RectBuilder rect = (RectBuilder) obj;
+            return (minX == rect.minX)
+                    && (minY == rect.minY)
+                    && (maxX == rect.maxX)
+                    && (maxY == rect.maxY);
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -229,7 +262,7 @@ public final class RectBuilder implements Cloneable, Serializable {
 
     @Override
     public RectBuilder clone() {
-        return empty ? new RectBuilder() : new RectBuilder(minX, minY, maxX, maxY);
+        return valid ? new RectBuilder(minX, minY, maxX, maxY) : new RectBuilder();
     }
 
 }
