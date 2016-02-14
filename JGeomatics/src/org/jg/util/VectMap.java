@@ -317,10 +317,31 @@ public final class VectMap<E> implements Serializable, Cloneable {
      * Get a list of all keys
      *
      * @param target
-     * @return
+     * @return target
      * @throws NullPointerException if target was null
      */
     public VectList keyList(VectList target) throws NullPointerException {
+        int index = 0;
+        while (true) {
+            if (index >= ords.length) {
+                return target;
+            }
+            if (!Double.isNaN(ords[index])) {
+                target.addInternal(ords[index++], ords[index++]);
+            } else {
+                index += 2;
+            }
+        }
+    }
+
+    /**
+     * Get a set of all keys
+     *
+     * @param target
+     * @return target
+     * @throws NullPointerException if target was null
+     */
+    public VectSet keySet(VectSet target) throws NullPointerException {
         int index = 0;
         while (true) {
             if (index >= ords.length) {

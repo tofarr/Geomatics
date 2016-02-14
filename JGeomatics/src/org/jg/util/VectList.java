@@ -191,12 +191,36 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
      * Get the first index of the vector given in this list, after the index
      * given (inclusive)
      *
+     * @param x
+     * @param y
+     * @param fromIndex
+     * @return the first index, or -1 if not found
+     * @throws IndexOutOfBoundsException if fromIndex was out of bounds
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
+    public int indexOf(double x, double y, int fromIndex) throws IndexOutOfBoundsException, IllegalArgumentException {
+        checkLength(fromIndex);
+        fromIndex = (fromIndex << 1);
+        int endIndex = (size << 1);
+        for (int i = fromIndex; i < endIndex; i++) {
+            if ((ords[i] == x) && (ords[++i] == y)) {
+                return (i - 1) >> 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Get the first index of the vector given in this list, after the index
+     * given (inclusive)
+     *
      * @param vect
      * @param fromIndex
      * @return the first index, or -1 if not found
      * @throws IndexOutOfBoundsException if fromIndex was out of bounds
+     * @throws NullPointerException if vect was null
      */
-    public int indexOf(Vect vect, int fromIndex) throws IndexOutOfBoundsException {
+    public int indexOf(Vect vect, int fromIndex) throws IndexOutOfBoundsException, NullPointerException {
         checkLength(fromIndex);
         fromIndex = (fromIndex << 1);
         int endIndex = (size << 1);
@@ -218,10 +242,35 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
      * @param y
      * @param toIndex
      * @return the first index, or -1 if not found
+     * @throws IndexOutOfBoundsException if from index was out of bounds
+     * @throws IllegalArgumentException if an ordinate was infinite of NaN
      */
-    public int lastIndexOf(double x, double y, int toIndex) {
+    public int lastIndexOf(double x, double y, int toIndex) throws IndexOutOfBoundsException, IllegalArgumentException {
         checkLength(toIndex);
         toIndex = (toIndex << 1);
+        for (int i = toIndex; i > 0;) {
+            if ((ords[--i] == y) && (ords[--i] == x)) {
+                return i >> 1;
+            }
+        }
+        return -1;
+    }
+    
+    /**
+     * Get the last index of the vector given in this list, before the index
+     * given (exclusive)
+     *
+     * @param vect
+     * @param toIndex
+     * @return the first index, or -1 if not found
+     * @throws IndexOutOfBoundsException if from index was out of bounds
+     * @throws NullPointerException if vect was null
+     */
+    public int lastIndexOf(Vect vect, int toIndex) throws IndexOutOfBoundsException, NullPointerException {
+        checkLength(toIndex);
+        toIndex = (toIndex << 1);
+        double x = vect.getX();
+        double y = vect.getY();
         for (int i = toIndex; i > 0;) {
             if ((ords[--i] == y) && (ords[--i] == x)) {
                 return i >> 1;
@@ -393,17 +442,34 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
      * @throws NullPointerException if vect was null
      */
     public VectList insert(int index, Vect vect) throws IndexOutOfBoundsException, NullPointerException {
+        return insertInternal(index, vect.x, vect.y);
+    }
+
+    /**
+     * Insert the vector given at the index given, increasing the index of later
+     * vectors by 1
+     *
+     * @param index
+     * @param x
+     * @param y
+     * @return this
+     * @throws IndexOutOfBoundsException if index < 0 or index > size
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     */
+    public VectList insert(int index, double x, double y) throws IndexOutOfBoundsException, IllegalArgumentException {
+        Vect.check(x, y);
+        return insertInternal(index, x, y);
+    }
+
+    VectList insertInternal(int index, double x, double y) throws IndexOutOfBoundsException {
         if (index == size) {
-            return add(vect);
-        }
-        if (vect == null) {
-            throw new NullPointerException("Vect must not be null!");
+            return add(x, y);
         }
         ensureSize(size + 1);
         int ordIndex = (index << 1);
         System.arraycopy(ords, ordIndex, ords, ordIndex + 2, (size << 1) - ordIndex);
-        ords[ordIndex] = vect.getX();
-        ords[++ordIndex] = vect.getY();
+        ords[ordIndex] = x;
+        ords[++ordIndex] = y;
         size++;
         cachedRect = null;
         return this;
