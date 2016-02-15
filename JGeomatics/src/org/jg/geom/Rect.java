@@ -297,10 +297,16 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public Rect union(Rect rect) throws NullPointerException {
-        return new Rect(Math.min(minX, rect.minX),
+        if(contains(rect)){
+            return this;
+        }else if(rect.contains(this)){
+            return rect;
+        }else{
+            return new Rect(Math.min(minX, rect.minX),
                 Math.min(minY, rect.minY),
                 Math.max(maxX, rect.maxX),
                 Math.max(maxY, rect.maxY));
+        }
     }
 
     /**

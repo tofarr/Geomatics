@@ -1,21 +1,12 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.util.HashSet;
 import java.util.Set;
-import org.jg.util.Network;
 import org.jg.util.Relate;
-import org.jg.util.Transform;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,7 +23,7 @@ public class RectTest {
         rect = Rect.valueOf(5, 5, 9, 5);
         assertEquals(4, rect.getWidth(), 0.00001);
         rect = Rect.valueOf(5, 5, 1, 5);
-        assertEquals(-4, rect.getWidth(), 0.00001);
+        assertEquals(4, rect.getWidth(), 0.00001);
     }
 
     @Test
@@ -42,7 +33,7 @@ public class RectTest {
         rect = Rect.valueOf(5, 5, 5, 9);
         assertEquals(4, rect.getHeight(), 0.00001);
         rect = Rect.valueOf(5, 5, 5, 1);
-        assertEquals(-4, rect.getHeight(), 0.00001);
+        assertEquals(4, rect.getHeight(), 0.00001);
     }
 
     @Test
@@ -50,9 +41,9 @@ public class RectTest {
         Rect rect = Rect.valueOf(1, 3, 7, 13);
         assertEquals(60, rect.getArea(), 0.00001);
         rect = Rect.valueOf(1, 13, 7, 3);
-        assertEquals(-60, rect.getArea(), 0.00001);
+        assertEquals(60, rect.getArea(), 0.00001);
         rect = Rect.valueOf(7, 3, 1, 13);
-        assertEquals(-60, rect.getArea(), 0.00001);
+        assertEquals(60, rect.getArea(), 0.00001);
         rect = Rect.valueOf(7, 13, 1, 3);
         assertEquals(60, rect.getArea(), 0.00001);
     }
@@ -97,8 +88,9 @@ public class RectTest {
             for (int y1 = 0; y1 < 30; y1 += 5) {
                 for (int x2 = x1; x2 < 30; x2 += 5) {
                     for (int y2 = y1; y2 < 30; y2 += 5) {
-                        boolean disjoint = (x1 > a.maxX) || (y1 > a.maxY) || (x2 < a.minX) || (y2 < a.minY);
+                        b.set(x1, y1, x2, y2);
                         Rect c = Rect.valueOf(x1, y1, x2, y2);
+                        boolean disjoint = (c.minX > a.maxX) || (c.minY > a.maxY) || (c.maxX < a.minX) || (c.maxY < a.minY);
                         assertEquals(disjoint, a.isDisjoint(b));
                         assertEquals(disjoint, a.isDisjoint(c));
                         assertEquals(disjoint, c.isDisjoint(a));
@@ -106,10 +98,10 @@ public class RectTest {
                 }
             }
         }
-        assertTrue(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2)));
-        assertTrue(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4)));
-        assertTrue(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2).build()));
-        assertTrue(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4).build()));
+        assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2)));
+        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4)));
+        assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2).build()));
+        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4).build()));
         try {
             a.isDisjoint((Rect)null);
             fail("Exception expected");
@@ -122,6 +114,7 @@ public class RectTest {
         } catch (NullPointerException ex) {
             //expected
         }
+        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(new RectBuilder()));
     }
 
     @Test
@@ -133,6 +126,7 @@ public class RectTest {
                 for (int x2 = x1; x2 < 30; x2 += 5) {
                     for (int y2 = y1; y2 < 30; y2 += 5) {
                         boolean overlapping = (x1 < a.maxX) && (y1 < a.maxY) && (x2 > a.minX) && (y2 > a.minY);
+                        b.set(x1, y1, x2, y2);
                         Rect c = Rect.valueOf(x1, y1, x2, y2);
                         assertEquals(overlapping, a.isOverlapping(b));
                         assertEquals(overlapping, a.isOverlapping(c));
@@ -141,8 +135,8 @@ public class RectTest {
                 }
             }
         }
-        assertFalse(Rect.valueOf(1, 2, 3, 4).isOverlapping(b.set(1, 4, 3, 2)));
-        assertFalse(Rect.valueOf(3, 2, 1, 4).isOverlapping(b.set(1, 2, 3, 4)));
+        assertTrue(Rect.valueOf(1, 2, 3, 4).isOverlapping(b.set(1, 4, 3, 2)));
+        assertTrue(Rect.valueOf(3, 2, 1, 4).isOverlapping(b.set(1, 2, 3, 4)));
         try {
             a.isOverlapping((Rect)null);
             fail("Exception expected");
@@ -155,6 +149,7 @@ public class RectTest {
         } catch (NullPointerException ex) {
             //expected
         }
+        assertFalse(Rect.valueOf(1, 2, 3, 4).isOverlapping(new RectBuilder()));
     }
 
     @Test
@@ -166,6 +161,7 @@ public class RectTest {
                 for (int x2 = x1; x2 < 30; x2 += 5) {
                     for (int y2 = y1; y2 < 30; y2 += 5) {
                         boolean contains = (x1 >= a.minX) && (y1 >= a.minY) && (x2 <= a.maxX) && (y2 <= a.maxY);
+                        b.set(x1, y1, x2, y2);
                         Rect c = Rect.valueOf(x1, y1, x2, y2);
                         assertEquals(contains, a.contains(b));
                         assertEquals(contains, a.contains(c));
@@ -173,14 +169,15 @@ public class RectTest {
                 }
             }
         }
-        assertFalse(Rect.valueOf(1, 2, 3, 4).contains(b.set(1, 4, 3, 2)));
-        assertFalse(Rect.valueOf(3, 2, 1, 4).contains(b.set(1, 2, 3, 4)));
+        assertTrue(Rect.valueOf(1, 2, 3, 4).contains(b.set(1, 4, 3, 2)));
+        assertTrue(Rect.valueOf(3, 2, 1, 4).contains(b.set(1, 2, 3, 4)));
         try {
             a.contains((Rect) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
+        assertFalse(Rect.valueOf(1, 2, 3, 4).contains(new RectBuilder()));
     }
 
     @Test
@@ -193,7 +190,7 @@ public class RectTest {
                 assertEquals(contains, a.contains(b));
             }
         }
-        assertFalse(Rect.valueOf(3, 4, 1, 2).contains(Vect.valueOf(1, 2)));
+        assertTrue(Rect.valueOf(3, 4, 1, 2).contains(Vect.valueOf(1, 2)));
         try {
             a.contains((Vect) null);
             fail("Exception expected");
@@ -219,7 +216,7 @@ public class RectTest {
                 }
             }
         }
-        assertEquals(Relate.OUTSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15)));
+        assertEquals(Relate.INSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15)));
         try {
             a.relate((Vect) null);
             fail("Exception expected");
@@ -250,7 +247,7 @@ public class RectTest {
                 }
             }
         }
-        assertNull(Rect.valueOf(20, 20, 10, 10).intersection(Rect.valueOf(10, 10, 20, 20)));
+        assertEquals(Rect.valueOf(10, 10, 20, 20), Rect.valueOf(20, 20, 10, 10).intersection(Rect.valueOf(10, 10, 20, 20)));
         try {
             a.intersection(null);
             fail("Exception expected");
@@ -301,7 +298,7 @@ public class RectTest {
                 }
             }
         }
-        assertSame(Rect.valueOf(10, 20, 30, 40), a.union(a));
+        assertSame(a, a.union(a));
         try {
             a.union((Rect) null);
             fail("Exception expected");

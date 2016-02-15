@@ -5,6 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -274,5 +278,58 @@ public class VectBuilderTest {
             VectBuilder b = VectBuilder.read(in);
             assertEquals(a, b);
         }
+        try{
+            a.write(new DataOutputStream(new OutputStream(){
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
+        
+        try{
+            VectBuilder.read(new DataInputStream(new InputStream(){
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
+    }
+    
+    @Test
+    public void testCompareTo() {
+        assertEquals(-1, new VectBuilder(1, 2).compareTo(new VectBuilder(3, 4)));
+        try {
+            new VectBuilder(1, 2).compareTo(null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+    }
+
+    @Test
+    public void testHashCode() {
+        assertEquals(new VectBuilder(1, 2).hashCode(), new VectBuilder(1, 2).hashCode()); // equal should have same hashcode
+        Set<Integer> hashes = new HashSet<>();
+        for (int i = 1; i < 100; i++) { // minor test - no collisions in 200 elements
+            int a = new VectBuilder(0, i).hashCode();
+            int b = new VectBuilder(i, 0).hashCode();
+            assertFalse(hashes.contains(a));
+            hashes.add(a);
+            assertFalse(hashes.contains(b));
+            hashes.add(b);
+        }
+    }
+
+    @Test
+    public void testEquals() {
+        assertEquals(new VectBuilder(1, 2), new VectBuilder(1, 2));
+        assertFalse(new VectBuilder(1, 2).equals(new VectBuilder(1, 3)));
+        assertFalse(new VectBuilder(1, 2).equals(new VectBuilder(-1, 2)));
+        assertFalse(new VectBuilder(1, 2).equals((Object) null)); // equals null should not throw an NPE
     }
 }

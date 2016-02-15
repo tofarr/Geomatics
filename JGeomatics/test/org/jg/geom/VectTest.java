@@ -6,6 +6,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Network;
@@ -224,6 +226,26 @@ public class VectTest {
         StringBuilder str = new StringBuilder();
         v.toString(str);
         assertEquals("[1,2.3]", str.toString());
+        try{
+            v.toString(new Appendable(){
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException("SomeMsg");
+                }
+
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException("SomeMsg");
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException("SomeMsg");
+                }
+            });
+            fail("Exception expected");
+        }catch(GeomException ex){
+        }
     }
 
     @Test
@@ -246,7 +268,6 @@ public class VectTest {
         assertFalse(Vect.valueOf(1, 2).equals(Vect.valueOf(1, 3)));
         assertFalse(Vect.valueOf(1, 2).equals(Vect.valueOf(-1, 2)));
         assertFalse(Vect.valueOf(1, 2).equals((Object) null)); // equals null should not throw an NPE
-
     }
 
     @Test
@@ -265,6 +286,27 @@ public class VectTest {
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
             Vect b = Vect.read(in);
             assertEquals(a, b);
+        }
+        try{
+            a.write(new DataOutputStream(new OutputStream(){
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
+        
+        try{
+            Vect.read(new DataInputStream(new InputStream(){
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
         }
     }
 

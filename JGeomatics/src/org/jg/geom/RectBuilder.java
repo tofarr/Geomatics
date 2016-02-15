@@ -15,21 +15,42 @@ public final class RectBuilder implements Cloneable, Serializable {
     private double maxY;
     private boolean valid;
 
+    /**
+     * Create a new instance of RectBuilder
+     */
     public RectBuilder() {
-        valid = false;
+        reset();
     }
 
+    /**
+     * Create a new instance of RectBuilder (ordinates are swapped if min > max)
+     * @param minX
+     * @param minY
+     * @param maxX
+     * @param maxY
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
     public RectBuilder(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
         set(minX, minY, maxX, maxY);
     }
 
+    /**
+     * Set the ordinates for this RectBuilder (ordinates are swapped if min > max)
+     * @param minX
+     * @param minY
+     * @param maxX
+     * @param maxY
+     * @return this
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
     public RectBuilder set(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
         Rect.check(minX, minY, maxX, maxY);
         if (minX > maxX) {
             double tmp = minX;
             minX = maxX;
             maxX = tmp;
-        } else if (minY > maxY) {
+        }
+        if (minY > maxY) {
             double tmp = minY;
             minY = maxY;
             maxY = tmp;
@@ -37,10 +58,22 @@ public final class RectBuilder implements Cloneable, Serializable {
         return setInternal(minX, minY, maxX, maxY);
     }
 
+    /**
+     * Set the ordinates for this RectBuilder
+     * @param rect
+     * @return this
+     * @throws NullPointerException if rect was null
+     */
     public RectBuilder set(Rect rect) throws NullPointerException {
         return setInternal(rect.minX, rect.minY, rect.maxX, rect.maxY);
     }
 
+    /**
+     * Set the ordinates for this RectBuilder
+     * @param rect
+     * @return this
+     * @throws NullPointerException if rect was null
+     */
     public RectBuilder set(RectBuilder rect) throws NullPointerException {
         setInternal(rect.minX, rect.minY, rect.maxX, rect.maxY);
         this.valid = rect.valid;
@@ -56,29 +89,66 @@ public final class RectBuilder implements Cloneable, Serializable {
         return this;
     }
 
+    /**
+     * Reset this rect builder to an invalid state [NaN,NaN,NaN,NaN]
+     * @return this
+     */
     public RectBuilder reset() {
         valid = false;
+        minX = minY = maxX = maxY = Double.NaN;
         return this;
     }
 
+    /**
+     * Add the vector given to this rectangle
+     * @param x
+     * @param y
+     * @return this
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     */
     public RectBuilder add(double x, double y) throws IllegalArgumentException {
         Vect.check(x, y);
         return addInternal(x, y);
     }
-
+    
+    /**
+     * Add the vector given to this rectangle
+     * @param vect
+     * @return this
+     * @throws NullPointerException if vect was null
+     */
     public RectBuilder add(VectBuilder vect) throws NullPointerException {
         return addInternal(vect.getX(), vect.getY());
     }
-
+    
+    /**
+     * Add the vector given to this rectangle
+     * @param vect
+     * @return this
+     * @throws NullPointerException if vect was null
+     */
     public RectBuilder add(Vect vect) throws NullPointerException {
         return addInternal(vect.x, vect.y);
     }
 
+    /**
+     * Add the rectangle given to this rectangle
+     * @param rect
+     * @return this
+     * @throws NullPointerException if rect was null
+     */
     public RectBuilder add(Rect rect) throws NullPointerException {
         addInternal(rect.minX, rect.minY);
         return addInternal(rect.maxX, rect.maxY);
     }
 
+
+    /**
+     * Add the rectangle given to this rectangle
+     * @param rect
+     * @return this
+     * @throws NullPointerException if rect was null
+     */
     public RectBuilder add(RectBuilder rect) throws NullPointerException {
         if (rect.isValid()) {
             addInternal(rect.minX, rect.minY);
