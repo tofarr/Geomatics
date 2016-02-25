@@ -14,7 +14,7 @@ import org.jg.geom.VectBuilder;
  *
  * @author tofar_000
  */
-public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
+public final class VectList implements Serializable, Cloneable, Iterable<Vect>, Comparable<VectList> {
 
     static final int DEFAULT_INITIAL_CAPACITY = 64;
     private double[] ords;
@@ -255,7 +255,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
         }
         return -1;
     }
-    
+
     /**
      * Get the last index of the vector given in this list, before the index
      * given (exclusive)
@@ -356,6 +356,17 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
      */
     public VectList add(Vect vect) throws NullPointerException {
         return addInternal(vect.x, vect.y);
+    }
+
+    /**
+     * Add a vector to the end of this list
+     *
+     * @param vect
+     * @return this
+     * @throws NullPointerException if vect was null
+     */
+    public VectList add(VectBuilder vect) throws NullPointerException {
+        return addInternal(vect.getX(), vect.getY());
     }
 
     /**
@@ -727,6 +738,30 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
         }
     }
 
+    /**
+     * Determine whether this list is ordered such that the start is less than
+     * the end
+     *
+     * @return
+     */
+    public boolean isOrdered() {
+        int min = 0;
+        int max = size << 1;
+        while (min < max) {
+            double ax = ords[min++];
+            double ay = ords[min++];
+            double by = ords[--max];
+            double bx = ords[--max];
+            int c = Vect.compare(ax, ay, bx, by);
+            if (c < 0) {
+                return true;
+            }else if(c > 0){
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof VectList) {
@@ -768,6 +803,30 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect> {
         }
         return hash;
     }
+
+    @Override
+    public int compareTo(VectList o) {
+        //First we test to determine if one list has a point at an index which is less
+        //than the other lists corresponding point
+        int max = Math.min(size, o.size) << 1;
+        for(int i = 0; i < max; i++){
+            if(ords[i] < o.ords[i]){
+                return -1;
+            }else if(ords[i] > o.ords[i]){
+                return 1;
+            }
+        }
+        //Otherwise we return the shortest list
+        if(size < o.size){
+            return -1;
+        }else if(size > o.size){
+            return 1;
+        }else{
+            return 0;
+        }
+    }
+    
+    
 
     @Override
     public String toString() {

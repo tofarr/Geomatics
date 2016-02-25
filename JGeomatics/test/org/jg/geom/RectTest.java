@@ -1,12 +1,18 @@
 package org.jg.geom;
 
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import org.jg.util.Network;
 import org.jg.util.Relate;
+import org.jg.util.Transform;
+import org.jg.util.TransformBuilder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -103,13 +109,13 @@ public class RectTest {
         assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2).build()));
         assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4).build()));
         try {
-            a.isDisjoint((Rect)null);
+            a.isDisjoint((Rect) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
         try {
-            a.isDisjoint((RectBuilder)null);
+            a.isDisjoint((RectBuilder) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
@@ -138,13 +144,13 @@ public class RectTest {
         assertTrue(Rect.valueOf(1, 2, 3, 4).isOverlapping(b.set(1, 4, 3, 2)));
         assertTrue(Rect.valueOf(3, 2, 1, 4).isOverlapping(b.set(1, 2, 3, 4)));
         try {
-            a.isOverlapping((Rect)null);
+            a.isOverlapping((Rect) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
         try {
-            a.isOverlapping((RectBuilder)null);
+            a.isOverlapping((RectBuilder) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
@@ -178,6 +184,40 @@ public class RectTest {
             //expected
         }
         assertFalse(Rect.valueOf(1, 2, 3, 4).contains(new RectBuilder()));
+    }
+
+    @Test
+    public void testIsContainedBy() {
+        Rect a = Rect.valueOf(10, 10, 20, 20);
+        RectBuilder b = new RectBuilder();
+        for (int x1 = 0; x1 < 30; x1 += 5) {
+            for (int y1 = 0; y1 < 30; y1 += 5) {
+                for (int x2 = x1; x2 < 30; x2 += 5) {
+                    for (int y2 = y1; y2 < 30; y2 += 5) {
+                        boolean containedBy = (x1 <= a.minX) && (y1 <= a.minY) && (x2 >= a.maxX) && (y2 >= a.maxY);
+                        b.set(x1, y1, x2, y2);
+                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+                        assertEquals(containedBy, a.isContainedBy(b));
+                        assertEquals(containedBy, a.isContainedBy(c));
+                    }
+                }
+            }
+        }
+        assertTrue(Rect.valueOf(1, 2, 3, 4).isContainedBy(b.set(1, 4, 3, 2)));
+        assertTrue(Rect.valueOf(3, 2, 1, 4).isContainedBy(b.set(1, 2, 3, 4)));
+        assertFalse(Rect.valueOf(1, 2, 3, 4).isContainedBy(new RectBuilder()));
+        try {
+            a.isContainedBy((Rect) null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        try {
+            a.isContainedBy((RectBuilder) null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
     }
 
     @Test
@@ -379,6 +419,27 @@ public class RectTest {
         str.setLength(0);
         Rect.valueOf(1.5, 2.5, 3.5, 4.5).toString(str);
         assertEquals("[1.5,2.5,3.5,4.5]", str.toString());
+        try {
+            Rect.valueOf(1, 2, 3, 4).toString(new Appendable() {
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
+
+            });
+        } catch (GeomException ex) {
+
+        }
     }
 
     @Test
@@ -432,5 +493,48 @@ public class RectTest {
         } catch (IllegalArgumentException ex) {
             //Expected
         }
-    }    
+    }
+
+    @Test
+    public void testGetBounds() {
+        Rect a = Rect.valueOf(3, 7, 13, 29);
+        Rect b = a.getBounds();
+        assertSame(a, b);
+    }
+
+    @Test
+    public void testAddBoundsTo() {
+        Rect a = Rect.valueOf(3, 7, 13, 29);
+        RectBuilder b = new RectBuilder(4, 6, 12, 30);
+        a.addBoundsTo(b);
+        assertEquals(new RectBuilder(3, 6, 13, 30), b);
+    }
+
+    @Test
+    public void testTransform() {
+        Transform transform = new TransformBuilder().scaleAround(2, 4, 9).build();
+        Rect a = Rect.valueOf(3, 7, 13, 29);
+        Rect b = a.transform(transform);
+        assertEquals("[2,5,22,49]", b.toString());
+    }
+
+    @Test
+    public void testPathIterator() {
+        Rect a = Rect.valueOf(3, 7, 13, 29);
+        Path2D.Double path = new Path2D.Double();
+        path.append(a.pathIterator(), true);
+        Rectangle2D bounds = path.getBounds2D();
+        assertEquals(3, bounds.getMinX(), 0.0001);
+        assertEquals(7, bounds.getMinY(), 0.0001);
+        assertEquals(13, bounds.getMaxX(), 0.0001);
+        assertEquals(29, bounds.getMaxY(), 0.0001);
+    }
+
+    @Test
+    public void testAddTo() {
+        Network network = new Network();
+        Rect a = Rect.valueOf(3, 7, 13, 29);
+        a.addTo(network, 0);
+        assertEquals("[[3,7, 13,7, 13,29, 3,29, 3,7]]", network.toString());
+    }
 }

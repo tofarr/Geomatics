@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import org.jg.geom.GeomException;
 import org.jg.geom.Line;
@@ -506,10 +506,11 @@ public final class Network implements Externalizable, Cloneable {
 
     public Collection<VectList> extractLines(Collection<VectList> results, boolean includePoints) {
         VectList vects = getVects(new VectList());
-        HashSet<Line> done = new HashSet<>();
         VectBuilder a = new VectBuilder();
         VectBuilder b = new VectBuilder();
         VectBuilder c = new VectBuilder();
+        VectList result = new VectList();
+        int numLinksProcessed = 0;
         for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, a);
             VectList links = map.get(a.getX(), a.getY());
@@ -525,47 +526,67 @@ public final class Network implements Externalizable, Cloneable {
                 default:
                     for (int j = 0; j < links.size(); j++) {
                         links.getVect(j, b);
-                        Line testLine = (Vect.compare(a.getX(), a.getY(), b.getX(), b.getY()) < 0)
-                                ? Line.valueOf(a.getX(), a.getY(), b.getX(), b.getY())
-                                : Line.valueOf(b.getX(), b.getY(), a.getX(), a.getY());
-                        //OR DO WE NEED A LINESET TOO?
-                        if (!done.contains(testLine)) {
-                            VectList result = followLine(a, b, c, new VectList().add(a.getX(), a.getY()));
-                            for (int k = result.size() - 1; k-- > 0;) {
-                                done.add(result.getLine(k).normalize());
-                            }
-                            results.add(result);
+                        result.clear().add(a);
+                        followLine(a, b, c, result);
+                        if(result.isOrdered()){
+                            results.add(result.clone());
+                            numLinksProcessed += (result.size() - 1);
                         }
                     }
             }
         }
-        if (done.size() == (vects.size() - 1)) {
+        if (numLinksProcessed == numLinks) { // if there were no rings, then we are done
             return results;
         }
+        
+        //Process rings in second pass
         VectBuilder d = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, a);
             VectList links = map.get(vects.getX(i), vects.getY(i));
-            if (links.size() == 2) {
-                links.getVect(0, c);
-                Line testLine = (Vect.compare(a.getX(), a.getY(), c.getX(), c.getY()) < 0)
-                        ? Line.valueOf(a.getX(), a.getY(), c.getX(), c.getY())
-                        : Line.valueOf(c.getX(), c.getY(), a.getX(), a.getY());
-                if (!done.contains(testLine)) {
-                    VectList result = new VectList().add(a.getX(), a.getY()).add(c.getX(), c.getY());
-                    b.set(a);
-                    while (!c.equals(a)) {
-                        links = map.get(c.getX(), c.getY());
-                        links.getVect(1, d);
-                        if (d.equals(b)) {
-                            links.getVect(0, d);
-                        }
-                        result.add(d.getX(), d.getY());
-                        VectBuilder e = b; // rotate
-                        b = c;
-                        c = d;
-                        d = e;
+            if (links.size() == 2) { // If there are 2 links, then this could be part of an unconnected ring
+                
+                links.getVect(0, b);
+                links.getVect(1, c);
+                
+                //if both linked vertices are greater than the current one, then this may be the start point
+                //of an unconnected linear ring. All points on the ring will be greater than a
+                if((a.compareTo(b) > 0) || (a.compareTo(c) > 0)){
+                    break; // point was less than a - continue
+                }
+                
+                //to begin, we pick the direction with the lower dydx
+                if(Vect.dydxTo(a.getX(), a.getY(), b.getX(), b.getY()) < Vect.dydxTo(a.getX(), a.getY(), c.getX(), c.getY())){
+                    c.set(b);
+                }
+                
+                b.set(a);
+                
+                //follow line, copying into result. If we come across a point which is less than
+                // a or has more than 2 links, discontinue.
+                result.clear().add(b);
+                while(true){
+                    result.add(c);
+                    links = map.get(c);
+                    if(links.size() != 2){
+                        break; // this is not a ring!
                     }
+                    links.getVect(0, d);
+                    if(d.equals(b)){
+                        links.getVect(1, d);
+                    }
+                    int cmp = d.compareTo(a);
+                    if(cmp < 0){
+                        break; // found a point before origin of ring.
+                    }else if(cmp == 0){ // cycled back to origin - we have a ring!
+                        result.add(a);
+                        results.add(result.clone());
+                        break;
+                    }
+                    VectBuilder t = b;
+                    b = c;
+                    c = d;
+                    d = t;
                 }
             }
         }
@@ -680,17 +701,19 @@ public final class Network implements Externalizable, Cloneable {
 
     public void toString(Appendable appendable) throws GeomException {
         try {
-            ArrayList<VectList> linesAndPoints = new ArrayList<>();
-            extractLines(linesAndPoints, true);
+            ArrayList<VectList> linesAndPointList = new ArrayList<>();
+            extractLines(linesAndPointList, true);
+            VectList[] linesAndPoints = linesAndPointList.toArray(new VectList[linesAndPointList.size()]);
+            Arrays.sort(linesAndPoints);
             appendable.append('[');
             boolean comma = false;
-            for (int i = 0; i < linesAndPoints.size(); i++) {
+            for (int i = 0; i < linesAndPoints.length; i++) {
                 if (comma) {
                     appendable.append(',');
                 } else {
                     comma = true;
                 }
-                linesAndPoints.get(i).toString(appendable);
+                linesAndPoints[i].toString(appendable);
             }
             appendable.append(']');
         } catch (IOException ex) {

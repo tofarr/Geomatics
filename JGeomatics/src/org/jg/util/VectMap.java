@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 
 /**
  *
@@ -131,8 +132,19 @@ public final class VectMap<E> implements Serializable, Cloneable {
      * @return value or null if no such mapping
      * @throws NullPointerException if vect was null
      */
-    public E get(Vect vect) {
+    public E get(Vect vect) throws NullPointerException {
         return getInternal(vect.x, vect.y);
+    }
+    
+    /**
+     * Get the value mapped from the vector given
+     *
+     * @param vect
+     * @return value or null if no such mapping
+     * @throws NullPointerException if vect was null
+     */
+    public E get(VectBuilder vect) throws NullPointerException {
+        return getInternal(vect.getX(), vect.getY());
     }
 
     /**
