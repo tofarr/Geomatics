@@ -3,6 +3,8 @@ package org.jg.geom;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import org.jg.util.Network;
 import org.jg.util.Tolerance;
@@ -643,6 +645,18 @@ public class Line implements Geom, Comparable<Line> {
         }
     }
 
+    public void write(DataOutput out) throws IOException {
+        out.writeDouble(ax);
+        out.writeDouble(ay);
+        out.writeDouble(bx);
+        out.writeDouble(by);
+    }
+
+    public static Line read(DataInput in) throws IOException {
+        return valueOf(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
+    }
+
+    
     @Override
     public Line clone() {
         return this;

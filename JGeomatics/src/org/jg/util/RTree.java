@@ -164,8 +164,8 @@ public final class RTree<E> {
         if ((xa.size == 0) || (xb.size == 0)) {
             return; // could not split
         }
-        xa.bounds.addAll(xa.itemBounds, 0, xa.size);
-        xb.bounds.addAll(xb.itemBounds, 0, xb.size);
+        xa.bounds.addRects(xa.itemBounds, 0, xa.size);
+        xb.bounds.addRects(xb.itemBounds, 0, xb.size);
         node.a = xa;
         node.b = xb;
         node.itemBounds = null;
@@ -286,7 +286,7 @@ public final class RTree<E> {
             node.itemBounds = newItemBounds;
             node.itemValues = newItemValues;
             node.size = n;
-            node.bounds.reset().addAll(newItemBounds, 0, n);
+            node.bounds.reset().addRects(newItemBounds, 0, n);
             return ret;
         }
     }
@@ -343,7 +343,7 @@ public final class RTree<E> {
             node.itemBounds = newItemBounds;
             node.itemValues = newItemValues;
             node.size = n;
-            node.bounds.reset().addAll(newItemBounds, 0, n);
+            node.bounds.reset().addRects(newItemBounds, 0, n);
             return ret;
         }
     }

@@ -182,14 +182,11 @@ public final class RectBuilder implements Cloneable, Serializable {
         return this;
     }
 
-    public RectBuilder addAll(Rect... rects) throws NullPointerException {
-        for (Rect rect : rects) {
-            add(rect);
-        }
-        return this;
+    public RectBuilder addRects(Rect... rects) throws NullPointerException {
+        return addRects(rects, 0, rects.length);
     }
 
-    public RectBuilder addAll(Rect[] rects, int startOffset, int numRects) throws NullPointerException, IndexOutOfBoundsException {
+    public RectBuilder addRects(Rect[] rects, int startOffset, int numRects) throws NullPointerException, IndexOutOfBoundsException {
         int endOffset = startOffset + numRects;
         for (int i = startOffset; i < endOffset; i++) {
             if (rects[i] == null) {
@@ -278,9 +275,13 @@ public final class RectBuilder implements Cloneable, Serializable {
      * @param amt
      * @return this
      * @throws IllegalArgumentException if amt was infinite or NaN
+     * @throws IllegalStateException if rect was invalid
      */
-    public RectBuilder buffer(double amt) throws IllegalArgumentException {
+    public RectBuilder buffer(double amt) throws IllegalArgumentException, IllegalStateException {
         Vect.check(amt, "Invalid buffer amount {0}");
+        if(!isValid()){
+            throw new IllegalStateException("Invalid rectangle");
+        }
         if (amt == 0) {
             return this;
         }
@@ -316,10 +317,14 @@ public final class RectBuilder implements Cloneable, Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof RectBuilder) {
             RectBuilder rect = (RectBuilder) obj;
-            return (minX == rect.minX)
-                    && (minY == rect.minY)
-                    && (maxX == rect.maxX)
-                    && (maxY == rect.maxY);
+            if(valid){
+                return (minX == rect.minX)
+                        && (minY == rect.minY)
+                        && (maxX == rect.maxX)
+                        && (maxY == rect.maxY);
+            }else{
+                return !rect.valid;
+            }
         } else {
             return false;
         }
