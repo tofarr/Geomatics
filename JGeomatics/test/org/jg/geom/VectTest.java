@@ -391,6 +391,6 @@ public class VectTest {
     
     @Test
     public void testBuffer(){
-        fail("Test case is a prototype");
+        fail("Test case is a prototype!");
     }
 }
