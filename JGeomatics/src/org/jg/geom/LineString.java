@@ -2,6 +2,7 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import org.jg.util.Network;
+import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 
 /**
@@ -408,4 +409,9 @@ public class LineString implements Geom {
 //        }
 //
 //    }
+
+    @Override
+    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

@@ -3,6 +3,7 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.Serializable;
 import org.jg.util.Network;
+import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 
 /**
@@ -24,5 +25,7 @@ public interface Geom extends Cloneable, Serializable {
     void toString(Appendable appendable) throws NullPointerException, GeomException;
 
     void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException;
+
+    Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException;
 
 }

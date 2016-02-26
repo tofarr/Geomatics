@@ -585,6 +585,11 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
+    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public int compareTo(Line other) {
         return compare(ax, ay, bx, by, other.ax, other.ay, other.bx, other.by);
     }

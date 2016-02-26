@@ -9,6 +9,7 @@ import java.text.MessageFormat;
 import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.VectList;
 
 /**
  * Immutable vector
@@ -198,6 +199,131 @@ public final class Vect implements Geom, Comparable<Vect> {
     public void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException {
         network.addVertex(this);
     }
+
+    @Override
+    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+        check(amt, "Invalid buffer amt {0}");
+        check(amt, "Invalid flatness {0}");
+        if(amt <= 0){
+            throw new IllegalArgumentException("Invalid flatness "+flatness);
+        }
+        if(amt == 0){
+            return this;
+        }else if(amt < 0){
+            return null;
+        }else{
+            VectList result = new VectList();
+            double angleSize = 2 * Math.PI;
+            double sy = y - amt;
+            double radiusSq = amt * amt;
+            double flatnessSq = flatness * flatness;
+            linearizeArcSegment(x, y, angleSize, x, sy, x, sy, amt, radiusSq, flatnessSq, result);
+            return (result.size() > 2) ? new RingSet(new Ring(result)) : this;
+        }
+    }
+    
+    
+    //Assumes CCW direction
+    static void linearizeArc(double ox, double oy, double ax, double ay, double bx, double by, double radius, double flatness, VectList result) throws NullPointerException{
+        double angleA = Vect.directionInRadiansTo(ox, oy, ax, ay);
+        double angleB = Vect.directionInRadiansTo(ox, oy, bx, by);
+        double angleSize = angleB - angleA;
+        if(angleSize < 0){
+            angleSize += 2 * Math.PI;
+        }
+        double radiusSq = radius * radius;
+        double flatnessSq = flatness * flatness;
+        linearizeArcSegment(ox, oy, angleSize, ax, ay, bx, by, radius, radiusSq, flatnessSq, result);
+        result.add(bx, by);
+    }
+    
+    static void linearizeArc(double ox, double oy, double angleA, double angleB, double radius, double flatness, VectList result) throws NullPointerException{
+        double angleSize = angleB - angleA;
+        if(angleSize < 0){
+            angleSize += 2 * Math.PI;
+        }
+        double ax = ox + (Math.cos(angleA) * radius);
+        double ay = oy + (Math.sin(angleA) * radius);
+        double bx = ox + (Math.cos(angleB) * radius);
+        double by = oy + (Math.sin(angleB) * radius);
+        double radiusSq = radius * radius;
+        double flatnessSq = flatness * flatness;
+        linearizeArcSegment(ox, oy, angleSize, ax, ay, bx, by, radius, radiusSq, flatnessSq, result);
+        result.add(bx, by);
+    }
+    
+    private static void linearizeArcSegment(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
+            double radius, double radiusSq, double flatnessSq, VectList result){
+        
+        double mx = (ax + bx) / 2; //get mid point between a and b
+        double my = (ay + by) / 2;
+        
+        if(angleSize > (2 * Math.PI)){ // If angle is greater than 180 degrees, invert vector direction.
+            mx = ox + (ox - mx);
+            my = oy + (oy - my);
+        }
+        
+        double distSq = Vect.distSq(ox, oy, mx, my);
+        double diffSq = radiusSq - distSq;
+        if(diffSq <= flatnessSq){ // If the value is less than flatnes, simply add a - b will be added later
+            result.add(ax, ay);
+        }else{
+            
+            double nx = Math.pow(mx - ox, 2) * radius / distSq + ox; //calculate a new mid point
+            double ny = Math.pow(my - oy, 2) * radius / distSq + oy;
+            angleSize /= 2; // angle size is halved
+            
+            linearizeArcSegment(ox, oy, angleSize, ax, ay, nx, ny, radius, radiusSq, flatnessSq, result);
+            linearizeArcSegment(ox, oy, angleSize, nx, ny, bx, by, radius, radiusSq, flatnessSq, result);
+        }
+        
+    }
+
+//    /**
+//     * Get the number of segments in the linearized arc between the segments given
+//     * @param x origin x
+//     * @param y origin y
+//     * @param startAngle in radians
+//     * @param endAngle in radians
+//     * @param radius radius of arc
+//     * @param flatness densification factor
+//     * @param result list to store densified arc 
+//     * @throws IllegalArgumentException if radius or flatness wass <= 0, or any value was infinite or NaN
+//     * @throws NullPointerException if result was null
+//     */
+//    public static void densify(double x, double y, double startAngle, double endAngle, double radius, double flatness, VectList result) throws IllegalArgumentException, NullPointerException{
+//        check(startAngle, "Invalid startAngle {0}");
+//        check(endAngle, "Invalid endAngle {0}");
+//        check(radius, "Invalid radius {0}");
+//        if(radius <= 0){
+//            throw new IllegalArgumentException("Invalid radius "+radius);
+//        }
+//        check(flatness, "Invalid flatness {0}");
+//        if(flatness <= 0){
+//            throw new IllegalArgumentException("Invalid flatness "+flatness);
+//        }
+//        int numSegments = getNumSegments(startAngle, endAngle, radius, flatness);
+//        double segmentSize = (endAngle - startAngle) / numSegments;
+//        for(int i = 0; i <= numSegments; i++){
+//            double theta = (segmentSize * i) + startAngle;
+//            double sx = x + radius * Math.cos(theta);
+//            double sy = y + radius * Math.sin(theta);
+//            result.add(sx, sy);
+//        }
+//    }
+//    
+//    /**
+//     * Given the angles and radius given, get the number of segments required such that the difference between the radius and the 
+//     * line between the 2 segments is less than flatness
+//     */
+//    static int getNumSegments(double startAngle, double endAngle, double radius, double flatness) throws IllegalArgumentException{
+//        double theta = Math.asin(Math.sqrt(flatness / radius)) * 2;
+//        if(endAngle < startAngle){
+//            theta = -theta;
+//        }
+//        int numSegments = (int)Math.ceil((endAngle - startAngle) / theta);
+//        return numSegments;
+//    }
 
     /**
      * Determine if this vect matches the vector given within the tolerance

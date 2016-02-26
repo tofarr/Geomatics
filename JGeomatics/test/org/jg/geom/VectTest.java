@@ -388,4 +388,9 @@ public class VectTest {
         vect.addTo(network, 0);
         assertEquals("[[3,7]]", network.toString());
     }
+    
+    @Test
+    public void testBuffer(){
+        fail("Test case is a prototype");
+    }
 }

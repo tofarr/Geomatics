@@ -8,6 +8,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import org.jg.util.Network;
 import org.jg.util.Relate;
+import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 
 /**
@@ -380,6 +381,11 @@ public class Rect implements Geom {
     public void addBoundsTo(RectBuilder target) throws NullPointerException {
         target.addInternal(minX, minY);
         target.addInternal(maxX, maxY);
+    }
+
+    @Override
+    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
