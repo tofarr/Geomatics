@@ -1,6 +1,8 @@
 package org.jg.geom;
 
+import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.util.Set;
 import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.TransformBuilder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -21,34 +24,40 @@ import static org.junit.Assert.*;
 public class LineTest {
 
     @Test
-    public void testConstructor_4args() {
+    public void testValueOf() {
         Tolerance tolerance = new Tolerance(0.0001);
-        Line line = new Line(2, 5, 11, 19);
+        Line line = Line.valueOf(2, 5, 11, 19);
         assertEquals(line.ax, 2, 0.00001);
         assertEquals(line.ay, 5, 0.00001);
         assertEquals(line.bx, 11, 0.00001);
         assertEquals(line.by, 19, 0.00001);
         assertTrue(line.isValid(tolerance));
         try {
-            new Line(Double.NaN, 5, 11, 19);
+            Line.valueOf(Double.NaN, 5, 11, 19);
             fail("Exception expected");
         } catch (IllegalArgumentException ex) {
             //expected
         }
         try {
-            new Line(2, Double.POSITIVE_INFINITY, 11, 19);
+            Line.valueOf(2, Double.POSITIVE_INFINITY, 11, 19);
             fail("Exception expected");
         } catch (IllegalArgumentException ex) {
             //expected
         }
         try {
-            new Line(2, 5, Double.NEGATIVE_INFINITY, 19);
+            Line.valueOf(2, 5, Double.NEGATIVE_INFINITY, 19);
             fail("Exception expected");
         } catch (IllegalArgumentException ex) {
             //expected
         }
         try {
-            new Line(2, 5, 11, Double.NaN);
+            Line.valueOf(2, 5, 11, Double.NaN);
+            fail("Exception expected");
+        } catch (IllegalArgumentException ex) {
+            //expected
+        }
+        try {
+            Line.valueOf(2, 5, 2, 5);
             fail("Exception expected");
         } catch (IllegalArgumentException ex) {
             //expected
@@ -124,7 +133,7 @@ public class LineTest {
         Line line = new Line(50, 0, 100, 50);
         VectBuilder vect = new VectBuilder();
         assertTrue(line.project(0.5, Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(75, 25), vect);
+        assertEquals(new VectBuilder(75, 25), vect);
 
         assertTrue(line.project(0, Tolerance.DEFAULT, vect));
         assertEquals(line.getA(new VectBuilder()), vect);
@@ -139,9 +148,9 @@ public class LineTest {
         assertTrue(line.project(1.0000001, Tolerance.DEFAULT, vect));
         assertEquals(line.getB(new VectBuilder()), vect);
         assertFalse(line.project(2, Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(150, 100), vect);
+        assertEquals(new VectBuilder(150, 100), vect);
         assertFalse(line.project(-1, Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(0, -50), vect);
+        assertEquals(new VectBuilder(0, -50), vect);
 
         try {
             line.project(Double.NaN, Tolerance.DEFAULT, new VectBuilder());
@@ -168,23 +177,23 @@ public class LineTest {
         Line line = new Line(50, 0, 100, 50);
         VectBuilder vect = new VectBuilder();
         line.projectClosest(0.5, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(75, 25), vect);
+        assertEquals(new VectBuilder(75, 25), vect);
         line.projectClosest(0, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(50, 0), vect);
+        assertEquals(new VectBuilder(50, 0), vect);
         line.projectClosest(1, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(100, 50), vect);
+        assertEquals(new VectBuilder(100, 50), vect);
         line.projectClosest(-0.0000001, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(50, 0), vect);
+        assertEquals(new VectBuilder(50, 0), vect);
         line.projectClosest(0.0000001, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(50, 0), vect);
+        assertEquals(new VectBuilder(50, 0), vect);
         line.projectClosest(0.9999999, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(100, 50), vect);
+        assertEquals(new VectBuilder(100, 50), vect);
         line.projectClosest(1.01, new Tolerance(0.01), vect);
-        assertEquals(new Vect(100, 50), vect);
+        assertEquals(new VectBuilder(100, 50), vect);
         line.projectClosest(2, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(100, 50), vect);
+        assertEquals(new VectBuilder(100, 50), vect);
         line.projectClosest(-1, Tolerance.DEFAULT, vect);
-        assertEquals(new Vect(50, 0), vect);
+        assertEquals(new VectBuilder(50, 0), vect);
         try {
             line.projectClosest(Double.NaN, Tolerance.DEFAULT, vect);
             fail("Exception expected");
@@ -308,62 +317,62 @@ public class LineTest {
         assertFalse(line.intersectionLine(line, Tolerance.DEFAULT, vect)); // parallel lines do not intersect
 
         assertTrue(line.intersectionLine(new Line(2, 8, 6, 5), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(4, 6.5), vect);
+        assertEquals(new VectBuilder(4, 6.5), vect);
 
         assertTrue(line.intersectionLine(new Line(2, 2, 2, 10), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
 
         assertTrue(line.intersectionLine(new Line(2, 8, 8, 8), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(6, 8), vect);
+        assertEquals(new VectBuilder(6, 8), vect);
 
         assertTrue(line.intersectionLine(new Line(1, 5, 4, 5), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
 
         assertTrue(line.intersectionLine(new Line(1, 4.999999, 4, 4.999999), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
 
         assertTrue(line.intersectionLine(new Line(1, 5.000001, 4, 5.000001), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
 
         assertTrue(line.intersectionLine(new Line(2, 4, 2, 6), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
 
         assertTrue(line.intersectionLine(new Line(6, 6, 6, 10), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(6, 8), vect);
+        assertEquals(new VectBuilder(6, 8), vect);
 
         assertTrue(line.intersectionLine(new Line(6.0000001, 6, 6.0000001, 10), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(6, 8), vect);
+        assertEquals(new VectBuilder(6, 8), vect);
 
         line = Line.valueOf(2, 2, 10, 10);
 
         assertTrue(line.intersectionLine(new Line(4, 0, 0, 4), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 2), vect);
+        assertEquals(new VectBuilder(2, 2), vect);
 
         assertTrue(line.intersectionLine(new Line(3.999999, 0, 0, 3.999999), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 2), vect);
+        assertEquals(new VectBuilder(2, 2), vect);
 
         assertTrue(line.intersectionLine(new Line(8, 12, 12, 8), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(10, 10), vect);
+        assertEquals(new VectBuilder(10, 10), vect);
 
         assertTrue(line.intersectionLine(new Line(8.0000001, 12, 12, 8.0000001), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(10, 10), vect);
+        assertEquals(new VectBuilder(10, 10), vect);
 
         assertTrue(Line.valueOf(0, 0, 4, 4).intersectionLine(new Line(0, 9, 9, 0), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(4.5, 4.5), vect);
+        assertEquals(new VectBuilder(4.5, 4.5), vect);
 
         assertTrue(Line.valueOf(8, 8, 12, 12).intersectionLine(new Line(0, 9, 9, 0), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(4.5, 4.5), vect);
+        assertEquals(new VectBuilder(4.5, 4.5), vect);
 
         assertTrue(Line.valueOf(0, 9, 9, 0).intersectionLine(new Line(0, 0, 4, 4), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(4.5, 4.5), vect);
+        assertEquals(new VectBuilder(4.5, 4.5), vect);
 
         assertTrue(Line.valueOf(0, 9, 9, 0).intersectionLine(new Line(8, 8, 12, 12), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(4.5, 4.5), vect);
+        assertEquals(new VectBuilder(4.5, 4.5), vect);
 
         assertTrue(new Line(10, 0, 0, 0).intersectionLine(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(0, 0), vect);
+        assertEquals(new VectBuilder(0, 0), vect);
         assertTrue(new Line(0, 0, 10, 10).intersectionLine(new Line(0, 2, 2, 2), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 2), vect);
+        assertEquals(new VectBuilder(2, 2), vect);
 
         try {
             line.intersectionLine(null, Tolerance.DEFAULT, vect);
@@ -372,13 +381,13 @@ public class LineTest {
             //expected
         }
         try {
-            line.intersectionLine(new Line(0, 0, 4, 4), null, vect);
+            line.intersectionLine(new Line(0, 4, 4, 0), null, vect);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
         try {
-            line.intersectionLine(new Line(0, 0, 4, 4), Tolerance.DEFAULT, null);
+            line.intersectionLine(new Line(0, 4, 4, 0), Tolerance.DEFAULT, null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
@@ -391,32 +400,32 @@ public class LineTest {
         VectBuilder vect = new VectBuilder();
         assertFalse(line.intersectionSeg(line, Tolerance.DEFAULT, vect)); // parallel lines do not intersect
         assertTrue(line.intersectionSeg(new Line(2, 8, 6, 5), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(4, 6.5), vect);
+        assertEquals(new VectBuilder(4, 6.5), vect);
         assertTrue(line.intersectionSeg(new Line(2, 2, 2, 10), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
         assertTrue(line.intersectionSeg(new Line(2, 8, 8, 8), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(6, 8), vect);
+        assertEquals(new VectBuilder(6, 8), vect);
         assertTrue(line.intersectionSeg(new Line(1, 5, 4, 5), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
         assertTrue(line.intersectionSeg(new Line(1, 4.999999, 4, 4.999999), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
         assertTrue(line.intersectionSeg(new Line(1, 5.000001, 4, 5.000001), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
         assertTrue(line.intersectionSeg(new Line(2, 4, 2, 6), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 5), vect);
+        assertEquals(new VectBuilder(2, 5), vect);
         assertTrue(line.intersectionSeg(new Line(6, 6, 6, 10), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(6, 8), vect);
+        assertEquals(new VectBuilder(6, 8), vect);
         assertTrue(line.intersectionSeg(new Line(6.0000001, 6, 6.0000001, 10), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(6, 8), vect);
+        assertEquals(new VectBuilder(6, 8), vect);
         line = new Line(2, 2, 10, 10);
         assertTrue(line.intersectionSeg(new Line(4, 0, 0, 4), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 2), vect);
+        assertEquals(new VectBuilder(2, 2), vect);
         assertTrue(line.intersectionSeg(new Line(3.999999, 0, 0, 3.999999), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 2), vect);
+        assertEquals(new VectBuilder(2, 2), vect);
         assertTrue(line.intersectionSeg(new Line(8, 12, 12, 8), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(10, 10), vect);
+        assertEquals(new VectBuilder(10, 10), vect);
         assertTrue(line.intersectionSeg(new Line(8.0000001, 12, 12, 8.0000001), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(10, 10), vect);
+        assertEquals(new VectBuilder(10, 10), vect);
 
         assertFalse(new Line(0, 0, 4, 4).intersectionSeg(new Line(0, 9, 9, 0), Tolerance.DEFAULT, vect));
         assertFalse(new Line(8, 8, 12, 12).intersectionSeg(new Line(0, 9, 9, 0), Tolerance.DEFAULT, vect));
@@ -431,9 +440,9 @@ public class LineTest {
         assertFalse(new Line(10, 5, 5, 5).intersectionSeg(new Line(0, 10, 0, 0), Tolerance.DEFAULT, vect));
         assertFalse(new Line(10, 5, 5, 5).intersectionSeg(new Line(0, 4, 0, 0), Tolerance.DEFAULT, vect));
         assertTrue(new Line(0, 0, 10, 0).intersectionSeg(new Line(0.0000001, -1, 0.0000001, 1), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(0, 0), vect);
+        assertEquals(new VectBuilder(0, 0), vect);
         assertTrue(new Line(0, 0, 10, 10).intersectionSeg(new Line(0, 2, 2, 2), Tolerance.DEFAULT, vect));
-        assertEquals(new Vect(2, 2), vect);
+        assertEquals(new VectBuilder(2, 2), vect);
         assertFalse(new Line(0, 0, 2, 2).intersectionSeg(new Line(0, 5, 2, 3), Tolerance.DEFAULT, vect));
         assertFalse(new Line(0, 2, 2, 0).intersectionSeg(new Line(0, 3, 2, 5), Tolerance.DEFAULT, vect));
 
@@ -495,21 +504,41 @@ public class LineTest {
         str.setLength(0);
         new Line(1.1, 2.2, 3.3, 4.4).toString(str);
         assertEquals("[1.1,2.2,3.3,4.4]", str.toString());
+        try{
+            new Line(1, 2, 3, 4).toString(new Appendable(){
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
+            
+            });
+            fail("Exception Expected");
+        }catch(GeomException ex){
+        }
+        
     }
 
     @Test
     public void testClone() {
         Line a = new Line(1, 2, 3, 4);
-        assertNotSame(a, a.clone());
-        assertEquals(a, a.clone());
+        assertSame(a, a.clone());
     }
 
     @Test
     public void testNormalize() {
         Line a = new Line(1, 2, 3, 4);
         assertEquals(new Line(1, 2, 3, 4), a.normalize());
-        assertSame(a, Line.valueOf(3, 2, 1, 1).normalize());
-        assertEquals(new Line(1, 1, 3, 2), a);
+        assertEquals(a, Line.valueOf(3, 4, 1, 2).normalize());
     }
 
     @Test
@@ -518,7 +547,6 @@ public class LineTest {
         assertTrue(a.isValid(Tolerance.DEFAULT));
         assertTrue(Line.valueOf(1, 2, 1, 4).isValid(Tolerance.DEFAULT));
         assertTrue(Line.valueOf(1, 2, 3, 2).isValid(Tolerance.DEFAULT));
-        assertFalse(Line.valueOf(1, 2, 1, 2).isValid(Tolerance.DEFAULT));
         assertFalse(Line.valueOf(1, 2, 1.01, 2).isValid(new Tolerance(0.1)));
         assertFalse(Line.valueOf(1, 2, 1, 2.01).isValid(new Tolerance(0.1)));
     }
@@ -566,193 +594,6 @@ public class LineTest {
         assertEquals(-1, b.compareTo(a));
     }
 
-    /**
-     * Test of valueOf method, of class Line.
-     */
-    @Test
-    public void testValueOf() {
-        System.out.println("valueOf");
-        double ax = 0.0;
-        double ay = 0.0;
-        double bx = 0.0;
-        double by = 0.0;
-        Line expResult = null;
-        Line result = Line.valueOf(ax, ay, bx, by);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getAx method, of class Line.
-     */
-    @Test
-    public void testGetAx() {
-        System.out.println("getAx");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getAx();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getAy method, of class Line.
-     */
-    @Test
-    public void testGetAy() {
-        System.out.println("getAy");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getAy();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getBx method, of class Line.
-     */
-    @Test
-    public void testGetBx() {
-        System.out.println("getBx");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getBx();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getBy method, of class Line.
-     */
-    @Test
-    public void testGetBy() {
-        System.out.println("getBy");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getBy();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getA method, of class Line.
-     */
-    @Test
-    public void testGetA_0args() {
-        System.out.println("getA");
-        Line instance = null;
-        Vect expResult = null;
-        Vect result = instance.getA();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getB method, of class Line.
-     */
-    @Test
-    public void testGetB_0args() {
-        System.out.println("getB");
-        Line instance = null;
-        Vect expResult = null;
-        Vect result = instance.getB();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getA method, of class Line.
-     */
-    @Test
-    public void testGetA_VectBuilder() {
-        System.out.println("getA");
-        VectBuilder target = null;
-        Line instance = null;
-        VectBuilder expResult = null;
-        VectBuilder result = instance.getA(target);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getB method, of class Line.
-     */
-    @Test
-    public void testGetB_VectBuilder() {
-        System.out.println("getB");
-        VectBuilder target = null;
-        Line instance = null;
-        VectBuilder expResult = null;
-        VectBuilder result = instance.getB(target);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getMid method, of class Line.
-     */
-    @Test
-    public void testGetMid() {
-        System.out.println("getMid");
-        Line instance = null;
-        Vect expResult = null;
-        Vect result = instance.getMid();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getLength method, of class Line.
-     */
-    @Test
-    public void testGetLength() {
-        System.out.println("getLength");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getLength();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getLengthSq method, of class Line.
-     */
-    @Test
-    public void testGetLengthSq() {
-        System.out.println("getLengthSq");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getLengthSq();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getDydx method, of class Line.
-     */
-    @Test
-    public void testGetDydx() {
-        System.out.println("getDydx");
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.getDydx();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
     @Test
     public void testGetDirectionInRadians() {
         assertEquals(0, Line.valueOf(0, 0, 10, 0).getDirectionInRadians(), 0.00001);
@@ -761,274 +602,52 @@ public class LineTest {
         assertEquals(Math.PI*3/2, Line.valueOf(0, 0, 0, -10).getDirectionInRadians(), 0.00001);
         assertEquals(Math.PI/4, Line.valueOf(0, 0, 10, 10).getDirectionInRadians(), 0.00001);
     }
-
-    /**
-     * Test of sign method, of class Line.
-     */
-    @Test
-    public void testSign_Vect_Tolerance() {
-        System.out.println("sign");
-        Vect vect = null;
-        Tolerance tolerance = null;
-        Line instance = null;
-        int expResult = 0;
-        int result = instance.sign(vect, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of sign method, of class Line.
-     */
-    @Test
-    public void testSign_Vect() {
-        System.out.println("sign");
-        Vect vect = null;
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.sign(vect);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of distLineVectSq method, of class Line.
-     */
-    @Test
-    public void testDistLineVectSq() {
-        System.out.println("distLineVectSq");
-        Vect vect = null;
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.distLineVectSq(vect);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of pntLineDistSq method, of class Line.
-     */
-    @Test
-    public void testPntLineDistSq() {
-        System.out.println("pntLineDistSq");
-        double ax = 0.0;
-        double ay = 0.0;
-        double bx = 0.0;
-        double by = 0.0;
-        double x = 0.0;
-        double y = 0.0;
-        double expResult = 0.0;
-        double result = Line.pntLineDistSq(ax, ay, bx, by, x, y);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of distSegVectSq method, of class Line.
-     */
+    
     @Test
     public void testDistSegVectSq() {
-        System.out.println("distSegVectSq");
-        Vect vect = null;
-        Line instance = null;
-        double expResult = 0.0;
-        double result = instance.distSegVectSq(vect);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Line a = Line.valueOf(5, 7, 11, 15);
+        assertEquals(0, a.distSegVectSq(Vect.valueOf(5, 7)), 0.00001);
+        assertEquals(25, a.distSegVectSq(Vect.valueOf(1, 4)), 0.00001);
+        assertEquals(25, a.distSegVectSq(Vect.valueOf(9, 4)), 0.00001);
+        assertEquals(25, a.distSegVectSq(Vect.valueOf(4, 14)), 0.00001);
+        assertEquals(25, a.distSegVectSq(Vect.valueOf(12, 8)), 0.00001);
+        assertEquals(25, a.distSegVectSq(Vect.valueOf(14, 19)), 0.00001);
     }
 
-    /**
-     * Test of pntSegDistSq method, of class Line.
-     */
-    @Test
-    public void testPntSegDistSq() {
-        System.out.println("pntSegDistSq");
-        double ax = 0.0;
-        double ay = 0.0;
-        double bx = 0.0;
-        double by = 0.0;
-        double x = 0.0;
-        double y = 0.0;
-        double expResult = 0.0;
-        double result = Line.pntSegDistSq(ax, ay, bx, by, x, y);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getDenom method, of class Line.
-     */
-    @Test
-    public void testGetDenom() {
-        System.out.println("getDenom");
-        double iax = 0.0;
-        double iay = 0.0;
-        double ibx = 0.0;
-        double iby = 0.0;
-        double jax = 0.0;
-        double jay = 0.0;
-        double jbx = 0.0;
-        double jby = 0.0;
-        double expResult = 0.0;
-        double result = Line.getDenom(iax, iay, ibx, iby, jax, jay, jbx, jby);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of intersectionLineInternal method, of class Line.
-     */
-    @Test
-    public void testIntersectionLineInternal() {
-        System.out.println("intersectionLineInternal");
-        double ax = 0.0;
-        double ay = 0.0;
-        double bx = 0.0;
-        double by = 0.0;
-        double jax = 0.0;
-        double jay = 0.0;
-        double jbx = 0.0;
-        double jby = 0.0;
-        Tolerance tolerance = null;
-        VectBuilder target = null;
-        boolean expResult = false;
-        boolean result = Line.intersectionLineInternal(ax, ay, bx, by, jax, jay, jbx, jby, tolerance, target);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of intersectionSegInternal method, of class Line.
-     */
-    @Test
-    public void testIntersectionSegInternal() {
-        System.out.println("intersectionSegInternal");
-        double ax = 0.0;
-        double ay = 0.0;
-        double bx = 0.0;
-        double by = 0.0;
-        double jax = 0.0;
-        double jay = 0.0;
-        double jbx = 0.0;
-        double jby = 0.0;
-        Tolerance tolerance = null;
-        VectBuilder target = null;
-        boolean expResult = false;
-        boolean result = Line.intersectionSegInternal(ax, ay, bx, by, jax, jay, jbx, jby, tolerance, target);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of addBoundsTo method, of class Line.
-     */
     @Test
     public void testAddBoundsTo() {
-        System.out.println("addBoundsTo");
-        RectBuilder target = null;
-        Line instance = null;
-        instance.addBoundsTo(target);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        RectBuilder bounds = new RectBuilder();
+        Line.valueOf(4,5,2,8).addBoundsTo(bounds);
+        assertEquals(new RectBuilder(2,5,4,8), bounds);
+        Line.valueOf(9,11,3,6).addBoundsTo(bounds);
+        assertEquals(new RectBuilder(2,5,9,11), bounds);
     }
 
-    /**
-     * Test of transform method, of class Line.
-     */
     @Test
     public void testTransform() {
-        System.out.println("transform");
-        Transform transform = null;
-        Line instance = null;
-        Line expResult = null;
-        Line result = instance.transform(transform);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Transform transform = new TransformBuilder().flipYAround(5).translate(2, 0).build();
+        Line a = Line.valueOf(2,3,7,11);
+        Line b = a.transform(transform);
+        assertEquals("[4,7,9,-1]", b.toString());
     }
 
-    /**
-     * Test of pathIterator method, of class Line.
-     */
     @Test
     public void testPathIterator() {
-        System.out.println("pathIterator");
-        Line instance = null;
-        PathIterator expResult = null;
-        PathIterator result = instance.pathIterator();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Line a = Line.valueOf(2, 3, 7, 13);
+        Path2D.Double path = new Path2D.Double();
+        path.append(a.pathIterator(), true);
+        Rectangle2D bounds = path.getBounds2D();
+        assertEquals(2, bounds.getMinX(), 0.0001);
+        assertEquals(3, bounds.getMinY(), 0.0001);
+        assertEquals(7, bounds.getMaxX(), 0.0001);
+        assertEquals(13, bounds.getMaxY(), 0.0001);
     }
 
-    /**
-     * Test of addTo method, of class Line.
-     */
     @Test
     public void testAddTo() {
-        System.out.println("addTo");
-        Network network = null;
-        double flatness = 0.0;
-        Line instance = null;
-        instance.addTo(network, flatness);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of compare method, of class Line.
-     */
-    @Test
-    public void testCompare() {
-        System.out.println("compare");
-        double iax = 0.0;
-        double iay = 0.0;
-        double ibx = 0.0;
-        double iby = 0.0;
-        double jax = 0.0;
-        double jay = 0.0;
-        double jbx = 0.0;
-        double jby = 0.0;
-        int expResult = 0;
-        int result = Line.compare(iax, iay, ibx, iby, jax, jay, jbx, jby);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of toString method, of class Line.
-     */
-    @Test
-    public void testToString_0args() {
-        System.out.println("toString");
-        Line instance = null;
-        String expResult = "";
-        String result = instance.toString();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of toString method, of class Line.
-     */
-    @Test
-    public void testToString_Appendable() {
-        System.out.println("toString");
-        Appendable appendable = null;
-        Line instance = null;
-        instance.toString(appendable);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Line a = Line.valueOf(2, 3, 7, 13);
+        Network network = new Network();
+        a.addTo(network, 0);
+        assertEquals("[[2,3, 7,13]]", network.toString());
     }
 }

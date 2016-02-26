@@ -267,10 +267,10 @@ public class Line implements Geom, Comparable<Line> {
      * @throws NullPointerException if vect was null
      */
     public double distLineVectSq(Vect vect) throws NullPointerException {
-        return pntLineDistSq(ax, ay, bx, by, vect.getX(), vect.getY());
+        return vectLineDistSq(ax, ay, bx, by, vect.getX(), vect.getY());
     }
 
-    static double pntLineDistSq(double ax, double ay, double bx, double by, double x, double y) {
+    static double vectLineDistSq(double ax, double ay, double bx, double by, double x, double y) {
         bx -= ax;
         by -= ay;
         x -= ax;
