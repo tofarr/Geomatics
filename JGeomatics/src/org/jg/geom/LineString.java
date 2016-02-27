@@ -4,6 +4,7 @@ import java.awt.geom.PathIterator;
 import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.VectList;
 
 /**
  *
@@ -42,10 +43,33 @@ public class LineString implements Geom {
     }
 
     @Override
-    public void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException {
+    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
+    
+    
+//    public double getLength() {
+//        return getLength(vects);
+//    }
+
+    static double getLength(VectList vects) {
+        double ret = 0;
+        if (!vects.isEmpty()) {
+            int i = vects.size() - 1;
+            double bx = vects.getX(i);
+            double by = vects.getY(i);
+            while (--i >= 0) {
+                double ax = vects.getX(i);
+                double ay = vects.getY(i);
+                ret += Math.sqrt(Vect.distSq(ax, ay, bx, by));
+                bx = ax;
+                by = ay;
+            }
+        }
+        return ret;
+    }
+
     
     
     
@@ -314,27 +338,6 @@ public class LineString implements Geom {
 //        }
 //    }
 //
-//    public double getLength() {
-//        return getLength(vects);
-//    }
-//
-//    static double getLength(VectList vects) {
-//        double ret = 0;
-//        if (!vects.isEmpty()) {
-//            int i = vects.size() - 1;
-//            double bx = vects.getX(i);
-//            double by = vects.getY(i);
-//            while (--i >= 0) {
-//                double ax = vects.getX(i);
-//                double ay = vects.getY(i);
-//                ret = Math.sqrt(Vect.distSq(ax, ay, bx, by));
-//                bx = ax;
-//                by = ay;
-//            }
-//        }
-//        return ret;
-//    }
-//
 //    @Override
 //    public String toString() {
 //        return vects.toString();
@@ -411,7 +414,7 @@ public class LineString implements Geom {
 //    }
 
     @Override
-    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

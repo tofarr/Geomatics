@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Network;
 import org.jg.util.Relate;
+import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
 import org.junit.Test;
@@ -534,7 +535,7 @@ public class RectTest {
     public void testAddTo() {
         Network network = new Network();
         Rect a = Rect.valueOf(3, 7, 13, 29);
-        a.addTo(network, 0);
+        a.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[3,7, 13,7, 13,29, 3,29, 3,7]]", network.toString());
     }
 }

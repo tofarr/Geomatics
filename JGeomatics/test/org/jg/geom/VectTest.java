@@ -14,6 +14,7 @@ import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
+import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -383,14 +384,78 @@ public class VectTest {
     public void testAddTo() {
         Vect vect = Vect.valueOf(3, 7);
         Network network = new Network();
-        vect.addTo(network, 0);
+        vect.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[3,7]]", network.toString());
-        vect.addTo(network, 0);
+        vect.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[3,7]]", network.toString());
     }
     
     @Test
     public void testBuffer(){
-        fail("Test case is a prototype!");
+        Vect vect = Vect.valueOf(3, 7);
+        RingSet ringSet = (RingSet)vect.buffer(2, new Tolerance(0.5));
+        assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
+        assertEquals(Math.PI * 4, ringSet.getArea(), 0.5);
+        assertEquals(Math.PI * 4, ringSet.ring.getLength(), 0.5);
+        
+        ringSet = (RingSet)vect.buffer(2, new Tolerance(0.1));
+        assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
+        assertEquals(Math.PI * 4, ringSet.getArea(), 0.1);
+        assertEquals(Math.PI * 4, ringSet.ring.getLength(), 0.1);
+        
+        assertNull(vect.buffer(-1, new Tolerance(0.1)));
+        assertSame(vect, vect.buffer(0, new Tolerance(0.1)));
+        assertSame(vect, vect.buffer(2, new Tolerance(2)));
+    }
+    
+    @Test
+    public void testLinearizeArc(){
+        VectList result = new VectList();
+        Vect.linearizeArc(0, 0, 0, 2, 2, 0, 2, 0.1, result);
+        result.add(0, 0).add(0, 2);
+        Rect bounds = result.getBounds();
+        assertEquals(-2, bounds.minX, 0.1);
+        assertEquals(-2, bounds.minY, 0.1);
+        assertEquals(2, bounds.maxX, 0.1);
+        assertEquals(2, bounds.maxY, 0.1);
+        assertEquals(Math.PI * 3, Ring.getArea(result), 0.1);
+        assertEquals(Math.PI * 3 + 4, LineString.getLength(result), 0.2);
+        
+        result.clear().add(0, 0);
+        Vect.linearizeArc(0, 0, 2, 0, 0, 2, 2, 0.1, result);
+        result.add(0, 0);
+        bounds = result.getBounds();
+        assertEquals(0, bounds.minX, 0.1);
+        assertEquals(0, bounds.minY, 0.1);
+        assertEquals(2, bounds.maxX, 0.1);
+        assertEquals(2, bounds.maxY, 0.1);
+        assertEquals(Math.PI, Ring.getArea(result), 0.1);
+        assertEquals(Math.PI + 4, LineString.getLength(result), 0.2);
+        
+        result.clear();
+        Vect.linearizeArc(0, 0, 2, 0, 0, 2, 1, 1, result);
+        assertEquals(new VectList(0, 0), result);
+        
+        result.clear();
+        Vect.linearizeArc(0, 0, Math.PI/2, 0, 2, 0.1, result);
+        result.add(0, 0).add(0, 2);
+        bounds = result.getBounds();
+        assertEquals(-2, bounds.minX, 0.1);
+        assertEquals(-2, bounds.minY, 0.1);
+        assertEquals(2, bounds.maxX, 0.1);
+        assertEquals(2, bounds.maxY, 0.1);
+        assertEquals(Math.PI * 3, Ring.getArea(result), 0.1);
+        assertEquals(Math.PI * 3 + 4, LineString.getLength(result), 0.2);
+        
+        result.clear().add(0, 0);
+        Vect.linearizeArc(0, 0, 0, Math.PI/2, 2, 0.1, result);
+        result.add(0, 0);
+        bounds = result.getBounds();
+        assertEquals(0, bounds.minX, 0.1);
+        assertEquals(0, bounds.minY, 0.1);
+        assertEquals(2, bounds.maxX, 0.1);
+        assertEquals(2, bounds.maxY, 0.1);
+        assertEquals(Math.PI, Ring.getArea(result), 0.1);
+        assertEquals(Math.PI + 4, LineString.getLength(result), 0.2);
     }
 }

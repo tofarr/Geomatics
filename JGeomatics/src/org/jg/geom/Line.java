@@ -580,12 +580,12 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException {
+    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
         network.addLink(ax, ay, bx, by);
     }
 
     @Override
-    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

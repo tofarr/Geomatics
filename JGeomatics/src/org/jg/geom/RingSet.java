@@ -25,18 +25,47 @@ public class RingSet implements Geom {
         this(ring, new ArrayList<RingSet>());
     }
 
+    
+    
     public void addInternal(RingSet child) {
 
+    }
+    
+    public double getArea(){
+        if(ring == null){
+            double ret = 0;
+            for(RingSet ringSet : children){
+                ret += ringSet.getArea();
+            }
+            return ret;
+        }else{
+            double ret = ring.getArea();
+            for(RingSet ringSet : children){
+                ret -= ringSet.getArea();
+            }
+            return ret;
+        }
     }
 
     @Override
     public Rect getBounds() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(children.isEmpty()){
+            return ring.getBounds();
+        }else{
+            RectBuilder bounds = new RectBuilder();
+            if(ring != null){
+                ring.addBoundsTo(bounds);
+            }
+            for(RingSet ringSet : children){
+                ringSet.addBoundsTo(bounds);
+            }
+            return bounds.build();
+        }
     }
 
     @Override
     public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        target.add(getBounds());
     }
 
     @Override
@@ -60,12 +89,12 @@ public class RingSet implements Geom {
     }
 
     @Override
-    public void addTo(Network network, double flatness) throws NullPointerException, IllegalArgumentException {
+    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Geom buffer(double amt, double flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

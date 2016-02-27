@@ -830,7 +830,16 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
 
     @Override
     public String toString() {
-        if (size > 50) { //Large list - just print summary
+        return toString(true);
+    }
+
+    /**
+     * Convert this list to a string
+     * @param summarize true if shortened format may be used, false otherwise
+     * @return string representation of this list
+     */
+    public String toString(boolean summarize) {
+        if ((summarize) && size > 50) { //Large list - just print summary
             return "{size:" + size + ", bounds:" + getBounds() + "}";
         } else {
             StringWriter str = new StringWriter();
@@ -838,7 +847,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
             return str.toString();
         }
     }
-
+    
     /**
      * Get a string representing this path in the format [x0,y0, x1,y1, ...
      * xn,yn]

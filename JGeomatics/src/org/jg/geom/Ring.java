@@ -24,32 +24,41 @@ public class Ring implements Serializable, Cloneable {
         this.vects = vects;
     }
 
-//    /*public Rect getBounds(Rect bounds){
-//     return vects.getBounds(bounds);
-//     }*/
-//    public double getArea() {
-//        return getArea(vects);
-//    }
-//
-//    static double getArea(VectList vects) throws NullPointerException, IndexOutOfBoundsException {
-//        int index = vects.size();
-//        Vect b = vects.get(--index, new Vect());
-//        Vect a = new Vect();
-//        double area = 0;
-//        while (index > 0) {
-//            vects.get(--index, a);
-//            area += (b.x * a.y) - (a.x * b.y);
-//            Vect c = a;
-//            a = b;
-//            b = c;
-//        }
-//        area /= 2;
-//        return area;
-//    }
-//
-//    public double getLength() {
-//        return LineString.getLength(vects);
-//    }
+    /*public Rect getBounds(Rect bounds){
+     return vects.getBounds(bounds);
+     }*/
+    public double getArea() {
+        return getArea(vects);
+    }
+
+    static double getArea(VectList vects) throws NullPointerException, IndexOutOfBoundsException {
+        int index = vects.size();
+        double bx = vects.getX(--index);
+        double by = vects.getY(index);
+        double area = 0;
+        while (index > 0) {
+            double ax = vects.getX(--index);
+            double ay = vects.getY(index);
+            area += (ax * by) - (bx * ay);
+            bx = ax;
+            by = ay;
+        }
+        area /= 2;
+        return area;
+    }
+
+    public double getLength() {
+        return LineString.getLength(vects);
+    }
+    
+    public Rect getBounds(){
+        return vects.getBounds();
+    }
+    
+    public void addBoundsTo(RectBuilder bounds){
+        bounds.add(vects.getBounds());
+    }
+    
 //
 //    static VectList rotateMinFirst(VectList segment, VectList target) {
 //        int offset = 0;

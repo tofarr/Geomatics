@@ -647,7 +647,7 @@ public class LineTest {
     public void testAddTo() {
         Line a = Line.valueOf(2, 3, 7, 13);
         Network network = new Network();
-        a.addTo(network, 0);
+        a.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[2,3, 7,13]]", network.toString());
     }
 }
