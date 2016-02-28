@@ -10,6 +10,7 @@ import org.jg.util.Network;
 import org.jg.util.Relate;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.VectList;
 
 /**
  *
@@ -385,7 +386,26 @@ public class Rect implements Geom {
 
     @Override
     public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(amt == 0){
+            return this;
+        }else if(amt < 0){
+            return buffer(amt);
+        }
+        VectList result = new VectList();
+        VectBuilder vect = new VectBuilder();
+        
+        double _minX = minX - amt;
+        double _minY = minY - amt;
+        double _maxX = maxX + amt;
+        double _maxY = maxY + amt;
+        
+        Vect.linearizeArc(minX, minY, _minX, minY, minX, _minY, amt, tolerance.getTolerance(), result);
+        Vect.linearizeArc(maxX, minY, maxX, _minY, _maxX, minY, amt, tolerance.getTolerance(), result);
+        Vect.linearizeArc(maxX, maxY, _maxX, maxY, maxX, _maxY, amt, tolerance.getTolerance(), result);
+        Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, tolerance.getTolerance(), result);
+        result.add(_minX, minY);
+        
+        return new RingSet(new Ring(result));
     }
 
     @Override

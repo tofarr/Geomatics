@@ -1,7 +1,6 @@
 package org.jg.geom;
 
 import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -166,6 +165,55 @@ public class LineTest {
         }
         try {
             line.project(1, Tolerance.DEFAULT, null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+    }
+
+    @Test
+    public void testProjectOutward() {
+        Line line = new Line(50, 0, 100, 50);
+        VectBuilder vect = new VectBuilder();
+        assertTrue(line.projectOutward(0.5, Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(78, 22), Tolerance.DEFAULT));
+        assertTrue(line.projectOutward(0, Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(53, -3), Tolerance.DEFAULT));
+        assertTrue(line.projectOutward(1, Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(103, 47), Tolerance.DEFAULT));
+        assertTrue(line.projectOutward(-0.0000001, Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(53, -3), Tolerance.DEFAULT));
+        
+        assertTrue(line.projectOutward(0.5, -Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(72, 28), Tolerance.DEFAULT));
+        assertTrue(line.projectOutward(0, -Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(47, 3), Tolerance.DEFAULT));
+        assertTrue(line.projectOutward(1, -Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(97, 53), Tolerance.DEFAULT));
+        assertTrue(line.projectOutward(-0.0000001, -Math.sqrt(18), Tolerance.DEFAULT, vect));
+        assertTrue(vect.build().match(Vect.valueOf(47, 3), Tolerance.DEFAULT));
+        
+        
+        try {
+            line.projectOutward(Double.NaN, Math.sqrt(18), Tolerance.DEFAULT, new VectBuilder());
+            fail("Exception expected");
+        } catch (IllegalArgumentException ex) {
+            //expected
+        }
+        try {
+            line.projectOutward(1, Double.POSITIVE_INFINITY, Tolerance.DEFAULT, new VectBuilder());
+            fail("Exception expected");
+        } catch (IllegalArgumentException ex) {
+            //expected
+        }
+        try {
+            line.projectOutward(1, Math.sqrt(18), null, new VectBuilder());
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        try {
+            line.projectOutward(1, Math.sqrt(18), Tolerance.DEFAULT, null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
@@ -649,5 +697,21 @@ public class LineTest {
         Network network = new Network();
         a.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[2,3, 7,13]]", network.toString());
+    }
+    
+    @Test
+    public void testBuffer(){
+        Line a = Line.valueOf(2, 3, 7, 13);
+        assertNull(a.buffer(-1, Tolerance.DEFAULT));
+        assertSame(a, a.buffer(0, Tolerance.DEFAULT));
+        RingSet b = (RingSet)a.buffer(3, new Tolerance(0.1));
+        
+        Rect bounds = b.getBounds();
+        assertEquals(-1, bounds.minX, 0.1);
+        assertEquals(0, bounds.minY, 0.1);
+        assertEquals(10, bounds.maxX, 0.1);
+        assertEquals(16, bounds.maxY, 0.1);
+        assertEquals((Math.sqrt(125) * 6) + (Math.PI * 9), b.getArea(), 0.2);
+        assertEquals((Math.sqrt(125) * 2) + (Math.PI * 6), b.ring.getLength(), 0.1);
     }
 }

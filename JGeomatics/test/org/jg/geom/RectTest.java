@@ -370,6 +370,18 @@ public class RectTest {
         assertNull(Rect.valueOf(0, 0, 2, 10).buffer(-2));
         assertNull(Rect.valueOf(0, 0, 10, 2).buffer(-2));
     }
+    
+    @Test
+    public void testBuffer_Tolerance(){
+        Rect rect = Rect.valueOf(3, 7, 13, 23);
+        assertSame(rect, rect.buffer(0, Tolerance.DEFAULT));
+        assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Tolerance.DEFAULT));
+        RingSet ringSet = (RingSet)rect.buffer(2, new Tolerance(0.5));
+        
+        assertEquals(Rect.valueOf(1, 5, 15, 25), ringSet.getBounds());
+        assertEquals(264 + (Math.PI * 4), ringSet.getArea(), 0.5);
+        assertEquals(52 + (Math.PI * 4), ringSet.ring.getLength(), 0.5);
+    }
 
     @Test
     public void testHashCode() {

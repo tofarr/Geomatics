@@ -9,6 +9,7 @@ import java.io.IOException;
 import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.VectList;
 
 /**
  *
@@ -210,13 +211,18 @@ public class Line implements Geom, Comparable<Line> {
      * @throws NullPointerException if tolerance or target was null
      */
     public boolean project(double u, Tolerance tolerance, VectBuilder target) throws NullPointerException, IllegalArgumentException {
+        Vect.check(u, "Invalid u {0}");
+        return project(ax, ay, bx, by, u, tolerance, target);
+    }
+    
+    static boolean project(double ax, double ay, double bx, double by, double u, Tolerance tolerance, VectBuilder target){
         double x = (u * (bx - ax)) + ax;
         double y = (u * (by - ay)) + ay;
         if (tolerance.match(x, y, ax, ay)) {
-            getA(target);
+            target.set(ax, ay);
             return true;
         } else if (tolerance.match(x, y, bx, by)) {
-            getB(target);
+            target.set(bx, by);
             return true;
         } else {
             target.set(x, y);
@@ -224,6 +230,43 @@ public class Line implements Geom, Comparable<Line> {
         }
     }
 
+    /**
+     * Project the value given along the line, where 0 represents A and 1
+     * represents B. Tolerance is used to snap points to A or B if close enough.
+     * Return true if such snapping occurs, or u > 0 or u < 1. Returned point
+     * is projected outward a dist distFromLine from the line, where positive 
+     * values are on the right, negative values are on the left
+     *
+     * @param u
+     * @param distFromLine the distance from the line (positive on right, negative on left)
+     * @param tolerance tolerance for snapping to end points
+     * @param target target vector
+     * @return true if on segment, false otherwise
+     * @throws IllegalArgumentException if u was infinite or NaN
+     * @throws NullPointerException if tolerance or target was null
+     */
+    public boolean projectOutward(double u, double distFromLine, Tolerance tolerance, VectBuilder target) throws NullPointerException, IllegalArgumentException {
+        Vect.check(u, "Invalid u {0}");
+        Vect.check(distFromLine, "Invalid distance from line {0}");
+        return projectOutward(ax, ay, bx, by, u, distFromLine, tolerance, target);
+    }
+    
+    static boolean projectOutward(double ax, double ay, double bx, double by, double u, double distFromLine, Tolerance tolerance, VectBuilder target){
+        boolean ret = project(ax, ay, bx, by, u, tolerance, target);
+        double dx = bx - ax;
+        double dy = by - ay;
+        double len = Math.sqrt(dx * dx + dy * dy);
+        double mul = Math.abs(distFromLine) / len;
+        dx *= mul;
+        dy *= mul;
+        if(distFromLine < 0){
+            target.add(-dy, dx);
+        }else{
+            target.add(dy, -dx);
+        }
+        return ret;
+    }
+    
     /**
      * Project the value given along the line segment, where 0 represents A and
      * 1 represents B. Tolerance is used to snap points to A or B if close
@@ -586,7 +629,29 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(amt == 0){
+            return this;
+        }else if(amt < 0){
+            return null;
+        }
+        VectList result = new VectList();
+        VectBuilder vect = new VectBuilder();
+        
+        projectOutward(0, -amt, tolerance, vect);
+        double ix = vect.getX();
+        double iy = vect.getY();
+        projectOutward(0, amt, tolerance, vect);
+        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+        
+        projectOutward(1, amt, tolerance, vect);
+        double jx = vect.getX();
+        double jy = vect.getY();
+        projectOutward(1, -amt, tolerance, vect);
+        Vect.linearizeArc(bx, by, jx, jy, vect.getX(), vect.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+        
+        result.add(ix, iy);
+        
+        return new RingSet(new Ring(result));
     }
 
     @Override

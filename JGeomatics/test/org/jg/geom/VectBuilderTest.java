@@ -332,4 +332,16 @@ public class VectBuilderTest {
         assertFalse(new VectBuilder(1, 2).equals(new VectBuilder(-1, 2)));
         assertFalse(new VectBuilder(1, 2).equals((Object) null)); // equals null should not throw an NPE
     }
+    
+    @Test
+    public void testBuild(){
+        VectBuilder vect = new VectBuilder();
+        assertSame(Vect.ZERO, vect.build());
+        vect.set(1, 0);
+        assertEquals(Vect.valueOf(1, 0), vect.build());
+        vect.set(0, 2);
+        assertEquals(Vect.valueOf(0, 2), vect.build());
+        vect.set(2, 3);
+        assertEquals(Vect.valueOf(2, 3), vect.build());
+    }
 }

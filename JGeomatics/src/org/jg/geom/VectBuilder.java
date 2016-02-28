@@ -245,8 +245,15 @@ public final class VectBuilder implements Cloneable, Serializable, Comparable<Ve
         y /= scalar;
         return this;
     }
-
     
+    /**
+     * Create a vect based on this builder
+     * @return a vect based on this builder
+     */
+    public Vect build(){
+        return (x == 0) && (y == 0) ? Vect.ZERO : new Vect(x, y);
+    }
+
     /**
      * Write this vect to the DataOutput given
      *
