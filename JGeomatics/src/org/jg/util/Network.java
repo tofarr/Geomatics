@@ -260,7 +260,12 @@ public final class Network implements Externalizable, Cloneable {
     public boolean addLink(Vect a, Vect b) throws NullPointerException {
         return addLinkInternal(a.x, a.y, b.x, b.y);
     }
-
+    
+//does nothing if points are the same
+    public boolean addLink(VectBuilder a, VectBuilder b) throws NullPointerException {
+        return addLinkInternal(a.getX(), a.getY(), b.getX(), b.getY());
+    }
+    
     //does nothing if points are the same
     public boolean addLink(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         Vect.check(ax, ay);
@@ -374,21 +379,20 @@ public final class Network implements Externalizable, Cloneable {
     }
 
     public Network addAllLinks(VectList links) {
-        throw new UnsupportedOperationException();
-//        if (links.size() <= 1) {
-//            return this;
-//        }
-//        Vect a = new Vect();
-//        links.get(0, a);
-//        Vect b = new Vect();
-//        for (int i = 1; i < links.size(); i++) {
-//            links.get(i, b);
-//            addLink(a, b);
-//            Vect c = a;
-//            a = b;
-//            b = c;
-//        }
-//        return this;
+        if (links.size() <= 1) {
+            return this;
+        }
+        VectBuilder a = new VectBuilder();
+        links.getVect(0, a);
+        VectBuilder b = new VectBuilder();
+        for (int i = 1; i < links.size(); i++) {
+            links.getVect(i, b);
+            addLink(a, b);
+            VectBuilder c = a;
+            a = b;
+            b = c;
+        }
+        return this;
     }
 
     //Get all vectors, sorted from min to max

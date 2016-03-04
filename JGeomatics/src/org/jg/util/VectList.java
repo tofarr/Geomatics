@@ -1,9 +1,14 @@
 package org.jg.util;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jg.geom.GeomException;
 import org.jg.geom.Line;
 import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
@@ -826,6 +831,48 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         }
     }
     
+    /**
+     * Read a VectList from to the DataInput given
+     *
+     * @param in
+     * @return a VectList
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws GeomException if there was an IO error
+     */
+    public static VectList read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException{
+        try {
+            int size = in.readInt();
+            int max = size << 1;
+            double[] ords = new double[max];
+            for(int i = 0; i < max; i++){
+                double d = in.readDouble();
+                Vect.check(d, "Invalid ordinate {0}");
+                ords[i] = d;
+            }
+            return new VectList(ords, size, false);
+        } catch (IOException ex) {
+            throw new GeomException("Error reading VectList", ex);
+        }
+    }
+    
+    /**
+     * Write this VectList to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, GeomException{
+        try {
+            out.writeInt(size);
+            for(int i = 0, max = size << 1; i < max; i++){
+                out.writeDouble(ords[i]);
+            }
+        } catch (IOException ex) {
+            throw new GeomException("Error writing VectList", ex);
+        }
+    }
     
 
     @Override

@@ -173,6 +173,21 @@ public class VectTest {
         assertFalse(Vect.valueOf(2, 3).match(Vect.valueOf(2, -3), tolerance));
     }
 
+
+    @Test
+    public void testRelate() {
+        Tolerance tolerance = new Tolerance(0.15);
+        assertEquals(Relate.TOUCH, Vect.valueOf(2, 3).relate(Vect.valueOf(2, 3), tolerance));
+        assertEquals(Relate.TOUCH, Vect.valueOf(2, 3).relate(Vect.valueOf(2.1, 3), tolerance));
+        assertEquals(Relate.TOUCH, Vect.valueOf(2, 3).relate(new VectBuilder(2, 3.1), tolerance));
+        assertEquals(Relate.TOUCH, Vect.valueOf(2, 3).relate(new VectBuilder(2.1, 3.1), tolerance));
+        assertEquals(Relate.OUTSIDE, Vect.valueOf(2, 3).relate(Vect.valueOf(2, 3.2), tolerance));
+        assertEquals(Relate.OUTSIDE, Vect.valueOf(2, 3).relate(Vect.valueOf(2.2, 3), tolerance));
+        assertEquals(Relate.OUTSIDE, Vect.valueOf(2, 3).relate(new VectBuilder(2.2, 3.2), tolerance));
+        assertEquals(Relate.OUTSIDE, Vect.valueOf(2, 3).relate(new VectBuilder(-2, 3), tolerance));
+        assertEquals(Relate.OUTSIDE, Vect.valueOf(2, 3).relate(Vect.valueOf(2, -3), tolerance));
+    }
+
     @Test
     public void testCompare() {
         assertEquals(0, Vect.compare(1, 1, 1, 1));

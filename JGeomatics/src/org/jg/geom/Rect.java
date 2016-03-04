@@ -7,7 +7,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import org.jg.util.Network;
-import org.jg.util.Relate;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -408,6 +407,27 @@ public class Rect implements Geom {
         return new RingSet(new Ring(result));
     }
 
+    @Override
+    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+        return relateInternal(vect.x, vect.y, tolerance);
+    }
+
+    @Override
+    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+        return relateInternal(vect.getX(), vect.getY(), tolerance);
+    }
+
+    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException{
+        double t = tolerance.tolerance;
+        if((x < (minX - t)) || (x > (maxX + t)) || (y < (minY - t)) || (y > (maxY + t))){
+            return Relate.OUTSIDE;
+        }else if((x > (minX + t)) && (x < (maxX - t)) && (y > (minY + t)) && (y < (maxY - t))){
+            return Relate.INSIDE;
+        }else{
+            return Relate.TOUCH;
+        }
+    }
+    
     @Override
     public Rect clone() {
         return this;

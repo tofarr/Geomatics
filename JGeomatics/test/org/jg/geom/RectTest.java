@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Network;
-import org.jg.util.Relate;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
@@ -549,5 +548,43 @@ public class RectTest {
         Rect a = Rect.valueOf(3, 7, 13, 29);
         a.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[3,7, 13,7, 13,29, 3,29, 3,7]]", network.toString());
+    }
+    
+    @Test
+    public void testRelate_Tolerance(){
+        Rect a = Rect.valueOf(10, 10, 20, 20);
+        for (int x1 = 0; x1 < 30; x1 += 5) {
+            for (int y1 = 0; y1 < 30; y1 += 5) {
+                Vect b = Vect.valueOf(x1, y1);
+                Relate relate = a.relate(b, Tolerance.DEFAULT);
+                if ((x1 > a.minX) && (y1 > a.minY) && (x1 < a.maxX) && (y1 < a.maxY)) {
+                    assertEquals(Relate.INSIDE, relate);
+                } else if ((((x1 == a.minX) || (x1 == a.maxX)) && (y1 >= a.minY) && (y1 <= a.maxY))
+                        || (((y1 == a.minY) || (y1 == a.maxY)) && (x1 >= a.minX) && (x1 <= a.maxX))) {
+                    assertEquals(Relate.TOUCH, relate);
+                } else {
+                    assertEquals(Relate.OUTSIDE, relate);
+                }
+            }
+        }
+        assertEquals(Relate.INSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15), Tolerance.DEFAULT));
+        try {
+            a.relate((Vect) null, Tolerance.DEFAULT);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        try {
+            a.relate((VectBuilder) null, Tolerance.DEFAULT);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        try {
+            a.relate((Vect) null, Tolerance.DEFAULT);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
     }
 }

@@ -27,5 +27,9 @@ public interface Geom extends Cloneable, Serializable {
     void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException;
 
     Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException;
+    
+    Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException;
+    
+    Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException;
 
 }

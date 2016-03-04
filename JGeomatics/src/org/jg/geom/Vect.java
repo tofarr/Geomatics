@@ -215,6 +215,16 @@ public final class Vect implements Geom, Comparable<Vect> {
             return (result.size() > 2) ? new RingSet(new Ring(result)) : this;
         }
     }
+
+    @Override
+    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+        return match(vect, tolerance) ? Relate.TOUCH : Relate.OUTSIDE;
+    }
+
+    @Override
+    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+        return tolerance.match(x, y, vect.getX(), vect.getY()) ? Relate.TOUCH : Relate.OUTSIDE;
+    }
     
     //Assumes CCW direction
     static void linearizeArc(double ox, double oy, double ax, double ay, double bx, double by, double radius, double flatness, VectList result) throws NullPointerException{
@@ -378,7 +388,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     /**
-     * Write the vector given to the DataOutput given
+     * Write this vector to the DataOutput given
      *
      * @param out
      * @throws NullPointerException if out was null

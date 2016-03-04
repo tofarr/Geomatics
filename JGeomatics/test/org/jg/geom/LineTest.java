@@ -714,4 +714,24 @@ public class LineTest {
         assertEquals((Math.sqrt(125) * 6) + (Math.PI * 9), b.getArea(), 0.2);
         assertEquals((Math.sqrt(125) * 2) + (Math.PI * 6), b.ring.getLength(), 0.1);
     }
+    
+    @Test
+    public void testCounterClockwise(){
+        Line a = Line.valueOf(0, 0, 100, 100);
+        assertEquals(1, a.counterClockwise(new Vect(100, 0)));
+        assertEquals(-1, a.counterClockwise(new VectBuilder(0, 100)));
+        assertEquals(0, a.counterClockwise(Vect.valueOf(50, 50)));
+        assertEquals(1, a.counterClockwise(new VectBuilder(150, 150)));
+    }
+    
+    @Test
+    public void testRelate(){
+        Line a = Line.valueOf(0, 0, 100, 100);
+        assertEquals(Relate.TOUCH, a.relate(Vect.valueOf(50,50), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, a.relate(Vect.valueOf(51,50), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, a.relate(Vect.valueOf(50,49), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, a.relate(Vect.valueOf(51,50), new Tolerance(1)));
+        assertEquals(Relate.TOUCH, a.relate(new VectBuilder(50,49), new Tolerance(1)));
+        assertEquals(Relate.OUTSIDE, a.relate(new VectBuilder(101,101), Tolerance.DEFAULT));
+    }
 }

@@ -343,10 +343,10 @@ public class Line implements Geom, Comparable<Line> {
      * @throws NullPointerException if vect was null
      */
     public double distSegVectSq(Vect vect) throws NullPointerException {
-        return pntSegDistSq(ax, ay, bx, by, vect.getX(), vect.getY());
+        return distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY());
     }
 
-    static double pntSegDistSq(double ax, double ay, double bx, double by, double x, double y) {
+    static double distSegVectSq(double ax, double ay, double bx, double by, double x, double y) {
         bx -= ax;
         by -= ay;
         x -= ax;
@@ -627,6 +627,37 @@ public class Line implements Geom, Comparable<Line> {
         network.addLink(ax, ay, bx, by);
     }
 
+    /**
+     * Determine if the triangle formed by the points a, vect, b is counterclockwise
+     * @param vect vector
+     * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line segment ab
+     */
+    public int counterClockwise(Vect vect) throws NullPointerException{
+        return counterClockwise(ax, ay, bx, by, vect.x, vect.y);
+    }
+    
+    /**
+     * Determine if the triangle formed by the points a, vect, b is counterclockwise
+     * @param vect vector
+     * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line segment ab
+     */
+    public int counterClockwise(VectBuilder vect) throws NullPointerException{
+        return counterClockwise(ax, ay, bx, by, vect.getX(), vect.getY());
+    }
+    
+    static int counterClockwise(double ax, double ay, double bx, double by, double x, double y){
+        bx -= ax;
+        by -= ay;
+        x -= ax;
+        y -= ay;
+        double ccw = x * by - y * bx;
+        if (ccw == 0.0) { // Point is colinear - classify based on whether b is further away from a than point
+            ccw = ((x * x) + (y * y)) - ((bx * bx) + (by * by));
+            ccw = Math.max(ccw, 0); 
+        }
+        return Double.compare(ccw, 0);
+    }
+    
     @Override
     public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         if(amt == 0){
@@ -652,6 +683,17 @@ public class Line implements Geom, Comparable<Line> {
         result.add(ix, iy);
         
         return new RingSet(new Ring(result));
+    }
+
+    @Override
+    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+        return (distSegVectSq(vect) <= (tolerance.tolerance * tolerance.tolerance)) ? Relate.TOUCH : Relate.OUTSIDE;
+    }
+
+    @Override
+    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+        return (distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY()) <= (tolerance.tolerance * tolerance.tolerance))
+                ? Relate.TOUCH : Relate.OUTSIDE;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package org.jg.util;
+package org.jg.geom;
 
 /**
  *
