@@ -66,8 +66,16 @@ public final class RTree<E> {
      * bounds did not match the number of values
      */
     public RTree(Rect[] itemBounds, E[] itemValues) throws NullPointerException, IllegalArgumentException {
-        root = new SpatialNode<>(itemBounds, itemValues);
-        optimise();
+        if(itemBounds.length < SPLIT_SIZE){
+            root = new SpatialNode<>(itemBounds, itemValues);
+        }else{
+            if (itemBounds.length != itemValues.length) {
+                throw new IllegalArgumentException("Different numbers of arguments : " + itemBounds.length + "->" + itemValues.length);
+            }
+            RectBuilder bounds = new RectBuilder().addRects(itemBounds);
+            root = new SpatialNode<E>(null, null, bounds, itemBounds, itemValues, itemBounds.length);
+            optimise();
+        }
     }
 
     /**

@@ -56,6 +56,8 @@ public class LineString implements Geom {
             if ((ax == bx) && (ay == by)) {
                 vects.remove(index);
             }
+            bx = ax;
+            by = ay;
         }
         return new LineString(vects);
     }
@@ -297,11 +299,17 @@ public class LineString implements Geom {
         }
 
         VectList buffer = bufferInternal(vects, amt, tolerance);
-
-        //add to network
-        //remove any point from network which is too close to a line from this
+        
+        //Since the buffer may self intersect, we need to identify points of self intersection and elmiminate them.
+        
+        Network network = new Network();
+        network.addAllLinks(buffer);
+        network.explicitIntersections(tolerance);
+        
+        //remove any link from network with a mid point closer than the amt to one of the lines in this
         throw new UnsupportedOperationException("Not yet implemented");
-
+        
+        //return network.extractRingSet();
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
@@ -357,21 +365,36 @@ public class LineString implements Geom {
             by = cy;
         }
 
-        Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, vect);
+        Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, vect);
         result.add(vect);
 
         return result;
     }
 
     static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance tolerance, VectBuilder work, VectList result) {
-        if (Line.counterClockwise(ax, ay, cx, cy, bx, by) >= 0) { //if angle abc is acute, then this is easy - no linearize needed
-            //project outward distance from angle
-            double dx = ((bx - ax) + (bx - cx)) / 2;
-            double dy = ((by - ay) + (by - cy)) / 2;
-            double mul = amt / Math.sqrt((dx * dx) + (dy * dy));
-            dx *= mul;
-            dy *= mul;
-            result.add(bx + dx, by + dy);
+        if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
+            
+            double distAB = Math.sqrt(Vect.distSq(ax, ay, bx, by));
+            double distBC = Math.sqrt(Vect.distSq(cx, cy, bx, by));
+            
+            //now we analyse a vector n with an origin b
+            double ndx = ((ax - bx) / distAB + (cx - bx) / distBC) / 2; // get vector n
+            double ndy = ((ay - by) / distAB + (cy - by) / distBC) / 2;
+            
+            double dx = ndx + bx; // get a second point d on the line
+            double dy = ndy + by;
+            double mul = amt / Math.sqrt(Line.vectLineDistSq(ax, ay, bx, by, dx, dy));
+            dx = (dx - bx) * mul + bx; // move d such that it is the proper distance from line segments ab and bc
+            dy = (dy - by) * mul + by;
+            
+            
+            double distBD = Math.sqrt(Vect.distSq(bx, by, dx, dy));
+            
+            if((distBD < distAB) && (distBD < distBC)){
+                result.add(dx, dy);    
+            }
+            //TODO: There are probably other cases where additional points are required
+            
         } else {
             Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
             double ix = work.getX();

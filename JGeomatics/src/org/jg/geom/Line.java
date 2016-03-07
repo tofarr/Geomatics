@@ -290,6 +290,26 @@ public class Line implements Geom, Comparable<Line> {
             target.set(x, y);
         }
     }
+    
+    /**
+     * Get the point on the line closest to the point given
+     * 
+     * @param vect
+     * @param tolerance
+     * @param target
+     * @throws NullPointerException
+     */
+    public void projectOnToLine(Vect vect, Tolerance tolerance, VectBuilder target) throws NullPointerException{
+        projectOnToLineInternal(ax, ay, bx, by, vect.x, vect.y, tolerance, target);
+    }
+    
+    static void projectOnToLineInternal(double ax, double ay, double bx, double by, double x, double y, Tolerance tolerance, VectBuilder target){
+        double jax = x;
+        double jay = y;
+        double jbx = x + (by - ay);
+        double jby = y - (bx - ax);
+        intersectionLineInternal(ax, ay, bx, by, jax, jay, jbx, jby, Tolerance.DEFAULT, target);
+    }
 
     /**
      * Get the min distance from this line to the point given

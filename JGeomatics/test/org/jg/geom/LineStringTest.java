@@ -1,9 +1,13 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,6 +38,7 @@ public class LineStringTest {
         } catch (NullPointerException ex) {
         }
         assertEquals("[0,0, 10,0, 10,10, 20,10]", LineString.valueOf(new VectList().addAll(0, 0, 10, 0, 10, 10, 20, 10)).toString());
+        assertEquals("[0,0, 10,0, 10,10, 20,10]", LineString.valueOf(0, 0, 10, 0, 10, 0, 10, 10, 20, 10).toString());
     }
 
     @Test
@@ -247,63 +252,52 @@ public class LineStringTest {
         assertTrue(map.isEmpty());
     }
 
-    /**
-     * Test of read method, of class LineString.
-     */
+    
     @Test
-    public void testRead() {
-        System.out.println("read");
-        DataInput in = null;
-        LineString expResult = null;
-        LineString result = LineString.read(in);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testExternalize() throws Exception {
+        LineString a = LineString.valueOf(0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
+            out.writeObject(a);
+        }
+        LineString b;
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
+            b = (LineString) in.readObject();
+        }
+        assertEquals(a, b);
+        bout = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
+            a.write(out);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
+            b = LineString.read(in);
+        }
+        assertEquals(a, b);
     }
 
-    /**
-     * Test of write method, of class LineString.
-     */
-    @Test
-    public void testWrite() {
-        System.out.println("write");
-        DataOutput out = null;
-        LineString instance = null;
-        instance.write(out);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of buffer method, of class LineString.
-     */
     @Test
     public void testBuffer() {
-        System.out.println("buffer");
-        double amt = 0.0;
-        Tolerance tolerance = null;
-        LineString instance = null;
-        Geom expResult = null;
-        Geom result = instance.buffer(amt, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of bufferInternal method, of class LineString.
-     */
-    @Test
-    public void testBufferInternal() {
-        System.out.println("bufferInternal");
-        VectList vects = null;
-        double amt = 0.0;
-        Tolerance tolerance = null;
-        VectList expResult = null;
-        VectList result = LineString.bufferInternal(vects, amt, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Tolerance tolerance = new Tolerance(0.5);
+        LineString s = LineString.valueOf(37, 61);
+        assertNull(s.buffer(-1, tolerance)); // buffer out of existance
+        assertSame(s, s.buffer(0, tolerance)); // no op buffer
+        
+        // buffer a point
+        Geom g = s.buffer(5, tolerance); 
+        RingSet ringSet = (RingSet)g;
+        Rect bounds = ringSet.getBounds();
+        assertEquals(32, bounds.minX, 0.5);
+        assertEquals(56, bounds.minY, 0.5);
+        assertEquals(42, bounds.maxX, 0.5);
+        assertEquals(66, bounds.maxY, 0.5);
+        assertEquals(Math.PI * 25, ringSet.getArea(), 0.6);
+        assertEquals(Math.PI * 10, ringSet.ring.getLength(), 0.5);
+        
+        //buffer self crossing string
+        s = LineString.valueOf(20, 0, 20, 60, 60, 60, 60, 20, 0, 20);
+        Geom c = s.buffer(5, tolerance);
+        System.out.println(c);
+        
     }
 
     /**
@@ -311,18 +305,18 @@ public class LineStringTest {
      */
     @Test
     public void testProjectOutward() {
-        System.out.println("projectOutward");
-        double ax = 0.0;
-        double ay = 0.0;
-        double bx = 0.0;
-        double by = 0.0;
-        double cx = 0.0;
-        double cy = 0.0;
-        double amt = 0.0;
-        Tolerance tolerance = null;
-        VectBuilder work = null;
-        VectList result_2 = null;
-        LineString.projectOutward(ax, ay, bx, by, cx, cy, amt, tolerance, work, result_2);
+//        System.out.println("projectOutward");
+//        double ax = 0.0;
+//        double ay = 0.0;
+//        double bx = 0.0;
+//        double by = 0.0;
+//        double cx = 0.0;
+//        double cy = 0.0;
+//        double amt = 0.0;
+//        Tolerance tolerance = null;
+//        VectBuilder work = null;
+//        VectList result_2 = null;
+//        LineString.projectOutward(ax, ay, bx, by, cx, cy, amt, tolerance, work, result_2);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }

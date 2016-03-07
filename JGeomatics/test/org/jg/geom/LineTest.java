@@ -734,4 +734,13 @@ public class LineTest {
         assertEquals(Relate.TOUCH, a.relate(new VectBuilder(50,49), new Tolerance(1)));
         assertEquals(Relate.OUTSIDE, a.relate(new VectBuilder(101,101), Tolerance.DEFAULT));
     }
+    
+    @Test
+    public void testProjectOnToLine(){
+        Line line = Line.valueOf(3, 7, 14, 18);
+        VectBuilder target = new VectBuilder();
+        line.projectOnToLine(Vect.valueOf(14, 7), Tolerance.DEFAULT, target);
+        assertEquals(8.5, target.getX(), 0.00001);
+        assertEquals(12.5, target.getY(), 0.00001);
+    }
 }
