@@ -10,7 +10,9 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.jg.geom.GeomException;
 import org.jg.geom.Line;
 import org.jg.geom.Rect;
@@ -115,88 +117,6 @@ public final class Network implements Externalizable, Cloneable {
         return map.keySet(target);
     }
 
-    public VectList extractPoints(final VectList target) throws NullPointerException {
-        map.forEach(new VectMapProcessor<VectList>() {
-            @Override
-            public boolean process(double x, double y, VectList value) {
-                if (value.isEmpty()) {
-                    target.add(x, y);
-                }
-                return true;
-            }
-        });
-        return target;
-    }
-
-    public List<VectList> extractLines(boolean includePnts, List<VectList> target) throws NullPointerException {
-        final VectList allVectsSorted = getVects(new VectList(map.size()));
-        allVectsSorted.sort();
-        VectList path = new VectList();
-        for (int i = 0; i < allVectsSorted.size(); i++) {
-            double ax = allVectsSorted.getX(i);
-            double ay = allVectsSorted.getY(i);
-            VectList links = map.get(ax, ay);
-            switch (links.size()) {
-                case 0:
-                    if (includePnts) {
-                        VectList vects = new VectList(1);
-                        vects.addInternal(ax, ay);
-                        target.add(vects);
-                    }
-                    break;
-                case 2: {
-                    double bx = links.getX(0);
-                    double by = links.getY(0);
-                    double cx = links.getX(1);
-                    double cy = links.getY(1);
-                    if ((Vect.compare(ax, ay, bx, by) < 0) && (Vect.compare(ax, ay, cx, cy) < 0)) {
-                        path.clear();
-                        followLineString(ax, ay, bx, by, path);
-                        if ((ax == path.getX(path.size() - 1)) && (ay == path.getY(path.size() - 1))) {
-                            target.add(path);
-                            path = new VectList();
-                        }
-                    }
-                    break; // internal link. Do nothing
-                }
-                default: {
-                    path.clear();
-                    followLineString(ax, ay, links.getX(0), links.getY(0), path);
-                    double bx = links.getX(links.size() - 1);
-                    double by = links.getY(links.size() - 1);
-                    if (Vect.compare(ax, ay, bx, by) <= 0) {
-                        target.add(path);
-                        path = new VectList();
-                    }
-                }
-            }
-        }
-        return target;
-    }
-
-    void followLineString(double sx, double sy, double bx, double by, VectList result) {
-        double ax = sx;
-        double ay = sy;
-        result.addInternal(ax, ay);
-        while (true) {
-            result.addInternal(bx, by);
-            VectList links = map.get(bx, by);
-            if ((links.size() != 2) || ((sx == bx) && (sy == by))) {
-                return;
-            }
-            double cx = links.getX(0);
-            double cy = links.getY(0);
-            if ((cx == ax) && (cy == ay)) {
-                cx = links.getX(1);
-                cy = links.getY(1);
-            }
-            ax = bx;
-            ay = by;
-            bx = cx;
-            by = cy;
-        }
-    }
-
     public boolean addVertex(Vect vect) throws NullPointerException {
         return addVertexInternal(vect.x, vect.y);
     }
@@ -289,7 +209,7 @@ public final class Network implements Externalizable, Cloneable {
             links.add(ax, ay);
             map.put(bx, by, links);
         } else {
-            insertLink(bx, by, ax, by, links);
+            insertLink(bx, by, ax, ay, links);
         }
         numLinks++;
         cachedLinks = null;
@@ -332,6 +252,8 @@ public final class Network implements Externalizable, Cloneable {
     }
 
     public boolean removeLink(double ax, double ay, double bx, double by) throws IllegalArgumentException {
+        Vect.check(ax, ay);
+        Vect.check(bx, by);
         return removeLinkInternal(ax, ay, bx, by);
     }
 
@@ -394,6 +316,11 @@ public final class Network implements Externalizable, Cloneable {
         return target;
 
     }
+    
+    public RTree<Line> getLinks(RTree<Line> target){
+        target.addAll(getLinks());
+        return target;
+    }
 
     RTree<Line> getLinks() {
         RTree<Line> ret = cachedLinks;
@@ -436,99 +363,114 @@ public final class Network implements Externalizable, Cloneable {
     public boolean forOverlappingLinks(Rect rect, NodeProcessor<Line> processor) throws NullPointerException {
         return getLinks().forOverlapping(rect, processor);
     }
-    
-
-    //modifications during iteration are not permitted
-//    public Iter iterator() {
-//        return new Iter();
-//    }
+  
     //Make all points of self intersection explicit
     public Network explicitIntersections(Tolerance tolerance) {
-        throw new UnsupportedOperationException();
-//        final RTree<Line> lines = getLinks();
-//        final IntersectionFinder finder = new IntersectionFinder(tolerance);
-//        lines.root.get(new NodeProcessor<Line>() {
-//
-//            final Rect rect = new Rect();
-//
-//            @Override
-//            public boolean process(SpatialNode<Line> leaf, int index) {
-//                Line value = leaf.getItemValue(index);
-//                leaf.getItemBounds(index, rect);
-//                finder.reset(value);
-//                lines.root.getInteracting(rect, finder);
-//                VectList intersections = finder.intersections;
-//                if (intersections.size() > 0) {
-//                    Vect a = finder.a;
-//                    Vect b = finder.b;
-//                    Vect n = finder.intersection;
-//                    removeLink(a, b);
-//                    intersections.sort();
-//                    if (Vect.compare(value.ax, value.ay, value.bx, value.by) > 0) {
-//                        intersections.reverse();
-//                    }
-//                    for (int i = intersections.size(); i-- > 0;) {
-//                        intersections.get(i, n);
-//                        addLink(n, b);
-//                        Vect c = b;
-//                        b = n;
-//                        n = c;
-//                    }
-//                    addLink(a, b);
-//                }
-//                return true;
-//            }
-//
-//        });
-//        return this;
+        final RTree<Line> links = getLinks();
+        final IntersectionFinder finder = new IntersectionFinder(tolerance);
+        links.forEach(new NodeProcessor<Line>(){
+            @Override
+            public boolean process(Rect bounds, Line value) {
+                finder.reset(value);
+                links.forOverlapping(bounds, finder);
+                VectList intersections = finder.intersections;
+                if (intersections.size() > 0) {
+                    double ax = value.ax;
+                    double ay = value.ay;
+                    double cx = value.bx;
+                    double cy = value.by;
+                    removeLinkInternal(ax, ay, cx, cy);
+                    
+                    
+                    //intersections.sort(); // since a < b, sorting always puts in correct order - ORDER IS NOT ALWAYS CORRECT DUE TO ROUNDING ERRORS!!!
+                    for(int i = intersections.size(); i-- > 1;){
+                        double ix = intersections.getX(i);
+                        double iy = intersections.getY(i);
+                        double disq = Vect.distSq(ax, ay, ix, iy);
+                        for(int j = i; j-- > 0;){
+                            double jx = intersections.getX(j);
+                            double jy = intersections.getY(j);
+                            double djsq = Vect.distSq(ax, ay, jx, jy);
+                            if(disq < djsq){
+                                intersections.swap(i, j);
+                                ix = jx;
+                                iy = jy;
+                                disq = djsq;
+                            }
+                        }
+                    }
+                    
+                    for (int i = intersections.size(); i-- > 0;) {
+                        double bx = intersections.getX(i);
+                        double by = intersections.getY(i);
+                        addLinkInternal(bx, by, cx, cy);
+                        cx = bx;
+                        cy = by;
+                    }
+                    addLink(ax, ay, cx, cy);
+                }
+                return true;
+            }
+            
+        });
+        return this;
     }
 
     public Network snap(Tolerance tolerance) {
-        throw new UnsupportedOperationException();
-//        int size = map.size();
-//        int i = size - 1;
-//        if (i <= 0) {
-//            return this;
-//        }
-//        VectList vects = getVects(new VectList());
-//        Vect a = new Vect();
-//        Vect b = new Vect();
-//        vects.get(i, a);
-//        while (i-- > 0) {
-//            vects.get(i, a);
-//            int j = i;
-//            while (++j < size) {
-//                vects.get(j, b);
-//                if (!tolerance.match(a.getX(), b.getX())) {
-//                    break;
-//                }
-//                if (a.match(b, tolerance)) {
-//                    VectList links = map.get(b);
-//                    removeVertex(b);
-//                    for (int k = 0; k < links.size(); k++) {
-//                        links.get(k, b);
-//                        addLink(a, b);
-//                    }
-//                }
-//            }
-//        }
-//        return this;
+        int size = map.size();
+        int a = size - 1;
+        if (a <= 0) {
+            return this;
+        }
+        VectList vects = getVects(new VectList());
+        while (a-- > 0) {
+            double ax = vects.getX(a);
+            double ay = vects.getY(a);
+            int b = a;
+            while (++b < size) {
+                double bx = vects.getX(b);
+                double by = vects.getY(b);
+                if (!tolerance.match(ax, by)) {
+                    break;
+                }
+                if(tolerance.match(ax, ay, bx, by)){
+                    VectList links = map.get(bx, by);
+                    removeVertexInternal(bx, by);
+                    for (int k = 0; k < links.size(); k++) {
+                        addLinkInternal(ax, ay, links.getX(k), links.getY(k));
+                    }
+                }
+            }
+        }
+        return this;
     }
 
+    
+    public VectList extractPoints(final VectList target) throws NullPointerException {
+        map.forEach(new VectMapProcessor<VectList>() {
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                if (value.isEmpty()) {
+                    target.add(x, y);
+                }
+                return true;
+            }
+        });
+        return target;
+    }
+    
     public Collection<VectList> extractLines(Collection<VectList> results, boolean includePoints) {
         VectList vects = getVects(new VectList());
-        VectBuilder a = new VectBuilder();
-        VectBuilder b = new VectBuilder();
-        VectBuilder c = new VectBuilder();
         VectList result = new VectList();
         int numLinksProcessed = 0;
         for (int i = 0; i < vects.size(); i++) {
-            vects.getVect(i, a);
-            VectList links = map.get(a.getX(), a.getY());
+            double ax = vects.getX(i);
+            double ay = vects.getY(i);
+            VectList links = map.get(ax, ay);
             switch (links.size()) {
                 case 0:
                     if (includePoints) {
-                        results.add(new VectList().add(a.getX(), a.getY()));
+                        results.add(new VectList().add(ax, ay));
                     }
                     break;
                 case 2:
@@ -536,9 +478,10 @@ public final class Network implements Externalizable, Cloneable {
                     break;
                 default:
                     for (int j = 0; j < links.size(); j++) {
-                        links.getVect(j, b);
-                        result.clear().add(a);
-                        followLine(a, b, c, result);
+                        double bx = links.getX(j);
+                        double by = links.getY(j);
+                        result.clear().add(ax, ay);
+                        followLine(ax, ay, bx, by, result);
                         if (result.isOrdered()) {
                             results.add(result.clone());
                             numLinksProcessed += (result.size() - 1);
@@ -551,6 +494,9 @@ public final class Network implements Externalizable, Cloneable {
         }
 
         //Process rings in second pass
+        VectBuilder a = new VectBuilder();
+        VectBuilder b = new VectBuilder();
+        VectBuilder c = new VectBuilder();
         VectBuilder d = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, a);
@@ -563,7 +509,7 @@ public final class Network implements Externalizable, Cloneable {
                 //if both linked vertices are greater than the current one, then this may be the start point
                 //of an unconnected linear ring. All points on the ring will be greater than a
                 if ((a.compareTo(b) > 0) || (a.compareTo(c) > 0)) {
-                    break; // point was less than a - continue
+                    continue; // point was less than a - continue
                 }
 
                 //to begin, we pick the direction with the lower dydx
@@ -650,21 +596,23 @@ public final class Network implements Externalizable, Cloneable {
 //        return ret;
     }
 
-    private VectList followLine(VectBuilder a, VectBuilder b, VectBuilder c, VectList results) {
+    private VectList followLine(double ax, double ay, double bx, double by, VectList results) {
         while (true) {
-            results.add(b.getX(), b.getY());
-            VectList links = map.get(b.getX(), b.getY());
+            results.add(bx, by);
+            VectList links = map.get(bx, by);
             if (links.size() != 2) {
                 return results;
             }
-            links.getVect(1, c);
-            if (c.equals(a)) {
-                links.getVect(0, c);
+            double cx = links.getX(1);
+            double cy = links.getY(1);
+            if ((cx == ax) && (cy == ay)) {
+                cx = links.getX(0);
+                cy = links.getY(0);
             }
-            VectBuilder d = a;
-            a = b;
-            b = c;
-            c = d;
+            ax = bx;
+            ay = by;
+            bx = cx;
+            by = cy;
         }
     }
 
@@ -819,42 +767,6 @@ public final class Network implements Externalizable, Cloneable {
 //        }
 //    }
 //
-//    class IntersectionFinder implements NodeProcessor<Line> {
-//
-//        final Tolerance tolerance;
-//        Line i;
-//        final Vect a;
-//        final Vect b;
-//        final Vect intersection;
-//        final VectList intersections;
-//
-//        IntersectionFinder(Tolerance tolerance) {
-//            this.tolerance = tolerance;
-//            this.a = new Vect();
-//            this.b = new Vect();
-//            this.intersection = new Vect();
-//            this.intersections = new VectList();
-//        }
-//
-//        void reset(Line i) {
-//            this.i = i;
-//            this.i.getA(a);
-//            this.i.getB(b);
-//            this.intersections.clear();
-//        }
-//
-//        @Override
-//        public boolean process(SpatialNode<Line> node, int index) {
-//            Line j = node.getItemValue(index);
-//            if ((!i.equals(j)) && i.intersectionSeg(j, tolerance, intersection)) {
-//                if (!(a.equals(intersection) || b.equals(intersection))) {
-//                    intersections.add(intersection);
-//                }
-//            }
-//            return true;
-//        }
-//
-//    }
 //
 //    @Override
 //    public Network clone() {
@@ -867,4 +779,35 @@ public final class Network implements Externalizable, Cloneable {
 //        network.numLinks = numLinks;
 //        return network;
 //    }
+    
+    
+    class IntersectionFinder implements NodeProcessor<Line> {
+
+        final Tolerance tolerance;
+        Line i;
+        final VectList intersections;
+        final VectBuilder workingVect;
+
+        IntersectionFinder(Tolerance tolerance) {
+            this.tolerance = tolerance;
+            this.intersections = new VectList();
+            this.workingVect = new VectBuilder();
+        }
+
+        void reset(Line i) {
+            this.i = i;
+            this.intersections.clear();
+        }
+
+        @Override
+        public boolean process(Rect bounds, Line j) {
+            if ((!i.equals(j)) && i.intersectionSeg(j, tolerance, workingVect)) {
+                if((Vect.compare(i.ax, i.ay, workingVect.getX(), workingVect.getY()) != 0)
+                    && (Vect.compare(i.bx, i.by, workingVect.getX(), workingVect.getY()) != 0)){
+                    intersections.add(workingVect);
+                }
+            }
+            return true;
+        }
+    }
 }

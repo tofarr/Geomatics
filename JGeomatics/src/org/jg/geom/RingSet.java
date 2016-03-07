@@ -94,7 +94,7 @@ public class RingSet implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

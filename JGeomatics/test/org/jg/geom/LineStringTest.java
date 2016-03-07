@@ -215,7 +215,7 @@ public class LineStringTest {
     }
 
     @Test
-    public void testGetInteractingLines() {
+    public void testForInteractingLines() {
         LineString a = LineString.valueOf(0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20);
         final Map<Rect, Line> map = new HashMap<>();
         map.put(Rect.valueOf(0, 0, 0, 50), Line.valueOf(0, 0, 0, 50));
@@ -224,7 +224,7 @@ public class LineStringTest {
         map.put(Rect.valueOf(10, 0, 10, 40), Line.valueOf(10, 0, 10, 40));
         map.put(Rect.valueOf(10, 40, 40, 40), Line.valueOf(10, 40, 40, 40));
         
-        assertTrue(a.getInteractingLines(Rect.valueOf(0, 40, 10, 50), new NodeProcessor<Line>(){
+        assertTrue(a.forInteractingLines(Rect.valueOf(0, 40, 10, 50), new NodeProcessor<Line>(){
             @Override
             public boolean process(Rect bounds, Line value) {
                 assertEquals(map.remove(bounds), value);
@@ -236,12 +236,12 @@ public class LineStringTest {
     }
 
     @Test
-    public void testGetOverlappingLines() {
+    public void testForOverlappingLines() {
         LineString a = LineString.valueOf(0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20);
         final Map<Rect, Line> map = new HashMap<>();
         map.put(Rect.valueOf(0, 50, 50, 50), Line.valueOf(0, 50, 50, 50));
         
-        assertTrue(a.getOverlappingLines(Rect.valueOf(0, 40, 10, 51), new NodeProcessor<Line>(){
+        assertTrue(a.forOverlappingLines(Rect.valueOf(0, 40, 10, 51), new NodeProcessor<Line>(){
             @Override
             public boolean process(Rect bounds, Line value) {
                 assertEquals(map.remove(bounds), value);
@@ -277,13 +277,13 @@ public class LineStringTest {
 
     @Test
     public void testBuffer() {
-        Tolerance tolerance = new Tolerance(0.5);
+        Tolerance flatness = new Tolerance(0.5);
         LineString s = LineString.valueOf(37, 61);
-        assertNull(s.buffer(-1, tolerance)); // buffer out of existance
-        assertSame(s, s.buffer(0, tolerance)); // no op buffer
+        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
         
         // buffer a point
-        Geom g = s.buffer(5, tolerance); 
+        Geom g = s.buffer(5, flatness, Tolerance.DEFAULT); 
         RingSet ringSet = (RingSet)g;
         Rect bounds = ringSet.getBounds();
         assertEquals(32, bounds.minX, 0.5);
@@ -295,7 +295,7 @@ public class LineStringTest {
         
         //buffer self crossing string
         s = LineString.valueOf(20, 0, 20, 60, 60, 60, 60, 20, 0, 20);
-        Geom c = s.buffer(5, tolerance);
+        Geom c = s.buffer(5, flatness, Tolerance.DEFAULT);
         System.out.println(c);
         
     }

@@ -17,10 +17,10 @@ import org.jg.util.VectList;
  */
 public class Line implements Geom, Comparable<Line> {
 
-    final double ax;
-    final double ay;
-    final double bx;
-    final double by;
+    public final double ax;
+    public final double ay;
+    public final double bx;
+    public final double by;
 
     Line(Vect a, Vect b) {
         ax = a.x;
@@ -679,7 +679,7 @@ public class Line implements Geom, Comparable<Line> {
     }
     
     @Override
-    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         if(amt == 0){
             return this;
         }else if(amt < 0){
@@ -692,13 +692,13 @@ public class Line implements Geom, Comparable<Line> {
         double ix = vect.getX();
         double iy = vect.getY();
         projectOutward(0, amt, tolerance, vect);
-        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
         
         projectOutward(1, amt, tolerance, vect);
         double jx = vect.getX();
         double jy = vect.getY();
         projectOutward(1, -amt, tolerance, vect);
-        Vect.linearizeArc(bx, by, jx, jy, vect.getX(), vect.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+        Vect.linearizeArc(bx, by, jx, jy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
         
         result.add(ix, iy);
         

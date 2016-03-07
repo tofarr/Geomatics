@@ -201,7 +201,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         check(amt, "Invalid buffer amt {0}");
         if(amt == 0){
             return this;
@@ -211,7 +211,7 @@ public final class Vect implements Geom, Comparable<Vect> {
             VectList result = new VectList();
             double angleSize = 2 * Math.PI;
             double sy = y + amt;
-            linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, tolerance.getTolerance(), result);
+            linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
             return (result.size() > 2) ? new RingSet(new Ring(result)) : this;
         }
     }

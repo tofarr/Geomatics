@@ -207,9 +207,9 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         checkLength(fromIndex);
         fromIndex = (fromIndex << 1);
         int endIndex = (size << 1);
-        for (int i = fromIndex; i < endIndex; i++) {
-            if ((ords[i] == x) && (ords[++i] == y)) {
-                return (i - 1) >> 1;
+        for (int i = fromIndex; i < endIndex; i+=2) {
+            if ((ords[i] == x) && (ords[i+1] == y)) {
+                return i >> 1;
             }
         }
         return -1;
@@ -231,9 +231,9 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         int endIndex = (size << 1);
         double x = vect.getX();
         double y = vect.getY();
-        for (int i = fromIndex; i < endIndex; i++) {
-            if ((ords[i] == x) && (ords[++i] == y)) {
-                return (i - 1) >> 1;
+        for (int i = fromIndex; i < endIndex; i+=2) {
+            if ((ords[i] == x) && (ords[i+1] == y)) {
+                return i >> 1;
             }
         }
         return -1;
@@ -254,9 +254,12 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         checkLength(toIndex);
         toIndex = (toIndex << 1);
         for (int i = toIndex; i > 0;) {
-            if ((ords[--i] == y) && (ords[--i] == x)) {
-                return i >> 1;
+            i--;
+            int j = i-1;
+            if ((ords[i] == y) && (ords[j] == x)) {
+                return j >> 1;
             }
+            i = j;
         }
         return -1;
     }
@@ -277,9 +280,12 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         double x = vect.getX();
         double y = vect.getY();
         for (int i = toIndex; i > 0;) {
-            if ((ords[--i] == y) && (ords[--i] == x)) {
-                return i >> 1;
+            i--;
+            int j = i-1;
+            if ((ords[i] == y) && (ords[j] == x)) {
+                return j >> 1;
             }
+            i = j;
         }
         return -1;
     }

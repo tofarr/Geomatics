@@ -384,7 +384,7 @@ public class Rect implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         if(amt == 0){
             return this;
         }else if(amt < 0){
@@ -398,10 +398,10 @@ public class Rect implements Geom {
         double _maxX = maxX + amt;
         double _maxY = maxY + amt;
         
-        Vect.linearizeArc(minX, minY, _minX, minY, minX, _minY, amt, tolerance.getTolerance(), result);
-        Vect.linearizeArc(maxX, minY, maxX, _minY, _maxX, minY, amt, tolerance.getTolerance(), result);
-        Vect.linearizeArc(maxX, maxY, _maxX, maxY, maxX, _maxY, amt, tolerance.getTolerance(), result);
-        Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, tolerance.getTolerance(), result);
+        Vect.linearizeArc(minX, minY, _minX, minY, minX, _minY, amt, flatness.getTolerance(), result);
+        Vect.linearizeArc(maxX, minY, maxX, _minY, _maxX, minY, amt, flatness.getTolerance(), result);
+        Vect.linearizeArc(maxX, maxY, _maxX, maxY, maxX, _maxY, amt, flatness.getTolerance(), result);
+        Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, flatness.getTolerance(), result);
         result.add(_minX, minY);
         
         return new RingSet(new Ring(result));

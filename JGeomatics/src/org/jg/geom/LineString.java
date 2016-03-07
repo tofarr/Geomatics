@@ -3,6 +3,7 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.util.ArrayList;
 import org.jg.util.Network;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -269,12 +270,12 @@ public class LineString implements Geom {
         }
         return ret;
     }
-
-    public boolean getInteractingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
+    
+    public boolean forInteractingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
         return getLineIndex().forInteracting(bounds, lineProcessor);
     }
 
-    public boolean getOverlappingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
+    public boolean forOverlappingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
         return getLineIndex().forOverlapping(bounds, lineProcessor);
     }
 
@@ -288,32 +289,44 @@ public class LineString implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         Vect.check(amt, "Invalid amt {0}");
         if (amt < 0) {
             return null;
         } else if (amt == 0) {
             return this;
         } else if (vects.size() == 1) {
-            return vects.getVect(0).buffer(amt, tolerance);
+            return vects.getVect(0).buffer(amt, flatness, tolerance);
         }
 
-        VectList buffer = bufferInternal(vects, amt, tolerance);
+        VectList buffer = bufferInternal(vects, amt, flatness, tolerance);
         
-        //Since the buffer may self intersect, we need to identify points of self intersection and elmiminate them.
-        
+        //Since the buffer may self intersect, we need to identify points of self intersection
         Network network = new Network();
         network.addAllLinks(buffer);
+
         network.explicitIntersections(tolerance);
         
         //remove any link from network with a mid point closer than the amt to one of the lines in this
-        throw new UnsupportedOperationException("Not yet implemented");
-        
-        //return network.extractRingSet();
+        final RTree<Line> lines = network.getLinks(new RTree<Line>());
+        double threshold = amt - flatness.tolerance;
+        final NearLinkRemover remover = new NearLinkRemover(threshold, network);
+        int index = vects.size()-1;
+        RectBuilder bounds = new RectBuilder();
+        while(index-- > 0){
+            Line i = getLine(index);
+            bounds.reset();
+            i.addBoundsTo(bounds);
+            bounds.buffer(threshold);
+            remover.reset(i);
+            lines.forOverlapping(bounds.build(), remover);
+        }
+             
+        return network.extractRingSet();
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
-    static VectList bufferInternal(VectList vects, double amt, Tolerance tolerance) {
+    static VectList bufferInternal(VectList vects, double amt, Tolerance flatness, Tolerance tolerance) {
         VectList result = new VectList(vects.size() << 2);
         VectBuilder vect = new VectBuilder();
 
@@ -327,13 +340,13 @@ public class LineString implements Geom {
         double ix = vect.getX();
         double iy = vect.getY();
         Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, vect);
-        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
 
         int index = 1;
         while (++index < vects.size()) {
             double cx = vects.getX(index);
             double cy = vects.getY(index);
-            projectOutward(ax, ay, bx, by, cx, cy, amt, tolerance, vect, result);
+            projectOutward(ax, ay, bx, by, cx, cy, amt, flatness, tolerance, vect, result);
             ax = bx;
             bx = cx;
             ay = by;
@@ -345,7 +358,7 @@ public class LineString implements Geom {
         ix = vect.getX();
         iy = vect.getY();
         Line.projectOutward(bx, by, ax, ay, 0, amt, tolerance, vect);
-        Vect.linearizeArc(bx, by, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+        Vect.linearizeArc(bx, by, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
 
         double tmp = ax;
         ax = bx;
@@ -358,7 +371,7 @@ public class LineString implements Geom {
         while (--index >= 0) {
             double cx = vects.getX(index);
             double cy = vects.getY(index);
-            projectOutward(ax, ay, bx, by, cx, cy, amt, tolerance, vect, result);
+            projectOutward(ax, ay, bx, by, cx, cy, amt, flatness, tolerance, vect, result);
             ax = bx;
             bx = cx;
             ay = by;
@@ -371,7 +384,7 @@ public class LineString implements Geom {
         return result;
     }
 
-    static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance tolerance, VectBuilder work, VectList result) {
+    static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance flatness, Tolerance tolerance, VectBuilder work, VectList result) {
         if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
             
             double distAB = Math.sqrt(Vect.distSq(ax, ay, bx, by));
@@ -400,7 +413,7 @@ public class LineString implements Geom {
             double ix = work.getX();
             double iy = work.getY();
             Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
-            Vect.linearizeArc(bx, by, ix, iy, work.getX(), work.getY(), Math.abs(amt), tolerance.getTolerance(), result);
+            Vect.linearizeArc(bx, by, ix, iy, work.getX(), work.getY(), Math.abs(amt), flatness.getTolerance(), result);
         }
     }
 
@@ -448,4 +461,30 @@ public class LineString implements Geom {
         return vects.isEmpty();
     }
 
+    
+    static class NearLinkRemover implements NodeProcessor<Line>{
+     
+        final double thresholdSq;
+        final Network network;
+        Line i;
+
+        public NearLinkRemover(double threshold, Network network) {
+            this.thresholdSq = threshold * threshold;
+            this.network = network;
+        }
+        
+        void reset(Line i){
+            this.i = i;
+        }
+
+        @Override
+        public boolean process(Rect bounds, Line j) {
+            double x = (j.ax + j.bx) / 2;
+            double y = (j.ay + j.by) / 2;
+            if(Line.distSegVectSq(i.ax, i.ay, i.bx, i.by, x, y) < thresholdSq){
+                network.removeLink(j.ax, j.ay, j.bx, j.by);
+            }
+            return true;
+        }
+    }
 }

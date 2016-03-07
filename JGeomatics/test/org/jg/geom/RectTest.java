@@ -373,9 +373,9 @@ public class RectTest {
     @Test
     public void testBuffer_Tolerance(){
         Rect rect = Rect.valueOf(3, 7, 13, 23);
-        assertSame(rect, rect.buffer(0, Tolerance.DEFAULT));
-        assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Tolerance.DEFAULT));
-        RingSet ringSet = (RingSet)rect.buffer(2, new Tolerance(0.5));
+        assertSame(rect, rect.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
+        RingSet ringSet = (RingSet)rect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
         
         assertEquals(Rect.valueOf(1, 5, 15, 25), ringSet.getBounds());
         assertEquals(264 + (Math.PI * 4), ringSet.getArea(), 0.5);

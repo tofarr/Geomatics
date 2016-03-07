@@ -48,7 +48,9 @@ public final class RTree<E> {
 
             @Override
             public boolean process(Rect bounds, E value) {
-                add(bounds, value);
+                root.itemBounds[rootIndex] = bounds;
+                root.itemValues[rootIndex] = value;
+                rootIndex++;
                 return true;
             }
 
@@ -192,16 +194,38 @@ public final class RTree<E> {
         if (this == tree) {
             throw new IllegalArgumentException("Cannot add to self!");
         }
-        tree.root.forEach(new NodeProcessor<E>() {
+        if(isEmpty()){
+            SpatialNode<E> node = tree.root;
+            root.bounds.set(node.bounds);
+            root.size = node.size;
+            root.itemBounds = new Rect[node.size];
+            root.itemValues = (E[]) new Object[node.size];
+            node.forEach(new NodeProcessor<E>() {
 
-            @Override
-            public boolean process(Rect bounds, E value) {
-                add(bounds, value);
-                return true;
-            }
+                int rootIndex;
 
-        });
-        return tree;
+                @Override
+                public boolean process(Rect bounds, E value) {
+                    root.itemBounds[rootIndex] = bounds;
+                    root.itemValues[rootIndex] = value;
+                    rootIndex++;
+                    return true;
+                }
+
+            });
+            optimise();
+        }else{
+            tree.root.forEach(new NodeProcessor<E>() {
+
+                @Override
+                public boolean process(Rect bounds, E value) {
+                    add(bounds, value);
+                    return true;
+                }
+
+            });
+        }
+        return this;
     }
 
     /**

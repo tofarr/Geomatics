@@ -702,9 +702,9 @@ public class LineTest {
     @Test
     public void testBuffer(){
         Line a = Line.valueOf(2, 3, 7, 13);
-        assertNull(a.buffer(-1, Tolerance.DEFAULT));
-        assertSame(a, a.buffer(0, Tolerance.DEFAULT));
-        RingSet b = (RingSet)a.buffer(3, new Tolerance(0.1));
+        assertNull(a.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
+        assertSame(a, a.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
+        RingSet b = (RingSet)a.buffer(3, new Tolerance(0.1), Tolerance.DEFAULT);
         
         Rect bounds = b.getBounds();
         assertEquals(-1, bounds.minX, 0.1);
