@@ -226,17 +226,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @throws NullPointerException if vect was null
      */
     public int indexOf(Vect vect, int fromIndex) throws IndexOutOfBoundsException, NullPointerException {
-        checkLength(fromIndex);
-        fromIndex = (fromIndex << 1);
-        int endIndex = (size << 1);
-        double x = vect.getX();
-        double y = vect.getY();
-        for (int i = fromIndex; i < endIndex; i+=2) {
-            if ((ords[i] == x) && (ords[i+1] == y)) {
-                return i >> 1;
-            }
-        }
-        return -1;
+        return indexOf(vect.x, vect.y, fromIndex);
     }
 
     /**
@@ -275,19 +265,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @throws NullPointerException if vect was null
      */
     public int lastIndexOf(Vect vect, int toIndex) throws IndexOutOfBoundsException, NullPointerException {
-        checkLength(toIndex);
-        toIndex = (toIndex << 1);
-        double x = vect.getX();
-        double y = vect.getY();
-        for (int i = toIndex; i > 0;) {
-            i--;
-            int j = i-1;
-            if ((ords[i] == y) && (ords[j] == x)) {
-                return j >> 1;
-            }
-            i = j;
-        }
-        return -1;
+        return lastIndexOf(vect.x, vect.y, toIndex);
     }
 
     /**
@@ -892,7 +870,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @return string representation of this list
      */
     public String toString(boolean summarize) {
-        if ((summarize) && size > 50) { //Large list - just print summary
+        if (summarize && (size > 50)) { //Large list - just print summary
             return "{size:" + size + ", bounds:" + getBounds() + "}";
         } else {
             StringWriter str = new StringWriter();
@@ -955,6 +933,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         @Override
         public void remove() {
             VectList.this.remove(index - 1);
+            index--;
         }
 
     }

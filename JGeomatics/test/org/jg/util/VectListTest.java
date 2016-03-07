@@ -2,21 +2,20 @@ package org.jg.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataOutput;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Iterator;
+import org.jg.geom.GeomException;
 import org.jg.geom.Line;
 import org.jg.geom.Rect;
 import org.jg.geom.Vect;
 import org.jg.geom.VectBuilder;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -218,6 +217,7 @@ public class VectListTest {
         assertNull(vects.getBounds());
         vects.addAll(new VectList(1, 2, 3, 4), 0, 2);
         assertEquals(Rect.valueOf(1, 2, 3, 4), vects.getBounds());
+        assertEquals(Rect.valueOf(1, 2, 3, 4), vects.getBounds());
         vects.addAll(new VectList(1, 2, 5, 6), 1, 1);
         assertEquals(Rect.valueOf(1, 2, 5, 6), vects.getBounds());
         vects.transform(new TransformBuilder().scale(2).build());
@@ -255,6 +255,7 @@ public class VectListTest {
         assertEquals(0, vects.lastIndexOf(1, 2, 1));
         assertEquals(-1, vects.lastIndexOf(1, 2, 0));
         assertEquals(-1, vects.lastIndexOf(1, 3, 7));
+        assertEquals(0, new VectList(1, 2, 3, 2, 1, 4).lastIndexOf(Vect.valueOf(1, 2), 3));
         try {
             vects.lastIndexOf(1, 2, -1);
             fail("Exception Expected");
@@ -265,6 +266,12 @@ public class VectListTest {
             vects.lastIndexOf(1, 2, 8);
             fail("Exception Expected");
         } catch (IndexOutOfBoundsException ex) {
+            //expected
+        }
+        try {
+            vects.lastIndexOf(null, 0);
+            fail("Exception Expected");
+        } catch (NullPointerException ex) {
             //expected
         }
     }
@@ -333,15 +340,28 @@ public class VectListTest {
 
     @Test
     public void testIterator() {
-        Iterator<Vect> iter = new VectList(1, 2, 3, 4, 5, 6).iterator();
+        VectList vects = new VectList(1, 2, 3, 4, 5, 6);
+        Iterator<Vect> iter = vects.iterator();
         assertTrue(iter.hasNext());
         assertEquals(Vect.valueOf(1, 2), iter.next());
         assertTrue(iter.hasNext());
         assertEquals(Vect.valueOf(3, 4), iter.next());
+        iter.remove();
         assertTrue(iter.hasNext());
         assertEquals(Vect.valueOf(5, 6), iter.next());
         assertFalse(iter.hasNext());
-
+        assertEquals("[1,2, 5,6]", vects.toString());
+        vects.addAll(7, 8, 9, 10);
+        iter = vects.iterator(1);
+        assertTrue(iter.hasNext());
+        assertEquals(Vect.valueOf(5, 6), iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(Vect.valueOf(7, 8), iter.next());
+        iter.remove();
+        assertTrue(iter.hasNext());
+        assertEquals(Vect.valueOf(9, 10), iter.next());
+        assertFalse(iter.hasNext());
+        assertEquals("[1,2, 5,6, 9,10]", vects.toString());
     }
 
     @Test
@@ -570,22 +590,26 @@ public class VectListTest {
 
     @Test
     public void testAddAll_Iterable() {
-        VectList vects = new VectList(1, 2, 3, 4);
-        assertSame(vects, vects.addAll(Arrays.asList(Vect.valueOf(5, 6), Vect.valueOf(7, 8))));
+        VectList a = new VectList(1, 2, 3, 4);
+        assertSame(a, a.addAll(Arrays.asList(Vect.valueOf(5, 6), Vect.valueOf(7, 8))));
         try {
-            vects.addAll(Arrays.asList(Vect.valueOf(3, 2), null));
+            a.addAll(Arrays.asList(Vect.valueOf(3, 2), null));
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
         try {
-            vects.addAll((Iterable<Vect>) null);
+            a.addAll((Iterable<Vect>) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
-        assertEquals(4, vects.size());
-        assertEquals("[1,2, 3,4, 5,6, 7,8]", vects.toString());
+        assertEquals(4, a.size());
+        assertEquals("[1,2, 3,4, 5,6, 7,8]", a.toString());
+        
+        VectList b = new VectList();
+        b.addAll((Iterable<Vect>)a);
+        assertEquals("[1,2, 3,4, 5,6, 7,8]", b.toString());
     }
 
     @Test
@@ -749,10 +773,24 @@ public class VectListTest {
     @Test
     public void testToString() {
         VectList vects = new VectList();
-        for (int i = 0; i < 102;) {
+        for (int i = 0; i < 10;) {
             vects.add(i++, i++);
         }
+        StringBuilder str = new StringBuilder("[0,1, 2,3, 4,5, 6,7, 8,9]");
+        assertEquals(str.toString(), vects.toString(false));
+        assertEquals(str.toString(), vects.toString(true));
+        str.setLength(str.length()-1);
+        for (int i = 10; i < 102;) {
+            double x = i++;
+            double y = i++;
+            vects.add(x, y);
+            str.append(", ").append(Vect.ordToStr(x)).append(',').append(Vect.ordToStr(y));
+            
+        }
+        str.append(']');
         assertEquals("{size:51, bounds:[0,1,100,101]}", vects.toString());
+        assertEquals("{size:51, bounds:[0,1,100,101]}", vects.toString(true));
+        assertEquals(str.toString(), vects.toString(false));
         try {
             vects.toString(new Appendable() {
 
@@ -813,5 +851,66 @@ public class VectListTest {
             b = VectList.read(in);
         }
         assertEquals(a, b);
+        try{
+            VectList.read(new DataInputStream(new InputStream(){
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){
+        }
+        try{
+            a.write(new DataOutputStream(new OutputStream(){
+                
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException();
+                }
+            
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){
+        }
+        try{
+            VectList.read(new DataInputStream(new InputStream(){
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){
+        }
+    }
+    
+    @Test
+    public void testIsOrdered(){
+        assertTrue(new VectList(1,2, 3,4, 5,6).isOrdered());
+        assertTrue(new VectList(1,2, 3,4, 5,6, 1,2).isOrdered());
+        assertFalse(new VectList(5,6, 3,4, 1,2).isOrdered());
+        assertFalse(new VectList(1,2, 5,6, 3,4, 1,2).isOrdered());
+        assertTrue(new VectList(1,2, 3,4, 1,2).isOrdered());
+    }
+    
+    @Test
+    public void testCompareTo(){
+        VectList a = new VectList(1,2, 3,4, 5,6);
+        VectList b = new VectList(1,2, 3,4, 5,6, 5,6);
+        VectList c = a.clone().reverse();
+        assertEquals(0, a.compareTo(a));
+        assertEquals(-1, a.compareTo(b));
+        assertEquals(1, b.compareTo(a));
+        assertEquals(-1, a.compareTo(c));
+        assertEquals(1, c.compareTo(a));
+        try{
+            a.compareTo(null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        
     }
 }

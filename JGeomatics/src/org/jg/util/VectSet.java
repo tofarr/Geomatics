@@ -1,9 +1,13 @@
 package org.jg.util;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import org.jg.geom.GeomException;
 import org.jg.geom.Vect;
 
 /**
@@ -18,7 +22,7 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
     final int maxJumps;
     double[] ords;
     int size;
-    boolean copyOnEdit;
+    transient boolean copyOnEdit;
     int version;
 
     /**
@@ -284,10 +288,10 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
             }
             if (Double.isNaN(ords[index])) {
                 index += 2;
-            } else if (!processor.process(ords[index++], ords[index++])) {
-                return false;
             } else if(storedVersion != version){
                 throw new ConcurrentModificationException();
+            } else if (!processor.process(ords[index++], ords[index++])) {
+                return false;
             }
         }
     }
@@ -315,6 +319,55 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
             } else {
                 index += 2;
             }
+        }
+    }
+    
+    
+    /**
+     * Read a VectSet from to the DataInput given
+     *
+     * @param in
+     * @return a VectSet
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws GeomException if there was an IO error
+     */
+    public static VectSet read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException{
+        try {
+            VectSet ret = new VectSet(in.readInt());
+            int size = in.readInt();
+            for(int i = 0; i < size; i++){
+                ret.add(in.readDouble(), in.readDouble());
+            }
+            return ret;
+        } catch (IOException ex) {
+            throw new GeomException("Error reading VectList", ex);
+        }
+    }
+    
+    /**
+     * Write this VectList to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, GeomException{
+        try {
+            int i = 0;
+            int max = ords.length;
+            out.writeInt(max);
+            out.writeInt(size);
+            while(i < max){
+                double x = ords[i++];
+                double y = ords[i++];
+                if(!Double.isNaN(x)){
+                    out.writeDouble(x);
+                    out.writeDouble(y);
+                }
+            }
+        } catch (IOException ex) {
+            throw new GeomException("Error writing VectList", ex);
         }
     }
 
@@ -435,8 +488,8 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
             if (storedVersion != version) {
                 throw new ConcurrentModificationException();
             }
-            Vect ret = Vect.valueOf(ords[nextIndex++], ords[nextIndex++]);
             prevIndex = nextIndex;
+            Vect ret = Vect.valueOf(ords[nextIndex++], ords[nextIndex++]);
             nextIndex = nextIndex();
             return ret;
         }
@@ -452,7 +505,12 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
 
         @Override
         public void remove() {
-            ords[prevIndex] = Double.NaN;
+            if(!Double.isNaN(ords[prevIndex])){
+                ords[prevIndex] = Double.NaN;
+                size--;
+            }else{
+                throw new IllegalStateException("Already Removed");
+            }
         }
     }
 

@@ -1,32 +1,33 @@
-package org.jg;
+package org.jg.util;
 
-import org.jg.VectSet;
-import org.jg.VectList;
-import org.jg.Vect;
-import org.jg.VectSet.Iter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.ObjectInput;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
+import org.jg.geom.GeomException;
+import org.jg.geom.Vect;
+import org.jg.util.VectSet.VectSetProcessor;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
  *
- * @author tim.ofarrell
+ * @author tofar
  */
 public class VectSetTest {
 
     @Test
-    public void testConstructor(){
+    public void testConstructor() {
         VectSet vects = new VectSet(5, 1);
         assertEquals(16, vects.ords.length);
         assertEquals(0, vects.size());
@@ -35,35 +36,35 @@ public class VectSetTest {
         assertEquals(32, vects.ords.length);
         assertEquals(0, vects.size());
         assertEquals(3, vects.maxJumps);
-        try{
+        try {
             vects = new VectSet(0, 1);
             fail("Exception expected");
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             //expection expected
         }
-        try{
+        try {
             vects = new VectSet(5, 0);
             fail("Exception expected");
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             //expection expected
         }
     }
-    
+
     @Test
     public void testSize() {
         VectSet vects = new VectSet();
         assertEquals(0, vects.size());
-        vects.add(new Vect(1, 2));
+        vects.add(Vect.valueOf(1, 2));
         assertEquals(1, vects.size());
-        vects.add(new Vect(1, 2));
+        vects.add(Vect.valueOf(1, 2));
         assertEquals(1, vects.size());
         vects.add(3, 4); //HASHES ALL SEEM SAME - NEED TO APPLY TO MAP TOO!
         assertEquals(2, vects.size());
         vects.add(3, 4);
         assertEquals(2, vects.size());
-        vects.addAll(Arrays.asList(new Vect(5, 6), new Vect(7, 8)));
+        vects.addAll(Arrays.asList(Vect.valueOf(5, 6), Vect.valueOf(7, 8)));
         assertEquals(4, vects.size());
-        vects.addAll(Arrays.asList(new Vect(5, 6), new Vect(7, 8)));
+        vects.addAll(Arrays.asList(Vect.valueOf(5, 6), Vect.valueOf(7, 8)));
         assertEquals(4, vects.size());
         vects.addAll(new VectSet().add(9, 10).add(11, 12));
         assertEquals(6, vects.size());
@@ -75,7 +76,7 @@ public class VectSetTest {
         assertEquals(8, vects.size());
         vects.remove(13, 14);
         assertEquals(7, vects.size());
-        
+
     }
 
     @Test
@@ -91,12 +92,12 @@ public class VectSetTest {
     @Test
     public void testContains() {
         VectSet vects = new VectSet();
-        for(int i = 1; i <= 32; i += 2){
-            assertFalse(vects.contains(i+1, i+2));
-            assertFalse(vects.contains(new Vect(i+1, i+2)));
-            vects.add(i+1, i+2);
-            assertTrue(vects.contains(i+1, i+2));
-            assertTrue(vects.contains(new Vect(i+1, i+2)));
+        for (int i = 1; i <= 32; i += 2) {
+            assertFalse(vects.contains(i + 1, i + 2));
+            assertFalse(vects.contains(Vect.valueOf(i + 1, i + 2)));
+            vects.add(i + 1, i + 2);
+            assertTrue(vects.contains(i + 1, i + 2));
+            assertTrue(vects.contains(Vect.valueOf(i + 1, i + 2)));
         }
         //vects = new VectSet(4, 4);
         vects = new VectSet(4, 5);
@@ -106,22 +107,22 @@ public class VectSetTest {
         vects.add(1, 4);
         assertFalse(vects.contains(1, 5));
         vects.add(1, 5);
-        try{
+        try {
             vects.contains(1, Double.NaN);
             fail("Exception Expected");
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             //expected
         }
-        try{
+        try {
             vects.contains(Double.NaN, 1);
             fail("Exception Expected");
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             //expected
         }
-        try{
+        try {
             vects.contains(null);
             fail("Exception Expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
             //expected
         }
     }
@@ -130,13 +131,13 @@ public class VectSetTest {
     public void testAdd() {
         VectSet vects = new VectSet();
         vects.add(1, 2);
-        vects.add(new Vect(3, 4));
+        vects.add(Vect.valueOf(3, 4));
         vects.add(3, 4);
-        vects.add(new Vect(1, 2));
+        vects.add(Vect.valueOf(1, 2));
         assertEquals(2, vects.size());
         assertTrue(vects.contains(1, 2));
         assertTrue(vects.contains(3, 4));
-        
+
         vects = new VectSet(2, 1);
         vects.add(0, 1); // these were formulated to have the same hash
         vects.add(0, 2);
@@ -144,11 +145,11 @@ public class VectSetTest {
         assertEquals(3, vects.size());
         assertEquals("[0,1, 0,2, 0,23]", vects.toString());
     }
-    
-/*
+
+    /*
     @Test
     public void testSameHash(){
-        Vect a = new Vect(0, 1);
+        Vect a = Vect.valueOf(0, 1);
         int hashCode = a.hashCode();
         int index4 = hashCode & 3;
         int index8 = hashCode & 7;
@@ -167,16 +168,15 @@ public class VectSetTest {
         }
         fail("Not found");
     }
-*/
-    
+     */
     @Test
     public void testAddAll_VectList() {
         VectSet vects = new VectSet();
         assertSame(vects, vects.addAll(new VectList(1, 2, 3, 4, 5, 6)));
-        try{
-            vects.addAll((VectList)null);
+        try {
+            vects.addAll((VectList) null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
             //expected
         }
         assertEquals(3, vects.size());
@@ -190,10 +190,11 @@ public class VectSetTest {
         VectSet vects = new VectSet();
         assertSame(vects, vects.addAll(new VectSet().add(1, 2).add(3, 4).add(5, 6)));
         assertSame(vects, vects.addAll(new VectSet()));
-        try{
-            vects.addAll((VectList)null);
+        assertSame(vects, vects.addAll(vects));
+        try {
+            vects.addAll((VectList) null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
             //expected
         }
         assertEquals(3, vects.size());
@@ -205,11 +206,11 @@ public class VectSetTest {
     @Test
     public void testAddAll_Iterable() {
         VectSet vects = new VectSet();
-        assertSame(vects, vects.addAll(Arrays.asList(new Vect(1, 2), new Vect(3, 4), new Vect(5, 6))));
-        try{
-            vects.addAll((Iterable<Vect>)null);
+        assertSame(vects, vects.addAll(Arrays.asList(Vect.valueOf(1, 2), Vect.valueOf(3, 4), Vect.valueOf(5, 6))));
+        try {
+            vects.addAll((Iterable<Vect>) null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
             //expected
         }
         assertEquals(3, vects.size());
@@ -221,27 +222,27 @@ public class VectSetTest {
     @Test
     public void testRemove() {
         VectSet vects = new VectSet().add(1, 2).add(3, 4).add(5, 6);
-        try{
+        try {
             vects.remove(null);
             fail("Exception expected");
-        }catch(NullPointerException ex){
+        } catch (NullPointerException ex) {
             //expected
         }
-        try{
+        try {
             vects.remove(1, Double.NaN);
             fail("Exception expected");
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             //expected
         }
-        try{
+        try {
             vects.remove(Double.NEGATIVE_INFINITY, 1);
             fail("Exception expected");
-        }catch(IllegalArgumentException ex){
+        } catch (IllegalArgumentException ex) {
             //expected
         }
-        assertFalse(vects.remove(new Vect(7, 8)));
+        assertFalse(vects.remove(Vect.valueOf(7, 8)));
         assertFalse(vects.remove(7, 8));
-        assertTrue(vects.remove(new Vect(5, 6)));
+        assertTrue(vects.remove(Vect.valueOf(5, 6)));
         assertEquals(2, vects.size());
         assertFalse(vects.contains(5, 6));
         assertTrue(vects.remove(3, 4));
@@ -269,34 +270,35 @@ public class VectSetTest {
         a.clear();
         assertTrue(a.isEmpty());
         assertEquals(3, b.size());
-        
+        a.clear();
+        assertTrue(a.isEmpty());
     }
 
     @Test
     public void testIterator() {
         VectSet vects = new VectSet().add(1, 2).add(3, 4).add(5, 6);
-        Iter iter = vects.iterator();
-        Set<Vect> expected = new HashSet<>(Arrays.asList(new Vect(1, 2), new Vect(3, 4), new Vect(5, 6)));
-        Vect vect = new Vect();
-        assertTrue(iter.next(vect));
-        assertTrue(expected.remove(vect));
-        assertTrue(iter.next(vect));
-        assertTrue(expected.remove(vect));
-        try{
-            iter.next(null);
-            fail("Exception expected");
-        }catch(NullPointerException ex){
-            //expected
+        Set<Vect> expected = new HashSet<>(Arrays.asList(Vect.valueOf(1, 2), Vect.valueOf(3, 4), Vect.valueOf(5, 6)));
+        for (Vect vect : vects) {
+            assertTrue(expected.remove(vect));
         }
-        assertTrue(iter.next(vect));
-        assertTrue(expected.remove(vect));
-        assertFalse(iter.next(vect));
-        vects.add(7, 8);
-        try{
-            iter.next(vect);
+        assertTrue(expected.isEmpty());
+        Iterator<Vect> iter = vects.iterator();
+        Vect vect = iter.next();
+        iter.remove();
+        assertTrue(iter.hasNext());
+        try {
+            iter.remove();
             fail("Exception expected");
-        }catch(ConcurrentModificationException ex){
-            //expected
+        } catch (IllegalStateException ex) {
+        }
+        assertEquals(2, vects.size());
+        assertEquals("[3,4, 5,6]", vects.toString());
+        iter.next();
+        vects.add(7, 8);
+        try {
+            iter.next();
+            fail("Exception expected");
+        } catch (ConcurrentModificationException ex) {
         }
     }
 
@@ -331,11 +333,11 @@ public class VectSetTest {
     public void testToString() {
         VectSet a = new VectSet();
         StringBuilder expectedB = new StringBuilder("[");
-        for(int i = 1; i <= 102; i += 2){
-            a.add(i, i+1);
-            expectedB.append(i).append(',').append(i+1).append(", ");
+        for (int i = 1; i <= 102; i += 2) {
+            a.add(i, i + 1);
+            expectedB.append(i).append(',').append(i + 1).append(", ");
         }
-        expectedB.setLength(expectedB.length()-2);
+        expectedB.setLength(expectedB.length() - 2);
         expectedB.append(']');
         String expected = expectedB.toString();
         assertEquals("{size:51, bounds:[1,2,101,102]}", a.toString());
@@ -379,11 +381,73 @@ public class VectSetTest {
         assertEquals(a, b);
         bout = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            a.writeData(out);
+            a.write(out);
         }
         try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
             b = VectSet.read(in);
         }
         assertEquals(a, b);
+        try {
+            a.write(new DataOutputStream(new OutputStream() {
+
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException();
+                }
+
+            }));
+            fail("Exception expected");
+        } catch (GeomException ex) {
+        }
+        try {
+            VectSet.read(new DataInputStream(new InputStream() {
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+
+            }));
+            fail("Exception expected");
+        } catch (GeomException ex) {
+        }
+    }
+
+    @Test
+    public void testForEach() {
+        final VectSet vects = new VectSet();
+        final Set<Vect> expected = new HashSet<>();
+        for(int i = 1; i < 8;){
+            Vect vect = Vect.valueOf(i++, i++);
+            vects.add(vect);
+            expected.add(vect);
+        }
+        assertTrue(vects.forEach(new VectSetProcessor(){
+            @Override
+            public boolean process(double x, double y) {
+                assertTrue(expected.remove(Vect.valueOf(x, y)));
+                return true;
+            }        
+        }));
+        assertTrue(expected.isEmpty());
+        assertFalse(vects.forEach(new VectSetProcessor(){
+            boolean done;
+            @Override
+            public boolean process(double x, double y) {
+                assertFalse(done);
+                done = true;
+                return false;
+            }        
+        }));
+        try{
+            vects.forEach(new VectSetProcessor(){
+               @Override
+               public boolean process(double x, double y) {
+                   vects.add(9, 10);
+                   return true;
+               }        
+            });
+            fail("Exception expected");
+        }catch(ConcurrentModificationException ex){
+        }
     }
 }
