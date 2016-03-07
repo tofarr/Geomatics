@@ -23,21 +23,21 @@ public class LineString implements Geom {
     LineString(VectList vects) {
         this.vects = vects;
     }
-    
+
     /**
      * Get a linestring based on the ords given
+     *
      * @param ords ordinates
      * @return a LineString
      * @throws IllegalArgumentException if an ordinate was infinite or NaN
      * @throws NullPointerException if ords was null
      */
-    public static LineString valueOf(double... ords) throws IllegalArgumentException, NullPointerException{
+    public static LineString valueOf(double... ords) throws IllegalArgumentException, NullPointerException {
         return valueOf(new VectList(ords));
     }
 
     /**
-     * Get a linestring based on the list of vectors given. (Includes defensive
-     * copy)
+     * Get a linestring based on the list of vectors given. (Includes defensive copy)
      *
      * @param vects
      * @return a linestring, or null if the list of vectors was empty
@@ -194,8 +194,8 @@ public class LineString implements Geom {
     }
 
     /**
-     * Remove any colinear vertices 
-     * and make sure ordered by lowest first
+     * Remove any colinear vertices and make sure ordered by lowest first
+     *
      * @param tolerance
      * @return
      */
@@ -270,7 +270,7 @@ public class LineString implements Geom {
         }
         return ret;
     }
-    
+
     public boolean forInteractingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
         return getLineIndex().forInteracting(bounds, lineProcessor);
     }
@@ -300,20 +300,20 @@ public class LineString implements Geom {
         }
 
         VectList buffer = bufferInternal(vects, amt, flatness, tolerance);
-        
+
         //Since the buffer may self intersect, we need to identify points of self intersection
         Network network = new Network();
         network.addAllLinks(buffer);
 
         network.explicitIntersections(tolerance);
-        
+
         //remove any link from network with a mid point closer than the amt to one of the lines in this
         final RTree<Line> lines = network.getLinks(new RTree<Line>());
         double threshold = amt - flatness.tolerance;
         final NearLinkRemover remover = new NearLinkRemover(threshold, network);
-        int index = vects.size()-1;
+        int index = vects.size() - 1;
         RectBuilder bounds = new RectBuilder();
-        while(index-- > 0){
+        while (index-- > 0) {
             Line i = getLine(index);
             bounds.reset();
             i.addBoundsTo(bounds);
@@ -321,7 +321,7 @@ public class LineString implements Geom {
             remover.reset(i);
             lines.forOverlapping(bounds.build(), remover);
         }
-             
+
         return network.extractRingSet();
     }
 
@@ -386,28 +386,27 @@ public class LineString implements Geom {
 
     static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance flatness, Tolerance tolerance, VectBuilder work, VectList result) {
         if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
-            
+
             double distAB = Math.sqrt(Vect.distSq(ax, ay, bx, by));
             double distBC = Math.sqrt(Vect.distSq(cx, cy, bx, by));
-            
+
             //now we analyse a vector n with an origin b
             double ndx = ((ax - bx) / distAB + (cx - bx) / distBC) / 2; // get vector n
             double ndy = ((ay - by) / distAB + (cy - by) / distBC) / 2;
-            
+
             double dx = ndx + bx; // get a second point d on the line
             double dy = ndy + by;
             double mul = amt / Math.sqrt(Line.vectLineDistSq(ax, ay, bx, by, dx, dy));
             dx = (dx - bx) * mul + bx; // move d such that it is the proper distance from line segments ab and bc
             dy = (dy - by) * mul + by;
-            
-            
+
             double distBD = Math.sqrt(Vect.distSq(bx, by, dx, dy));
-            
-            if((distBD < distAB) && (distBD < distBC)){
-                result.add(dx, dy);    
+
+            if ((distBD < distAB) && (distBD < distBC)) {
+                result.add(dx, dy);
             }
             //TODO: There are probably other cases where additional points are required
-            
+
         } else {
             Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
             double ix = work.getX();
@@ -419,15 +418,17 @@ public class LineString implements Geom {
 
     @Override
     public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        RelateProcessor processor = new RelateProcessor(vect.x, vect.y, tolerance);
+        return getLineIndex().forInteracting(vect.getBounds(), processor) ? Relate.OUTSIDE : Relate.TOUCH;
     }
 
     @Override
     public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        double x = vect.getX();
+        double y = vect.getY();
+        RelateProcessor processor = new RelateProcessor(x, y, tolerance);
+        return getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor) ? Relate.OUTSIDE : Relate.TOUCH;
     }
-    
-    
 
     public Vect getVect(int index) throws IndexOutOfBoundsException {
         return vects.getVect(index);
@@ -461,9 +462,8 @@ public class LineString implements Geom {
         return vects.isEmpty();
     }
 
-    
-    static class NearLinkRemover implements NodeProcessor<Line>{
-     
+    static class NearLinkRemover implements NodeProcessor<Line> {
+
         final double thresholdSq;
         final Network network;
         Line i;
@@ -472,8 +472,8 @@ public class LineString implements Geom {
             this.thresholdSq = threshold * threshold;
             this.network = network;
         }
-        
-        void reset(Line i){
+
+        void reset(Line i) {
             this.i = i;
         }
 
@@ -481,10 +481,29 @@ public class LineString implements Geom {
         public boolean process(Rect bounds, Line j) {
             double x = (j.ax + j.bx) / 2;
             double y = (j.ay + j.by) / 2;
-            if(Line.distSegVectSq(i.ax, i.ay, i.bx, i.by, x, y) < thresholdSq){
+            if (Line.distSegVectSq(i.ax, i.ay, i.bx, i.by, x, y) < thresholdSq) {
                 network.removeLink(j.ax, j.ay, j.bx, j.by);
             }
             return true;
+        }
+    }
+
+    static class RelateProcessor implements NodeProcessor<Line> {
+
+        final double x;
+        final double y;
+        final double toleranceSq;
+
+        public RelateProcessor(double x, double y, Tolerance tolerance) {
+            this.x = x;
+            this.y = y;
+            toleranceSq = tolerance.tolerance * tolerance.tolerance;
+        }
+
+        @Override
+        public boolean process(Rect bounds, Line value) {
+            double distSq = Line.distSegVectSq(value.ax, value.ay, value.bx, value.by, x, y);
+            return (distSq < toleranceSq);
         }
     }
 }
