@@ -102,8 +102,13 @@ public final class Transform implements Cloneable, Serializable {
      */
     public Transform getInverse() {
         double det = m00 * m11 - m01 * m10;
-        return new Transform(m11 / det, -m10 / det,
-                -m01 / det, m00 / det,
+        
+        //double m00, double m01, double m10, double m11, double m02, double m12
+        return new Transform(
+                m11 / det,
+                -m01 / det,
+                -m10 / det,
+                m00 / det,
                 (m01 * m12 - m11 * m02) / det,
                 (m10 * m02 - m00 * m12) / det);
     }

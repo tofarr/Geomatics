@@ -172,7 +172,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Translate by vector given. Effect of this operation is as if a matrix [1,0,0,1,tx,ty] was created and then added to this matrix
+     * Translate by vector given. Effect of this operation is as if a matrix
+     * [1,0,0,1,tx,ty] was created and then added to this matrix
      *
      * @param tx
      * @param ty
@@ -186,7 +187,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale by value given. Effect of this operation is as if a matrix [scale,0,0,scale,0,0] was created and then added to this matrix
+     * Scale by value given. Effect of this operation is as if a matrix
+     * [scale,0,0,scale,0,0] was created and then added to this matrix
      *
      * @param scale
      * @return this
@@ -197,7 +199,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale by values given. Effect of this operation is as if a matrix [sx,0,0,sy,0,0] was created and then added to this matrix
+     * Scale by values given. Effect of this operation is as if a matrix
+     * [sx,0,0,sy,0,0] was created and then added to this matrix
      *
      * @param sx
      * @param sy
@@ -216,7 +219,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale around the point given : translate(-ox,-oy).scale(scale).translate(ox,oy)
+     * Scale around the point given :
+     * translate(-ox,-oy).scale(scale).translate(ox,oy)
      *
      * @param scale
      * @param ox
@@ -229,7 +233,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Scale around the point given : same as translate(-ox,-oy).scale(scale).translate(ox,oy)
+     * Scale around the point given : same as
+     * translate(-ox,-oy).scale(scale).translate(ox,oy)
      *
      * @param sx scale x
      * @param sy scale y
@@ -250,8 +255,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around origin. Effect of this operation is as if a matrix [cos,-sin,sin,cos,0,0] was created and then added to this
-     * matrix
+     * Rotate degrees around origin. Effect of this operation is as if a matrix
+     * [cos,-sin,sin,cos,0,0] was created and then added to this matrix
      *
      * @param degrees
      * @return
@@ -262,8 +267,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around origin. Effect of this operation is as if a matrix [cos,-sin,sin,cos,0,0] was created and then added to this
-     * matrix
+     * Rotate degrees around origin. Effect of this operation is as if a matrix
+     * [cos,-sin,sin,cos,0,0] was created and then added to this matrix
      *
      * @param radians
      * @return
@@ -272,12 +277,25 @@ public final class TransformBuilder {
     public TransformBuilder rotateRadians(double radians) throws IllegalArgumentException {
         Vect.check(radians, "Invalid rotation {0}");
         double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
+        double cos;
+        if (sin == 1) { // 90
+            cos = 0;
+        } else if (sin == -1) { // 270
+            cos = 0;
+        }else{
+            cos = Math.cos(radians);
+            if (cos == 1) { // 0
+                return this;
+            } else if (cos == -1) { // 180
+                sin = 0;
+            }
+        }
         return addInternal(cos, -sin, sin, cos, 0, 0);
     }
 
     /**
-     * Rotate degrees around the point given: translate(-ox,-oy).rotate(degrees).translate(ox,oy)
+     * Rotate degrees around the point given:
+     * translate(-ox,-oy).rotate(degrees).translate(ox,oy)
      *
      * @param degrees
      * @param ox
@@ -290,7 +308,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Rotate degrees around the point given: translate(-ox,-oy).rotate(radians).translate(ox,oy)
+     * Rotate degrees around the point given:
+     * translate(-ox,-oy).rotate(radians).translate(ox,oy)
      *
      * @param radians
      * @param ox
@@ -313,7 +332,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Flip x axis for any points transformed points around the x value given translate(-ox,0).flipX().translate(ox,0)
+     * Flip x axis for any points transformed points around the x value given
+     * translate(-ox,0).flipX().translate(ox,0)
      *
      * @param ox
      * @return this
@@ -332,7 +352,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Flip x axis for any points transformed points around the x value given translate(0,-oy).flipY().translate(0,oy)
+     * Flip x axis for any points transformed points around the x value given
+     * translate(0,-oy).flipY().translate(0,oy)
      *
      * @param oy
      * @return this
@@ -356,8 +377,8 @@ public final class TransformBuilder {
     }
 
     /**
-     * Add the transform given to this matrix. Order is this then the given matrix. (Unlike affine transform where order is given then
-     * this.)
+     * Add the transform given to this matrix. Order is this then the given
+     * matrix. (Unlike affine transform where order is given then this.)
      *
      * @param matrix
      * @return this
@@ -407,7 +428,7 @@ public final class TransformBuilder {
     public TransformBuilder clone() {
         return new TransformBuilder(m00, m01, m10, m11, m02, m12);
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 5;
