@@ -195,7 +195,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else if (isBranch()) {
             return a.isDisjoint(rect) && b.isDisjoint(rect);
         } else {
-            for (int i = 0, max = size << 2; i < max;) {
+            for (int i = 0; i < size; i++){
                 if (!rect.isDisjoint(itemBounds[i])) {
                     return false;
                 }
@@ -292,8 +292,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else if (isBranch()) {
             return a.contains(rect, value) || b.contains(rect, value);
         } else {
-            for (int i = 0, j = 0, max = size << 2; i < size; i++, j += 4) {
-                if (itemBounds[j].equals(rect) && Objects.equals(itemValues[i], value)) {
+            for(int i = 0; i < size; i++){
+                if (itemBounds[i].equals(rect) && Objects.equals(itemValues[i], value)) {
                     return true;
                 }
             }
@@ -415,7 +415,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else {
             out.writeBoolean(false);
             out.writeInt(size);
-            for (int i = 0, max = size << 2; i < max; i++) {
+            for (int i = 0; i < size; i++) {
                 itemBounds[i].write(out);
             }
             for (int i = 0; i < size; i++) {
@@ -469,8 +469,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
                         return a.equals(tree.a) && b.equals(tree.b);
                     }
                 } else if (!tree.isBranch()) {
-                    for (int i = size << 2; i-- > 0;) {
-                        if (itemBounds[i] != tree.itemBounds[i]) {
+                    for(int i = 0; i < size; i++){
+                        if (!itemBounds[i].equals(tree.itemBounds[i])) {
                             return false;
                         }
                     }

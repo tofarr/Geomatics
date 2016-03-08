@@ -307,7 +307,7 @@ public final class RTree<E> {
             int n = 0;
             for (int i = 0; i < node.size; i++) {
                 if(!bounds.isOverlapping(itemBounds[i])){
-                    newItemBounds[n++] = itemBounds[i];
+                    newItemBounds[n] = itemBounds[i];
                     newItemValues[n++] = itemValues[i];
                 }
             }
@@ -362,7 +362,7 @@ public final class RTree<E> {
             E[] newItemValues = (E[]) new Object[node.itemValues.length];
             int n = 0;
             for (int i = 0; i < node.size; i++) {
-                Rect itemBound = node.itemBounds[i];
+                Rect itemBound = itemBounds[i];
                 if(itemBound.isDisjoint(bounds)){
                     newItemBounds[n] = itemBound;
                     newItemValues[n++] = itemValues[i];
@@ -406,7 +406,7 @@ public final class RTree<E> {
             index = mergeNode(index, toMerge.b, target);
             return index;
         } else {
-            System.arraycopy(toMerge.itemBounds, 0, target.itemBounds, index << 2, toMerge.size << 2);
+            System.arraycopy(toMerge.itemBounds, 0, target.itemBounds, index, toMerge.size);
             System.arraycopy(toMerge.itemValues, 0, target.itemValues, index, toMerge.size);
             index += toMerge.size;
             return index;
