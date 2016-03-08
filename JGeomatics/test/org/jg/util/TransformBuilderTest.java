@@ -553,4 +553,14 @@ public class TransformBuilderTest {
         transform.build().toString(str);
         assertEquals("[1.1,2.2,3.3,4.4,5.5,6.6]", str.toString());
     }  
+    
+    @Test
+    public void testRotate(){
+        assertEquals(Vect.valueOf(5, 5), new TransformBuilder().translate(1, 2).rotateRadians(0).build().transform(Vect.valueOf(4, 3)));
+        assertEquals(Vect.valueOf(-5, 5), new TransformBuilder().translate(1, 2).rotateDegrees(90).build().transform(Vect.valueOf(4, 3)));
+        assertEquals(Vect.valueOf(-5, -5), new TransformBuilder().translate(1, 2).rotateDegrees(180).build().transform(Vect.valueOf(4, 3)));
+        assertEquals(Vect.valueOf(5, -5), new TransformBuilder().translate(1, 2).rotateDegrees(270).build().transform(Vect.valueOf(4, 3)));
+        assertTrue(Vect.valueOf(0, 7.071).match(new TransformBuilder().translate(1, 2).rotateDegrees(45).build().transform(Vect.valueOf(4, 3)), new Tolerance(0.01)));
+        
+    }
 }

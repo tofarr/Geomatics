@@ -4,9 +4,13 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import org.jg.geom.GeomException;
 import org.jg.geom.Vect;
@@ -201,6 +205,28 @@ public class TransformTest {
             b = Transform.read(in);
         }
         assertEquals(a, b);
+        
+        try{
+            a.write(new DataOutputStream(new OutputStream(){
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
+        
+        try{
+            Transform.read(new DataInputStream(new InputStream(){
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
     }
 
 }

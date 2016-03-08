@@ -1,7 +1,5 @@
-package org.jg;
+package org.jg.util;
 
-import org.jg.util.Tolerance;
-import org.jg.Util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,7 +10,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author tofar_000
+ * @author tofar
  */
 public class ToleranceTest {
 
@@ -20,7 +18,6 @@ public class ToleranceTest {
     public void testGetTolerance() {
         Tolerance tolerance = new Tolerance(0.06);
         assertEquals(0.06, tolerance.getTolerance(), 0.00001);
-        new Util(); // just for coverage
     }
 
     @Test
@@ -129,5 +126,4 @@ public class ToleranceTest {
         b.toString(str);
         assertEquals("4", str.toString());
     }
-
 }

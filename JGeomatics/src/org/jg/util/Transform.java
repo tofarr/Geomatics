@@ -300,10 +300,10 @@ public final class Transform implements Cloneable, Serializable {
     }
     
     /**
-     * Read a VectList from to the DataInput given
+     * Read a Transform from to the DataInput given
      *
      * @param in
-     * @return a VectList
+     * @return a Transform
      * @throws NullPointerException if in was null
      * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
      * @throws GeomException if there was an IO error
@@ -323,7 +323,7 @@ public final class Transform implements Cloneable, Serializable {
     }
     
     /**
-     * Write this VectList to the DataOutput given
+     * Write this Transform to the DataOutput given
      *
      * @param out
      * @throws NullPointerException if out was null

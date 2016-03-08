@@ -1,6 +1,10 @@
 package org.jg.util;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
+import org.jg.geom.GeomException;
 import org.jg.geom.Rect;
 import org.jg.geom.Vect;
 
@@ -157,4 +161,42 @@ public class View implements Serializable, Cloneable {
     public View clone() {
         return this;
     }
+     
+    /**
+     * Read a View from to the DataInput given
+     *
+     * @param in
+     * @return a VectList
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws GeomException if there was an IO error
+     */
+    public static View read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException{
+        try {
+            Rect bounds = Rect.read(in);
+            int widthPx = in.readInt();
+            int heightPx = in.readInt();
+            return new View(bounds, widthPx, heightPx);
+        } catch (IOException ex) {
+            throw new GeomException("Error reading VectList", ex);
+        }
+    }
+    
+    /**
+     * Write this View to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, GeomException{
+        try {
+            bounds.write(out);
+            out.writeInt(widthPx);
+            out.writeInt(heightPx);
+        } catch (IOException ex) {
+            throw new GeomException("Error writing VectList", ex);
+        }
+    }
+   
 }
