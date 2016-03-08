@@ -407,4 +407,32 @@ public final class TransformBuilder {
     public TransformBuilder clone() {
         return new TransformBuilder(m00, m01, m10, m11, m02, m12);
     }
+    
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 89 * hash + Vect.hash(m00);
+        hash = 89 * hash + Vect.hash(m01);
+        hash = 89 * hash + Vect.hash(m10);
+        hash = 89 * hash + Vect.hash(m11);
+        hash = 89 * hash + Vect.hash(m02);
+        hash = 89 * hash + Vect.hash(m12);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TransformBuilder) {
+            TransformBuilder matrix = (TransformBuilder) obj;
+            return (m00 == matrix.m00)
+                    && (m01 == matrix.m01)
+                    && (m10 == matrix.m10)
+                    && (m11 == matrix.m11)
+                    && (m02 == matrix.m02)
+                    && (m12 == matrix.m12);
+        } else {
+            return false;
+        }
+    }
+
 }

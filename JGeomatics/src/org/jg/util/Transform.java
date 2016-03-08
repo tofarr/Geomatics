@@ -1,6 +1,8 @@
 package org.jg.util;
 
 import java.awt.geom.AffineTransform;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import org.jg.geom.GeomException;
@@ -291,6 +293,50 @@ public final class Transform implements Cloneable, Serializable {
     public AffineTransform toAffineTransform() {
         return new AffineTransform(m00, m10, m01, m11, m02, m12);
     }
+    
+    /**
+     * Read a VectList from to the DataInput given
+     *
+     * @param in
+     * @return a VectList
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws GeomException if there was an IO error
+     */
+    public static Transform read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException{
+        try {
+            double m00 = in.readDouble();
+            double m01 = in.readDouble();
+            double m10 = in.readDouble();
+            double m11 = in.readDouble();
+            double m02 = in.readDouble();
+            double m12 = in.readDouble();
+            return valueOf(m00, m01, m10, m11, m02, m12);
+        } catch (IOException ex) {
+            throw new GeomException("Error reading VectList", ex);
+        }
+    }
+    
+    /**
+     * Write this VectList to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, GeomException{
+        try {
+            out.writeDouble(m00);
+            out.writeDouble(m01);
+            out.writeDouble(m10);
+            out.writeDouble(m11);
+            out.writeDouble(m02);
+            out.writeDouble(m12);
+        } catch (IOException ex) {
+            throw new GeomException("Error writing VectList", ex);
+        }
+    }
+    
 
     @Override
     public String toString() {

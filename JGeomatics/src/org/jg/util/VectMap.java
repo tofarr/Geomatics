@@ -316,10 +316,10 @@ public final class VectMap<E> implements Serializable, Cloneable {
                 index += 2;
             } else {
                 E value = values[index >> 1];
-                if (!processor.process(ords[index++], ords[index++], value)) {
-                    return false;
-                }else if(storedVersion != version){
+                if(storedVersion != version){
                     throw new ConcurrentModificationException();
+                }else if (!processor.process(ords[index++], ords[index++], value)) {
+                    return false;
                 }
             }
         }
