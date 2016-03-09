@@ -1,29 +1,43 @@
 package org.jg.geom;
 
-import java.io.IOException;
+import java.beans.Transient;
+import java.io.DataInput;
+import java.io.DataOutput;
 import org.jg.util.RelationProcessor;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jg.util.Network;
-import org.jg.util.RTree;
+import org.jg.util.Network.VertexProcessor;
+import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.VectList;
 import org.jg.util.VectSet;
 
 /**
+ * Linear Ring
  *
  * @author tofar_000
  */
 public class Ring implements Serializable, Cloneable {
 
     final VectList vects;
-    private RTree<Line> lines;
+    private SpatialNode<Line> lineIndex;
     private Double area;
+    private Double length;
+    private Vect centroid;
+    private Boolean valid;
+    private Boolean convex;
 
-    public Ring(VectList vects) {
+    /**
+     * Create a ring based on the list of vectors given
+     *
+     * @param vects
+     * @throws NullPointerException if vects was null
+     * @throws IllegalArgumentException if the list was less than 4 vectors
+     * long, or was unclosed
+     */
+    public Ring(VectList vects) throws NullPointerException, IllegalArgumentException {
         int last = vects.size() - 1;
         if (last < 3) {
             throw new IllegalArgumentException("Rings must have at least 4 points");
@@ -31,58 +45,70 @@ public class Ring implements Serializable, Cloneable {
         if ((vects.getX(0) != vects.getX(last)) || (vects.getY(0) != vects.getY(last))) {
             throw new IllegalArgumentException("Rings must be closed!");
         }
-        this.vects = vects;
+        this.vects = vects.clone();
     }
 
     private Ring(VectList vects, Double area) {
         this.vects = vects;
         this.area = area;
     }
-    
-    public static List<Ring> valueOf(Network network) {
-        //String wkt = "MULTILINESTRING"+network.toString().replace(",", " ").replace("  ", ", ").replace("[", "(").replace("]",")").replace(") (", "),(");
-        //System.out.println(wkt);
-        
+
+    /**
+     * Extract any available rings from the network given
+     *
+     * @param network
+     * @return list of rings
+     * @throws NullPointerException if network was null
+     */
+    public static List<Ring> valueOf(Network network) throws NullPointerException {
+
         ArrayList<Ring> ret = new ArrayList<>();
-        
+        int numVects = network.numVects();
+        if (numVects == 0) {
+            return ret; //no vectors so no rings
+        }
         final Network visited = new Network(); // network storing visited links
-        VectList allVects = network.getVects(new VectList(network.numVects())); //get vectors in correct order
-        
+        VectList allVects = network.getVects(new VectList(numVects)); //get vectors in correct order
+
         //first mark all hang lines as visited
         VectList path = new VectList();
         VectBuilder vect = new VectBuilder();
-        for(int v = allVects.size(); v-- > 0;){
+        for (int v = allVects.size(); v-- > 0;) {
             double ax = allVects.getX(v);
             double ay = allVects.getY(v);
-            if(network.numLinks(ax, ay) == 1){
-                path.clear();
+            if (network.numLinks(ax, ay) == 1) {
                 network.getLink(ax, ay, 0, vect);
-                network.followLine(ax, ay, vect.getX(), vect.getY(), path);
-                visited.addAllLinks(path);
+                double bx = vect.getX();
+                double by = vect.getY();
+                if(!visited.hasLink(ax, ay, bx, by)){
+                    path.clear();
+                    network.followLine(ax, ay, bx, by, path);
+                    visited.addAllLinks(path);
+                }
             }
         }
-        
+
         VectList links = new VectList();
         VectSet pathSet = new VectSet();
-        for(int a = 0; a < allVects.size(); a++){
+        for (int a = 0; a < allVects.size(); a++) {
             double ax = allVects.getX(a);
             double ay = allVects.getY(a);
             links.clear();
             network.getLinks(ax, ay, links);
-            for(int b = 0; b < links.size(); b++){
+            for (int b = 0; b < links.size(); b++) {
                 double bx = links.getX(b);
                 double by = links.getY(b);
-                if(!visited.hasLink(ax, ay, bx, by)){
+                if (!visited.hasLink(ax, ay, bx, by)) {
                     //traverse - if self intersects, then invalid. If area is negative at end then invalid 
                     followRing(ax, ay, bx, by, network, path, pathSet, vect);
                     int s = path.size();
-                    if(s <= 3){
+                    if (s <= 3) {
                         continue; // not enough points for a ring - traversal was invalid
-                    }else if((path.getX(s-1) != ax) || (path.getY(s-1) != ay)){
+                    } else if ((path.getX(s - 1) != ax) || (path.getY(s - 1) != ay)) {
                         continue; // not a ring - traversal was invalid
                     }
                     double area = Ring.getArea(path);
-                    if(area <= 0){ // not a valid  ring
+                    if (area <= 0) { // not a valid  ring
                         continue;
                     }
                     Ring ring = new Ring(path.clone(), area);
@@ -93,14 +119,15 @@ public class Ring implements Serializable, Cloneable {
         }
         return ret;
     }
-    
-    private static void followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectSet pathSet, VectBuilder vect){
+
+    //follow a ring around the edge of a network
+    private static void followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectSet pathSet, VectBuilder vect) {
         path.clear().add(ax, ay).add(bx, by);
         pathSet.clear().add(ax, ay).add(bx, by);
-        while(true){
+        while (true) {
             network.nextCW(bx, by, ax, ay, vect);
             path.add(vect);
-            if(pathSet.contains(vect)){
+            if (pathSet.contains(vect)) {
                 return;
             }
             pathSet.add(vect);
@@ -110,11 +137,31 @@ public class Ring implements Serializable, Cloneable {
             by = vect.getY();
         }
     }
-    
+
+    /**
+     * Get the area of this ring
+     *
+     * @return
+     */
+    @Transient
     public double getArea() {
-        return getArea(vects);
+        Double ret = area;
+        if (ret == null) {
+            ret = getArea(vects);
+            area = ret;
+        }
+        return ret;
     }
 
+    /**
+     * Get the area of the vect list given, assuming that it is a valid closed
+     * linear ring.
+     *
+     * @param vects
+     * @return area
+     * @throws NullPointerException if vects was null
+     * @throws IndexOutOfBoundsException if vects does not have enough elements
+     */
     public static double getArea(VectList vects) throws NullPointerException, IndexOutOfBoundsException {
         int index = vects.size();
         double bx = vects.getX(--index);
@@ -131,252 +178,242 @@ public class Ring implements Serializable, Cloneable {
         return area;
     }
 
+    /**
+     * Get the length of the perimeter of this ring
+     *
+     * @return the length of the perimeter of this ring
+     */
+    @Transient
     public double getLength() {
-        return LineString.getLength(vects);
+        Double ret = length;
+        if (ret == null) {
+            ret = LineString.getLength(vects);
+            length = ret;
+        }
+        return ret;
     }
-    
-    public Rect getBounds(){
+
+    /**
+     * Get the bounds of this ring
+     *
+     * @return
+     */
+    @Transient
+    public Rect getBounds() {
         return vects.getBounds();
     }
-    
-    public void addBoundsTo(RectBuilder bounds){
+
+    /**
+     * Add the bounds of this ring to the builder given
+     *
+     * @param bounds
+     * @throws NullPointerException if bounds was null
+     */
+    public void addBoundsTo(RectBuilder bounds) throws NullPointerException {
         bounds.add(vects.getBounds());
     }
-    
-    public Relate relate(Vect vect, Tolerance tolerance){
-        return relate(vect.x, vect.y, tolerance);
+
+    /**
+     * Determine the relation between the point given and this ring
+     *
+     * @param vect
+     * @param tolerance tolerance for touch
+     * @return relation
+     * @throws NullPointerException if vect or tolerance was null
+     */
+    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+        return relateInternal(vect.x, vect.y, tolerance);
     }
-    
-    public Relate relate(double x, double y, Tolerance tolerance){
+
+    /**
+     * Determine the relation between the point given and this ring
+     *
+     * @param x
+     * @param y
+     * @param tolerance tolerance for touch
+     * @return relation
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     * @throws NullPointerException if tolerance was null
+     */
+    public Relate relate(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         Vect.check(x, y);
-        
+        return relateInternal(x, y, tolerance);
+    }
+
+    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
         Rect bounds = vects.getBounds();
-        if(bounds.relateInternal(x, y, tolerance) == Relate.OUTSIDE){ // If outside bounds, then cant be inside
+        if (bounds.relateInternal(x, y, tolerance) == Relate.OUTSIDE) { // If outside bounds, then cant be inside
             return Relate.OUTSIDE;
         }
-        
+
         Rect selection = Rect.valueOf(x, y, bounds.maxX, y);
         RelationProcessor processor = new RelationProcessor(tolerance, x, y);
-        getLines().forInteracting(selection, processor);
+        getLineIndex().forInteracting(selection, processor);
         return processor.getRelate();
     }
-    
-    
-    RTree<Line> getLines() {
-        if (lines == null) {
-            lines = vects.toLineIndex();
+
+    /**
+     * Get an index of all lines in this ring
+     *
+     * @return
+     */
+    @Transient
+    public SpatialNode<Line> getLineIndex() {
+        SpatialNode<Line> ret = lineIndex;
+        if (ret == null) {
+            ret = vects.toLineIndex().getRoot();
+            lineIndex = ret;
         }
-        return lines;
+        return ret;
     }
-    
-//
-//    static VectList rotateMinFirst(VectList segment, VectList target) {
-//        int offset = 0;
-//        Vect min = segment.get(offset, new Vect());
-//        Vect vect = new Vect();
-//        int numVertices = segment.size();
-//        for (int v = numVertices - 1; v-- > 1;) {
-//            segment.get(v, vect);
-//            if (min.compareTo(vect) > 0) {
-//                offset = v;
-//                min = vect;
-//            }
-//        }
-//        if (offset != 0) {
-//            target.clear();
-//            numVertices--;
-//            for (long v = 0; v < numVertices; v++) {
-//                target.add(segment, offset);
-//                offset++;
-//                if (offset == numVertices) {
-//                    offset = 0;
-//                }
-//            }
-//            target.add(target, 0);
-//        }
-//        return target;
-//    }
-//
-//    public Vect getCentroid(Vect target) {
-//        int index = vects.size();
-//        Vect b = vects.get(--index, new Vect());
-//        double twiceArea = 0;
-//        double x = 0;
-//        double y = 0;
-//        Vect a = new Vect();
-//        while (index > 0) {
-//            vects.get(--index, a);
-//            double f = (b.x * a.y) - (a.x * b.y);
-//            twiceArea += f;
-//            x += (a.x + b.x) * f;
-//            y += (a.y + b.y) * f;
-//            b = a;
-//        }
-//        double f = twiceArea * 3;
-//        return a.set(x / f, y / f);
-//    }
-//
-//    /**
-//     * Determine if the ring is convex.
-//     *
-//     * @return true if the ring was convex, false otherwise
-//     */
-//    @Transient
-//    public boolean isConvex() {
-//        int index = nextConcaveAngle(vects, vects.size()); // Because of the way it is sorted (minX,minY), the angle between (max,0,1) is guaranteed to be convex and can be ignored
-//        return (index < 0);
-//    }
-//
-//    static int nextConcaveAngle(VectList edges, int fromIndex) {
-//        Vect c = edges.get(--fromIndex, new Vect()); // Because of the way it is sorted (minX,minY), the angle between (max,0,1) is guaranteed to be convex and can be ignored
-//        Vect b = edges.get(--fromIndex, new Vect());
-//        Vect a = new Vect();
-//        while (fromIndex > 0) {
-//            edges.get(--fromIndex, a);
-//            if (Line.sign(a.x, a.y, c.x, c.y, b.x, b.y) > 0) {
-//                return (fromIndex + 1);
-//            }
-//            c = b;
-//            b = a;
-//        }
-//        return -1;
-//    }
-//
-//    /**
-//     * Determine if this Ring Network contains the point given
-//     *
-//     * @param pnt
-//     * @return true if it contains the point, false otherwise
-//     * @throws NullPointerException if pnt was null
-//     */
-//    public Relate relate(Vect pnt, Tolerance tolerance) throws NullPointerException {
-//        return relateInternal(pnt.x, pnt.y, tolerance);
-//    }
-//
-//    /**
-//     * Determine if this Ring Network contains the point given
-//     *
-//     * @param pnt
-//     * @param tolerance
-//     * @return true if it contains the point, false otherwise
-//     * @throws NullPointerException if pnt was null
-//     */
-//    public Relate relate(double x, double y, Tolerance tolerance) throws NullPointerException {
-//        return relateInternal(x, y, tolerance);
-//    }
-//
-//    Relate relateInternal(double x, double y, Tolerance tolerance) throws IllegalArgumentException {
-//        Rect bounds = vects.getBounds(new Rect());
-//        double tol = tolerance.tolerance;
-//        if (((x + tol) < bounds.minX)
-//                || // if the point is not within the tolerance distance
-//                ((x - tol) > bounds.maxX)
-//                || // of the bounding box, it cannot be considered inside
-//                ((y + tol) < bounds.minY)
-//                || // or touching the network
-//                ((y - tol) > bounds.maxY)) {
-//            return Relate.OUTSIDE;
-//        }
-//
-//        double padding = tol * 2;
-//        bounds.set(x - padding, y - padding, bounds.maxX + padding, y + padding); // Generate a selection ray from the point off to the right including the tolerance
-//
-//        RelationVisitor visitor = new RelationVisitor(tolerance, x, y);
-//        getLines().root.getInteracting(bounds, visitor);
-//        return visitor.relation;
-//    }
-//
-//    public VectList getVects(VectList target) {
-//        return target.addAll(vects);
-//    }
-//
-//    public RTree<Line> getLines(RTree<Line> target) {
-//        return target.addAll(getLines());
-//    }
-//
-//
-//    public boolean intersects(Ring ring, final Tolerance tolerance) throws IllegalArgumentException {
-//        Rect bounds = vects.getBounds(new Rect());
-//        Rect selectBounds = ring.vects.getBounds(new Rect());
-//        if (!bounds.isOverlapping(selectBounds)) {
-//            return false;
-//        }
-//
-//        double padding = tolerance.getTolerance() * 2;
-//
-//        //Go through this, testing each point to determine if any are inside ring
-//        final RelationVisitor relationVisitor = new RelationVisitor(tolerance);
-//        Vect vect = new Vect();
-//        RTree<Line> _lines = getLines();
-//
-//        VectList ringVects = ring.vects;
-//        for (int i = ringVects.size() - 1; i-- > 0;) {
-//            double x = ringVects.getX(i);
-//            double y = ringVects.getY(i);
-//            relationVisitor.reset(x, y);
-//            selectBounds.set(x - padding, y - padding, bounds.maxX + padding, y + padding); // Generate a selection ray from the point off to the right including the tolerance    
-//            _lines.root.getInteracting(selectBounds, relationVisitor);
-//            if (relationVisitor.relation == Relate.INSIDE) {
-//                return true;
-//            }
-//        }
-//
-//        final NumIntersectionVisitor numIntersectionVisitor = new NumIntersectionVisitor(tolerance);
-//        Line line = new Line();
-//        for (int i = ringVects.size() - 1; i-- > 0;) {
-//            ringVects.get(i, line);
-//            line.getBounds(selectBounds);
-//            numIntersectionVisitor.reset(line);
-//            _lines.root.getInteracting(selectBounds, numIntersectionVisitor);
-//            if (numIntersectionVisitor.getNumIntersection() > 1) {
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
-//
-//    public boolean contains(Ring ring, final Tolerance tolerance) throws IllegalArgumentException {
-//        Rect bounds = vects.getBounds(new Rect());
-//        Rect selectBounds = ring.vects.getBounds(new Rect());
-//        if (!bounds.contains(selectBounds)) {
-//            return false;
-//        }
-//
-//        double padding = tolerance.getTolerance() * 2;
-//
-//        //Go through this, testing each point to determine if any are inside ring
-//        final RelationVisitor relationVisitor = new RelationVisitor(tolerance);
-//        Vect vect = new Vect();
-//        RTree<Line> _lines = getLines();
-//
-//        VectList ringVects = ring.vects;
-//        for (int i = ringVects.size() - 1; i-- > 0;) {
-//            double x = ringVects.getX(i);
-//            double y = ringVects.getY(i);
-//            relationVisitor.reset(x, y);
-//            selectBounds.set(x - padding, y - padding, bounds.maxX + padding, y + padding); // Generate a selection ray from the point off to the right including the tolerance    
-//            _lines.root.getInteracting(selectBounds, relationVisitor);
-//            if (relationVisitor.relation == Relate.OUTSIDE) {
-//                return true;
-//            }
-//        }
-//
-//        final NumIntersectionVisitor numIntersectionVisitor = new NumIntersectionVisitor(tolerance);
-//        Line line = new Line();
-//        for (int i = ringVects.size() - 1; i-- > 0;) {
-//            ringVects.get(i, line);
-//            line.getBounds(selectBounds);
-//            numIntersectionVisitor.reset(line);
-//            _lines.root.getInteracting(selectBounds, numIntersectionVisitor);
-//            if (numIntersectionVisitor.getNumIntersection() > 1) {
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
-//
+
+    @Transient
+    public boolean isValid() {
+        Boolean ret = valid;
+        if (ret == null) {
+
+            Network network = new Network();
+            network.addAllLinks(vects);
+            network.explicitIntersections(Tolerance.ZERO);
+            ret = network.forEachVertex(new VertexProcessor() {
+                @Override
+                public boolean process(double x, double y, int numLinks) {
+                    return numLinks == 2;
+                }
+            });
+
+            if (ret) {
+                ret = (getArea() > 0);
+            }
+            valid = ret;
+        }
+        return ret;
+    }
+
+    public Ring normalize() {
+        int index = minIndex(vects);
+        if (index == 0) {
+            return this;
+        }
+        VectList rotated = rotate(vects, index);
+        Ring ret = new Ring(rotated, area);
+        ret.centroid = centroid;
+        ret.convex = convex;
+        ret.length = length;
+        ret.lineIndex = lineIndex;
+        ret.valid = valid;
+        return ret;
+    }
+
+    static int minIndex(VectList ring) throws IndexOutOfBoundsException {
+        int ret = 0;
+        double x = ring.getX(0);
+        double y = ring.getY(0);
+        for (int i = ring.size() - 1; i-- > 0;) {
+            double bx = ring.getX(i);
+            double by = ring.getY(i);
+            if (Vect.compare(x, y, bx, by) > 0) {
+                ret = i;
+                x = bx;
+                y = by;
+            }
+        }
+        return ret;
+    }
+
+    static VectList rotate(VectList ring, int index) throws IndexOutOfBoundsException {
+        VectList ret = new VectList(ring.size());
+        for (int i = 0, s = ring.size() - 1; i < s; i++) {
+            ret.add(ring, index);
+            index++;
+            if (index == s) {
+                index = 0;
+            }
+        }
+        ret.add(ret, 0);
+        return ret;
+    }
+
+    @Transient
+    public Vect getCentroid() {
+        Vect ret = centroid;
+        if (ret == null) {
+            ret = getCentroid(vects);
+            centroid = ret;
+        }
+        return ret;
+    }
+
+    public static Vect getCentroid(VectList vects) {
+        int index = vects.size() - 1;
+        double bx = vects.getX(index);
+        double by = vects.getY(index);
+        double twiceArea = 0;
+        double x = 0;
+        double y = 0;
+        while (index-- > 0) {
+            double ax = vects.getX(index);
+            double ay = vects.getY(index);
+            double f = (bx * ay) - (ax * by);
+            twiceArea += f;
+            x += (ax + bx) * f;
+            y += (ay + by) * f;
+            bx = ax;
+            by = ay;
+        }
+        double f = twiceArea * 3;
+        return Vect.valueOf(x / f, y / f);
+    }
+
+    /**
+     * Determine if the ring is convex.
+     *
+     * @return true if the ring was convex, false otherwise
+     */
+    @Transient
+    public boolean isConvex() {
+        Boolean ret = convex;
+        if (ret == null) {
+            ret = isConvex(vects);
+            convex = ret;
+        }
+        return ret;
+    }
+
+    /**
+     * Determine if the linear ring represented by the vectList given contains
+     * only convex angles. Results are undefined if the edges are unclosed or
+     * self intersect
+     *
+     * @param vects
+     * @return
+     * @throws IndexOutOfBoundsException if the vect list does not have at least
+     * 4 elements
+     */
+    public static boolean isConvex(VectList vects) throws IndexOutOfBoundsException {
+        int s = vects.size();
+        double ax = vects.getX(s - 2);
+        double ay = vects.getY(s - 2);
+        double bx = vects.getX(0);
+        double by = vects.getY(0);
+        for (int i = 1; i < vects.size(); i++) {
+            double cx = vects.getX(i);
+            double cy = vects.getY(i);
+            if (Line.counterClockwise(ax, ay, cx, cy, bx, by) == -1) {
+                return false;
+            }
+            ax = bx;
+            ay = by;
+            bx = cx;
+            by = cy;
+        }
+        return true;
+    }
+
+    public VectList getVects(VectList target) {
+        return target.addAll(vects);
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
@@ -391,144 +428,50 @@ public class Ring implements Serializable, Cloneable {
 
     @Override
     public String toString() {
-        return "{Ring:" + vects.toString() + "}";
+        return vects.toString();
     }
 
+    /**
+     *
+     * @param appendable
+     * @throws GeomException
+     */
     public void toString(Appendable appendable) throws GeomException {
-        try {
-            appendable.append("{Ring:");
-            vects.toString(appendable);
-            appendable.append("}");
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
+        vects.toString(appendable);
     }
 
-//    @Override
-//    public void writeExternal(ObjectOutput out) throws IOException {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
-//
-//    @Override
-//    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
-//
-//    static class RelationVisitor implements NodeProcessor<Line> {
-//
-//        final Tolerance tolerance;
-//        final Vect i;
-//        final Vect j;
-//        double x;
-//        double y;
-//        Relate relation;
-//        boolean touchesLess; // there is a line which touches the ray but does not cross it and has a lower y value
-//        boolean touchesGreater; // there is a line which touches the ray but does not cross it and has a greater y value
-//        
-//
-//        RelationVisitor(Tolerance tolerance, double x, double y) {
-//            this.tolerance = tolerance;
-//            this.x = x;
-//            this.y = y;
-//            this.relation = Relate.OUTSIDE;
-//            this.i = new Vect();
-//            this.j = new Vect();
-//        }
-//
-//        RelationVisitor(Tolerance tolerance) {
-//            this.tolerance = tolerance;
-//            this.relation = Relate.OUTSIDE;
-//            this.i = new Vect();
-//            this.j = new Vect();
-//        }
-//
-//        void reset(double x, double y) {
-//            this.x = x;
-//            this.y = y;
-//            this.relation = Relate.OUTSIDE;
-//            touchesLess = touchesGreater = false;
-//        }
-//
-//        @Override
-//        public boolean process(SpatialNode<Line> leaf, int index) {
-//            Line link = leaf.getItemValue(index);
-//            link.getA(i);
-//            link.getB(j);
-//            if (i.y == j.y) { // line has same slope as ray
-//                if (tolerance.match(i.y, y)) { // ray is within the tolerance of line on the y axis - do they overlap on x?
-//                    if (((i.x - tolerance.tolerance) <= x) && ((j.x + tolerance.tolerance) >= x)) {
-//                        relation = Relate.TOUCH;
-//                        return false; // no further processing is required - we have a touch
-//                    }
-//                }
-//            } else {
-//                double slope = (j.y - i.y) / (j.x - i.x);
-//                double lx = ((y - i.y) / slope) + i.x;  //find the x on line which crosses the ray
-//                if (tolerance.match(lx, x)) { // if the point where line crosses ray is within the tolerated 
-//                    relation = Relate.TOUCH;     // distance of the point, we call this a touch
-//                    return false;
-//                } else if ((lx + tolerance.tolerance) < x) { // Go from one side only...
-//                    return true;
-//                }
-//                //We can take a shortcut here, because for all edges in a network ax <= bx...
-//                double minY = i.y;
-//                double maxY = j.y;
-//                if (minY > maxY) {
-//                    double tmp = minY;
-//                    minY = maxY;
-//                    maxY = tmp;
-//                }
-//                if ((lx >= i.x) && (lx <= j.x)) { // if the point of intersection is on the line segment, we have a crossing point...
-//                    if (minY == y) {
-//                        if (touchesLess) { // we have a crossing point
-//                            touchesLess = false;
-//                            flipRelation();
-//                        } else {
-//                            touchesGreater = !touchesGreater;
-//                        }
-//                    } else if (maxY == y) {
-//                        if (touchesGreater) { // we have a crossing point
-//                            touchesGreater = false;
-//                            flipRelation();
-//                        } else {
-//                            touchesLess = !touchesLess;
-//                        }
-//                    } else {
-//                        flipRelation();
-//                    }
-//                }
-//            }
-//
-//            return true; // continue processing
-//        }
-//
-//        private void flipRelation() {
-//            relation = (relation == Relate.OUTSIDE) ? Relate.INSIDE : Relate.OUTSIDE;
-//        }
-//
-//    }
-//    
-//    static class NumIntersectionVisitor implements NodeProcessor<Line> {
-//
-//        final Tolerance tolerance;
-//
-//        NumIntersectionVisitor(Tolerance tolerance) {
-//            this.tolerance = tolerance;
-//        }
-//        
-//        
-//        @Override
-//        public boolean process(SpatialNode<Line> leaf, int index) {
-//            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//        }
-//
-//        private void reset(Line line) {
-//            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//        }
-//
-//        private int getNumIntersection() {
-//            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//        }
-//        
-//    }
+    /**
+     * Convert this ring to a string
+     *
+     * @param summarize true if shortened format may be used, false otherwise
+     * @return string representation of this ring
+     */
+    public String toString(boolean summarize) {
+        return vects.toString(summarize);
+    }
+
+    /**
+     * Read a VectList from to the DataInput given
+     *
+     * @param in
+     * @return a VectList
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN
+     * ordinates
+     * @throws GeomException if there was an IO error
+     */
+    public static Ring read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException {
+        return new Ring(VectList.read(in));
+    }
+
+    /**
+     * Write this Ring to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, GeomException {
+        vects.write(out);
+    }
 }

@@ -2,6 +2,7 @@ package org.jg.geom;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -173,6 +174,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
+    @Transient
     public Rect getBounds() {
         return new Rect(x, y, x, y);
     }

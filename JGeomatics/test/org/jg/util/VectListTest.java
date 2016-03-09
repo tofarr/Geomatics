@@ -811,7 +811,7 @@ public class VectListTest {
 
             });
             fail("Exception expected");
-        } catch (IllegalStateException ex) {
+        } catch (GeomException ex) {
             //expected
         }
     }

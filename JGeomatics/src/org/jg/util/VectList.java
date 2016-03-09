@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jg.geom.GeomException;
 import org.jg.geom.Line;
 import org.jg.geom.Rect;
@@ -16,7 +14,7 @@ import org.jg.geom.Vect;
 import org.jg.geom.VectBuilder;
 
 /**
- *
+ * Packed list of vectors
  * @author tofar_000
  */
 public final class VectList implements Serializable, Cloneable, Iterable<Vect>, Comparable<VectList> {
@@ -111,6 +109,12 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         }
     }
 
+    /**
+     * Get the vector at the index given
+     * @param index
+     * @return vector
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
     public Vect getVect(int index) throws IndexOutOfBoundsException {
         checkIndex(index);
         int ordIndex = index << 1;
@@ -139,9 +143,8 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @param index
      * @return target
      * @throws IndexOutOfBoundsException if index is out of bounds
-     * @throws NullPointerException if target was null
      */
-    public Line getLine(int index) throws IndexOutOfBoundsException, NullPointerException {
+    public Line getLine(int index) throws IndexOutOfBoundsException {
         if ((index < 0) || ((index + 1) >= size)) {
             throw new IndexOutOfBoundsException(index + " is not within range [0," + (size - 1) + "]");
         }
@@ -178,10 +181,9 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
     /**
      * Get the bounds of all vectors in this list
      *
-     * @return target
-     * @throws NullPointerException if target was null
+     * @return bounds
      */
-    public Rect getBounds() throws NullPointerException {
+    public Rect getBounds() {
         Rect ret = cachedRect;
         if (ret == null) {
             RectBuilder builder = new RectBuilder();
@@ -899,9 +901,9 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * xn,yn]
      *
      * @param appendable
-     * @throws IllegalStateException
+     * @throws GeomException
      */
-    public void toString(Appendable appendable) throws IllegalStateException {
+    public void toString(Appendable appendable) throws GeomException {
         try {
             appendable.append('[');
             boolean comma = false;
@@ -916,7 +918,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
             }
             appendable.append(']');
         } catch (IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new GeomException("Error writing", ex);
         }
     }
 

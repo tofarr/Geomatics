@@ -77,6 +77,7 @@ public class Line implements Geom, Comparable<Line> {
      *
      * @return
      */
+    @Transient
     public Vect getA() {
         return new Vect(ax, ay);
     }
@@ -85,6 +86,7 @@ public class Line implements Geom, Comparable<Line> {
      *
      * @return
      */
+    @Transient
     public Vect getB() {
         return new Vect(bx, by);
     }
@@ -656,6 +658,7 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
+    @Transient
     public Rect getBounds() {
         return new RectBuilder().addInternal(ax, ay).addInternal(bx, by).build();
     }

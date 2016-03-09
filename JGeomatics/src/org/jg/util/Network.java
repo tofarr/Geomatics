@@ -21,6 +21,7 @@ import org.jg.geom.Vect;
 import org.jg.geom.VectBuilder;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.VectMap.VectMapProcessor;
+import org.jg.util.VectSet.VectSetProcessor;
 
 /**
  *
@@ -120,7 +121,7 @@ public final class Network implements Externalizable, Cloneable {
         if (links == null) {
             throw new IllegalArgumentException("Unknown vertex : "+Vect.valueOf(x, y));
         }
-        links.getVect(index);
+        links.getVect(index, target);
     }
 
     public boolean nextCW(double originX, double originY, double linkX, double linkY, VectBuilder target) throws NullPointerException, IllegalArgumentException {
@@ -403,6 +404,16 @@ public final class Network implements Externalizable, Cloneable {
     public boolean forEachLink(NodeProcessor<Line> processor) throws NullPointerException {
         return getLinks().forEach(processor);
     }
+    
+    public boolean forEachVertex(final VertexProcessor processor) throws NullPointerException{
+        return map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                return processor.process(x, y, value.size());
+            }
+        
+        });
+    }
 
     public boolean forInteractingLinks(Rect rect, NodeProcessor<Line> processor) throws NullPointerException {
         return getLinks().forInteracting(rect, processor);
@@ -526,7 +537,7 @@ public final class Network implements Externalizable, Cloneable {
                     for (int j = 0; j < links.size(); j++) {
                         double bx = links.getX(j);
                         double by = links.getY(j);
-                        result.clear().add(ax, ay);
+                        result.clear();
                         followLine(ax, ay, bx, by, result);
                         if (result.isOrdered()) {
                             results.add(result.clone());
@@ -652,6 +663,7 @@ public final class Network implements Externalizable, Cloneable {
     }
 
     public VectList followLine(double ax, double ay, double bx, double by, VectList results) {
+        results.add(ax, ay);
         while (true) {
             results.add(bx, by);
             VectList links = map.get(bx, by);
@@ -864,5 +876,9 @@ public final class Network implements Externalizable, Cloneable {
             }
             return true;
         }
+    }
+    
+    public interface VertexProcessor{
+        public boolean process(double x, double y, int numLinks);
     }
 }
