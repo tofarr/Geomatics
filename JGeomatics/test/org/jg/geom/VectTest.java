@@ -411,12 +411,12 @@ public class VectTest {
         RingSet ringSet = (RingSet)vect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
         assertEquals(Math.PI * 4, ringSet.getArea(), 0.5);
-        assertEquals(Math.PI * 4, ringSet.ring.getLength(), 0.5);
+        assertEquals(Math.PI * 4, ringSet.shell.getLength(), 0.5);
         
         ringSet = (RingSet)vect.buffer(2, new Tolerance(0.1), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
         assertEquals(Math.PI * 4, ringSet.getArea(), 0.1);
-        assertEquals(Math.PI * 4, ringSet.ring.getLength(), 0.1);
+        assertEquals(Math.PI * 4, ringSet.shell.getLength(), 0.1);
         
         assertNull(vect.buffer(-1, new Tolerance(0.1), Tolerance.DEFAULT));
         assertSame(vect, vect.buffer(0, new Tolerance(0.1), Tolerance.DEFAULT));

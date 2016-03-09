@@ -379,7 +379,7 @@ public class RectTest {
         
         assertEquals(Rect.valueOf(1, 5, 15, 25), ringSet.getBounds());
         assertEquals(264 + (Math.PI * 4), ringSet.getArea(), 0.5);
-        assertEquals(52 + (Math.PI * 4), ringSet.ring.getLength(), 0.5);
+        assertEquals(52 + (Math.PI * 4), ringSet.shell.getLength(), 0.5);
     }
 
     @Test

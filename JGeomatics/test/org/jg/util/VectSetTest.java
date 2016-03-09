@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Set;
 import org.jg.geom.GeomException;
 import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 import org.jg.util.VectSet.VectSetProcessor;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -95,9 +96,11 @@ public class VectSetTest {
         for (int i = 1; i <= 32; i += 2) {
             assertFalse(vects.contains(i + 1, i + 2));
             assertFalse(vects.contains(Vect.valueOf(i + 1, i + 2)));
+            assertFalse(vects.contains(new VectBuilder(i + 1, i + 2)));
             vects.add(i + 1, i + 2);
             assertTrue(vects.contains(i + 1, i + 2));
             assertTrue(vects.contains(Vect.valueOf(i + 1, i + 2)));
+            assertTrue(vects.contains(new VectBuilder(i + 1, i + 2)));
         }
         //vects = new VectSet(4, 4);
         vects = new VectSet(4, 5);
@@ -120,7 +123,13 @@ public class VectSetTest {
             //expected
         }
         try {
-            vects.contains(null);
+            vects.contains((Vect)null);
+            fail("Exception Expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        try {
+            vects.contains((VectBuilder)null);
             fail("Exception Expected");
         } catch (NullPointerException ex) {
             //expected
