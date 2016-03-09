@@ -37,12 +37,24 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     public static Line valueOf(double ax, double ay, double bx, double by) throws IllegalArgumentException {
+        check(ax, ay, bx, by);
+        return new Line(ax, ay, bx, by);
+    }
+    
+    /**
+     * Check that the line given is valid
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @throws IllegalArgumentException if ordinate was infinite or NaN or ordinates were same
+     */
+    public static void check(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         Vect.check(ax, ay);
         Vect.check(bx, by);
         if ((ax == bx) && (ay == by)) {
             throw new IllegalArgumentException("Points were the same! [" + ax + "," + ay + "," + bx + "," + by + "]");
         }
-        return new Line(ax, ay, bx, by);
     }
 
     public double getAx() {
@@ -514,8 +526,21 @@ public class Line implements Geom, Comparable<Line> {
         }
         double ui = ((jbx - jax) * (ay - jay) - (jby - jay) * (ax - jax)) / denom; // projected distance along i and j
 
-        double x = (ui * (bx - ax)) + ax;
-        double y = (ui * (by - ay)) + ay;
+        double x,y;
+        if(ax == bx){
+            x = ax;
+        }else if(jax == jbx){
+            x = jax;
+        }else{
+            x = (ui * (bx - ax)) + ax;
+        }
+        if(ay == by){
+            y = ay;
+        }else if(jay == jby){
+            y = jay;
+        }else{
+            y = (ui * (by - ay)) + ay;
+        }
 
         if (tolerance.match(x, y, ax, ay)) {
             target.set(ax, ay);
@@ -589,8 +614,21 @@ public class Line implements Geom, Comparable<Line> {
         double ui = ((jbx - jax) * (ay - jay) - (jby - jay) * (ax - jax)) / denom; // projected distance along i and j
         double uj = ((bx - ax) * (ay - jay) - (by - ay) * (ax - jax)) / denom;
 
-        double x = (ui * (bx - ax)) + ax;
-        double y = (ui * (by - ay)) + ay;
+        double x,y;
+        if(ax == bx){
+            x = ax;
+        }else if(jax == jbx){
+            x = jax;
+        }else{
+            x = (ui * (bx - ax)) + ax;
+        }
+        if(ay == by){
+            y = ay;
+        }else if(jay == jby){
+            y = jay;
+        }else{
+            y = (ui * (by - ay)) + ay;
+        }
 
         boolean ia = tolerance.match(x, y, ax, ay);
         boolean ib = tolerance.match(x, y, bx, by);
@@ -732,11 +770,15 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public int hashCode() {
+        return hashCode(ax, ay, bx, by);
+    }
+    
+    public static int hashCode(double ax, double ay, double bx, double by){
         int hash = 7;
-        hash = 97 * hash + Vect.hash(this.ax);
-        hash = 97 * hash + Vect.hash(this.ay);
-        hash = 97 * hash + Vect.hash(this.bx);
-        hash = 97 * hash + Vect.hash(this.by);
+        hash = 97 * hash + Vect.hash(ax);
+        hash = 97 * hash + Vect.hash(ay);
+        hash = 97 * hash + Vect.hash(bx);
+        hash = 97 * hash + Vect.hash(by);
         return hash;
     }
 

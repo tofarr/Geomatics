@@ -322,7 +322,7 @@ public class LineString implements Geom {
             lines.forOverlapping(bounds.build(), remover);
         }
 
-        return network.extractRingSet();
+        return RingSet.valueOf(network);
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use

@@ -9,6 +9,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import org.jg.geom.GeomException;
 import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 
 /**
  * Set of vectors backed by an open hash table
@@ -102,6 +103,17 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
     public boolean contains(Vect vect) throws NullPointerException {
         return containsInternal(vect.x, vect.y);
     }
+    
+    /**
+     * Determine if set contains the vector given
+     *
+     * @param vect
+     * @return
+     * @throws NullPointerException if vect was null
+     */
+    public boolean contains(VectBuilder vect) throws NullPointerException {
+        return containsInternal(vect.getX(), vect.getY());
+    }
 
     /**
      * Determine if set contains the vector given
@@ -115,7 +127,7 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
         Vect.check(x, y);
         return containsInternal(x, y);
     }
-
+    
     boolean containsInternal(double x, double y) {
         int index = hashIndex(x, y, ords);
         for (int s = maxJumps; s-- > 0;) {
@@ -136,6 +148,17 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
      */
     public VectSet add(Vect vect) throws NullPointerException {
         return addInternal(vect.x, vect.y);
+    } 
+    
+    /**
+     * Add the vector given to this set
+     *
+     * @param vect
+     * @return this
+     * @throws NullPointerException if vect was null
+     */
+    public VectSet add(VectBuilder vect) throws NullPointerException {
+        return addInternal(vect.getX(), vect.getY());
     }
 
     /**
@@ -268,7 +291,7 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
     /**
      * Remove all entries from this set
      */
-    public void clear() {
+    public VectSet clear() {
         if (size != 0) {
             if (copyOnEdit) {
                 ords = new double[ords.length];
@@ -277,6 +300,7 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
             Arrays.fill(ords, Double.NaN);
             size = 0;
         }
+        return this;
     }
 
     public boolean forEach(VectSetProcessor processor) {

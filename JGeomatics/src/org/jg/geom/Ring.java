@@ -1,8 +1,17 @@
 package org.jg.geom;
 
+import java.io.IOException;
+import org.jg.util.RelationProcessor;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jg.util.Network;
 import org.jg.util.RTree;
+import org.jg.util.Tolerance;
 import org.jg.util.VectList;
+import org.jg.util.VectSet;
 
 /**
  *
@@ -12,6 +21,7 @@ public class Ring implements Serializable, Cloneable {
 
     final VectList vects;
     private RTree<Line> lines;
+    private Double area;
 
     public Ring(VectList vects) {
         int last = vects.size() - 1;
@@ -24,14 +34,88 @@ public class Ring implements Serializable, Cloneable {
         this.vects = vects;
     }
 
-    /*public Rect getBounds(Rect bounds){
-     return vects.getBounds(bounds);
-     }*/
+    private Ring(VectList vects, Double area) {
+        this.vects = vects;
+        this.area = area;
+    }
+    
+    public static List<Ring> valueOf(Network network) {
+        //String wkt = "MULTILINESTRING"+network.toString().replace(",", " ").replace("  ", ", ").replace("[", "(").replace("]",")").replace(") (", "),(");
+        //System.out.println(wkt);
+        
+        ArrayList<Ring> ret = new ArrayList<>();
+        
+        final Network visited = new Network(); // network storing visited links
+        VectList allVects = network.getVects(new VectList(network.numVects())); //get vectors in correct order
+        
+        //first mark all hang lines as visited
+        VectList path = new VectList();
+        VectBuilder vect = new VectBuilder();
+        for(int v = allVects.size(); v-- > 0;){
+            double ax = allVects.getX(v);
+            double ay = allVects.getY(v);
+            if(network.numLinks(ax, ay) == 1){
+                path.clear();
+                network.getLink(ax, ay, 0, vect);
+                network.followLine(ax, ay, vect.getX(), vect.getY(), path);
+                visited.addAllLinks(path);
+            }
+        }
+        
+        VectList links = new VectList();
+        VectSet pathSet = new VectSet();
+        for(int a = 0; a < allVects.size(); a++){
+            double ax = allVects.getX(a);
+            double ay = allVects.getY(a);
+            links.clear();
+            network.getLinks(ax, ay, links);
+            for(int b = 0; b < links.size(); b++){
+                double bx = links.getX(b);
+                double by = links.getY(b);
+                if(!visited.hasLink(ax, ay, bx, by)){
+                    //traverse - if self intersects, then invalid. If area is negative at end then invalid 
+                    followRing(ax, ay, bx, by, network, path, pathSet, vect);
+                    int s = path.size();
+                    if(s <= 3){
+                        continue; // not enough points for a ring - traversal was invalid
+                    }else if((path.getX(s-1) != ax) || (path.getY(s-1) != ay)){
+                        continue; // not a ring - traversal was invalid
+                    }
+                    double area = Ring.getArea(path);
+                    if(area <= 0){ // not a valid  ring
+                        continue;
+                    }
+                    Ring ring = new Ring(path.clone(), area);
+                    ret.add(ring);
+                    visited.addAllLinks(path);
+                }
+            }
+        }
+        return ret;
+    }
+    
+    private static void followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectSet pathSet, VectBuilder vect){
+        path.clear().add(ax, ay).add(bx, by);
+        pathSet.clear().add(ax, ay).add(bx, by);
+        while(true){
+            network.nextCW(bx, by, ax, ay, vect);
+            path.add(vect);
+            if(pathSet.contains(vect)){
+                return;
+            }
+            pathSet.add(vect);
+            ax = bx;
+            ay = by;
+            bx = vect.getX();
+            by = vect.getY();
+        }
+    }
+    
     public double getArea() {
         return getArea(vects);
     }
 
-    static double getArea(VectList vects) throws NullPointerException, IndexOutOfBoundsException {
+    public static double getArea(VectList vects) throws NullPointerException, IndexOutOfBoundsException {
         int index = vects.size();
         double bx = vects.getX(--index);
         double by = vects.getY(index);
@@ -57,6 +141,32 @@ public class Ring implements Serializable, Cloneable {
     
     public void addBoundsTo(RectBuilder bounds){
         bounds.add(vects.getBounds());
+    }
+    
+    public Relate relate(Vect vect, Tolerance tolerance){
+        return relate(vect.x, vect.y, tolerance);
+    }
+    
+    public Relate relate(double x, double y, Tolerance tolerance){
+        Vect.check(x, y);
+        
+        Rect bounds = vects.getBounds();
+        if(bounds.relateInternal(x, y, tolerance) == Relate.OUTSIDE){ // If outside bounds, then cant be inside
+            return Relate.OUTSIDE;
+        }
+        
+        Rect selection = Rect.valueOf(x, y, bounds.maxX, y);
+        RelationProcessor processor = new RelationProcessor(tolerance, x, y);
+        getLines().forInteracting(selection, processor);
+        return processor.getRelate();
+    }
+    
+    
+    RTree<Line> getLines() {
+        if (lines == null) {
+            lines = vects.toLineIndex();
+        }
+        return lines;
     }
     
 //
@@ -184,19 +294,6 @@ public class Ring implements Serializable, Cloneable {
 //        return target.addAll(getLines());
 //    }
 //
-//    RTree<Line> getLines() {
-//        if (lines == null) {
-//            RTree<Line> tree = new RTree<>();
-//            for (int i = vects.size() - 1; i-- > 0;) {
-//                Line line = vects.get(i, new Line());
-//                line.normalize();
-//                tree.add(line.getBounds(new Rect()), line);
-//            }
-//            lines = tree;
-//        }
-//        return lines;
-//
-//    }
 //
 //    public boolean intersects(Ring ring, final Tolerance tolerance) throws IllegalArgumentException {
 //        Rect bounds = vects.getBounds(new Rect());
@@ -280,29 +377,33 @@ public class Ring implements Serializable, Cloneable {
 //        return false;
 //    }
 //
-//    @Override
-//    public int hashCode() {
-//        int hash = 7;
-//        hash = 67 * hash + vects.hashCode();
-//        return hash;
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        return (obj instanceof Ring) && vects.equals(((Ring) obj).vects);
-//    }
-//
-//    @Override
-//    public String toString() {
-//        return "{Ring:" + vects.toString() + "}";
-//    }
-//
-//    public void toString(Appendable appendable) throws IOException {
-//        appendable.append("{Ring:");
-//        vects.toString(appendable);
-//        appendable.append("}");
-//    }
-//
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + vects.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return (obj instanceof Ring) && vects.equals(((Ring) obj).vects);
+    }
+
+    @Override
+    public String toString() {
+        return "{Ring:" + vects.toString() + "}";
+    }
+
+    public void toString(Appendable appendable) throws GeomException {
+        try {
+            appendable.append("{Ring:");
+            vects.toString(appendable);
+            appendable.append("}");
+        } catch (IOException ex) {
+            throw new GeomException("Error writing", ex);
+        }
+    }
+
 //    @Override
 //    public void writeExternal(ObjectOutput out) throws IOException {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.

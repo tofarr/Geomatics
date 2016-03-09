@@ -276,7 +276,7 @@ public class LineStringTest {
     }
 
     @Test
-    public void testBuffer() {
+    public void testBuffer_Point() {
         Tolerance flatness = new Tolerance(0.5);
         LineString s = LineString.valueOf(37, 61);
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
@@ -291,12 +291,44 @@ public class LineStringTest {
         assertEquals(42, bounds.maxX, 0.5);
         assertEquals(66, bounds.maxY, 0.5);
         assertEquals(Math.PI * 25, ringSet.getArea(), 0.6);
-        assertEquals(Math.PI * 10, ringSet.ring.getLength(), 0.5);
+        assertEquals(Math.PI * 10, ringSet.shell.getLength(), 0.5);
         
-        //buffer self crossing string
-        s = LineString.valueOf(20, 0, 20, 60, 60, 60, 60, 20, 0, 20);
-        Geom c = s.buffer(5, flatness, Tolerance.DEFAULT);
-        System.out.println(c);
+    }
+    
+    @Test
+    public void testBuffer_RightAngle() {
+        Tolerance flatness = new Tolerance(0.5);
+        LineString s = LineString.valueOf(20, 0, 20, 60, 60, 60);
+        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+        
+        // buffer a point
+        RingSet r = (RingSet)s.buffer(5, flatness, Tolerance.DEFAULT); 
+        double area = (25 * Math.PI) 
+                + ((25 * Math.PI) * 0.25)
+                + 550
+                + 450;
+        assertEquals(area, r.getArea(), 0.1);
+        System.out.println(r);
+    }
+
+    @Test
+    public void testBuffer_Loop() {
+        Tolerance flatness = new Tolerance(0.5);
+        LineString s = LineString.valueOf(20, 0, 20, 60, 60, 60, 60, 20, 0, 20);
+        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+        
+        // buffer a point
+        RingSet r = (RingSet)s.buffer(5, flatness, Tolerance.DEFAULT); 
+        double area = (25 * Math.PI) 
+                + ((25 * Math.PI) * 0.75)
+                + 225
+                + 900
+                + 100
+                + 300;
+        assertEquals(area, r.getArea(), 0.1);
+        System.out.println(r);
         
     }
 

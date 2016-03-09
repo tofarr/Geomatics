@@ -743,4 +743,23 @@ public class LineTest {
         assertEquals(8.5, target.getX(), 0.00001);
         assertEquals(12.5, target.getY(), 0.00001);
     }
+    
+    @Test
+    public void testIntersectionInternal(){
+        Line i = Line.valueOf(0, 25, 55, 25);
+        Line j = Line.valueOf(15, 0, 15, 65);
+        VectBuilder target = new VectBuilder();
+        assertTrue(i.intersectionSeg(j, Tolerance.DEFAULT, target));
+        assertTrue(15 == target.getX());
+        assertTrue(25 == target.getY());
+        assertTrue(i.intersectionLine(j, Tolerance.DEFAULT, target));
+        assertTrue(15 == target.getX());
+        assertTrue(25 == target.getY());
+        
+        assertTrue(Line.intersectionLineInternal(0, 0, 0, 10, 0, 5, 10, 5, Tolerance.DEFAULT, target));
+        assertEquals("[0,5]", target.toString());
+        assertTrue(Line.intersectionLineInternal(10, 0, 10, 10, 0, 5, 10, 5, Tolerance.DEFAULT, target));
+        assertEquals("[10,5]", target.toString());
+        
+    }
 }

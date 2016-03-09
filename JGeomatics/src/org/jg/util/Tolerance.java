@@ -20,6 +20,10 @@ public final class Tolerance implements Serializable, Cloneable {
      */
     public static final Tolerance DEFAULT = new Tolerance(0.00001);
     /**
+     * No tolerance
+     */
+    public static final Tolerance ZERO = new Tolerance(0);
+    /**
      * Tolerance value
      */
     public final double tolerance;

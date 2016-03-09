@@ -858,6 +858,21 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         }
     }
     
+    /**
+     * Get an RTree containing all lines in this list
+     * @return
+     */
+    public RTree<Line> toLineIndex(){
+        int s = size - 1;
+        Rect[] bounds = new Rect[s];
+        Line[] lines = new Line[s];
+        for(int i = 0; i < s; i++){
+            Line line = getLine(i);
+            bounds[i] = line.getBounds();
+            lines[i] = line;
+        }
+        return new RTree<Line>(bounds, lines);
+    }
 
     @Override
     public String toString() {
