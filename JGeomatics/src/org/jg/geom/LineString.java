@@ -400,29 +400,28 @@ public class LineString implements Geom {
             dx = (dx - bx) * mul + bx; // move d such that it is the proper distance from line segments ab and bc
             dy = (dy - by) * mul + by;
 
-            double distBD = Math.sqrt(Vect.distSq(bx, by, dx, dy));
+            double distBDSq = Vect.distSq(bx, by, dx, dy);
+            double distBD = Math.sqrt(distBDSq);
 
-            //THIS IS WRONG! - NEED TO WORK OUT DESIRECT BEHAVIOUR WHEN LINES ARE SHORT!
-            
             if ((distBD < distAB) && (distBD < distBC)) {
                 result.add(dx, dy);
-            }else if(distAB > distBC){ 
+                return;
+            }
+            
+            VectList intersections = new VectList();
+            if(distAB > distBC){ 
                 //find point which is both on the line segment BD and the circle centered at C with radius amt
-                VectList intersections = new VectList();
                 Line.intersectionLineCircleInternal(bx, by, dx, dy, cx, cy, amt, tolerance, work, intersections);
-                for(int i = 0; i < intersections.size(); i++){
-                    Line.
-                }
-                
-
-                throw new UnsupportedOperationException();
             }else{
-                
                 //find point which is both on the line segment BD and the circle centered at A with radius amt
-                VectList intersections = new VectList();
                 Line.intersectionLineCircleInternal(bx, by, dx, dy, ax, ay, amt, tolerance, work, intersections);
-                
-                throw new UnsupportedOperationException();
+            }
+            for(int i = 0; i < intersections.size(); i++){
+                double x = intersections.getX(i);
+                double y = intersections.getY(i);
+                if((Vect.distSq(bx, by, x, y) <= distBDSq) && (Vect.distSq(dx, dy, x, y) <= distBDSq)){
+                    result.add(x, y);
+                }
             }
         } else {
             Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
