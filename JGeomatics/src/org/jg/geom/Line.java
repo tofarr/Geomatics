@@ -656,6 +656,43 @@ public class Line implements Geom, Comparable<Line> {
         }
         return false;
     }
+    
+    static void intersectionLineCircleInternal(double ax, double ay, double bx, double by,
+            double cx, double cy, double radius, Tolerance tolerance, VectBuilder working, VectList intersections){
+
+        projectOnToLineInternal(ax, ay, bx, by, cx, cy, tolerance, working); //get the closest point on the line to the circle center
+        
+        double dx = working.getX();
+        double dy = working.getY();
+        
+        double distToLineSq = Vect.distSq(cx, cy, dx, dy);
+        double radiusSq = radius * radius;
+        switch(tolerance.check(distToLineSq - radiusSq)){
+            case 1: // dist to line is greater than radius - line does not intersect circle
+                return;
+            case 0: // dist to line matches radius - line touches circle
+                intersections.add(dx, dy);
+                return;
+            default: // dist to line is less than radius - line crosses circle
+                double mx = bx - ax;
+                double my = by - ay;
+                double segmentLen = Math.sqrt(mx * mx + my * my);
+                double projectDist;
+                if(tolerance.check(distToLineSq) == 0){ // line crosses circle center
+                    projectDist = radius;
+                    dx = cx;
+                    dy = cy;
+                }else{
+                    projectDist = Math.sqrt(radiusSq - distToLineSq);
+                }
+                double mul = projectDist / segmentLen;
+                mx *= mul;
+                my *= mul;
+                intersections.add(dx - mx, dy - my);
+                intersections.add(dx + mx, dy + my);
+                return;
+        }
+    }
 
     @Override
     @Transient

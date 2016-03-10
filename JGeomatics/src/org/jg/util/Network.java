@@ -431,7 +431,7 @@ public final class Network implements Externalizable, Cloneable {
             @Override
             public boolean process(Rect bounds, Line value) {
                 finder.reset(value);
-                links.forOverlapping(bounds, finder);
+                links.forInteracting(bounds, finder);
                 VectList intersections = finder.intersections;
                 if (intersections.size() > 0) {
                     double ax = value.ax;

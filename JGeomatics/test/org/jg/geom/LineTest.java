@@ -13,6 +13,7 @@ import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
+import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -762,4 +763,39 @@ public class LineTest {
         assertEquals("[10,5]", target.toString());
         
     }
+    
+    @Test
+    public void testIntersectionCircleInternal(){      
+                
+        checkIntersection(13, 0, 15, 2); // Outside
+        checkIntersection(7, 0, 7, 2); // Outside vertical
+        checkIntersection(0, 23, 23, 23); // Outside horizontal
+
+        checkIntersection(5.071067811865475244008443621049, 2, 25.071067811865475244008443621049, 22, 16.535533905932738, 13.464466094067262); // Touch
+        checkIntersection(18, 0, 18, 2, 18, 17); // Touch vertical
+        checkIntersection(10, 12, 16, 12, 13, 12); // Touch horizontal
+
+        checkIntersection(8, 7, 23, 22, 13, 12, 18, 17); // Intersection
+        checkIntersection(15, 7, 15, 22, 15, 12.417424305044161, 15, 21.58257569495584); // Intersection vertical
+        checkIntersection(10, 15, 15, 15, 8.417424305044161, 15, 17.58257569495584, 15); // Intersection horizontal
+        
+        checkIntersection(8, 12, 23, 27, 9.464466094067262, 13.464466094067262, 16.535533905932738, 20.535533905932738); // Center
+        checkIntersection(13, 0, 13, 1, 13, 12, 13, 22); // Center vertical
+        checkIntersection(0, 17, 20, 17, 8, 17, 18, 17); // Center horizontal
+        
+    }
+    
+    private void checkIntersection(double ax, double ay, double bx, double by, double...intersections){
+        final double cx = 13;
+        final double cy = 17;
+        final double r = 5;
+        
+        VectList expected = new VectList(intersections);
+        VectList found = new VectList();
+        VectBuilder work = new VectBuilder();
+        Line.intersectionLineCircleInternal(ax, ay, bx, by, cx, cy, r, Tolerance.DEFAULT, work, found);
+        assertEquals(expected, found);
+    }
+    
+    
 }

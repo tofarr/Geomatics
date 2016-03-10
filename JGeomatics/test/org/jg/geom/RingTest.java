@@ -2,11 +2,10 @@ package org.jg.geom;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +110,43 @@ public class RingTest {
         assertEquals("[0,50, 50,0, 100,50, 50,100, 0,50]", ring.toString());
         assertTrue(ring.isConvex());
         assertTrue(ring.isValid());
+    }
+    
+    @Test
+    public void testValueOf_C() {
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,50, 50,0, 100,50, 0,50, 50,100, 100,50));
+        List<Ring> rings = Ring.valueOf(network);
+        ArrayList<Ring> expected = new ArrayList<>();
+        expected.add(new Ring(new VectList(0,50, 50,0, 100,50, 0,50)));
+        expected.add(new Ring(new VectList(0,50, 100,50, 50,100, 0,50)));
+        assertEquals(expected, rings);
+    }  
+
+    @Test
+    public void testValueOf_D() {
+        Network network = new Network();
+        network.addAllLinks(new VectList(10,0, 10,10, 0,10, 0,0, 30,0, 30,10, 20,10, 20,0));
+        network.explicitIntersections(Tolerance.DEFAULT);
+        List<Ring> rings = Ring.valueOf(network);
+        ArrayList<Ring> expected = new ArrayList<>();
+        expected.add(new Ring(new VectList(0,0, 10,0, 10,10, 0,10, 0,0)));
+        expected.add(new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0)));
+        assertEquals(expected, rings);
+    }
+
+    @Test
+    public void testValueOf_E() {
+        Network network = new Network();
+        //Network has some explicit intersections but not others - it is completely rubbish input!
+        network.addAllLinks(new VectList(0,10, 0,20, 20,0, 30,10, 40,20, 40,10, 30,10, 0,10));
+        List<Ring> rings = Ring.valueOf(network);
+        ArrayList<Ring> expected = new ArrayList<>();
+        expected.add(new Ring(new VectList(0,10, 0,20, 20,0, 30,10, 0,10)));
+        expected.add(new Ring(new VectList(30,10, 40,10, 40,20, 30,10)));
+        assertEquals(expected, rings);
+        assertFalse(rings.get(0).isValid());
+        assertTrue(rings.get(1).isValid());
     }
 
     @Test

@@ -1,5 +1,8 @@
 package org.jg.geom;
 
+import java.awt.Polygon;
+import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -298,15 +301,16 @@ public class LineStringTest {
         LineString s = LineString.valueOf(20, 0, 20, 60, 60, 60);
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
-        
-        // buffer a point
+
         RingSet r = (RingSet)s.buffer(5, flatness, Tolerance.DEFAULT); 
-        double area = (25 * Math.PI) 
-                + ((25 * Math.PI) * 0.25)
-                + 550
-                + 450;
-        assertEquals(area, r.getArea(), 0.1);
-        System.out.println(r);
+        double area = (35 * 10)
+            + (55 * 10)
+            + (25 * Math.PI)
+            + (5 * 5 * 3)
+            + (25 * Math.PI * 0.25);
+        assertEquals(area, r.getArea(), 1);
+        assertEquals(Rect.valueOf(15,-5,65,65), r.getBounds());
+
     }
 
     @Test
@@ -315,18 +319,39 @@ public class LineStringTest {
         LineString s = LineString.valueOf(20, 0, 20, 60, 60, 60, 60, 20, 0, 20);
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
-        
-        // buffer a point
+
         RingSet r = (RingSet)s.buffer(5, flatness, Tolerance.DEFAULT); 
-        double area = (25 * Math.PI) 
-                + ((25 * Math.PI) * 0.75)
-                + 225
-                + 900
-                + 100
-                + 300;
-        assertEquals(area, r.getArea(), 0.1);
-        System.out.println(r);
+        double area = (30 * 10 * 4)
+                + (5 * 5 * 3 * 3)
+                + (5 * 5 * Math.PI * 0.25 * 3)
+                + (10 * 10)
+                + (5 * 5 * Math.PI)
+                + (15 * 10 * 2);
+        assertEquals(area, r.getArea(), 1);
+    }
+    
+    
+    @Test
+    public void testBuffer_V() {
+        Tolerance flatness = new Tolerance(0.5);
+        LineString s = LineString.valueOf(20,0, 20,10, 19,10.2, 20,10.4, 20,30);
+        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+
+        RingSet r = (RingSet)s.buffer(5, flatness, Tolerance.DEFAULT); 
         
+        Network network = new Network();
+        r.addTo(network, Tolerance.DEFAULT);
+        String wkt = "MULTILINESTRING"+network.toString().replace(",", " ").replace("  ", ", ").replace("[", "(").replace("]",")").replace(") (", "),(");
+        System.out.println(wkt);
+        
+        double area = (30 * 10 * 4)
+                + (5 * 5 * 3 * 3)
+                + (5 * 5 * Math.PI * 0.25 * 3)
+                + (10 * 10)
+                + (5 * 5 * Math.PI)
+                + (15 * 10 * 2);
+        assertEquals(area, r.getArea(), 1);
     }
 
     /**
@@ -334,6 +359,24 @@ public class LineStringTest {
      */
     @Test
     public void testProjectOutward() {
+        Tolerance flatness = new Tolerance(0.5);
+        VectBuilder work = new VectBuilder();
+        VectList result = new VectList();
+        
+        LineString.projectOutward(0,0, 0,10, 10,10, 5, flatness, Tolerance.DEFAULT, work, result);
+        assertEquals(1, result.size());
+        assertEquals(5, result.getX(0), 0.0001);
+        assertEquals(5, result.getY(0), 0.0001);
+        
+        result.clear();
+        LineString.projectOutward(19,10.2, 20,10, 20,0, 5, flatness, Tolerance.DEFAULT, work, result);
+        assertEquals(1, result.size());
+        assertEquals(5, result.getX(0), 0.0001);
+        assertEquals(5, result.getY(0), 0.0001);
+        
+        //LineString.projectOutward(20,10, 19,10.2, 20,10.4, 5, flatness, Tolerance.DEFAULT, work, result);
+        System.out.println(result);
+        
 //        System.out.println("projectOutward");
 //        double ax = 0.0;
 //        double ay = 0.0;

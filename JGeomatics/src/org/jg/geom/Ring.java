@@ -102,16 +102,19 @@ public class Ring implements Serializable, Cloneable {
                     //traverse - if self intersects, then invalid. If area is negative at end then invalid 
                     followRing(ax, ay, bx, by, network, path, pathSet, vect);
                     int s = path.size();
-                    if (s <= 3) {
-                        continue; // not enough points for a ring - traversal was invalid
-                    } else if ((path.getX(s - 1) != ax) || (path.getY(s - 1) != ay)) {
+                    //if (s <= 3) {
+                    //    continue; // not enough points for a ring - traversal was invalid - impossible since hang lines have been filtered
+                    //} else
+                    if ((path.getX(s - 1) != ax) || (path.getY(s - 1) != ay)) {
                         continue; // not a ring - traversal was invalid
                     }
                     double area = Ring.getArea(path);
                     if (area <= 0) { // not a valid  ring
                         continue;
                     }
-                    Ring ring = new Ring(path.clone(), area);
+                    int index = minIndex(path);
+                    VectList ringPath = (index == 0) ? path.clone() : rotate(path, index);
+                    Ring ring = new Ring(ringPath, area);
                     ret.add(ring);
                     visited.addAllLinks(path);
                 }
@@ -412,6 +415,10 @@ public class Ring implements Serializable, Cloneable {
 
     public VectList getVects(VectList target) {
         return target.addAll(vects);
+    }
+    
+    public void addTo(Network network, Tolerance tolerance) {
+        network.addAllLinks(vects);
     }
 
     @Override

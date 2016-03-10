@@ -402,11 +402,28 @@ public class LineString implements Geom {
 
             double distBD = Math.sqrt(Vect.distSq(bx, by, dx, dy));
 
+            //THIS IS WRONG! - NEED TO WORK OUT DESIRECT BEHAVIOUR WHEN LINES ARE SHORT!
+            
             if ((distBD < distAB) && (distBD < distBC)) {
                 result.add(dx, dy);
-            }
-            //TODO: There are probably other cases where additional points are required
+            }else if(distAB > distBC){ 
+                //find point which is both on the line segment BD and the circle centered at C with radius amt
+                VectList intersections = new VectList();
+                Line.intersectionLineCircleInternal(bx, by, dx, dy, cx, cy, amt, tolerance, work, intersections);
+                for(int i = 0; i < intersections.size(); i++){
+                    Line.
+                }
+                
 
+                throw new UnsupportedOperationException();
+            }else{
+                
+                //find point which is both on the line segment BD and the circle centered at A with radius amt
+                VectList intersections = new VectList();
+                Line.intersectionLineCircleInternal(bx, by, dx, dy, ax, ay, amt, tolerance, work, intersections);
+                
+                throw new UnsupportedOperationException();
+            }
         } else {
             Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
             double ix = work.getX();

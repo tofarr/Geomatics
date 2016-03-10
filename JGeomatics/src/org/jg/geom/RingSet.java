@@ -140,7 +140,12 @@ public class RingSet implements Geom {
 
     @Override
     public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(shell != null){
+            shell.addTo(network, tolerance);
+        }
+        for(int c = 0; c < children.length; c++){
+            children[c].addTo(network, tolerance);
+        }
     }
 
     @Override
