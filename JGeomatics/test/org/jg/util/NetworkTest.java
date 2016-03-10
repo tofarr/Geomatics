@@ -2,6 +2,7 @@ package org.jg.util;
 
 import java.util.ArrayList;
 import org.jg.geom.Vect;
+import org.jg.util.VectMap.VectMapProcessor;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

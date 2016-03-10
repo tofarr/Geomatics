@@ -387,6 +387,8 @@ public class LineString implements Geom {
     static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance flatness, Tolerance tolerance, VectBuilder work, VectList result) {
         if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
 
+            
+            
             double distAB = Math.sqrt(Vect.distSq(ax, ay, bx, by));
             double distBC = Math.sqrt(Vect.distSq(cx, cy, bx, by));
 
@@ -416,6 +418,12 @@ public class LineString implements Geom {
                 //find point which is both on the line segment BD and the circle centered at A with radius amt
                 Line.intersectionLineCircleInternal(bx, by, dx, dy, ax, ay, amt, tolerance, work, intersections);
             }
+            
+            Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
+            double abbx = work.getX();
+            double abby = work.getY();
+            result.add(abbx, abby);
+            
             for(int i = 0; i < intersections.size(); i++){
                 double x = intersections.getX(i);
                 double y = intersections.getY(i);
@@ -423,6 +431,28 @@ public class LineString implements Geom {
                     result.add(x, y);
                 }
             }
+            
+            Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
+            double bcbx = work.getX();
+            double bcby = work.getY();
+            result.add(bcbx, bcby);
+            
+//            Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, work);
+//            double abax = work.getX();
+//            double abay = work.getY();
+//            Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
+//            double abbx = work.getX();
+//            double abby = work.getY();
+//            Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
+//            double bcbx = work.getX();
+//            double bcby = work.getY();
+//            Line.projectOutward(bx, by, cx, cy, 1, amt, tolerance, work);
+//            double bccx = work.getX();
+//            double bccy = work.getY();
+//            Line.intersectionLineInternal(abax, abay, abbx, abby, bcbx, bcby, bccx, bccy, tolerance, work);
+//            result.add(work);
+            
+            
         } else {
             Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
             double ix = work.getX();

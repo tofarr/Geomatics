@@ -29,9 +29,9 @@ import org.jg.util.VectSet.VectSetProcessor;
  */
 public final class Network implements Externalizable, Cloneable {
 
-    private final VectMap<VectList> map;
-    private int numLinks;
-    private RTree<Line> cachedLinks;
+    final VectMap<VectList> map;
+    int numLinks;
+    RTree<Line> cachedLinks;
 
     public Network() {
         map = new VectMap<>();
@@ -465,7 +465,7 @@ public final class Network implements Externalizable, Cloneable {
                         cx = bx;
                         cy = by;
                     }
-                    addLink(ax, ay, cx, cy);
+                    addLinkInternal(ax, ay, cx, cy);
                 }
                 return true;
             }
@@ -848,6 +848,23 @@ public final class Network implements Externalizable, Cloneable {
         return network;
     }
 
+    public boolean checkConsistency(){
+        return map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                for(int i = 0; i < links.size(); i++){
+                    Vect link = links.getVect(i);
+                    VectList backLinks = map.get(link);
+                    if(backLinks.indexOf(x, y, 0) < 0){
+                        return false;
+                    }
+                }
+                return true;
+            }
+        
+        });
+    }
+    
     class IntersectionFinder implements NodeProcessor<Line> {
 
         final Tolerance tolerance;
