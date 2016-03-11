@@ -1,8 +1,7 @@
-package org.jg.util;
+package org.jg.geom;
 
-import java.util.ArrayList;
-import org.jg.geom.Vect;
-import org.jg.util.VectMap.VectMapProcessor;
+import org.jg.util.Tolerance;
+import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

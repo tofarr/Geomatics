@@ -292,16 +292,14 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * Transform this VectList using the matrix given
      *
      * @param transform
-     * @return this
      * @throws NullPointerException if matrix or target was null
      */
-    public VectList transform(Transform transform) throws NullPointerException {
+    public void transform(Transform transform) throws NullPointerException {
         if (transform.mode != Transform.NO_OP) {
             ensureSize(size);
             transform.transformOrds(ords, 0, ords, 0, size);
             cachedRect = null;
         }
-        return this;
     }
 
     /**
@@ -639,16 +637,14 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
     /**
      * Revverse the order of vectors in this list
      *
-     * @return this
      */
-    public VectList reverse() {
+    public void reverse() {
         ensureSize(size);
         int min = 0;
         int max = size - 1;
         while (min < max) {
             swap(min++, max--);
         }
-        return this;
     }
 
     /**

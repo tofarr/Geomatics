@@ -1,28 +1,26 @@
-package org.jg.util;
+package org.jg.geom;
 
-import org.jg.geom.Line;
-import org.jg.geom.Rect;
-import org.jg.geom.Relate;
 import org.jg.util.SpatialNode.NodeProcessor;
+import org.jg.util.Tolerance;
 
 /**
  *
  * @author tofarrell
  */
-public class RelationProcessor implements NodeProcessor<Line> {
+class RelationProcessor implements NodeProcessor<Line> {
 
-    final double tol;
-    double x;
-    double y;
-    Relate relate;
-    boolean touchesLess; // there is a line which touches the ray but does not cross it and has a lower y value
-    boolean touchesGreater; // there is a line which touches the ray but does not cross it and has a greater y value
+    private final double tol;
+    private double x;
+    private double y;
+    private Relate relate;
+    private boolean touchesLess; // there is a line which touches the ray but does not cross it and has a lower y value
+    private boolean touchesGreater; // there is a line which touches the ray but does not cross it and has a greater y value
 
-    public RelationProcessor(Tolerance tolerance) {
+    RelationProcessor(Tolerance tolerance) {
         this.tol = tolerance.tolerance;
     }
 
-    public RelationProcessor(Tolerance tolerance, double x, double y) {
+    RelationProcessor(Tolerance tolerance, double x, double y) {
         this(tolerance);
         this.x = x;
         this.y = y;
@@ -36,7 +34,15 @@ public class RelationProcessor implements NodeProcessor<Line> {
         touchesLess = touchesGreater = false;
     }
 
-    public Relate getRelate() {
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    Relate getRelate() {
         return relate;
     }
 
@@ -46,6 +52,14 @@ public class RelationProcessor implements NodeProcessor<Line> {
         double ay = line.ay;
         double bx = line.bx;
         double by = line.by;
+        if(Vect.compare(ax, ay, bx, by) > 0){
+            double tmp = ax;
+            ax = bx;
+            bx = tmp;
+            tmp = ay;
+            ay = by;
+            by = tmp;
+        }
 
         //if (Math.abs(ay - by) <= tolerance) { // line is horizontal or almost horizontal
         if (ay == by) { // line has same slope as ray
@@ -72,7 +86,8 @@ public class RelationProcessor implements NodeProcessor<Line> {
                 minY = maxY;
                 maxY = tmp;
             }
-            if ((lx >= ax) && (lx <= bx)) { // if the point of intersection is on the line segment, we have a crossing point...
+            boolean intersectOnSegment = (lx >= ax) & (lx <= bx);
+            if (intersectOnSegment) { // if the point of intersection is on the line segment, we have a crossing point...
                 if (minY == y) {
                     if (touchesLess) { // we have a crossing point
                         touchesLess = false;

@@ -321,8 +321,8 @@ public class VectListTest {
     public void testTransform() {
         Transform matrix = new TransformBuilder().scale(2).translate(3, 5).build();
         VectList vects = new VectList(1, 2, 3, 4);
-        assertSame(vects, vects.transform(matrix));
-        assertSame(vects, vects.transform(Transform.IDENTITY));
+        vects.transform(matrix);
+        vects.transform(Transform.IDENTITY);
         try {
             vects.transform(null);
             fail("Exception expected");
@@ -331,10 +331,10 @@ public class VectListTest {
         }
         assertEquals("[5,9, 9,13]", vects.toString());
         vects.clear();
-        assertSame(vects, vects.transform(matrix));
+        vects.transform(matrix);
         assertEquals("[]", vects.toString());
         vects.addAll(1, 2, 3, 4);
-        assertSame(vects, vects.transform(matrix));
+        vects.transform(matrix);
         assertEquals("[5,9, 9,13]", vects.toString());
     }
 
@@ -725,11 +725,11 @@ public class VectListTest {
     @Test
     public void testReverse() {
         VectList vects = new VectList(16).addAll(1, 2, 3, 4, 5, 6);
-        assertSame(vects, vects.reverse());
+        vects.reverse();
         assertEquals(new VectList(5, 6, 3, 4, 1, 2), vects);
-        assertSame(vects, vects.clear().addAll(1, 2, 3, 4, 5, 6, 7, 8).reverse());
+        vects.clear().addAll(1, 2, 3, 4, 5, 6, 7, 8).reverse();
         assertEquals(new VectList(7, 8, 5, 6, 3, 4, 1, 2), vects);
-        assertSame(vects, vects.clear().reverse());
+        vects.clear().reverse();
         assertEquals(new VectList(), vects);
     }
 
@@ -900,7 +900,8 @@ public class VectListTest {
     public void testCompareTo(){
         VectList a = new VectList(1,2, 3,4, 5,6);
         VectList b = new VectList(1,2, 3,4, 5,6, 5,6);
-        VectList c = a.clone().reverse();
+        VectList c = a.clone();
+        c.reverse();
         assertEquals(0, a.compareTo(a));
         assertEquals(-1, a.compareTo(b));
         assertEquals(1, b.compareTo(a));

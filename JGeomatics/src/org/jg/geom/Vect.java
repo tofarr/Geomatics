@@ -7,7 +7,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
-import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -252,7 +251,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
     
     
-    private static void linearizeArcInternal(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
+    static void linearizeArcInternal(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
             double radius, double flatness, VectList result){
         if(radius <= flatness){
             result.add(ox, oy);

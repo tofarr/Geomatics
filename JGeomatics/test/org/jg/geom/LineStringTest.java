@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.jg.geom.io.WKT;
-import org.jg.util.Network;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;

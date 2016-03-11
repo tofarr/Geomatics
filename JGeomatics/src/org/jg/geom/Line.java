@@ -6,7 +6,6 @@ import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -117,6 +116,12 @@ public class Line implements Geom, Comparable<Line> {
      */
     public Vect getMid() {
         return new Vect((ax + bx) / 2, (ay + by) / 2);
+    }
+    
+    /**
+     */
+    public VectBuilder getMid(VectBuilder vect){
+        return vect.set((ax + bx) / 2, (ay + by) / 2);
     }
 
     /**

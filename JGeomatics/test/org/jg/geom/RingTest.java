@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jg.util.Network;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
+import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -337,5 +337,36 @@ public class RingTest {
             b = Ring.read(in);
         }
         assertEquals(a, b);
+    }
+    
+    @Test
+    public void testTransform(){
+        Ring ring = new Ring(new VectList(0,0, 10,0, 10,10, 0,0));
+        Ring transformed = ring.transform(new TransformBuilder().flipXAround(20).build());
+        assertEquals("[40,0, 30,0, 30,10, 40,0]", transformed.toString());
+        assertTrue(ring.isValid());
+        assertFalse(transformed.isValid());
+        assertEquals(50, ring.getArea(), 0.00001);
+        assertTrue(ring.isConvex());
+        transformed = ring.transform(new TransformBuilder().flipXAround(20).build());
+        transformed = transformed.normalize();
+        assertEquals("[30,0, 40,0, 30,10, 30,0]", transformed.toString());
+        assertTrue(ring.isValid());
+        assertTrue(transformed.isValid());
+        assertEquals(50, ring.getArea(), 0.00001);
+        assertTrue(ring.isConvex());
+        assertEquals(50, transformed.getArea(), 0.00001);
+        assertTrue(transformed.isConvex());
+    }
+    
+    @Test
+    public void testBuffer(){
+        Ring ring = new Ring(new VectList(0,0, 10,0, 10,10, 0,0));
+        RingSet buffered = ring.buffer(5, new Tolerance(0.5), Tolerance.DEFAULT);
+        Rect bounds = buffered.getBounds();
+        //assertEquals(-5, bounds.minX, 0.1)
+                
+        assertEquals("[-5,-5, 15,15]", buffered.getBounds());
+        assertEquals(50, ring.getArea(), 0.00001);
     }
 }

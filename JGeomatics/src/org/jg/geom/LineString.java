@@ -3,10 +3,8 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.util.ArrayList;
-import org.jg.geom.io.WKT;
-import org.jg.util.Network;
 import org.jg.util.RTree;
+import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -308,22 +306,32 @@ public class LineString implements Geom {
 
         network.explicitIntersections(tolerance);
 
-        //remove any link from network with a mid point closer than the amt to one of the lines in this
-        final RTree<Line> lines = network.getLinks(new RTree<Line>());
+        removeWithinBuffer(vects, network, amt, flatness, tolerance);
+
+        return RingSet.valueOf(network);
+    }
+    
+    //remove any link from network with a mid point closer than the amt to one of the lines in this
+    static void removeWithinBuffer(VectList vects, Network network, double amt, Tolerance flatness, Tolerance tolerance){
+        final SpatialNode<Line> lines = network.getLinks();
         double threshold = amt - flatness.tolerance;
         final NearLinkRemover remover = new NearLinkRemover(threshold, network);
         int index = vects.size() - 1;
         RectBuilder bounds = new RectBuilder();
+        double by = vects.getX(index);
+        double bx = vects.getX(index);
+        index--;
         while (index-- > 0) {
-            Line i = getLine(index);
-            bounds.reset();
-            i.addBoundsTo(bounds);
+            double ay = vects.getX(index);
+            double ax = vects.getX(index);
+            index--;
+            bounds.reset().add(ax, ay).add(bx, by);
             bounds.buffer(threshold);
-            remover.reset(i);
+            remover.reset(ax,ay,bx,by);
             lines.forOverlapping(bounds.build(), remover);
+            bx = ax;
+            by = ay;
         }
-     
-        return RingSet.valueOf(network);
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
@@ -511,23 +519,29 @@ public class LineString implements Geom {
 
         final double thresholdSq;
         final Network network;
-        Line i;
+        double iax;
+        double iay;
+        double ibx;
+        double iby;
 
         public NearLinkRemover(double threshold, Network network) {
             this.thresholdSq = threshold * threshold;
             this.network = network;
         }
 
-        void reset(Line i) {
-            this.i = i;
+        void reset(double iax, double iay, double ibx, double iby) {
+            this.iax = iax;
+            this.iay = iay;
+            this.ibx = ibx;
+            this.iby = iby;
         }
 
         @Override
         public boolean process(Rect bounds, Line j) {
             double x = (j.ax + j.bx) / 2;
             double y = (j.ay + j.by) / 2;
-            if (Line.distSegVectSq(i.ax, i.ay, i.bx, i.by, x, y) < thresholdSq) {
-                network.removeLink(j.ax, j.ay, j.bx, j.by);
+            if (Line.distSegVectSq(iax, iay, ibx, iby, x, y) < thresholdSq) {
+                network.removeLink(j);
             }
             return true;
         }

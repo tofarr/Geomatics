@@ -6,7 +6,6 @@ import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import org.jg.util.Network;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;

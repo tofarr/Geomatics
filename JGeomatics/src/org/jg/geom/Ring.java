@@ -3,14 +3,14 @@ package org.jg.geom;
 import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
-import org.jg.util.RelationProcessor;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import org.jg.util.Network;
-import org.jg.util.Network.VertexProcessor;
+import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
+import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
+import org.jg.util.Transform;
 import org.jg.util.VectList;
 import org.jg.util.VectSet;
 
@@ -34,8 +34,7 @@ public class Ring implements Serializable, Cloneable {
      *
      * @param vects
      * @throws NullPointerException if vects was null
-     * @throws IllegalArgumentException if the list was less than 4 vectors
-     * long, or was unclosed
+     * @throws IllegalArgumentException if the list was less than 4 vectors long, or was unclosed
      */
     public Ring(VectList vects) throws NullPointerException, IllegalArgumentException {
         int last = vects.size() - 1;
@@ -67,9 +66,9 @@ public class Ring implements Serializable, Cloneable {
         if (numVects == 0) {
             return ret; //no vectors so no rings
         }
-        
+
         VectList allVects = network.getVects(new VectList(numVects)); //get vectors in correct order
-        
+
         //First we need to make sure there are no hang lines
         boolean cloned = false;
         VectList path = new VectList();
@@ -78,15 +77,15 @@ public class Ring implements Serializable, Cloneable {
             double ax = allVects.getX(v);
             double ay = allVects.getY(v);
             int numLinks = network.numLinks(ax, ay);
-            if(numLinks <= 1) {
-                if(!cloned){
+            if (numLinks <= 1) {
+                if (!cloned) {
                     network = network.clone();
                     cloned = true;
                 }
-                if(numLinks == 0){
+                if (numLinks == 0) {
                     network.removeVertex(ax, ay);
                 }
-                while(numLinks == 1){
+                while (numLinks == 1) {
                     network.getLink(ax, ay, 0, vect);
                     network.removeVertex(ax, ay);
                     ax = vect.getX();
@@ -95,7 +94,7 @@ public class Ring implements Serializable, Cloneable {
                 }
             }
         }
-        
+
         //traverse identifying links
         final Network visited = new Network(); // network storing visited links
         VectList links = new VectList();
@@ -167,8 +166,7 @@ public class Ring implements Serializable, Cloneable {
     }
 
     /**
-     * Get the area of the vect list given, assuming that it is a valid closed
-     * linear ring.
+     * Get the area of the vect list given, assuming that it is a valid closed linear ring.
      *
      * @param vects
      * @return area
@@ -204,6 +202,14 @@ public class Ring implements Serializable, Cloneable {
             length = ret;
         }
         return ret;
+    }
+    
+    public int numVects(){
+        return vects.size();
+    }
+    
+    public int numLines(){
+        return vects.size() - 1;
     }
 
     /**
@@ -254,14 +260,17 @@ public class Ring implements Serializable, Cloneable {
     }
 
     Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
-        Rect bounds = vects.getBounds();
+        return relateInternal(x, y, getLineIndex(), tolerance);
+    }
+    
+    static Relate relateInternal(double x, double y, SpatialNode<Line> lineIndex, Tolerance tolerance) throws NullPointerException{
+        Rect bounds = lineIndex.getBounds();
         if (bounds.relateInternal(x, y, tolerance) == Relate.OUTSIDE) { // If outside bounds, then cant be inside
             return Relate.OUTSIDE;
         }
-
         Rect selection = Rect.valueOf(x, y, bounds.maxX, y);
         RelationProcessor processor = new RelationProcessor(tolerance, x, y);
-        getLineIndex().forInteracting(selection, processor);
+        lineIndex.forInteracting(selection, processor);
         return processor.getRelate();
     }
 
@@ -309,12 +318,12 @@ public class Ring implements Serializable, Cloneable {
             return this;
         }
         VectList rotated = rotate(vects, index);
-        Ring ret = new Ring(rotated, area);
+        if(getArea() < 0){
+            rotated.reverse();
+        }
+        Ring ret = new Ring(rotated, Math.abs(area));
         ret.centroid = centroid;
-        ret.convex = convex;
         ret.length = length;
-        ret.lineIndex = lineIndex;
-        ret.valid = valid;
         return ret;
     }
 
@@ -394,14 +403,12 @@ public class Ring implements Serializable, Cloneable {
     }
 
     /**
-     * Determine if the linear ring represented by the vectList given contains
-     * only convex angles. Results are undefined if the edges are unclosed or
-     * self intersect
+     * Determine if the linear ring represented by the vectList given contains only convex angles. Results are undefined if the edges are
+     * unclosed or self intersect
      *
      * @param vects
      * @return
-     * @throws IndexOutOfBoundsException if the vect list does not have at least
-     * 4 elements
+     * @throws IndexOutOfBoundsException if the vect list does not have at least 4 elements
      */
     public static boolean isConvex(VectList vects) throws IndexOutOfBoundsException {
         int s = vects.size();
@@ -426,11 +433,61 @@ public class Ring implements Serializable, Cloneable {
     public VectList getVects(VectList target) {
         return target.addAll(vects);
     }
-    
+
     public void addTo(Network network, Tolerance tolerance) {
         network.addAllLinks(vects);
     }
+    
+    public RingSet buffer(double amt, Tolerance flatness, Tolerance tolerance){
+        VectList edgeBuffer = getEdgeBuffer(amt, flatness, tolerance);
+        Network network = new Network();
+        network.addAllLinks(edgeBuffer);
+        LineString.removeWithinBuffer(vects, network, amt, flatness, tolerance);
+        return RingSet.valueOf(network);
+    }
+    
+    public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance){
+        Vect.check(amt, "Invalid amt {0}");
+        if (amt == 0) {
+            return vects.clone();
+        }
+        return getEdgeBuffer(vects, amt, flatness, tolerance);
+    }
+    
+    //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
+    static VectList getEdgeBuffer(VectList vects, double amt, Tolerance flatness, Tolerance tolerance) {
+        VectList result = new VectList(vects.size() << 1);
+        VectBuilder vect = new VectBuilder();
 
+        double ax = vects.getX(vects.size()-2);
+        double ay = vects.getY(vects.size()-2);
+        double bx = vects.getX(0);
+        double by = vects.getY(0);
+
+        int index = 0;
+        while (++index < vects.size()) {
+            double cx = vects.getX(index);
+            double cy = vects.getY(index);
+            LineString.projectOutward(ax, ay, bx, by, cx, cy, amt, flatness, tolerance, vect, result);
+            ax = bx;
+            bx = cx;
+            ay = by;
+            by = cy;
+        }
+
+        Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, vect);
+        result.add(vect);
+
+        return result;
+    }
+    
+    public Ring transform(Transform transform){
+        VectList transformed = vects.clone();
+        transformed.transform(transform);
+        Ring ring = new Ring(transformed);
+        return ring;
+    }
+    
     @Override
     public int hashCode() {
         int hash = 7;
@@ -473,8 +530,7 @@ public class Ring implements Serializable, Cloneable {
      * @param in
      * @return a VectList
      * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN
-     * ordinates
+     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
      * @throws GeomException if there was an IO error
      */
     public static Ring read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException {
