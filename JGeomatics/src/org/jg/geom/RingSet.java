@@ -106,6 +106,14 @@ public class RingSet implements Geom {
         return this;
     }
     
+    public int numRings(){
+        int ret = (shell == null) ? 0 : 1;
+        for(RingSet child : children){
+            ret += child.numRings();
+        }
+        return ret;
+    }
+    
     @Override
     public String toString() {
         return "{shell:" + shell + ", holes:" + Arrays.toString(children) + '}';

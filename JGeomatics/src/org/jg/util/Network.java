@@ -724,6 +724,71 @@ public final class Network implements Externalizable, Cloneable {
         toString(str);
         return str.toString();
     }
+    
+    public String toWKT(){
+        final VectList points = new VectList();
+        forEachVertex(new VertexProcessor(){
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                if(numLinks == 0){
+                    points.add(x, y);
+                }
+                return true;
+            }
+        
+        });
+        StringBuilder str = new StringBuilder();
+        if(points.size() == 0){
+            str.append("MULTILINESTRING(");
+            List<VectList> lineStrings = new ArrayList<>();
+            extractLines(lineStrings, false);
+            for (int i = 0; i < lineStrings.size(); i++) {
+                VectList lineString = lineStrings.get(i);
+                if (i != 0) {
+                    str.append(',');
+                }
+                str.append('(');
+                for (int j = 0; j < lineString.size(); j++) {
+                    if (j != 0) {
+                        str.append(", ");
+                    }
+                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
+                }
+                str.append(')');
+            }
+        }else if(points.size() == map.size){
+            str.append("MULTIPOINT(");
+            for (int i = 0; i < points.size(); i++) {
+                if (i != 0) {
+                    str.append(", ");
+                }
+                str.append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i)));
+            }
+        }else{
+            str.append("GEOMETRYCOLLECTION(");
+            for (int i = 0; i < points.size(); i++) {
+                if (i != 0) {
+                    str.append(",");
+                }
+                str.append("POINT(").append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i))).append(')');
+            }
+            List<VectList> lineStrings = new ArrayList<>();
+            extractLines(lineStrings, false);
+            for (int i = 0; i < lineStrings.size(); i++) {
+                VectList lineString = lineStrings.get(i);
+                str.append(",LINESTRING(");
+                for (int j = 0; j < lineString.size(); j++) {
+                    if (j != 0) {
+                        str.append(", ");
+                    }
+                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
+                }
+                str.append(')');
+            }
+        }
+        str.append(')');
+        return str.toString();
+    }
 
     public void toString(Appendable appendable) throws GeomException {
         try {

@@ -67,27 +67,37 @@ public class Ring implements Serializable, Cloneable {
         if (numVects == 0) {
             return ret; //no vectors so no rings
         }
-        final Network visited = new Network(); // network storing visited links
+        
         VectList allVects = network.getVects(new VectList(numVects)); //get vectors in correct order
-
-        //first mark all hang lines as visited
+        
+        //First we need to make sure there are no hang lines
+        boolean cloned = false;
         VectList path = new VectList();
         VectBuilder vect = new VectBuilder();
         for (int v = allVects.size(); v-- > 0;) {
             double ax = allVects.getX(v);
             double ay = allVects.getY(v);
-            if (network.numLinks(ax, ay) == 1) {
-                network.getLink(ax, ay, 0, vect);
-                double bx = vect.getX();
-                double by = vect.getY();
-                if(!visited.hasLink(ax, ay, bx, by)){
-                    path.clear();
-                    network.followLine(ax, ay, bx, by, path);
-                    visited.addAllLinks(path);
+            int numLinks = network.numLinks(ax, ay);
+            if(numLinks <= 1) {
+                if(!cloned){
+                    network = network.clone();
+                    cloned = true;
+                }
+                if(numLinks == 0){
+                    network.removeVertex(ax, ay);
+                }
+                while(numLinks == 1){
+                    network.getLink(ax, ay, 0, vect);
+                    network.removeVertex(ax, ay);
+                    ax = vect.getX();
+                    ay = vect.getY();
+                    numLinks = network.numLinks(ax, ay);
                 }
             }
         }
-
+        
+        //traverse identifying links
+        final Network visited = new Network(); // network storing visited links
         VectList links = new VectList();
         VectSet pathSet = new VectSet();
         for (int a = 0; a < allVects.size(); a++) {

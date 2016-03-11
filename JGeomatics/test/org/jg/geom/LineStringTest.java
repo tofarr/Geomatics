@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.jg.geom.io.WKT;
 import org.jg.util.Network;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
@@ -339,24 +340,12 @@ public class LineStringTest {
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
         RingSet r = (RingSet)s.buffer(5, flatness, Tolerance.DEFAULT); 
-        
-        Network network = new Network();
-        r.addTo(network, Tolerance.DEFAULT);
-        String wkt = "MULTILINESTRING"+network.toString().replace(",", " ").replace("  ", ", ").replace("[", "(").replace("]",")").replace(") (", "),(");
-        System.out.println(wkt);
-        
-        double area = (30 * 10 * 4)
-                + (5 * 5 * 3 * 3)
-                + (5 * 5 * Math.PI * 0.25 * 3)
-                + (10 * 10)
-                + (5 * 5 * Math.PI)
-                + (15 * 10 * 2);
-        assertEquals(area, r.getArea(), 1);
+ 
+        assertEquals(1, r.numRings());
+        assertEquals(Rect.valueOf(14, -5, 25, 35), r.getBounds());
+        assertEquals(382, r.getArea(), 1);
     }
 
-    /**
-     * Test of projectOutward method, of class LineString.
-     */
     @Test
     public void testProjectOutward() {
         Tolerance flatness = new Tolerance(0.5);
@@ -364,33 +353,19 @@ public class LineStringTest {
         VectList result = new VectList();
         
         LineString.projectOutward(0,0, 0,10, 10,10, 5, flatness, Tolerance.DEFAULT, work, result);
-        assertEquals(1, result.size());
+        assertEquals(2, result.size());
         assertEquals(5, result.getX(0), 0.0001);
-        assertEquals(5, result.getY(0), 0.0001);
+        assertEquals(10, result.getY(0), 0.0001);
+        assertEquals(0, result.getX(1), 0.0001);
+        assertEquals(5, result.getY(1), 0.0001);
         
         result.clear();
         LineString.projectOutward(19,10.2, 20,10, 20,0, 5, flatness, Tolerance.DEFAULT, work, result);
-        assertEquals(1, result.size());
-        assertEquals(5, result.getX(0), 0.0001);
-        assertEquals(5, result.getY(0), 0.0001);
-        
-        //LineString.projectOutward(20,10, 19,10.2, 20,10.4, 5, flatness, Tolerance.DEFAULT, work, result);
-        System.out.println(result);
-        
-//        System.out.println("projectOutward");
-//        double ax = 0.0;
-//        double ay = 0.0;
-//        double bx = 0.0;
-//        double by = 0.0;
-//        double cx = 0.0;
-//        double cy = 0.0;
-//        double amt = 0.0;
-//        Tolerance tolerance = null;
-//        VectBuilder work = null;
-//        VectList result_2 = null;
-//        LineString.projectOutward(ax, ay, bx, by, cx, cy, amt, tolerance, work, result_2);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(2, result.size());
+        assertEquals(19.019419324309084, result.getX(0), 0.0001);
+        assertEquals(5.097096621545399, result.getY(0), 0.0001);
+        assertEquals(15, result.getX(1), 0.0001);
+        assertEquals(10, result.getY(1), 0.0001);
     }
 
     /**

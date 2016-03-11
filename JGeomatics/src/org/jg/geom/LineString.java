@@ -4,6 +4,7 @@ import java.awt.geom.PathIterator;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.util.ArrayList;
+import org.jg.geom.io.WKT;
 import org.jg.util.Network;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -321,7 +322,7 @@ public class LineString implements Geom {
             remover.reset(i);
             lines.forOverlapping(bounds.build(), remover);
         }
-
+     
         return RingSet.valueOf(network);
     }
 
@@ -387,70 +388,68 @@ public class LineString implements Geom {
     static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance flatness, Tolerance tolerance, VectBuilder work, VectList result) {
         if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
 
-            
-            
-            double distAB = Math.sqrt(Vect.distSq(ax, ay, bx, by));
-            double distBC = Math.sqrt(Vect.distSq(cx, cy, bx, by));
-
-            //now we analyse a vector n with an origin b
-            double ndx = ((ax - bx) / distAB + (cx - bx) / distBC) / 2; // get vector n
-            double ndy = ((ay - by) / distAB + (cy - by) / distBC) / 2;
-
-            double dx = ndx + bx; // get a second point d on the line
-            double dy = ndy + by;
-            double mul = amt / Math.sqrt(Line.vectLineDistSq(ax, ay, bx, by, dx, dy));
-            dx = (dx - bx) * mul + bx; // move d such that it is the proper distance from line segments ab and bc
-            dy = (dy - by) * mul + by;
-
-            double distBDSq = Vect.distSq(bx, by, dx, dy);
-            double distBD = Math.sqrt(distBDSq);
-
-            if ((distBD < distAB) && (distBD < distBC)) {
-                result.add(dx, dy);
-                return;
-            }
-            
-            VectList intersections = new VectList();
-            if(distAB > distBC){ 
-                //find point which is both on the line segment BD and the circle centered at C with radius amt
-                Line.intersectionLineCircleInternal(bx, by, dx, dy, cx, cy, amt, tolerance, work, intersections);
-            }else{
-                //find point which is both on the line segment BD and the circle centered at A with radius amt
-                Line.intersectionLineCircleInternal(bx, by, dx, dy, ax, ay, amt, tolerance, work, intersections);
-            }
-            
-            Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
-            double abbx = work.getX();
-            double abby = work.getY();
-            result.add(abbx, abby);
-            
-            for(int i = 0; i < intersections.size(); i++){
-                double x = intersections.getX(i);
-                double y = intersections.getY(i);
-                if((Vect.distSq(bx, by, x, y) <= distBDSq) && (Vect.distSq(dx, dy, x, y) <= distBDSq)){
-                    result.add(x, y);
-                }
-            }
-            
-            Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
-            double bcbx = work.getX();
-            double bcby = work.getY();
-            result.add(bcbx, bcby);
-            
-//            Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, work);
-//            double abax = work.getX();
-//            double abay = work.getY();
+//            double distAB = Math.sqrt(Vect.distSq(ax, ay, bx, by));
+//            double distBC = Math.sqrt(Vect.distSq(cx, cy, bx, by));
+//
+//            //now we analyse a vector n with an origin b
+//            double ndx = ((ax - bx) / distAB + (cx - bx) / distBC) / 2; // get vector n
+//            double ndy = ((ay - by) / distAB + (cy - by) / distBC) / 2;
+//
+//            double dx = ndx + bx; // get a second point d on the line
+//            double dy = ndy + by;
+//            double mul = amt / Math.sqrt(Line.vectLineDistSq(ax, ay, bx, by, dx, dy));
+//            dx = (dx - bx) * mul + bx; // move d such that it is the proper distance from line segments ab and bc
+//            dy = (dy - by) * mul + by;
+//
+//            double distBDSq = Vect.distSq(bx, by, dx, dy);
+//            double distBD = Math.sqrt(distBDSq);
+//
+//            if ((distBD < distAB) && (distBD < distBC)) {
+//                result.add(dx, dy);
+//                return;
+//            }
+//            
+//            VectList intersections = new VectList();
+//            if(distAB > distBC){ 
+//                //find point which is both on the line segment BD and the circle centered at C with radius amt
+//                Line.intersectionLineCircleInternal(bx, by, dx, dy, cx, cy, amt, tolerance, work, intersections);
+//            }else{
+//                //find point which is both on the line segment BD and the circle centered at A with radius amt
+//                Line.intersectionLineCircleInternal(bx, by, dx, dy, ax, ay, amt, tolerance, work, intersections);
+//            }
+//            
 //            Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
 //            double abbx = work.getX();
 //            double abby = work.getY();
+//            result.add(abbx, abby);
+//            
+//            for(int i = 0; i < intersections.size(); i++){
+//                double x = intersections.getX(i);
+//                double y = intersections.getY(i);
+//                if((Vect.distSq(bx, by, x, y) <= distBDSq) && (Vect.distSq(dx, dy, x, y) <= distBDSq)){
+//                    result.add(x, y);
+//                }
+//            }
+//            
 //            Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
 //            double bcbx = work.getX();
 //            double bcby = work.getY();
-//            Line.projectOutward(bx, by, cx, cy, 1, amt, tolerance, work);
-//            double bccx = work.getX();
-//            double bccy = work.getY();
-//            Line.intersectionLineInternal(abax, abay, abbx, abby, bcbx, bcby, bccx, bccy, tolerance, work);
-//            result.add(work);
+//            result.add(bcbx, bcby);
+            
+            //Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, work);
+            //double abax = work.getX();
+            //double abay = work.getY();
+            Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
+            result.add(work);
+            Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
+            result.add(work);
+            //Line.projectOutward(bx, by, cx, cy, 1, amt, tolerance, work);
+            //double bccx = work.getX();
+            //double bccy = work.getY();
+            //Line.intersectionLineInternal(abax, abay, abbx, abby, bcbx, bcby, bccx, bccy, tolerance, work);
+            //double mx = (abbx + bcbx) / 2;
+            //double my = (abby + bcby) / 2;
+            //result.add(mx, my);
             
             
         } else {
