@@ -47,19 +47,6 @@ public class LineStringTest {
     }
 
     @Test
-    public void testAddBoundsTo() {
-        RectBuilder bounds = new RectBuilder();
-        LineString.valueOf(new VectList().addAll(1, 3, 7, 13)).addBoundsTo(bounds);
-        LineString.valueOf(new VectList().addAll(5, 7, 11, 17)).addBoundsTo(bounds);
-        assertEquals(new RectBuilder(1, 3, 11, 17), bounds);
-        try {
-            LineString.valueOf(new VectList().addAll(5, 7, 11, 17)).addBoundsTo(null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-        }
-    }
-
-    @Test
     public void testTransform() {
         Transform transform = new TransformBuilder().scale(2, 3).translate(-1, -2).build();
         LineString ls = LineString.valueOf(new VectList().addAll(1, 3, 7, 13, 17, 29));

@@ -3,7 +3,9 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -17,10 +19,11 @@ public class GeomSet implements Geom, Serializable {
     final Geom[] geoms;
     Rect bounds;
 
-    GeomSet(Geom[] geoms) {
+    GeomSet(Geom... geoms) {
         this.geoms = geoms;
     }
     
+    /*
     public static Geom valueOf(Geom... geoms) throws NullPointerException{
         switch(geoms.length){
             case 0:
@@ -41,6 +44,31 @@ public class GeomSet implements Geom, Serializable {
                         return new GeomSet(result.toArray(new Geom[result.size()]));
                 }
         }
+    }*/
+    
+    
+    public static Geom normalizedValueOf(Geom... geoms) throws NullPointerException{
+        switch(geoms.length){
+            case 0:
+                return null;
+            case 1:
+                if(geoms[0] != null){
+                    return geoms[0];
+                }
+            default:
+                ArrayList<Geom> result = new ArrayList<>();
+                flatten(geoms, result);
+                switch(result.size()){
+                    case 0:
+                        return null;
+                    case 1:
+                        return result.get(0);
+                    default:
+                        Geom[] ret = result.toArray(new Geom[result.size()]);
+                        Arrays.sort(ret, COMPARATOR);
+                        return new GeomSet(ret);
+                }
+        }
     }
     
     static void flatten(Geom[] geoms, List<Geom> result){
@@ -59,17 +87,16 @@ public class GeomSet implements Geom, Serializable {
         if(bounds == null){
             RectBuilder builder = new RectBuilder();
             for(Geom geom : geoms){
-                geom.addBoundsTo(builder);
+                if(geom instanceof Vect){
+                    builder.add((Vect)geom);
+                }else{
+                    builder.add(geom.getBounds());
+                }
             }
             ret = builder.build();
             bounds = ret;
         }
         return ret;
-    }
-
-    @Override
-    public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        target.add(getBounds());
     }
 
     @Override
@@ -172,4 +199,54 @@ public class GeomSet implements Geom, Serializable {
         }
         return ret;
     }
+
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+            return normalizedValueOf(this, other);
+        }else{
+            return Network.union(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+            return null;
+        }else{
+            return Network.intersection(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+            return this;
+        }else{
+            return Network.less(flatness, tolerance, this, other);
+        }
+    }
+
+    public Geom union(Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        return Network.union(flatness, tolerance, geoms);
+    }    
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + Arrays.deepHashCode(this.geoms);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof GeomSet){
+            GeomSet geomSet = (GeomSet)obj;
+            return Arrays.equals(geoms, geomSet.geoms);
+        }else{
+            return false;
+        }
+    }
+    
+    
 }

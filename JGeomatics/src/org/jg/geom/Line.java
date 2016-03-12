@@ -706,11 +706,6 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        target.addInternal(ax, ay).addInternal(bx, by);
-    }
-
-    @Override
     public Line transform(Transform transform) throws NullPointerException {
         Vect ta = transform.transform(getA());
         Vect tb = transform.transform(getB());
@@ -797,6 +792,29 @@ public class Line implements Geom, Comparable<Line> {
     public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return (distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY()) <= (tolerance.tolerance * tolerance.tolerance))
                 ? Relate.TOUCH : Relate.OUTSIDE;
+    }
+
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(new RectBuilder().add(ax, ay).buffer(tolerance.tolerance).build().isDisjoint(other.getBounds())){
+            return GeomSet.normalizedValueOf(this, other);
+        }else{
+            return Network.union(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(new RectBuilder().add(ax, ay).buffer(tolerance.tolerance).build().isDisjoint(other.getBounds())){
+            return null;
+        }else{
+            return Network.intersection(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        return Network.less(flatness, tolerance, this, other);
     }
 
     @Override

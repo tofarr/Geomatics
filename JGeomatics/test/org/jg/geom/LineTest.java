@@ -663,15 +663,6 @@ public class LineTest {
     }
 
     @Test
-    public void testAddBoundsTo() {
-        RectBuilder bounds = new RectBuilder();
-        Line.valueOf(4,5,2,8).addBoundsTo(bounds);
-        assertEquals(new RectBuilder(2,5,4,8), bounds);
-        Line.valueOf(9,11,3,6).addBoundsTo(bounds);
-        assertEquals(new RectBuilder(2,5,9,11), bounds);
-    }
-
-    @Test
     public void testTransform() {
         Transform transform = new TransformBuilder().flipYAround(5).translate(2, 0).build();
         Line a = Line.valueOf(2,3,7,11);

@@ -84,15 +84,10 @@ public class RingSet implements Geom {
                 shell.addBoundsTo(bounds);
             }
             for (RingSet ringSet : children) {
-                ringSet.addBoundsTo(bounds);
+                bounds.add(ringSet.getBounds());
             }
             return bounds.build();
         }
-    }
-
-    @Override
-    public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        target.add(getBounds());
     }
 
     @Override
@@ -335,58 +330,33 @@ public class RingSet implements Geom {
         return Ring.relateInternal(x, y, getLineIndex(), tolerance);
     }
 
-    public RingSet intersection(RingSet other, Tolerance tolerance) {
-        Network network = new Network();
-        addTo(network, tolerance);
-        other.addTo(network, tolerance);
-        network.explicitIntersections(tolerance);
-        network.removeOutsideInternal(this, tolerance);
-        network.removeOutsideInternal(other, tolerance);
-        return valueOf(network);
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        return Network.union(flatness, tolerance, this, other);
+    }
+    
+    public RingSet union(Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        ADD A CACHED VALID FLAG - USED TO SPEED UP UNION OPERATIONS
+                
+                ALSO THING OF OVERLAPPING BOUNDARIES - THESE CAN BE INTERPRETED AS INSIDE OR OUTSIDE
+        return Network.intersection(flatness, tolerance, this, other);
     }
 
-    public RingSet union(RingSet other, Tolerance tolerance) {
-        Network network = new Network();
-        addTo(network, tolerance);
-        other.addTo(network, tolerance);
-        network.explicitIntersections(tolerance);
-        network.removeInsideInternal(this, tolerance);
-        network.removeInsideInternal(other, tolerance);
-        return valueOf(network);
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+            return null;
+        }else{
+            return Network.intersection(flatness, tolerance, this, other);
+        }
     }
 
-    public RingSet less(RingSet other, Tolerance tolerance) {
-        Network network = new Network();
-        addTo(network, tolerance);
-        other.addTo(network, tolerance);
-        network.explicitIntersections(tolerance);
-        network.removeOutsideInternal(this, tolerance);
-        network.removeInsideInternal(other, tolerance);
-        return valueOf(network);
-    }
-
-    public static RingSet intersection(Tolerance tolerance, RingSet... ringSets) {
-        Network network = new Network();
-        for (RingSet ringSet : ringSets) {
-            ringSet.addTo(network, tolerance);
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds())){
+            return this;
         }
-        network.explicitIntersections(tolerance);
-        for (RingSet ringSet : ringSets) {
-            network.removeOutsideInternal(ringSet, tolerance);
-        }
-        return valueOf(network);
-    }
-
-    public static RingSet union(Tolerance tolerance, RingSet... ringSets) {
-        Network network = new Network();
-        for (RingSet ringSet : ringSets) {
-            ringSet.addTo(network, tolerance);
-        }
-        network.explicitIntersections(tolerance);
-        for (RingSet ringSet : ringSets) {
-            network.removeInsideInternal(ringSet, tolerance);
-        }
-        return valueOf(network);
+        return Network.less(flatness, tolerance, this, other);
     }
 
     static class RingSetBuilder {

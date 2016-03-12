@@ -16,10 +16,23 @@ public class MultiPoint implements Serializable, Geom {
 
     final VectList vects;
 
-    MultiPoint(VectList vects) {
+    MultiPoint(VectList vects) throws NullPointerException {
+        vects.sort();
         this.vects = vects;
     }
 
+    static Geom valueOf(VectList vects){
+        switch(vects.size()){
+            case 0:
+                return null;
+            case 1:
+                return vects.getVect(0);
+            default:
+                vects.sort();
+                return new MultiPoint(vects);
+        }
+    }
+    
     public int numVects() {
         return vects.size();
     }
@@ -47,11 +60,6 @@ public class MultiPoint implements Serializable, Geom {
     @Override
     public Rect getBounds() {
         return vects.getBounds();
-    }
-
-    @Override
-    public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        target.add(vects.getBounds());
     }
 
     @Override
@@ -200,7 +208,48 @@ public class MultiPoint implements Serializable, Geom {
         }
         return Relate.OUTSIDE;
     }
-    
+
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds())){
+            return GeomSet.normalizedValueOf(this, other);
+        }else{
+            return Network.union(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+            return null;
+        }
+        VectList intersection = new VectList(vects.size());
+        VectBuilder vect = new VectBuilder();
+        for(int i = 0; i < vects.size(); i++){
+            vects.getVect(i, vect);
+            if(other.relate(vect, tolerance) != Relate.OUTSIDE){
+                intersection.add(vect);
+            }
+        }
+        return valueOf(intersection);
+    }
+
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        Rect otherBounds = other.getBounds().buffer(tolerance.tolerance);
+        if(getBounds().isDisjoint(otherBounds)){
+            return this;
+        }
+        VectList ret = new VectList(vects.size());
+        VectBuilder vect = new VectBuilder();
+        for(int i = 0; i < vects.size(); i++){
+            vects.getVect(i, vect);
+            if(other.relate(vect, tolerance) == Relate.INSIDE){
+                ret.add(vect);
+            }
+        }
+        return valueOf(ret);
+    }
     
     static class NearLinkRemover implements NodeProcessor<Line> {
 

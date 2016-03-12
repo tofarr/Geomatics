@@ -12,7 +12,7 @@ import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
- * Immutable vector
+ * Immutable 2D vector / Point
  *
  * @author tofar_000
  */
@@ -179,11 +179,6 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        target.add(x, y);
-    }
-
-    @Override
     public Geom transform(Transform transform) throws NullPointerException {
         return transform.transform(this);
     }
@@ -305,6 +300,46 @@ public final class Vect implements Geom, Comparable<Vect> {
         }
         
     }
+
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        switch(other.relate(this, tolerance)){
+            case INSIDE:
+            case TOUCH:
+                return other;
+            default:
+                if(other instanceof Vect){
+                    VectList ret = new VectList(2);
+                    ret.add((Vect)other);
+                    ret.add(this);
+                    return new MultiPoint(ret);
+                }else if(other instanceof MultiPoint){
+                    VectList fromOther = ((MultiPoint)other).vects;
+                    VectList ret = new VectList(fromOther.size()+1);
+                    return new MultiPoint(ret);
+                }else{
+                    return GeomSet.normalizedValueOf(this, other);
+                }
+        }
+    }
+
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(other.relate(this, tolerance) == Relate.OUTSIDE){
+            return null;   
+        }
+        return this;
+    }
+
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(other.relate(this, tolerance) == Relate.INSIDE){
+            return null;   
+        }
+        return this;
+    }
+    
+    
 
     /**
      * Determine if this vect matches the vector given within the tolerance
@@ -583,7 +618,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     static void toString(double x, double y, Appendable appendable) {
         try {
-            appendable.append('[').append(ordToStr(x)).append(',').append(ordToStr(y)).append(']');
+            appendable.append("POINT(").append(ordToStr(x)).append(' ').append(ordToStr(y)).append(')');
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
         }

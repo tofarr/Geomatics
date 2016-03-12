@@ -6,12 +6,13 @@ import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
- *
+ * Immutable 2D Rectangle
  * @author tofar_000
  */
 public class Rect implements Geom {
@@ -28,6 +29,15 @@ public class Rect implements Geom {
         this.maxY = maxY;
     }
 
+    /**
+     * Get a Rect based on the values given. Swap ordinates of max < min
+     * @param minX
+     * @param minY
+     * @param maxX
+     * @param maxY
+     * @return a Rect
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
     public static Rect valueOf(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
         check(minX, minY, maxX, maxY);
         if (minX > maxX) {
@@ -159,11 +169,10 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
-     * contain other rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) 
      *
      * @param rect
-     * @return true if contains rect, false otherwise or if rect was invalid
+     * @return true if contains rect, false otherwise
      * @throws NullPointerException if rect was null
      */
     public boolean contains(Rect rect) throws NullPointerException {
@@ -180,6 +189,21 @@ public class Rect implements Geom {
      */
     public boolean contains(RectBuilder rect) throws NullPointerException {
         return rect.isValid() ? contains(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()) : false;
+    }
+       
+    /**
+     * Determine if this rect covers the geom given. (ie: No part of geom is outside this) 
+     *
+     * @param geom
+     * @return true if contains rect, false otherwise
+     * @throws NullPointerException if rect was null
+     */
+    public boolean contains(Geom geom) throws NullPointerException {
+        if(geom instanceof Vect){
+            return contains((Vect)geom);
+        }else{
+            return contains(geom.getBounds());
+        }
     }
 
     static boolean contains(double aMinX, double aMinY, double aMaxX, double aMaxY,
@@ -219,6 +243,17 @@ public class Rect implements Geom {
      * @throws NullPointerException if vect was null
      */
     public boolean contains(Vect vect) throws NullPointerException {
+        return contains(minX, minY, maxX, maxY, vect.getX(), vect.getY());
+    }
+    
+    /**
+     * Determine if this rect covers the vect given. (inside or touching)
+     *
+     * @param vect
+     * @return true if contains vect, false otherwise
+     * @throws NullPointerException if vect was null
+     */
+    public boolean contains(VectBuilder vect) throws NullPointerException {
         return contains(minX, minY, maxX, maxY, vect.getX(), vect.getY());
     }
 
@@ -369,17 +404,11 @@ public class Rect implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
+    public void addTo(Network network, Tolerance flatness) throws NullPointerException, IllegalArgumentException {
         network.addLink(minX, minY, minX, maxY);
         network.addLink(minX, minY, maxX, minY);
         network.addLink(minX, maxY, maxX, maxY);
         network.addLink(maxX, minY, maxX, maxY);
-    }
-
-    @Override
-    public void addBoundsTo(RectBuilder target) throws NullPointerException {
-        target.addInternal(minX, minY);
-        target.addInternal(maxX, maxY);
     }
 
     @Override
@@ -426,6 +455,40 @@ public class Rect implements Geom {
             return Relate.TOUCH;
         }
     }
+
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(contains(other.getBounds())){
+            return this;
+        }else if(!isOverlapping(other.getBounds())){
+            return GeomSet.normalizedValueOf(this, other);
+        }else{
+            return Network.union(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+            return null;
+        }else if(contains(other)){
+            return this;
+        }else if((other instanceof Rect) && ((Rect)other).contains(this)){
+            return other;
+        }else{
+            return Network.intersection(flatness, tolerance, this, other);
+        }
+    }
+
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        if(isDisjoint(other.getBounds())){
+            return null;
+        }else{
+            return Network.less(flatness, tolerance, other, other);
+        }
+    }
+    
     
     @Override
     public Rect clone() {

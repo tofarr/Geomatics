@@ -219,15 +219,15 @@ public class VectTest {
 
     @Test
     public void testToString_0args() {
-        assertEquals("[0,0]", Vect.ZERO.toString());
-        assertEquals("[3.4,5.6]", Vect.valueOf(3.4, 5.6).toString());
+        assertEquals("POINT(0 0)", Vect.ZERO.toString());
+        assertEquals("POINT(3.4 5.6)", Vect.valueOf(3.4, 5.6).toString());
     }
 
     @Test
     public void testToString_double_double() {
         StringBuilder str = new StringBuilder();
         Vect.valueOf(3.4, 5.6).toString(str);
-        assertEquals("[3.4,5.6]", str.toString());
+        assertEquals("POINT(3.4 5.6)", str.toString());
         try {
             Vect.ZERO.toString(null);
         } catch (NullPointerException ex) {
@@ -240,7 +240,7 @@ public class VectTest {
         Vect v = new Vect(1, 2.3);
         StringBuilder str = new StringBuilder();
         v.toString(str);
-        assertEquals("[1,2.3]", str.toString());
+        assertEquals("POINT(1 2.3)", str.toString());
         try{
             v.toString(new Appendable(){
                 @Override
@@ -369,21 +369,6 @@ public class VectTest {
     }
 
     @Test
-    public void testAddBoundsTo() {
-        Vect vect = Vect.valueOf(3, 7);
-        RectBuilder builder = new RectBuilder();
-        vect.addBoundsTo(builder);
-        assertEquals(new RectBuilder(3, 7, 3, 7), builder);
-        try {
-            vect.addBoundsTo(null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-        }
-        Vect.valueOf(1, 11).addBoundsTo(builder);
-        assertEquals(new RectBuilder(1, 7, 3, 11), builder);
-    }
-
-    @Test
     public void testTransform() {
         Transform transform = new TransformBuilder().translate(3, 7).build();
         assertEquals(Vect.valueOf(16, 36), Vect.valueOf(13, 29).transform(transform));
@@ -471,5 +456,36 @@ public class VectTest {
         assertEquals(2, bounds.maxY, 0.1);
         assertEquals(Math.PI, Ring.getArea(result), 0.1);
         assertEquals(Math.PI + 4, LineString.getLength(result), 0.2);
+    }
+    
+    @Test
+    public void testUnion(){
+        Rect rect = Rect.valueOf(10, 20, 30, 40);
+        assertSame(rect, Vect.valueOf(20, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(rect, Vect.valueOf(10, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(rect, Vect.valueOf(20, 20).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        Vect vect = Vect.valueOf(5, 30);
+        assertEquals(new GeomSet(vect, rect), vect.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        /*
+        assertNull(Vect.valueOf(35, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(Vect.valueOf(20, 15).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(Vect.valueOf(20, 45).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        Vect vect = Vect.valueOf(20, 20);
+        assertSame(vect, vect.union(vect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        //assertEquals(rect, Vect.valueOf(20, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        */
+    }
+    
+    @Test
+    public void testIntersection(){
+        fail("Test case prototype");
+    }
+    
+    @Test
+    public void testLess(){
+        fail("Test case prototype");
     }
 }

@@ -156,6 +156,14 @@ public final class RectBuilder implements Cloneable, Serializable {
         }
         return this;
     }
+    
+    public RectBuilder add(Geom geom) throws NullPointerException {
+        if(geom instanceof Vect){
+            return add((Vect)geom);
+        }else{
+            return add(geom.getBounds());
+        }
+    }
 
     RectBuilder addInternal(double x, double y) {
         if (valid) {

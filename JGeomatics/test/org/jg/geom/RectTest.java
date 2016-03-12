@@ -514,14 +514,6 @@ public class RectTest {
     }
 
     @Test
-    public void testAddBoundsTo() {
-        Rect a = Rect.valueOf(3, 7, 13, 29);
-        RectBuilder b = new RectBuilder(4, 6, 12, 30);
-        a.addBoundsTo(b);
-        assertEquals(new RectBuilder(3, 6, 13, 30), b);
-    }
-
-    @Test
     public void testTransform() {
         Transform transform = new TransformBuilder().scaleAround(2, 4, 9).build();
         Rect a = Rect.valueOf(3, 7, 13, 29);

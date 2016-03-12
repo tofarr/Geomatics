@@ -689,17 +689,32 @@ public final class Network implements Serializable, Cloneable {
     }
     
     
-    public void removeOutside(final RingSet ringSet, Tolerance tolerance){
-        explicitIntersectionsWith(ringSet.getLineIndex(), tolerance);
-        removeOutsideInternal(ringSet, tolerance);
+    public void removeOutside(final Geom geom, Tolerance flatness, Tolerance tolerance){
+        SpatialNode<Line> lines= getLineIndex(geom, flatness);
+        explicitIntersectionsWith(lines, tolerance);
+        removeOutsideInternal(geom, tolerance);
+    }
+    
+    SpatialNode<Line> getLineIndex(Geom geom, Tolerance flatness){
+        if(geom instanceof LineString){
+            return ((LineString)geom).getLineIndex();
+        }else if(geom instanceof RingSet){
+            return((RingSet)geom).getLineIndex();
+        }else{
+            Network network = new Network();
+            geom.addTo(network, flatness);
+            return network.getLinks();
+        }
     }
 
-    void removeOutsideInternal(final RingSet ringSet, final Tolerance tolerance) {
-        map.forEach(new VectMapProcessor<VectList>(){
+    private void removeOutsideInternal(final Geom geom, final Tolerance tolerance) {
+        final VectBuilder vect = new VectBuilder();
+        map.forEach(new VectMapProcessor<VectList>(){    
             @Override
             public boolean process(double x, double y, VectList value) {
-                if(Relate.OUTSIDE == ringSet.relateInternal(x, y, tolerance)){
-                    removeVertex(x, y);
+                vect.set(x, y);
+                if(Relate.OUTSIDE == geom.relate(vect, tolerance)){
+                    removeVertex(vect);
                 }
                 return true;
             }
@@ -707,9 +722,8 @@ public final class Network implements Serializable, Cloneable {
         getLinks().forEach(new NodeProcessor<Line>(){
             @Override
             public boolean process(Rect bounds, Line line) {
-                double x = (line.ax + line.bx) / 2;
-                double y = (line.ay + line.by) / 2;
-                if(Relate.OUTSIDE == ringSet.relateInternal(x, y, tolerance)){
+                line.getMid(vect);
+                if(Relate.OUTSIDE == geom.relate(vect, tolerance)){
                     removeLink(line);
                 }
                 return true;
@@ -717,17 +731,20 @@ public final class Network implements Serializable, Cloneable {
         });
     }
     
-    public void removeInside(RingSet ringSet, Tolerance tolerance){
-        explicitIntersectionsWith(ringSet.getLineIndex(), tolerance);
-        removeInsideInternal(ringSet, tolerance);
+    public void removeInside(Geom geom, Tolerance flatness, Tolerance tolerance){
+        SpatialNode<Line> lines = getLineIndex(geom, flatness);
+        explicitIntersectionsWith(lines, tolerance);
+        removeInsideInternal(geom, tolerance);
     }
 
-    void removeInsideInternal(final RingSet ring, final Tolerance tolerance) {
+    private void removeInsideInternal(final Geom geom, final Tolerance tolerance) {
+        final VectBuilder vect = new VectBuilder();
         map.forEach(new VectMapProcessor<VectList>(){
             @Override
             public boolean process(double x, double y, VectList value) {
-                if(Relate.INSIDE == ring.relateInternal(x, y, tolerance)){
-                    removeVertex(x, y);
+                vect.set(x, y);
+                if(Relate.INSIDE == geom.relate(vect, tolerance)){
+                    removeVertex(vect);
                 }
                 return true;
             }
@@ -735,9 +752,8 @@ public final class Network implements Serializable, Cloneable {
         getLinks().forEach(new NodeProcessor<Line>(){
             @Override
             public boolean process(Rect bounds, Line line) {
-                double x = (line.ax + line.bx) / 2;
-                double y = (line.ay + line.by) / 2;
-                if(Relate.INSIDE == ring.relateInternal(x, y, tolerance)){
+                line.getMid(vect);
+                if(Relate.INSIDE == geom.relate(vect, tolerance)){
                     removeLink(line);
                 }
                 return true;
@@ -850,6 +866,39 @@ public final class Network implements Serializable, Cloneable {
         return str.toString();
     }
     
+    public static Geom union(Tolerance flatness, Tolerance tolerance, Geom... geoms){
+        Network network = new Network();
+        for(Geom geom : geoms){
+            geom.addTo(network, flatness);
+        }
+        network.explicitIntersections(tolerance);
+        for(Geom geom : geoms){
+            network.removeInsideInternal(geom, tolerance);
+        }
+        return network.toGeom();   
+    }
+    
+    public static Geom intersection(Tolerance flatness, Tolerance tolerance, Geom... geoms){
+        Network network = new Network();
+        for(Geom geom : geoms){
+            geom.addTo(network, flatness);
+        }
+        network.explicitIntersections(tolerance);
+        for(Geom geom : geoms){
+            network.removeOutsideInternal(geom, tolerance);
+        }
+        return network.toGeom();   
+    }
+    
+    public static Geom less(Tolerance flatness, Tolerance tolerance, Geom geom, Geom less){
+        Network network = new Network();
+        geom.addTo(network, flatness);
+        less.addTo(network, flatness);
+        network.explicitIntersections(tolerance);
+        network.removeInsideInternal(less, tolerance);
+        return network.toGeom();   
+    }
+    
     public Geom toGeom(){
         final List<Geom> geoms = new ArrayList<>();
         RingSet ringSet = RingSet.valueOf(this);
@@ -886,7 +935,14 @@ public final class Network implements Serializable, Cloneable {
                 }
             }
         }
-        return GeomSet.valueOf(geoms.toArray(new Geom[geoms.size()]));
+        switch(geoms.size()){
+            case 0:
+                return null;
+            case 1:
+                return geoms.get(0);
+            default:
+                return new GeomSet(geoms.toArray(new Geom[geoms.size()]));
+        }
     }
 
     public void toString(Appendable appendable) throws GeomException {
