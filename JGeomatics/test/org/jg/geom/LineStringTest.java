@@ -61,6 +61,7 @@ public class LineStringTest {
     public void testPathIterator() {
         LineString ls = LineString.valueOf(new VectList().addAll(1, 3, 7, 13, 17, 29));
         PathIterator iter = ls.pathIterator();
+        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
         assertFalse(iter.isDone());
         double[] coords = new double[6];
         float[] fcoords = new float[6];
@@ -88,6 +89,7 @@ public class LineStringTest {
         assertEquals(29, fcoords[1], 0.00001);
         iter.next();
         assertTrue(iter.isDone());
+        iter.next();
 
         ls = LineString.valueOf(new VectList().addAll(1, 3));
         iter = ls.pathIterator();
@@ -160,6 +162,8 @@ public class LineStringTest {
     public void testGetLength_0args() {
         LineString ls = LineString.valueOf(new VectList().addAll(20, 0, 20, 20, 30, 20, 30, 10, 0, 10));
         assertEquals(70, ls.getLength(), 0.00001);
+        assertEquals(0, LineString.getLength(new VectList()), 0.00001);
+        assertEquals(0, LineString.getLength(new VectList(20, 0)), 0.00001);
     }
 
     @Test
@@ -184,6 +188,7 @@ public class LineStringTest {
         LineString b = LineString.valueOf(0, 0, 100, 0, 100, 100);
         assertEquals(a, a);
         assertNotEquals(a, b);
+        assertNotEquals(a, "");
     }
 
     @Test
@@ -216,6 +221,19 @@ public class LineStringTest {
             }
 
         }));
+
+        assertFalse(a.forInteractingLines(Rect.valueOf(0, 40, 10, 50), new NodeProcessor<Line>() {
+            boolean done;
+            @Override
+            public boolean process(Rect bounds, Line value) {
+                if(done){
+                    fail("Already done");
+                }
+                return false;
+            }
+
+        }));
+
         assertTrue(map.isEmpty());
     }
 
@@ -322,6 +340,11 @@ public class LineStringTest {
 
         RingSet r = (RingSet) s.buffer(5, flatness, Tolerance.DEFAULT);
 
+        Network n = new Network();
+        r.addTo(n, Tolerance.DEFAULT);
+        String wkt = n.toWKT();
+        System.out.println(wkt);
+        
         assertEquals(1, r.numRings());
         assertEquals(Rect.valueOf(14, -5, 25, 35), r.getBounds());
         assertEquals(382, r.getArea(), 1);
@@ -442,5 +465,42 @@ public class LineStringTest {
     public void testNumLines() {
         assertEquals(2, new LineString(new VectList(1, 2, 3, 4, 5, 6)).numLines());
         assertEquals(0, new LineString(new VectList(1, 2)).numLines());
+    }
+    
+    @Test
+    public void testRelate(){
+        LineString ls = new LineString(new VectList(0, 50, 50, 0, 100, 0, 100, 100));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(0, 50), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(25, 25), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(50, 0), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(75, 0), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 0), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 50), Tolerance.DEFAULT));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 100), Tolerance.DEFAULT));
+        
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(1, 50), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(24, 25), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(50, -1), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(75, 1), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(99, 1), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(99, 50), Tolerance.DEFAULT));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(101, 100), Tolerance.DEFAULT));
+        
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(24, 25), new Tolerance(1)));
+    }
+    
+    @Test
+    public void testUnion() {
+        fail("Exception expected");
+    }
+
+    @Test
+    public void testIntersection() {
+        fail("Exception expected");
+    }
+
+    @Test
+    public void testLess() {
+        fail("Exception expected");
     }
 }

@@ -242,8 +242,9 @@ public final class VectMap<E> implements Serializable, Cloneable {
                 case 0:
                     return this; // exists
                 case -1:
-                    capacity = capacity << 1;
-                    rehash(capacity);
+                    do{
+                        capacity = capacity << 1;
+                    }while(!rehash(capacity));
                     break;
                 default: // case 1
                     size++;
@@ -451,7 +452,7 @@ public final class VectMap<E> implements Serializable, Cloneable {
         return ret;
     }
 
-    void rehash(int capacity) {
+    boolean rehash(int capacity) {
         double[] newOrds = new double[capacity];
         E[] newValues = (E[]) new Object[capacity];
         Arrays.fill(newOrds, Double.NaN);
@@ -460,11 +461,15 @@ public final class VectMap<E> implements Serializable, Cloneable {
             double y = ords[--index];
             double x = ords[--index];
             if (!Double.isNaN(x)) {
-                putMapping(x, y, values[index >> 1], newOrds, newValues, maxJumps);
+                if(putMapping(x, y, values[index >> 1], newOrds, newValues, maxJumps) == -1){
+                    return false; //DIDNT THINK THIS WAS POSSIBLE - RETURNS -1 - A REHASH FAILS ON A BIGGER ONE THAN THE ORIGINAL
+                }
+                
             }
         }
         ords = newOrds;
         values = newValues;
+        return true;
     }
 
     static <E> int putMapping(double x, double y, E value, double[] ords, E[] values, int maxJumps) {

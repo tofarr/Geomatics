@@ -466,6 +466,29 @@ public class RectTest {
                 }
 
             });
+            fail("Exception expected");
+        } catch (GeomException ex) {
+
+        }
+        try {
+            Rect.toString(Rect.valueOf(1, 2, 3, 4), new Appendable() {
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
+
+            });
+            fail("Exception expected");
         } catch (GeomException ex) {
 
         }

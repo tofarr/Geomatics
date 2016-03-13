@@ -322,22 +322,25 @@ public class LineString implements Geom {
     
     //remove any link from network with a mid point closer than the amt to one of the lines in this
     static void removeWithinBuffer(VectList vects, Network network, double amt, Tolerance flatness, Tolerance tolerance){
+        System.out.println("Should pick min then remove by crossing points");
+        System.out.println("Or could convert to ringsset but throw away holes - WONT WORK");
+        System.out.println("or we fix threshold");
         final SpatialNode<Line> lines = network.getLinks();
-        double threshold = amt - flatness.tolerance;
+        double threshold = amt - (flatness.tolerance * 2);
         final NearLinkRemover remover = new NearLinkRemover(threshold, network);
         int index = vects.size() - 1;
         RectBuilder bounds = new RectBuilder();
-        double by = vects.getX(index);
         double bx = vects.getX(index);
+        double by = vects.getY(index);
         index--;
         while (index-- > 0) {
-            double ay = vects.getX(index);
             double ax = vects.getX(index);
+            double ay = vects.getY(index);
             index--;
             bounds.reset().add(ax, ay).add(bx, by);
             bounds.buffer(threshold);
             remover.reset(ax,ay,bx,by);
-            lines.forOverlapping(bounds.build(), remover);
+            lines.forInteracting(bounds.build(), remover);
             bx = ax;
             by = ay;
         }
@@ -534,7 +537,7 @@ public class LineString implements Geom {
         @Override
         public boolean process(Rect bounds, Line value) {
             double distSq = Line.distSegVectSq(value.ax, value.ay, value.bx, value.by, x, y);
-            return (distSq < toleranceSq);
+            return (distSq > toleranceSq);
         }
     }
 }
