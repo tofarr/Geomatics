@@ -256,8 +256,8 @@ public class VectBuilderTest {
 
     @Test
     public void testToString() {
-        assertEquals("[0,0]", new VectBuilder().toString());
-        assertEquals("[3.4,5.6]", new VectBuilder(3.4, 5.6).toString());
+        assertEquals("[\"PT\",0,0]", new VectBuilder().toString());
+        assertEquals("[\"PT\",3.4,5.6]", new VectBuilder(3.4, 5.6).toString());
     }
 
     @Test

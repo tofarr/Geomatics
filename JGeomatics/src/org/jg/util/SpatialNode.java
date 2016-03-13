@@ -515,7 +515,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
                     if (i != 0) {
                         appendable.append(',');
                     }
-                    itemBounds[i].toString(appendable);
+                    Rect.toString(itemBounds[i], appendable);
                 }
                 appendable.append("],itemValues:[");
                 for (int i = 0; i < size; i++) {

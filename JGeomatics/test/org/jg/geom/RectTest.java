@@ -12,6 +12,7 @@ import java.util.Set;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
+import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -222,11 +223,13 @@ public class RectTest {
     @Test
     public void testContains_Vect() {
         Rect a = Rect.valueOf(10, 10, 20, 20);
+        VectBuilder b = new VectBuilder();
         for (int x1 = 0; x1 < 30; x1 += 5) {
             for (int y1 = 0; y1 < 30; y1 += 5) {
                 boolean contains = (x1 >= a.minX) && (y1 >= a.minY) && (x1 <= a.maxX) && (y1 <= a.maxY);
-                Vect b = Vect.valueOf(x1, y1);
+                b.set(x1, y1);
                 assertEquals(contains, a.contains(b));
+                assertEquals(contains, a.contains(b.build()));
             }
         }
         assertTrue(Rect.valueOf(3, 4, 1, 2).contains(Vect.valueOf(1, 2)));
@@ -235,9 +238,24 @@ public class RectTest {
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
+        }try {
+            a.contains((VectBuilder) null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
         }
     }
 
+    @Test
+    public void testContains_Geom() {
+        Rect a = Rect.valueOf(10, 10, 20, 20);
+        Rect b = Rect.valueOf(11, 11, 19, 19);
+        assertTrue(a.contains((Geom)b));
+        assertFalse(b.contains((Geom)a));
+        assertTrue(a.contains((Geom)Vect.valueOf(15, 15)));
+        assertFalse(a.contains((Geom)Vect.valueOf(25, 25)));
+    }
+    
     @Test
     public void testRelate() {
         Rect a = Rect.valueOf(10, 10, 20, 20);
@@ -368,14 +386,14 @@ public class RectTest {
         assertNull(Rect.valueOf(0, 0, 2, 10).buffer(-2));
         assertNull(Rect.valueOf(0, 0, 10, 2).buffer(-2));
     }
-    
+
     @Test
-    public void testBuffer_Tolerance(){
+    public void testBuffer_Tolerance() {
         Rect rect = Rect.valueOf(3, 7, 13, 23);
         assertSame(rect, rect.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        RingSet ringSet = (RingSet)rect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
-        
+        RingSet ringSet = (RingSet) rect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
+
         assertEquals(Rect.valueOf(1, 5, 15, 25), ringSet.getBounds());
         assertEquals(264 + (Math.PI * 4), ringSet.getArea(), 0.5);
         assertEquals(52 + (Math.PI * 4), ringSet.shell.getLength(), 0.5);
@@ -418,18 +436,18 @@ public class RectTest {
 
     @Test
     public void testToString_0args() {
-        assertEquals("[1,2,3,4]", Rect.valueOf(1, 2, 3, 4).toString());
-        assertEquals("[1.5,2.5,3.5,4.5]", Rect.valueOf(1.5, 2.5, 3.5, 4.5).toString());
+        assertEquals("[\"RE\",1,2,3,4]", Rect.valueOf(1, 2, 3, 4).toString());
+        assertEquals("[\"RE\",1.5,2.5,3.5,4.5]", Rect.valueOf(1.5, 2.5, 3.5, 4.5).toString());
     }
 
     @Test
     public void testToString_Appendable() throws Exception {
         StringBuilder str = new StringBuilder();
         Rect.valueOf(1, 2, 3, 4).toString(str);
-        assertEquals("[1,2,3,4]", str.toString());
+        assertEquals("[\"RE\",1,2,3,4]", str.toString());
         str.setLength(0);
         Rect.valueOf(1.5, 2.5, 3.5, 4.5).toString(str);
-        assertEquals("[1.5,2.5,3.5,4.5]", str.toString());
+        assertEquals("[\"RE\",1.5,2.5,3.5,4.5]", str.toString());
         try {
             Rect.valueOf(1, 2, 3, 4).toString(new Appendable() {
                 @Override
@@ -518,7 +536,7 @@ public class RectTest {
         Transform transform = new TransformBuilder().scaleAround(2, 4, 9).build();
         Rect a = Rect.valueOf(3, 7, 13, 29);
         Rect b = a.transform(transform);
-        assertEquals("[2,5,22,49]", b.toString());
+        assertEquals("[\"RE\",2,5,22,49]", b.toString());
     }
 
     @Test
@@ -540,9 +558,9 @@ public class RectTest {
         a.addTo(network, Tolerance.DEFAULT);
         assertEquals("[[3,7, 13,7, 13,29, 3,29, 3,7]]", network.toString());
     }
-    
+
     @Test
-    public void testRelate_Tolerance(){
+    public void testRelate_Tolerance() {
         Rect a = Rect.valueOf(10, 10, 20, 20);
         for (int x1 = 0; x1 < 30; x1 += 5) {
             for (int y1 = 0; y1 < 30; y1 += 5) {
@@ -577,5 +595,58 @@ public class RectTest {
         } catch (NullPointerException ex) {
             //expected
         }
+    }
+
+    @Test
+    public void testUnion() {
+        Rect a = Rect.valueOf(10, 20, 30, 40);
+        Rect b = Rect.valueOf(50, 60, 70, 80);
+        Rect c = Rect.valueOf(11, 21, 29, 39);
+        Rect d = Rect.valueOf(15, 25, 35, 45);
+        RingSet e = new RingSet(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
+        assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new GeomSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        RingSet expected = new RingSet(
+            new Ring(new VectList(10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20))
+        );
+        assertEquals(expected, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(expected, a.union(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }
+
+    @Test
+    public void testIntersection_B() {
+        Rect a = Rect.valueOf(10, 20, 30, 40);
+        Rect b = Rect.valueOf(50, 60, 70, 80);
+        Rect c = Rect.valueOf(11, 21, 29, 39);
+        Rect d = Rect.valueOf(15, 25, 35, 45);
+        RingSet e = new RingSet(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
+        assertSame(c, a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(c, c.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        RingSet result = new RingSet(
+            new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
+        );
+        assertEquals(result, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }
+
+    @Test
+    public void testLess() {
+        Rect a = Rect.valueOf(10, 20, 30, 40);
+        Rect b = Rect.valueOf(50, 60, 70, 80);
+        Rect c = Rect.valueOf(11, 21, 29, 39);
+        Rect d = Rect.valueOf(15, 25, 35, 45);
+        assertSame(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(c.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new RingSet(
+                new Ring(new VectList(10,20, 30,20, 30,40, 10,40, 10,20)),
+                new RingSet[]{
+                    new RingSet(new Ring(new VectList(11,21, 29,21, 29,39, 11,39, 11,21)))
+                }
+        ), a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new RingSet(
+            new Ring(new VectList(10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20))
+        ), a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 }

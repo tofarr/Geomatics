@@ -796,7 +796,7 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(new RectBuilder().add(ax, ay).buffer(tolerance.tolerance).build().isDisjoint(other.getBounds())){
+        if(new RectBuilder().addInternal(ax, ay).addInternal(bx, by).buffer(tolerance.tolerance).build().isDisjoint(other.getBounds())){
             return GeomSet.normalizedValueOf(this, other);
         }else{
             return Network.union(flatness, tolerance, this, other);
@@ -805,7 +805,7 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(new RectBuilder().add(ax, ay).buffer(tolerance.tolerance).build().isDisjoint(other.getBounds())){
+        if(new RectBuilder().addInternal(ax, ay).addInternal(bx, by).build().isDisjoint(other.getBounds())){
             return null;
         }else{
             return Network.intersection(flatness, tolerance, this, other);
@@ -872,7 +872,7 @@ public class Line implements Geom, Comparable<Line> {
      */
     public void toString(Appendable appendable) throws GeomException, NullPointerException {
         try {
-            appendable.append('[')
+            appendable.append("[\"LN\",")
                     .append(Vect.ordToStr(ax)).append(',')
                     .append(Vect.ordToStr(ay)).append(',')
                     .append(Vect.ordToStr(bx)).append(',')

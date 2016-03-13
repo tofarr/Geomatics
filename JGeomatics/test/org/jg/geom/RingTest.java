@@ -365,8 +365,12 @@ public class RingTest {
         RingSet buffered = ring.buffer(5, new Tolerance(0.5), Tolerance.DEFAULT);
         Rect bounds = buffered.getBounds();
         //assertEquals(-5, bounds.minX, 0.1)
-                
-        assertEquals("[-5,-5, 15,15]", buffered.getBounds());
+               
+        assertEquals(-5, bounds.minX, 0.1);
+        assertEquals(-5, bounds.minY, 0.1);
+        assertEquals(15, bounds.maxX, 0.1);
+        assertEquals(15, bounds.maxY, 0.1);
+        
         assertEquals(50, ring.getArea(), 0.00001);
     }
 }

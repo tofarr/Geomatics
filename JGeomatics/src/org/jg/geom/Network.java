@@ -895,6 +895,7 @@ public final class Network implements Serializable, Cloneable {
         geom.addTo(network, flatness);
         less.addTo(network, flatness);
         network.explicitIntersections(tolerance);
+        network.removeOutsideInternal(geom, tolerance);
         network.removeInsideInternal(less, tolerance);
         return network.toGeom();   
     }
@@ -912,16 +913,29 @@ public final class Network implements Serializable, Cloneable {
         if(numVectsInRings < map.size()){
             final VectList points = new VectList();
             map.forEach(new VectMapProcessor<VectList>(){
+                final VectList lineString = new VectList();
                 @Override
                 public boolean process(double x, double y, VectList value) {
                     switch(value.size()){
                         case 0:
                             points.add(x, y);
+                            break;
                         case 1:
-                            VectList lineString = new VectList();
+                            lineString.clear();
                             followLine(x, y, value.getX(0), value.getY(0), lineString);
-                            geoms.add(new LineString(lineString));
-                            
+                            int end = lineString.size()-1;
+                            double endX = lineString.getX(end);
+                            double endY = lineString.getY(end);
+                            if((map.get(endX, endY).size() != 1) || Vect.compare(x, y, endX, endY) < 0){
+                                if(!lineString.isOrdered()){
+                                    lineString.reverse();
+                                }
+                                if(lineString.size() == 2){
+                                    geoms.add(new Line(lineString.getX(0), lineString.getY(0), lineString.getX(1), lineString.getY(1)));
+                                }else{
+                                    geoms.add(new LineString(lineString.clone()));
+                                }
+                            }
                     }
                     return true;
                 }
@@ -941,7 +955,9 @@ public final class Network implements Serializable, Cloneable {
             case 1:
                 return geoms.get(0);
             default:
-                return new GeomSet(geoms.toArray(new Geom[geoms.size()]));
+                Geom[] ret = geoms.toArray(new Geom[geoms.size()]);
+                Arrays.sort(ret, Geom.COMPARATOR);
+                return new GeomSet(ret);
         }
     }
 

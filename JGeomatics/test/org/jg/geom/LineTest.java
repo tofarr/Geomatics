@@ -543,15 +543,15 @@ public class LineTest {
 
     @Test
     public void testToString() throws IOException {
-        assertEquals("[1,2,3,4]", new Line(1, 2, 3, 4).toString());
-        assertEquals("[4,3,2,1]", new Line(4, 3, 2, 1).toString());
-        assertEquals("[1.2,3.4,5.6,7.8]", new Line(1.2, 3.4, 5.6, 7.8).toString());
+        assertEquals("[\"LN\",1,2,3,4]", new Line(1, 2, 3, 4).toString());
+        assertEquals("[\"LN\",4,3,2,1]", new Line(4, 3, 2, 1).toString());
+        assertEquals("[\"LN\",1.2,3.4,5.6,7.8]", new Line(1.2, 3.4, 5.6, 7.8).toString());
         StringBuilder str = new StringBuilder();
         new Line(1, 2, 3, 4).toString(str);
-        assertEquals("[1,2,3,4]", str.toString());
+        assertEquals("[\"LN\",1,2,3,4]", str.toString());
         str.setLength(0);
         new Line(1.1, 2.2, 3.3, 4.4).toString(str);
-        assertEquals("[1.1,2.2,3.3,4.4]", str.toString());
+        assertEquals("[\"LN\",1.1,2.2,3.3,4.4]", str.toString());
         try{
             new Line(1, 2, 3, 4).toString(new Appendable(){
                 @Override
@@ -667,7 +667,7 @@ public class LineTest {
         Transform transform = new TransformBuilder().flipYAround(5).translate(2, 0).build();
         Line a = Line.valueOf(2,3,7,11);
         Line b = a.transform(transform);
-        assertEquals("[4,7,9,-1]", b.toString());
+        assertEquals("[\"LN\",4,7,9,-1]", b.toString());
     }
 
     @Test
@@ -748,9 +748,9 @@ public class LineTest {
         assertTrue(25 == target.getY());
         
         assertTrue(Line.intersectionLineInternal(0, 0, 0, 10, 0, 5, 10, 5, Tolerance.DEFAULT, target));
-        assertEquals("[0,5]", target.toString());
+        assertEquals(new VectBuilder(0, 5), target);
         assertTrue(Line.intersectionLineInternal(10, 0, 10, 10, 0, 5, 10, 5, Tolerance.DEFAULT, target));
-        assertEquals("[10,5]", target.toString());
+        assertEquals(new VectBuilder(10,5), target);
         
     }
     
@@ -786,6 +786,42 @@ public class LineTest {
         Line.intersectionLineCircleInternal(ax, ay, bx, by, cx, cy, r, Tolerance.DEFAULT, work, found);
         assertEquals(expected, found);
     }
-    
-    
+
+    @Test
+    public void testUnion() {
+        Line a = new Line(0,0, 100,100);
+        Line b = new Line(0,100, 100,0);
+        Rect c = new Rect(150,0,200,50);
+        assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        Geom expected = new GeomSet(
+            Line.valueOf(0,0,50,50),
+            Line.valueOf(0,100,50,50),
+            Line.valueOf(50,50,100,0),
+            Line.valueOf(50,50,100,100)
+        );
+        Geom found = a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        assertEquals(expected, found);
+        assertEquals(new GeomSet(a, c), a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }
+
+    @Test
+    public void testIntersection_B() {
+        Line a = new Line(0,0, 100,100);
+        Line b = new Line(0,100, 100,0);
+        Rect c = new Rect(150,0,200,50);
+        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Vect.valueOf(50,50), a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }
+
+    @Test
+    public void testLess() {
+        Line a = new Line(0,0, 100,100);
+        Line b = new Line(0,100, 100,0);
+        Rect c = new Rect(150,0,200,50);
+        Rect d = new Rect(-1,-1,101,101);
+        assertEquals(a, a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(LineString.valueOf(0,0, 50,50, 100,100), a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }    
 }

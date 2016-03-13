@@ -13,6 +13,7 @@ import org.jg.util.VectList;
 
 /**
  * Immutable 2D Rectangle
+ *
  * @author tofar_000
  */
 public class Rect implements Geom {
@@ -31,6 +32,7 @@ public class Rect implements Geom {
 
     /**
      * Get a Rect based on the values given. Swap ordinates of max < min
+     *
      * @param minX
      * @param minY
      * @param maxX
@@ -125,8 +127,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
-     * disjoint.
+     * Determine if this rect is disjoint from that given (does not touch or
+     * share any internal area). Invalid rects are considered disjoint.
      *
      * @param rect
      * @return true if rects are disjoint or rect was null, false otherwise
@@ -137,8 +139,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
-     * disjoint.
+     * Determine if this rect is disjoint from that given (does not touch or
+     * share any internal area). Invalid rects are considered disjoint.
      *
      * @param rect
      * @return true if rects are disjoint or rect was null, false otherwise
@@ -149,7 +151,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects are considered disjoint, and never overlap
+     * Determine if this rect overlaps (Shares some internal area with) that
+     * given. Invalid rects are considered disjoint, and never overlap
      *
      * @param rect
      * @return true if overlapping, false otherwise
@@ -159,7 +162,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects are considered disjoint, and never overlap
+     * Determine if this rect overlaps (Shares some internal area with) that
+     * given. Invalid rects are considered disjoint, and never overlap
      *
      * @param rect
      * @return true if overlapping, false otherwise
@@ -169,7 +173,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) 
+     * Determine if this rect covers the rect given. (ie: No part of rect is
+     * outside this)
      *
      * @param rect
      * @return true if contains rect, false otherwise
@@ -180,8 +185,9 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
-     * contain other rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is
+     * outside this) Invalid rects cannot overlap, and so cannot contain other
+     * rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -190,18 +196,19 @@ public class Rect implements Geom {
     public boolean contains(RectBuilder rect) throws NullPointerException {
         return rect.isValid() ? contains(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()) : false;
     }
-       
+
     /**
-     * Determine if this rect covers the geom given. (ie: No part of geom is outside this) 
+     * Determine if this rect covers the geom given. (ie: No part of geom is
+     * outside this)
      *
      * @param geom
      * @return true if contains rect, false otherwise
      * @throws NullPointerException if rect was null
      */
     public boolean contains(Geom geom) throws NullPointerException {
-        if(geom instanceof Vect){
-            return contains((Vect)geom);
-        }else{
+        if (geom instanceof Vect) {
+            return contains((Vect) geom);
+        } else {
             return contains(geom.getBounds());
         }
     }
@@ -212,8 +219,9 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
-     * contain other rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is
+     * outside this) Invalid rects cannot overlap, and so cannot contain other
+     * rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -224,8 +232,9 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
-     * contain other rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is
+     * outside this) Invalid rects cannot overlap, and so cannot contain other
+     * rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -245,7 +254,7 @@ public class Rect implements Geom {
     public boolean contains(Vect vect) throws NullPointerException {
         return contains(minX, minY, maxX, maxY, vect.getX(), vect.getY());
     }
-    
+
     /**
      * Determine if this rect covers the vect given. (inside or touching)
      *
@@ -258,7 +267,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if the rect given contains the point given. (Is inside or touching)
+     * Determine if the rect given contains the point given. (Is inside or
+     * touching)
      *
      * @param aMinX
      * @param aMinY
@@ -294,7 +304,7 @@ public class Rect implements Geom {
     public Relate relate(VectBuilder vect) throws NullPointerException {
         return relate(minX, minY, maxX, maxY, vect.getX(), vect.getY());
     }
-    
+
     static Relate relate(double minX, double minY, double maxX, double maxY,
             double x, double y) {
         if ((x < minX) || (y < minY) || (x > maxX) || (y > maxY)) {
@@ -332,15 +342,15 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public Rect union(Rect rect) throws NullPointerException {
-        if(contains(rect)){
+        if (contains(rect)) {
             return this;
-        }else if(rect.contains(this)){
+        } else if (rect.contains(this)) {
             return rect;
-        }else{
+        } else {
             return new Rect(Math.min(minX, rect.minX),
-                Math.min(minY, rect.minY),
-                Math.max(maxX, rect.maxX),
-                Math.max(maxY, rect.maxY));
+                    Math.min(minY, rect.minY),
+                    Math.max(maxX, rect.maxX),
+                    Math.max(maxY, rect.maxY));
         }
     }
 
@@ -413,25 +423,25 @@ public class Rect implements Geom {
 
     @Override
     public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
-        if(amt == 0){
+        if (amt == 0) {
             return this;
-        }else if(amt < 0){
+        } else if (amt < 0) {
             return buffer(amt);
         }
         VectList result = new VectList();
         VectBuilder vect = new VectBuilder();
-        
+
         double _minX = minX - amt;
         double _minY = minY - amt;
         double _maxX = maxX + amt;
         double _maxY = maxY + amt;
-        
+
         Vect.linearizeArc(minX, minY, _minX, minY, minX, _minY, amt, flatness.getTolerance(), result);
         Vect.linearizeArc(maxX, minY, maxX, _minY, _maxX, minY, amt, flatness.getTolerance(), result);
         Vect.linearizeArc(maxX, maxY, _maxX, maxY, maxX, _maxY, amt, flatness.getTolerance(), result);
         Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, flatness.getTolerance(), result);
         result.add(_minX, minY);
-        
+
         return new RingSet(new Ring(result));
     }
 
@@ -445,51 +455,57 @@ public class Rect implements Geom {
         return relateInternal(vect.getX(), vect.getY(), tolerance);
     }
 
-    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException{
+    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
         double t = tolerance.tolerance;
-        if((x < (minX - t)) || (x > (maxX + t)) || (y < (minY - t)) || (y > (maxY + t))){
+        if ((x < (minX - t)) || (x > (maxX + t)) || (y < (minY - t)) || (y > (maxY + t))) {
             return Relate.OUTSIDE;
-        }else if((x > (minX + t)) && (x < (maxX - t)) && (y > (minY + t)) && (y < (maxY - t))){
+        } else if ((x > (minX + t)) && (x < (maxX - t)) && (y > (minY + t)) && (y < (maxY - t))) {
             return Relate.INSIDE;
-        }else{
+        } else {
             return Relate.TOUCH;
         }
     }
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(contains(other.getBounds())){
+        if (contains(other.getBounds())) {
             return this;
-        }else if(!isOverlapping(other.getBounds())){
+        } else if (!isOverlapping(other.getBounds())) {
             return GeomSet.normalizedValueOf(this, other);
-        }else{
+        } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
+            return other;
+        } else {
             return Network.union(flatness, tolerance, this, other);
         }
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+        if (buffer(tolerance.tolerance).isDisjoint(other.getBounds())) {
             return null;
-        }else if(contains(other)){
-            return this;
-        }else if((other instanceof Rect) && ((Rect)other).contains(this)){
+        } else if (contains(other)) {
             return other;
-        }else{
+        } else if (other instanceof Rect) {
+            Rect otherRect = (Rect) other;
+            if (otherRect.contains(this)) {
+                return this;
+            } else {
+                return intersection(otherRect);
+            }
+        } else {
             return Network.intersection(flatness, tolerance, this, other);
         }
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(isDisjoint(other.getBounds())){
-            return null;
-        }else{
-            return Network.less(flatness, tolerance, other, other);
+        if (isDisjoint(other.getBounds())) {
+            return this;
+        } else {
+            return Network.less(flatness, tolerance, this, other);
         }
     }
-    
-    
+
     @Override
     public Rect clone() {
         return this;
@@ -547,11 +563,23 @@ public class Rect implements Geom {
 
     static void toString(double minX, double minY, double maxX, double maxY, Appendable appendable) {
         try {
-            appendable.append('[')
+            appendable.append("[\"RE\",")
                     .append(Vect.ordToStr(minX)).append(',')
                     .append(Vect.ordToStr(minY)).append(',')
                     .append(Vect.ordToStr(maxX)).append(',')
                     .append(Vect.ordToStr(maxY)).append(']');
+        } catch (IOException ex) {
+            throw new GeomException("Error writing", ex);
+        }
+    }
+
+    public static void toString(Rect rect, Appendable appendable) throws GeomException {
+        try {
+            appendable.append('[')
+                    .append(Vect.ordToStr(rect.minX)).append(',')
+                    .append(Vect.ordToStr(rect.minY)).append(',')
+                    .append(Vect.ordToStr(rect.maxX)).append(',')
+                    .append(Vect.ordToStr(rect.maxY)).append(']');
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
         }

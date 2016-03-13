@@ -23,8 +23,8 @@ public class TransformBuilderTest {
         VectBuilder src = new VectBuilder(11, 23);
         VectBuilder dst = new VectBuilder();
         transform.transform(src, dst);
-        assertEquals("[11,23]", src.toString());
-        assertEquals("[20,63]", dst.toString());
+        assertEquals(new VectBuilder(11,23), src);
+        assertEquals(new VectBuilder(20,63), dst);
     }
     
     @Test
@@ -136,7 +136,7 @@ public class TransformBuilderTest {
     @Test
     public void testTranslate() {
         TransformBuilder transform = new TransformBuilder().translate(3, 7);
-        assertEquals("[16,24]", transform.build().transform(Vect.valueOf(13, 17)).toString());
+        assertEquals(Vect.valueOf(16,24), transform.build().transform(Vect.valueOf(13, 17)));
         assertSame(transform, transform.translate(-4, -3));
         try {
             transform.translate(Double.NEGATIVE_INFINITY, 0);
@@ -150,13 +150,13 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[12,21]", transform.build().transform(Vect.valueOf(13, 17)).toString());
+        assertEquals(Vect.valueOf(12,21), transform.build().transform(Vect.valueOf(13, 17)));
     }
 
     @Test
     public void testScale() {
         TransformBuilder transform = new TransformBuilder().scale(2);
-        assertEquals("[10,14]", transform.build().transform(Vect.valueOf(5, 7)).toString());
+        assertEquals(Vect.valueOf(10,14), transform.build().transform(Vect.valueOf(5, 7)));
         assertSame(transform, transform.scale(2));
         try {
             transform.scale(Double.POSITIVE_INFINITY);
@@ -176,16 +176,16 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[20,28]", transform.build().transform(Vect.valueOf(5, 7)).toString());
+        assertEquals(Vect.valueOf(20,28), transform.build().transform(Vect.valueOf(5, 7)));
     }
 
     @Test
     public void testScaleAround() {
         TransformBuilder transform = new TransformBuilder().scaleAround(2, 7, 11);
-        assertEquals("[7,11]", transform.build().transform(Vect.valueOf(7, 11)).toString());
-        assertEquals("[9,13]", transform.build().transform(Vect.valueOf(8, 12)).toString());
-        assertEquals("[11,15]", transform.build().transform(Vect.valueOf(9, 13)).toString());
-        assertEquals("[5,9]", transform.build().transform(Vect.valueOf(6, 10)).toString());
+        assertEquals(Vect.valueOf(7,11), transform.build().transform(Vect.valueOf(7, 11)));
+        assertEquals(Vect.valueOf(9,13), transform.build().transform(Vect.valueOf(8, 12)));
+        assertEquals(Vect.valueOf(11,15), transform.build().transform(Vect.valueOf(9, 13)));
+        assertEquals(Vect.valueOf(5,9), transform.build().transform(Vect.valueOf(6, 10)));
         try {
             transform.scaleAround(2, 7, Double.NaN);
             fail("Exception expected");
@@ -216,7 +216,7 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[3,7]", transform.build().transform(Vect.valueOf(5, 9)).toString());
+        assertEquals(Vect.valueOf(3,7), transform.build().transform(Vect.valueOf(5, 9)));
     }
 
     @Test
@@ -276,15 +276,15 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[1,9]", transform.build().transform(Vect.valueOf(5, 9)).toString());
-        assertEquals("[3,9]", transform.build().transform(Vect.valueOf(5, 7)).toString());
-        assertEquals("[1,7]", transform.build().transform(Vect.valueOf(3, 9)).toString());
-        assertEquals("[3,7]", transform.build().transform(Vect.valueOf(3, 7)).toString());
-        assertEquals("[1,5]", transform.build().transform(Vect.valueOf(1, 9)).toString());
-        assertEquals("[3,5]", transform.build().transform(Vect.valueOf(1, 7)).toString());
-        assertEquals("[5,5]", transform.build().transform(Vect.valueOf(1, 5)).toString());
-        assertEquals("[5,7]", transform.build().transform(Vect.valueOf(3, 5)).toString());
-        assertEquals("[5,9]", transform.build().transform(Vect.valueOf(5, 5)).toString());
+        assertEquals(Vect.valueOf(1,9), transform.build().transform(Vect.valueOf(5, 9)));
+        assertEquals(Vect.valueOf(3,9), transform.build().transform(Vect.valueOf(5, 7)));
+        assertEquals(Vect.valueOf(1,7), transform.build().transform(Vect.valueOf(3, 9)));
+        assertEquals(Vect.valueOf(3,7), transform.build().transform(Vect.valueOf(3, 7)));
+        assertEquals(Vect.valueOf(1,5), transform.build().transform(Vect.valueOf(1, 9)));
+        assertEquals(Vect.valueOf(3,5), transform.build().transform(Vect.valueOf(1, 7)));
+        assertEquals(Vect.valueOf(5,5), transform.build().transform(Vect.valueOf(1, 5)));
+        assertEquals(Vect.valueOf(5,7), transform.build().transform(Vect.valueOf(3, 5)));
+        assertEquals(Vect.valueOf(5,9), transform.build().transform(Vect.valueOf(5, 5)));
     }
 
     /**
@@ -311,21 +311,21 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[1,10]", transform.build().transform(Vect.valueOf(5, 9)).toString());
-        assertEquals("[3,10]", transform.build().transform(Vect.valueOf(5, 7)).toString());
-        assertEquals("[1,8]", transform.build().transform(Vect.valueOf(3, 9)).toString());
-        assertEquals("[3,8]", transform.build().transform(Vect.valueOf(3, 7)).toString());
-        assertEquals("[1,6]", transform.build().transform(Vect.valueOf(1, 9)).toString());
-        assertEquals("[3,6]", transform.build().transform(Vect.valueOf(1, 7)).toString());
-        assertEquals("[5,6]", transform.build().transform(Vect.valueOf(1, 5)).toString());
-        assertEquals("[5,8]", transform.build().transform(Vect.valueOf(3, 5)).toString());
-        assertEquals("[5,10]", transform.build().transform(Vect.valueOf(5, 5)).toString());
+        assertEquals(Vect.valueOf(1,10), transform.build().transform(Vect.valueOf(5, 9)));
+        assertEquals(Vect.valueOf(3,10), transform.build().transform(Vect.valueOf(5, 7)));
+        assertEquals(Vect.valueOf(1,8), transform.build().transform(Vect.valueOf(3, 9)));
+        assertEquals(Vect.valueOf(3,8), transform.build().transform(Vect.valueOf(3, 7)));
+        assertEquals(Vect.valueOf(1,6), transform.build().transform(Vect.valueOf(1, 9)));
+        assertEquals(Vect.valueOf(3,6), transform.build().transform(Vect.valueOf(1, 7)));
+        assertEquals(Vect.valueOf(5,6), transform.build().transform(Vect.valueOf(1, 5)));
+        assertEquals(Vect.valueOf(5,8), transform.build().transform(Vect.valueOf(3, 5)));
+        assertEquals(Vect.valueOf(5,10), transform.build().transform(Vect.valueOf(5, 5)));
     }
 
     @Test
     public void testFlipX() {
         TransformBuilder transform = new TransformBuilder().translate(2, 3).flipX();
-        assertEquals("[-9,16]", transform.build().transform(Vect.valueOf(7, 13)).toString());
+        assertEquals(Vect.valueOf(-9,16), transform.build().transform(Vect.valueOf(7, 13)));
     }
 
     @Test
@@ -337,13 +337,13 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[-1,16]", transform.build().transform(Vect.valueOf(7, 13)).toString());
+        assertEquals(Vect.valueOf(-1,16), transform.build().transform(Vect.valueOf(7, 13)));
     }
 
     @Test
     public void testFlipY() {
         TransformBuilder transform = new TransformBuilder().translate(2, 3).flipY();
-        assertEquals("[9,-16]", transform.build().transform(Vect.valueOf(7, 13)).toString());
+        assertEquals(Vect.valueOf(9,-16), transform.build().transform(Vect.valueOf(7, 13)));
     }
 
     @Test
@@ -355,7 +355,7 @@ public class TransformBuilderTest {
         } catch (IllegalArgumentException ex) {
             ///expected
         }
-        assertEquals("[9,-8]", transform.build().transform(Vect.valueOf(7, 13)).toString());
+        assertEquals(Vect.valueOf(9,-8), transform.build().transform(Vect.valueOf(7, 13)));
     }
 
     @Test
@@ -392,13 +392,13 @@ public class TransformBuilderTest {
             ///expected
         }
         assertEquals(new TransformBuilder().scale(2), b);
-        assertEquals("[18,32]", a.build().transform(Vect.valueOf(7, 13)).toString());
+        assertEquals(Vect.valueOf(18,32), a.build().transform(Vect.valueOf(7, 13)));
     }
 
     @Test
     public void testInvert() {
         TransformBuilder a = new TransformBuilder().translate(2, 3).scale(2).invert();
-        assertEquals("[4,9]", a.build().transform(Vect.valueOf(12, 24)).toString());
+        assertEquals(Vect.valueOf(4,9), a.build().transform(Vect.valueOf(12, 24)));
     }
 
     @Test
@@ -406,19 +406,19 @@ public class TransformBuilderTest {
         TransformBuilder transform = new TransformBuilder().scale(2).translate(3, 7);
         Vect a = Vect.valueOf(13, 17);
         Vect b = transform.build().transform(a);
-        assertEquals("[13,17]", a.toString());
-        assertEquals("[29,41]", b.toString());
+        assertEquals(Vect.valueOf(13,17), a);
+        assertEquals(Vect.valueOf(29,41), b);
         transform.build().transform(a);
-        assertEquals("[13,17]", a.toString());
-        assertEquals("[29,41]", b.toString());
+        assertEquals(Vect.valueOf(13,17), a);
+        assertEquals(Vect.valueOf(29,41), b);
         try {
             transform.build().transform(null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             ///expected
         }
-        assertEquals("[13,17]", transform.reset().build().transform(a).toString());
-        assertEquals("[31,43]", transform.shear(1, 2).translate(1, 0).build().transform(a).toString());
+        assertEquals(Vect.valueOf(13,17), transform.reset().build().transform(a));
+        assertEquals(Vect.valueOf(31,43), transform.shear(1, 2).translate(1, 0).build().transform(a));
     }
 
     @Test

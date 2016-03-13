@@ -33,8 +33,8 @@ public class TransformTest {
         VectBuilder src = new VectBuilder(11, 23);
         VectBuilder dst = new VectBuilder();
         transform.transform(src, dst);
-        assertEquals("[11,23]", src.toString());
-        assertEquals("[20,63]", dst.toString());
+        assertEquals(new VectBuilder(11,23), src);
+        assertEquals(new VectBuilder(20,63), dst);
     }
 
     @Test
@@ -42,32 +42,32 @@ public class TransformTest {
         VectBuilder src = new VectBuilder(7, 13);
         VectBuilder dst = new VectBuilder();
         Transform.IDENTITY.transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[7,13]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(7,13), dst);
         new TransformBuilder().scale(3, 2).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[21,26]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(21,26), dst);
         new TransformBuilder().scale(3, 2).shear(-1, 3).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[-5,89]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(-5,89), dst);
         new TransformBuilder().rotateDegreesAround(90, 11, 17).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[15,13]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(15,13), dst);
         new TransformBuilder().translate(3, 5).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[10,18]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(10,18), dst);
         new TransformBuilder().shear(2, 3).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[33,34]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(33,34), dst);
         new TransformBuilder().translate(3, 2).shear(-1, 3).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[-5,45]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(-5,45), dst);
         new TransformBuilder().shear(0, 1).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[7,20]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(7,20), dst);
         new TransformBuilder().shear(1, 0).build().transform(src, dst);
-        assertEquals("[7,13]", src.toString());
-        assertEquals("[20,13]", dst.toString());
+        assertEquals(new VectBuilder(7,13), src);
+        assertEquals(new VectBuilder(20,13), dst);
     }
 
     @Test

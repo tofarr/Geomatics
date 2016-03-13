@@ -158,7 +158,7 @@ public class RectBuilderTest {
     public void testAdd_double_double() {
         RectBuilder rect = new RectBuilder();
         assertSame(rect, rect.add(1, 4));
-        assertEquals("[1,4,1,4]", rect.toString());
+        assertEquals("[\"RE\",1,4,1,4]", rect.toString());
         assertSame(rect, rect.add(2, 3));
         try {
             rect.add(8, Double.POSITIVE_INFINITY);
@@ -172,14 +172,14 @@ public class RectBuilderTest {
         } catch (IllegalArgumentException ex) {
             //expected
         }
-        assertEquals("[1,3,2,4]", rect.toString());
+        assertEquals("[\"RE\",1,3,2,4]", rect.toString());
     }
 
     @Test
     public void testAdd_Vect() {
         RectBuilder rect = new RectBuilder();
         assertSame(rect, rect.add(Vect.valueOf(1, 4)));
-        assertEquals("[1,4,1,4]", rect.toString());
+        assertEquals("[\"RE\",1,4,1,4]", rect.toString());
         assertSame(rect, rect.add(Vect.valueOf(2, 3)));
         try {
             rect.add((Vect) null);
@@ -187,14 +187,14 @@ public class RectBuilderTest {
         } catch (NullPointerException ex) {
             //expected
         }
-        assertEquals("[1,3,2,4]", rect.toString());
+        assertEquals("[\"RE\",1,3,2,4]", rect.toString());
     }
 
     @Test
     public void testAdd_VectBuilder() {
         RectBuilder rect = new RectBuilder();
         assertSame(rect, rect.add(new VectBuilder(1, 4)));
-        assertEquals("[1,4,1,4]", rect.toString());
+        assertEquals("[\"RE\",1,4,1,4]", rect.toString());
         assertSame(rect, rect.add(new VectBuilder(2, 3)));
         try {
             rect.add((VectBuilder) null);
@@ -202,14 +202,14 @@ public class RectBuilderTest {
         } catch (NullPointerException ex) {
             //expected
         }
-        assertEquals("[1,3,2,4]", rect.toString());
+        assertEquals("[\"RE\",1,3,2,4]", rect.toString());
     }
 
     @Test
     public void testAdd_Rect() {
         RectBuilder rect = new RectBuilder();
         assertSame(rect, rect.add(new RectBuilder(4, 5, 6, 7)));
-        assertEquals("[4,5,6,7]", rect.toString());
+        assertEquals("[\"RE\",4,5,6,7]", rect.toString());
         assertSame(rect, rect.add(new RectBuilder(2, 3, 8, 9)));
         try {
             rect.add((RectBuilder) null);
@@ -217,24 +217,39 @@ public class RectBuilderTest {
         } catch (NullPointerException ex) {
             //expected
         }
-        assertEquals("[2,3,8,9]", rect.toString());
+        assertEquals("[\"RE\",2,3,8,9]", rect.toString());
     }
 
     @Test
     public void testAdd_RectBuilder() {
         RectBuilder rect = new RectBuilder();
         assertSame(rect, rect.add(new RectBuilder(4, 5, 6, 7)));
-        assertEquals("[4,5,6,7]", rect.toString());
+        assertEquals("[\"RE\",4,5,6,7]", rect.toString());
         assertSame(rect, rect.add(new RectBuilder(2, 3, 8, 9)));
         assertSame(rect, rect.add(new RectBuilder()));
-        assertEquals("[2,3,8,9]", rect.toString());
+        assertEquals("[\"RE\",2,3,8,9]", rect.toString());
         try {
             rect.add((Rect) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
             //expected
         }
-        assertEquals("[2,3,8,9]", rect.toString());
+        assertEquals("[\"RE\",2,3,8,9]", rect.toString());
+    }
+
+    @Test
+    public void testAdd_Geom() {
+        RectBuilder rect = new RectBuilder();
+        assertSame(rect, rect.add((Geom)Rect.valueOf(4, 5, 6, 7)));
+        assertEquals("[\"RE\",4,5,6,7]", rect.toString());
+        assertSame(rect, rect.add((Geom)Vect.valueOf(2, 9)));
+        try {
+            rect.add((Geom) null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        assertEquals("[\"RE\",2,5,6,9]", rect.toString());
     }
 
     @Test
@@ -278,10 +293,10 @@ public class RectBuilderTest {
         Rect[] rects = new Rect[]{Rect.valueOf(0, 0, 0, 0), Rect.valueOf(2, 4, 6, 13), Rect.valueOf(2, 4, 7, 12), Rect.valueOf(2, 3, 6, 12), Rect.valueOf(1, 4, 6, 12), Rect.valueOf(14, 14, 14, 14)};
         RectBuilder a = new RectBuilder();
         assertSame(a, a.addRects(rects));
-        assertEquals("[0,0,14,14]", a.toString());
+        assertEquals("[\"RE\",0,0,14,14]", a.toString());
         a.reset();
         a.addRects(rects, 1, 3);
-        assertEquals("[2,3,7,13]", a.toString());
+        assertEquals("[\"RE\",2,3,7,13]", a.toString());
         try {
             a.addRects(null);
             fail("Exception Expected");
@@ -320,7 +335,7 @@ public class RectBuilderTest {
         } catch (NullPointerException ex) {
             //expected
         }
-        assertEquals("[2,3,7,13]", a.toString());
+        assertEquals("[\"RE\",2,3,7,13]", a.toString());
     }
 
     @Test

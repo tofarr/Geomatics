@@ -1,7 +1,11 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
@@ -128,7 +132,15 @@ public class MultiPoint implements Serializable, Geom {
 
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        vects.toString(appendable);
+        try {
+            appendable.append("[\"MP\"");
+            for(int i = 0; i < vects.size(); i++){
+                appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
+            }
+            appendable.append(']');
+        } catch (IOException ex) {
+            throw new GeomException("Error writing MultiPoint", ex);
+        }
     }
 
     @Override
@@ -279,4 +291,26 @@ public class MultiPoint implements Serializable, Geom {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof MultiPoint) {
+            MultiPoint other = (MultiPoint) obj;
+            return vects.equals(other.vects);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 89 * hash + vects.hashCode();
+        return hash;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder();
+        toString(str);
+        return str.toString();
+    }
 }

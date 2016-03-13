@@ -1,11 +1,14 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -120,9 +123,16 @@ public class GeomSet implements Geom, Serializable {
 
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        Network network = new Network();
-        addTo(network, Tolerance.DEFAULT);
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            appendable.append("[\"GS\"");
+            for(Geom geom : geoms){
+                appendable.append(',');
+                geom.toString(appendable);
+            }
+            appendable.append(']');
+        } catch (IOException ex) {
+            throw new GeomException("Error writing GeomSet", ex);
+        }
     }
 
     @Override
@@ -247,6 +257,11 @@ public class GeomSet implements Geom, Serializable {
             return false;
         }
     }
-    
-    
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder();
+        toString(str);
+        return str.toString();
+    }
 }

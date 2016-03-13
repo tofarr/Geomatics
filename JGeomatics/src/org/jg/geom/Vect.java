@@ -316,6 +316,8 @@ public final class Vect implements Geom, Comparable<Vect> {
                 }else if(other instanceof MultiPoint){
                     VectList fromOther = ((MultiPoint)other).vects;
                     VectList ret = new VectList(fromOther.size()+1);
+                    ret.add(this);
+                    ret.addAll(fromOther);
                     return new MultiPoint(ret);
                 }else{
                     return GeomSet.normalizedValueOf(this, other);
@@ -618,7 +620,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     static void toString(double x, double y, Appendable appendable) {
         try {
-            appendable.append("POINT(").append(ordToStr(x)).append(' ').append(ordToStr(y)).append(')');
+            appendable.append("[\"PT\",").append(ordToStr(x)).append(',').append(ordToStr(y)).append(']');
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
         }

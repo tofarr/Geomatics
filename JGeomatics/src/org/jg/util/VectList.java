@@ -883,13 +883,15 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @return string representation of this list
      */
     public String toString(boolean summarize) {
+        StringBuilder str = new StringBuilder();
         if (summarize && (size > 50)) { //Large list - just print summary
-            return "{size:" + size + ", bounds:" + getBounds() + "}";
+            str.append("{size:").append(size).append(", bounds:");
+            Rect.toString(getBounds(), str);
+            str.append("}");
         } else {
-            StringWriter str = new StringWriter();
             toString(str);
-            return str.toString();
         }
+        return str.toString();
     }
     
     /**

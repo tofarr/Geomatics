@@ -154,7 +154,11 @@ public class View implements Serializable, Cloneable {
 
     @Override
     public String toString() {
-        return "{bounds:" + bounds + ",widthPx:" + widthPx + ",heightPx:" + heightPx + '}';
+        StringBuilder str = new StringBuilder();
+        str.append("{bounds:");
+        Rect.toString(bounds, str);
+        str.append(",widthPx:").append(widthPx).append(",heightPx:").append(heightPx).append('}');
+        return str.toString();
     }
 
     @Override

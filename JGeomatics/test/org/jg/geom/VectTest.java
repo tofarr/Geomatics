@@ -219,15 +219,15 @@ public class VectTest {
 
     @Test
     public void testToString_0args() {
-        assertEquals("POINT(0 0)", Vect.ZERO.toString());
-        assertEquals("POINT(3.4 5.6)", Vect.valueOf(3.4, 5.6).toString());
+        assertEquals("[\"PT\",0,0]", Vect.ZERO.toString());
+        assertEquals("[\"PT\",3.4,5.6]", Vect.valueOf(3.4, 5.6).toString());
     }
 
     @Test
     public void testToString_double_double() {
         StringBuilder str = new StringBuilder();
         Vect.valueOf(3.4, 5.6).toString(str);
-        assertEquals("POINT(3.4 5.6)", str.toString());
+        assertEquals("[\"PT\",3.4,5.6]", str.toString());
         try {
             Vect.ZERO.toString(null);
         } catch (NullPointerException ex) {
@@ -240,7 +240,7 @@ public class VectTest {
         Vect v = new Vect(1, 2.3);
         StringBuilder str = new StringBuilder();
         v.toString(str);
-        assertEquals("POINT(1 2.3)", str.toString());
+        assertEquals("[\"PT\",1,2.3]", str.toString());
         try{
             v.toString(new Appendable(){
                 @Override
@@ -329,7 +329,7 @@ public class VectTest {
     public void testGetBounds() {
         Vect vect = Vect.valueOf(1, 2);
         Rect bounds = vect.getBounds();
-        assertEquals("[1,2,1,2]", bounds.toString());
+        assertEquals(Rect.valueOf(1,2,1,2), bounds);
     }
 
     @Test
@@ -463,29 +463,44 @@ public class VectTest {
         Rect rect = Rect.valueOf(10, 20, 30, 40);
         assertSame(rect, Vect.valueOf(20, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(rect, Vect.valueOf(10, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(rect, Vect.valueOf(20, 20).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(rect, Vect.valueOf(15, 20).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
-        Vect vect = Vect.valueOf(5, 30);
-        assertEquals(new GeomSet(vect, rect), vect.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        /*
-        assertNull(Vect.valueOf(35, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(Vect.valueOf(20, 15).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(Vect.valueOf(20, 45).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        Vect a = Vect.valueOf(5, 30);
+        assertEquals(new GeomSet(a, rect), a.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
-        Vect vect = Vect.valueOf(20, 20);
-        assertSame(vect, vect.union(vect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        Vect b = Vect.valueOf(10, 25);
+        MultiPoint c = new MultiPoint(new VectList(5, 30, 10,25));
+        assertEquals(c, a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
-        //assertEquals(rect, Vect.valueOf(20, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        */
+        assertEquals(new MultiPoint(new VectList(5, 30, 10, 25, 15, 35)), Vect.valueOf(15, 35).union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
     
     @Test
     public void testIntersection(){
-        fail("Test case prototype");
+        Rect rect = Rect.valueOf(10, 20, 30, 40);
+        Vect a = Vect.valueOf(20, 30);
+        assertSame(a, a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        a = Vect.valueOf(10, 30);
+        assertSame(a, a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        a = Vect.valueOf(15, 20);
+        assertSame(a, a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        a = Vect.valueOf(5, 30);
+        assertNull(a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
     
     @Test
     public void testLess(){
-        fail("Test case prototype");
+        Rect rect = Rect.valueOf(10, 20, 30, 40);
+        Vect a = Vect.valueOf(20, 20);
+        assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        a = Vect.valueOf(10, 30);
+        assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        a = Vect.valueOf(20, 30);
+        assertNull(a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        a = Vect.valueOf(5, 30);
+        assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 }

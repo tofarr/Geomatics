@@ -3,6 +3,9 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -136,7 +139,15 @@ public class LineString implements Geom {
 
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        vects.toString(appendable);
+        try {
+            appendable.append("[\"LS\"");
+            for(int i = 0; i < vects.size(); i++){
+                appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
+            }
+            appendable.append(']');
+        } catch (IOException ex) {
+           throw new GeomException("Error writing LineStirng", ex);
+        }
     }
 
     @Override
@@ -240,7 +251,9 @@ public class LineString implements Geom {
 
     @Override
     public String toString() {
-        return vects.toString();
+        StringBuilder str = new StringBuilder();
+        toString(str);
+        return str.toString();
     }
 
     public SpatialNode<Line> getLineIndex() {
@@ -472,10 +485,6 @@ public class LineString implements Geom {
 
     public int numLines() {
         return Math.max(vects.size() - 1, 0);
-    }
-
-    public boolean isEmpty() {
-        return vects.isEmpty();
     }
 
     static class NearLinkRemover implements NodeProcessor<Line> {

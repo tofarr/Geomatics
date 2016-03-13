@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
@@ -24,6 +25,7 @@ public class RingSet implements Geom {
     final Ring shell;
     final RingSet[] children;
     SpatialNode<Line> lineIndex;
+    Boolean valid;
 
     RingSet(Ring shell, RingSet[] children) {
         this.shell = shell;
@@ -94,7 +96,7 @@ public class RingSet implements Geom {
     public RingSet transform(Transform transform) throws NullPointerException {
         Ring transformedShell = (shell == null) ? null : shell.transform(transform);
         RingSet[] transformedChildren = (children.length == 0) ? EMPTY : new RingSet[children.length];
-        for(int c = 0; c < transformedChildren.length; c++){
+        for (int c = 0; c < transformedChildren.length; c++) {
             transformedChildren[c] = children[c].transform(transform);
         }
         return new RingSet(transformedShell, transformedChildren);
@@ -102,14 +104,14 @@ public class RingSet implements Geom {
 
     @Override
     public PathIterator pathIterator() {
-        return new PathIterator(){
-            
+        return new PathIterator() {
+
             final List<Ring> rings = getRings();
             int ringIndex;
             VectList vects = rings.get(0).vects;
             int vectIndex;
             int last = vects.size() - 1;
-            
+
             @Override
             public int getWindingRule() {
                 return WIND_NON_ZERO;
@@ -122,25 +124,25 @@ public class RingSet implements Geom {
 
             @Override
             public void next() {
-                if(vectIndex == last){
+                if (vectIndex == last) {
                     ringIndex++;
                     vects = rings.get(ringIndex).vects;
                     vectIndex = 0;
                     last = vects.size() - 1;
-                }else{
+                } else {
                     vectIndex++;
                 }
             }
 
             @Override
             public int currentSegment(float[] coords) {
-                coords[0] = (float)vects.getX(vectIndex);
-                coords[1] = (float)vects.getY(vectIndex);
-                if(vectIndex == 0){
+                coords[0] = (float) vects.getX(vectIndex);
+                coords[1] = (float) vects.getY(vectIndex);
+                if (vectIndex == 0) {
                     return SEG_MOVETO;
-                }else if(vectIndex == last){
+                } else if (vectIndex == last) {
                     return SEG_CLOSE;
-                }else{
+                } else {
                     return SEG_LINETO;
                 }
             }
@@ -149,11 +151,11 @@ public class RingSet implements Geom {
             public int currentSegment(double[] coords) {
                 coords[0] = vects.getX(vectIndex);
                 coords[1] = vects.getY(vectIndex);
-                if(vectIndex == 0){
+                if (vectIndex == 0) {
                     return SEG_MOVETO;
-                }else if(vectIndex == last){
+                } else if (vectIndex == last) {
                     return SEG_CLOSE;
-                }else{
+                } else {
                     return SEG_LINETO;
                 }
             }
@@ -238,8 +240,8 @@ public class RingSet implements Geom {
             child.getRings(result);
         }
     }
-    
-    public VectSet getVects(VectSet result){
+
+    public VectSet getVects(VectSet result) {
         if (shell != null) {
             result.addAll(shell.vects);
         }
@@ -334,26 +336,26 @@ public class RingSet implements Geom {
     public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         return Network.union(flatness, tolerance, this, other);
     }
-    
+
     public RingSet union(Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        ADD A CACHED VALID FLAG - USED TO SPEED UP UNION OPERATIONS
-                
-                ALSO THING OF OVERLAPPING BOUNDARIES - THESE CAN BE INTERPRETED AS INSIDE OR OUTSIDE
-        return Network.intersection(flatness, tolerance, this, other);
+        if (valid) {
+            return this;
+        }
+        return (RingSet) Network.union(flatness, tolerance, this);
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())){
+        if (getBounds().buffer(tolerance.tolerance).isDisjoint(other.getBounds())) {
             return null;
-        }else{
+        } else {
             return Network.intersection(flatness, tolerance, this, other);
         }
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(getBounds().isDisjoint(other.getBounds())){
+        if (getBounds().isDisjoint(other.getBounds())) {
             return this;
         }
         return Network.less(flatness, tolerance, this, other);
@@ -379,7 +381,9 @@ public class RingSet implements Geom {
             for (int c = 0; c < _children.length; c++) {
                 _children[c] = children.get(c).build();
             }
-            return new RingSet(shell, _children);
+            RingSet ret = new RingSet(shell, _children);
+            ret.valid = true;
+            return ret;
         }
 
         boolean add(Ring ring) {
@@ -412,4 +416,23 @@ public class RingSet implements Geom {
             }
         }
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 71 * hash + Objects.hashCode(this.shell);
+        hash = 71 * hash + Arrays.deepHashCode(this.children);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof RingSet)) {
+            return false;
+        }
+        RingSet other = (RingSet) obj;
+        return Objects.equals(this.shell, other.shell)
+                && Arrays.equals(this.children, other.children);
+    }
+
 }
