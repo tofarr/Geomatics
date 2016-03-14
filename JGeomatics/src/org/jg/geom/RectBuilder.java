@@ -276,7 +276,7 @@ public final class RectBuilder implements Cloneable, Serializable {
     public double getCy() {
         return (minY + maxY) / 2;
     }
-
+    
     /**
      * Get a Rect based on this buffered by the amount given
      *

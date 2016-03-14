@@ -459,4 +459,17 @@ public class VectSetTest {
         }catch(ConcurrentModificationException ex){
         }
     }
+    
+    @Test
+    public void testFoundBug(){
+        //have a situation here where a rehash failed when going to a larger ord array because an ordinate had the same hash multiple times
+        VectSet set = new VectSet();
+        set.ords = new double[]{24.982790201886765, 10.199999999999996, 15.731661311952562, 13.983908326084599, 14.648598665032996, 12.66278428248342, 24.903926402016154, 30.97545161008064, 23.866710706689513, 7.230055471972311, 22.77785116509801, -4.157348061512726, 20.980580675690916, 14.902903378454601, 14.291839343573354, 11.883218118152314, 21.803744114209803, 14.663315040875268, 14.291839343573354, 8.516781881847683, 24.708160656426646, 8.716781881847687, 16.464466094067262, -3.5355339059327373, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 23.535533905932738, 33.53553390593274, 18.019419324309084, 5.297096621545398};
+        set.size = 14;
+        set.add(24.351401334967004,7.93721571751658);
+        assertEquals(set.size, 15);
+        VectList list = new VectList();
+        set.toList(list);
+        assertEquals(list.size(), 15);
+    }
 }

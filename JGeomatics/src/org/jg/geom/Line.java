@@ -6,6 +6,8 @@ import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -721,8 +723,11 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
-        network.addLink(ax, ay, bx, by);
+    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        List<LineString> lines = new ArrayList<>();
+        lines.add(new LineString(new VectList(ax, ay, bx, by)));
+        GeoShape ret = new GeoShape(GeoShape.NO_RINGS, lines, GeoShape.NO_POINTS, Boolean.TRUE, null);
+        return ret;
     }
 
     /**
@@ -796,25 +801,20 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(new RectBuilder().addInternal(ax, ay).addInternal(bx, by).buffer(tolerance.tolerance).build().isDisjoint(other.getBounds())){
-            return GeomSet.normalizedValueOf(this, other);
-        }else{
-            return Network.union(flatness, tolerance, this, other);
-        }
+        GeoShape ret = other.toGeoShape(flatness, tolerance).union(this, flatness, tolerance);
+        return ret;
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(new RectBuilder().addInternal(ax, ay).addInternal(bx, by).build().isDisjoint(other.getBounds())){
-            return null;
-        }else{
-            return Network.intersection(flatness, tolerance, this, other);
-        }
+        GeoShape ret = other.toGeoShape(flatness, tolerance).intersection(this, flatness, tolerance);
+        return ret;
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        return Network.less(flatness, tolerance, this, other);
+        GeoShape ret = other.toGeoShape(flatness, tolerance).less(this, flatness, tolerance);
+        return ret;
     }
 
     @Override

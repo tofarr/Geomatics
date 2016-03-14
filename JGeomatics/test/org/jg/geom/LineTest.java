@@ -695,7 +695,7 @@ public class LineTest {
         Line a = Line.valueOf(2, 3, 7, 13);
         assertNull(a.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
         assertSame(a, a.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        RingSet b = (RingSet)a.buffer(3, new Tolerance(0.1), Tolerance.DEFAULT);
+        Area b = (Area)a.buffer(3, new Tolerance(0.1), Tolerance.DEFAULT);
         
         Rect bounds = b.getBounds();
         assertEquals(-1, bounds.minX, 0.1);

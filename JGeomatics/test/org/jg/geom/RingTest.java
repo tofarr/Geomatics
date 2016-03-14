@@ -362,7 +362,7 @@ public class RingTest {
     @Test
     public void testBuffer(){
         Ring ring = new Ring(new VectList(0,0, 10,0, 10,10, 0,0));
-        RingSet buffered = ring.buffer(5, new Tolerance(0.5), Tolerance.DEFAULT);
+        Area buffered = ring.buffer(5, new Tolerance(0.5), Tolerance.DEFAULT);
         Rect bounds = buffered.getBounds();
         //assertEquals(-5, bounds.minX, 0.1)
                

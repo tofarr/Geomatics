@@ -6,7 +6,8 @@ import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -414,11 +415,24 @@ public class Rect implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness) throws NullPointerException, IllegalArgumentException {
-        network.addLink(minX, minY, minX, maxY);
-        network.addLink(minX, minY, maxX, minY);
-        network.addLink(minX, maxY, maxX, maxY);
-        network.addLink(maxX, minY, maxX, maxY);
+    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        List<Ring> rings = new ArrayList<>();
+        rings.add(toRing());
+        GeoShape ret = new GeoShape(rings, GeoShape.NO_LINES, GeoShape.NO_POINTS);
+        ret.bounds = this;
+        return ret;
+    }
+    
+    public Ring toRing(){
+        VectList vects = new VectList(5);
+        vects.add(minX, minY);
+        vects.add(maxX, minY);
+        vects.add(maxX, maxY);
+        vects.add(minX, maxY);
+        vects.add(minX, minY);
+        double length = (getWidth() + getHeight()) * 2;
+        Ring ring = new Ring(vects, null, getArea(), length, getCentroid(), true, true, true);
+        return ring;
     }
 
     @Override
@@ -470,12 +484,19 @@ public class Rect implements Geom {
     public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (contains(other.getBounds())) {
             return this;
-        } else if (!isOverlapping(other.getBounds())) {
-            return GeomSet.normalizedValueOf(this, other);
-        } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
-            return other;
-        } else {
-            return Network.union(flatness, tolerance, this, other);
+        } else{
+            GeoShape otherShape = other.toGeoShape(flatness, tolerance);
+            if (!isOverlapping(other.getBounds())) {
+                List<Ring> rings = new ArrayList<>(otherShape.rings.size()+1);
+                rings.add(toRing());
+                rings.addAll(otherShape.rings);
+                rings.sort(COMPARATOR);
+                GeoShape ret = new GeoShape(rings, otherShape.hangLines, otherShape.points);
+                return ret;
+            }else{
+                GeoShape ret = otherShape.union(this, flatness, tolerance);
+                return ret;
+            }
         }
     }
 
@@ -493,7 +514,8 @@ public class Rect implements Geom {
                 return intersection(otherRect);
             }
         } else {
-            return Network.intersection(flatness, tolerance, this, other);
+            GeoShape ret = other.toGeoShape(flatness, tolerance).union(this, flatness, tolerance);
+            return ret;
         }
     }
 
@@ -502,7 +524,9 @@ public class Rect implements Geom {
         if (isDisjoint(other.getBounds())) {
             return this;
         } else {
-            return Network.less(flatness, tolerance, this, other);
+            GeoShape gs = toGeoShape(flatness, tolerance);
+            GeoShape ret = gs.less(other, flatness, tolerance);
+            return ret;
         }
     }
 

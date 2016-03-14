@@ -19,7 +19,7 @@ import org.jg.util.VectSet;
  *
  * @author tofar_000
  */
-public class Ring implements Serializable, Cloneable {
+public class Ring implements Serializable, Cloneable, Geom {
 
     final VectList vects;
     private SpatialNode<Line> lineIndex;
@@ -28,6 +28,18 @@ public class Ring implements Serializable, Cloneable {
     private Vect centroid;
     private Boolean valid;
     private Boolean convex;
+    private Boolean normalized;
+
+    Ring(VectList vects, SpatialNode<Line> lineIndex, Double area, Double length, Vect centroid, Boolean valid, Boolean convex, Boolean normalized) {
+        this.vects = vects;
+        this.lineIndex = lineIndex;
+        this.area = area;
+        this.length = length;
+        this.centroid = centroid;
+        this.valid = valid;
+        this.convex = convex;
+        this.normalized = normalized;
+    }
 
     /**
      * Create a ring based on the list of vectors given

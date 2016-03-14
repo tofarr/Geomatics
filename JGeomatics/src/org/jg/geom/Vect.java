@@ -7,6 +7,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.Collections;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -192,24 +193,10 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
-        network.addVertex(this);
-    }
-
-    @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
-        check(amt, "Invalid buffer amt {0}");
-        if(amt == 0){
-            return this;
-        }else if(amt < 0){
-            return null;
-        }else{
-            VectList result = new VectList();
-            double angleSize = 2 * Math.PI;
-            double sy = y + amt;
-            linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
-            return (result.size() > 2) ? new Area(new Ring(result)) : this;
-        }
+    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        GeoShape ret =  new GeoShape(GeoShape.NO_RINGS, GeoShape.NO_LINES, new VectList().add(this));
+        ret.normalized = true;
+        return ret;
     }
 
     @Override
@@ -222,6 +209,26 @@ public final class Vect implements Geom, Comparable<Vect> {
         return tolerance.match(x, y, vect.getX(), vect.getY()) ? Relate.TOUCH : Relate.OUTSIDE;
     }
     
+    @Override
+    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+        check(amt, "Invalid buffer amt {0}");
+        if(amt == 0){
+            return this;
+        }else if(amt < 0){
+            return null;
+        }else{
+            VectList result = new VectList();
+            double angleSize = 2 * Math.PI;
+            double sy = y + amt;
+            linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
+            if(result.size() < 4){
+                return null;
+            }
+            Ring ring = new Ring(result, null, null, null, this, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
+            return ring;
+        }
+    }
+
     //Assumes CCW direction
     static void linearizeArc(double ox, double oy, double ax, double ay, double bx, double by, double radius, double flatness, VectList result) throws NullPointerException{
         double angleA = Vect.directionInRadiansTo(ox, oy, ax, ay);
@@ -302,25 +309,27 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        switch(other.relate(this, tolerance)){
+    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        switch(other.relate(this, accuracy)){
             case INSIDE:
             case TOUCH:
-                return other;
+                return this;
             default:
                 if(other instanceof Vect){
-                    VectList ret = new VectList(2);
-                    ret.add((Vect)other);
-                    ret.add(this);
-                    return new MultiPoint(ret);
-                }else if(other instanceof MultiPoint){
-                    VectList fromOther = ((MultiPoint)other).vects;
-                    VectList ret = new VectList(fromOther.size()+1);
-                    ret.add(this);
-                    ret.addAll(fromOther);
-                    return new MultiPoint(ret);
+                    VectList points = new VectList(2);
+                    points.add((Vect)other);
+                    points.add(this);
+                    GeoShape ret = new GeoShape(GeoShape.NO_RINGS, GeoShape.NO_LINES, points);
+                    ret.normalized = true;
+                    return ret;
                 }else{
-                    return GeomSet.normalizedValueOf(this, other);
+                    GeoShape geoShape = other.toGeoShape(flatness, accuracy);
+                    VectList points = new VectList(geoShape.points.size()+1);
+                    points.addAll(geoShape.points);
+                    points.sort();
+                    GeoShape ret = new GeoShape(geoShape.rings, geoShape.hangLines, points);
+                    ret.normalized = true;
+                    return ret;
                 }
         }
     }

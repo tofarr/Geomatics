@@ -392,7 +392,7 @@ public class RectTest {
         Rect rect = Rect.valueOf(3, 7, 13, 23);
         assertSame(rect, rect.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        RingSet ringSet = (RingSet) rect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
+        Area ringSet = (Area) rect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
 
         assertEquals(Rect.valueOf(1, 5, 15, 25), ringSet.getBounds());
         assertEquals(264 + (Math.PI * 4), ringSet.getArea(), 0.5);
@@ -626,11 +626,11 @@ public class RectTest {
         Rect b = Rect.valueOf(50, 60, 70, 80);
         Rect c = Rect.valueOf(11, 21, 29, 39);
         Rect d = Rect.valueOf(15, 25, 35, 45);
-        RingSet e = new RingSet(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
+        Area e = new Area(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
         assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(new GeomSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        RingSet expected = new RingSet(
+        Area expected = new Area(
             new Ring(new VectList(10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20))
         );
         assertEquals(expected, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
@@ -643,12 +643,12 @@ public class RectTest {
         Rect b = Rect.valueOf(50, 60, 70, 80);
         Rect c = Rect.valueOf(11, 21, 29, 39);
         Rect d = Rect.valueOf(15, 25, 35, 45);
-        RingSet e = new RingSet(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
+        Area e = new Area(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
         assertSame(c, a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(c, c.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        RingSet result = new RingSet(
+        Area result = new Area(
             new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
         );
         assertEquals(result, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
@@ -662,13 +662,13 @@ public class RectTest {
         Rect d = Rect.valueOf(15, 25, 35, 45);
         assertSame(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(c.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new RingSet(
+        assertEquals(new Area(
                 new Ring(new VectList(10,20, 30,20, 30,40, 10,40, 10,20)),
-                new RingSet[]{
-                    new RingSet(new Ring(new VectList(11,21, 29,21, 29,39, 11,39, 11,21)))
+                new Area[]{
+                    new Area(new Ring(new VectList(11,21, 29,21, 29,39, 11,39, 11,21)))
                 }
         ), a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new RingSet(
+        assertEquals(new Area(
             new Ring(new VectList(10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20))
         ), a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }

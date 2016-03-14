@@ -285,7 +285,7 @@ public class LineStringTest {
 
         // buffer a point
         Geom g = s.buffer(5, flatness, Tolerance.DEFAULT);
-        RingSet ringSet = (RingSet) g;
+        Area ringSet = (Area) g;
         Rect bounds = ringSet.getBounds();
         assertEquals(32, bounds.minX, 0.5);
         assertEquals(56, bounds.minY, 0.5);
@@ -303,7 +303,7 @@ public class LineStringTest {
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
-        RingSet r = (RingSet) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Area r = (Area) s.buffer(5, flatness, Tolerance.DEFAULT);
         double area = (35 * 10)
                 + (55 * 10)
                 + (25 * Math.PI)
@@ -321,7 +321,7 @@ public class LineStringTest {
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
-        RingSet r = (RingSet) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Area r = (Area) s.buffer(5, flatness, Tolerance.DEFAULT);
         double area = (30 * 10 * 4)
                 + (5 * 5 * 3 * 3)
                 + (5 * 5 * Math.PI * 0.25 * 3)
@@ -338,7 +338,7 @@ public class LineStringTest {
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
-        RingSet r = (RingSet) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Area r = (Area) s.buffer(5, flatness, Tolerance.DEFAULT);
 
         Network n = new Network();
         r.addTo(n, Tolerance.DEFAULT);

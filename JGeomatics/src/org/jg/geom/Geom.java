@@ -53,46 +53,54 @@ public interface Geom extends Cloneable, Serializable {
      */
     void toString(Appendable appendable) throws NullPointerException, GeomException;
 
-    /**
-     * Add this shape to the network given, using the flatness given to convert
-     * any curves to lines
-     *
-     * @param network network to which to add this geometry
-     * @param flatness flatness for converting curves to lines
+    /** 
+     * Convert this to a standard format GeoShape
+     * @param flatness
+     * @param accuracy
+     * @return 
      */
-    void addTo(Network network, Tolerance flatness) throws NullPointerException, IllegalArgumentException;
+    GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    
+//    /**
+//     * Add this shape to the network given, using the flatness given to convert
+//     * any curves to lines
+//     *
+//     * @param network network to which to add this geometry
+//     * @param flatness flatness for converting curves to lines
+//     */
+//    void addTo(Network network, Tolerance flatness) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Create a buffered version of this geometry
      *
      * @param amt amount by which to buffer - may be positive or negative
      * @param flatness flatness if converting curves to lines is required
-     * @param tolerance tolerence for inaccuracy
+     * @param accuracy tolerance for inaccuracy
      * @return buffered geometry
      * @throws IllegalArgumentException if amt was infinite or NaN
      * @throws NullPointerException if flatness or tolerance was null
      */
-    Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException;
+    Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException;
 
     /**
      * Get the relation between this geometry and the vector given
      *
      * @param vect vector
-     * @param tolerance tolerance for inaccuracy
+     * @param accuracy tolerance for inaccuracy
      * @return relation
      * @throws NullPointerException if vect or tolerance was null
      */
-    Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException;
+    Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the relation between this geometry and the vector given
      *
      * @param vect vector
-     * @param tolerance tolerance for inaccuracy
+     * @param accuracy tolerance for inaccuracy
      * @return relation
      * @throws NullPointerException if vect or tolerance was null
      */
-    Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException;
+    Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the union of this geometry and that given. Any point touching one of
@@ -101,11 +109,11 @@ public interface Geom extends Cloneable, Serializable {
      *
      * @param other other geometry
      * @param flatness value for turning curves into lines where required
-     * @param tolerance tolerance for inaccuracy
+     * @param accuracy tolerance for inaccuracy
      * @return union geometry
      * @throws NullPointerException if other, flatness or tolerance was null
      */
-    Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException;
+    Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the intersection of this geometry and that given. Any point touching
@@ -114,22 +122,22 @@ public interface Geom extends Cloneable, Serializable {
      *
      * @param other other geometry
      * @param flatness value for turning curves into lines where required
-     * @param tolerance tolerance for inaccuracy
+     * @param accuracy tolerance for inaccuracy
      * @return union geometry
      * @throws NullPointerException if other or tolerance was null
      */
-    Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException;
+    Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the product of this geometry less the geometry given. Any point inside the
      * geometry given should be outside the result
      * @param other other geometry
      * @param flatness for turning curves into lines where required
-     * @param tolerance tolerance for inaccuracy
+     * @param accuracy tolerance for inaccuracy
      * @return this less other
      * @throws NullPointerException if other or tolerance was null
      */
-    Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException;
+    Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
     
     /**
      * Comparator for comparing geometries by their Bounds

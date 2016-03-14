@@ -392,12 +392,12 @@ public class VectTest {
     @Test
     public void testBuffer(){
         Vect vect = Vect.valueOf(3, 7);
-        RingSet ringSet = (RingSet)vect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
+        Area ringSet = (Area)vect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
         assertEquals(Math.PI * 4, ringSet.getArea(), 0.5);
         assertEquals(Math.PI * 4, ringSet.shell.getLength(), 0.5);
         
-        ringSet = (RingSet)vect.buffer(2, new Tolerance(0.1), Tolerance.DEFAULT);
+        ringSet = (Area)vect.buffer(2, new Tolerance(0.1), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
         assertEquals(Math.PI * 4, ringSet.getArea(), 0.1);
         assertEquals(Math.PI * 4, ringSet.shell.getLength(), 0.1);

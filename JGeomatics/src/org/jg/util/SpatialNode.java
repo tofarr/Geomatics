@@ -7,6 +7,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
+import org.jg.geom.Vect;
 
 /**
  * Node for use in spatial trees and indexes. A node may be a branch with 2 child nodes, or a leaf containing a number of bounds and values.
