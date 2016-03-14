@@ -88,7 +88,19 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     public Rect getBounds() {
         return bounds.build();
     }
-
+    
+    /**
+     * Determine if this node is disjoint from the bounds given
+     * @param minX
+     * @param minY
+     * @param maxX
+     * @param maxY
+     * @return
+     */
+    public boolean isDisjoint(double minX, double minY, double maxX, double maxY){
+        return Rect.disjoint(minX, minY, maxX, maxY, bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY());
+    }
+    
     /**
      * Get the number of entries
      *

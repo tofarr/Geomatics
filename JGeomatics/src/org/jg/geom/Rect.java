@@ -152,6 +152,23 @@ public class Rect implements Geom {
     }
 
     /**
+     * Determine if this rect is disjoint from that given (does not touch or
+     * share any internal area). Invalid rects are considered disjoint.
+     *
+     * @param rect
+     * @param accuracy
+     * @return true if rects are disjoint or rect was null, false otherwise
+     * @throws NullPointerException if rect was null
+     */
+    public boolean isDisjoint(Rect rect, Tolerance accuracy) throws NullPointerException {
+        double tolerance = accuracy.tolerance;
+        return ((minX - tolerance) > rect.maxX) 
+                || ((minY - tolerance) > rect.maxY)
+                || ((maxX + tolerance) < rect.minX)
+                || ((maxY + tolerance) < rect.minY);
+    }
+    
+    /**
      * Determine if this rect overlaps (Shares some internal area with) that
      * given. Invalid rects are considered disjoint, and never overlap
      *
@@ -501,11 +518,11 @@ public class Rect implements Geom {
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (buffer(tolerance.tolerance).isDisjoint(other.getBounds())) {
-            return null;
-        } else if (contains(other)) {
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if (contains(other)) {
             return other;
+        } else if (isDisjoint(other.getBounds(), accuracy)) {
+            return null;
         } else if (other instanceof Rect) {
             Rect otherRect = (Rect) other;
             if (otherRect.contains(this)) {
@@ -514,14 +531,14 @@ public class Rect implements Geom {
                 return intersection(otherRect);
             }
         } else {
-            GeoShape ret = other.toGeoShape(flatness, tolerance).union(this, flatness, tolerance);
+            GeoShape ret = other.toGeoShape(flatness, accuracy).union(this, flatness, accuracy);
             return ret;
         }
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (isDisjoint(other.getBounds())) {
+        if (!isOverlapping(other.getBounds())) {
             return this;
         } else {
             GeoShape gs = toGeoShape(flatness, tolerance);
@@ -609,19 +626,19 @@ public class Rect implements Geom {
         }
     }
 
-    static void check(double minX, double minY, double maxX, double maxY) {
+    public static void check(double minX, double minY, double maxX, double maxY) {
         Vect.check(minX, "Invalid minX : {0}");
         Vect.check(minY, "Invalid minY : {0}");
         Vect.check(maxX, "Invalid maxX : {0}");
         Vect.check(maxY, "Invalid maxY : {0}");
     }
 
-    static boolean disjoint(double aMinX, double aMinY, double aMaxX, double aMaxY,
+    public static boolean disjoint(double aMinX, double aMinY, double aMaxX, double aMaxY,
             double bMinX, double bMinY, double bMaxX, double bMaxY) {
         return (aMinX > bMaxX) || (aMinY > bMaxY) || (aMaxX < bMinX) || (aMaxY < bMinY);
     }
 
-    static boolean overlaps(double aMinX, double aMinY, double aMaxX, double aMaxY,
+    public static boolean overlaps(double aMinX, double aMinY, double aMaxX, double aMaxY,
             double bMinX, double bMinY, double bMaxX, double bMaxY) {
         return (aMinX < bMaxX) && (aMinY < bMaxY) && (aMaxX > bMinX) && (aMaxY > bMinY);
     }

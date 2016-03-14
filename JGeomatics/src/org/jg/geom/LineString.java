@@ -4,8 +4,8 @@ import java.awt.geom.PathIterator;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -21,6 +21,7 @@ public class LineString implements Geom {
 
     private final VectList vects;
     private SpatialNode<Line> lineIndex;
+    private Boolean normalized;
 
     LineString(VectList vects) {
         this.vects = vects;
@@ -147,6 +148,127 @@ public class LineString implements Geom {
             appendable.append(']');
         } catch (IOException ex) {
            throw new GeomException("Error writing LineStirng", ex);
+        }
+    }
+
+    @Override
+    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        zzz
+    }
+    
+    
+    public List<LineString> splitOnIntersect(SpatialNode<Line> against, Tolerance accuracy){
+        List<VectList> parts = splitOnIntersect(vects, against, accuracy);
+        List<LineString> ret = new ArrayList<>();
+        if(parts.size() == 1){
+            ret.add(this);
+        }else{
+            for(VectList part : parts){
+                ret.add(new LineString(part));
+            }
+        }
+        return ret;
+    }
+    
+    static List<VectList> splitOnIntersect(VectList vects, SpatialNode<Line> against, Tolerance accuracy){
+        List<VectList> ret = new ArrayList<>();
+        VectList current = new VectList();
+        VectList intersections = new VectList();
+        VectBuilder workingVect = new VectBuilder();
+        double ax = vects.getX(0);
+        double ay = vects.getY(0);
+        current.add(vects, 0);
+        for(int i = 1; i < vects.size(); i++){
+            double bx = vects.getX(i);
+            double by = vects.getY(i);
+            double minX = Math.min(ax, bx);
+            double minY = Math.min(ay, by);
+            double maxX = Math.max(ax, bx);
+            double maxY = Math.max(ay, by);
+            findIntersections(ax, ay, bx, by, minX, minY, maxX, maxY, against, workingVect, accuracy, intersections);
+            if(!intersections.isEmpty()){
+                
+                sortByDistFrom(ax, ay, intersections); //Sort intersections by dist 
+                removeDuplicates(intersections); //filter duplicates
+                
+                for (int n = intersections.size(); n-- > 0;) {
+                    current.add(intersections, n);
+                    ret.add(current);
+                    current = new VectList();
+                    current.add(intersections, n);
+                }
+                    
+            }
+            current.add(vects, i);
+        }
+        return ret;
+    }
+    
+    static void findIntersections(double ax, double ay, double bx, double by,
+            double minX, double minY, double maxX, double maxY, SpatialNode<Line> node, VectBuilder workingVect,
+            Tolerance tolerance, VectList intersections){
+        if(node.isDisjoint(minX, minY, maxX, maxY)){
+            //return;
+        }else if(node.isBranch()){
+            findIntersections(ax, ay, bx, by, minX, minY, maxX, maxY, node.getA(), workingVect, tolerance, intersections);
+            findIntersections(ax, ay, bx, by, minX, minY, maxX, maxY, node.getB(), workingVect, tolerance, intersections);
+        }else{
+            for(int i = node.size(); i-- > 0;){
+                Rect itemBounds = node.getItemBounds(i);
+                if(!Rect.disjoint(minX, minY, maxX, maxY, itemBounds.minX, itemBounds.minY, itemBounds.maxX, itemBounds.maxY)){
+                    Line line = node.getItemValue(i);
+                    if((line.ax != ax) || (line.ay != ay) || (line.bx != bx) || (line.by != by)){
+                        if(Line.intersectionSegInternal(ax, ay, bx, by, 
+                                line.ax, line.ay, line.bx, line.by,
+                                Tolerance.DEFAULT, workingVect)){
+                            intersections.add(workingVect);
+                        }
+                        
+                        if((Vect.compare(ax, ay, workingVect.getX(), workingVect.getY()) != 0)
+                            && (Vect.compare(bx, by, workingVect.getX(), workingVect.getY()) != 0)) {
+                            intersections.add(workingVect);        
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    static void sortByDistFrom(double ax, double ay, VectList intersections) {
+        for (int i = intersections.size(); i-- > 1;) {
+            double ix = intersections.getX(i);
+            double iy = intersections.getY(i);
+            double disq = Vect.distSq(ax, ay, ix, iy);
+            for (int j = i; j-- > 0;) {
+                double jx = intersections.getX(j);
+                double jy = intersections.getY(j);
+                double djsq = Vect.distSq(ax, ay, jx, jy);
+                if (disq < djsq) {
+                    intersections.swap(i, j);
+                    ix = jx;
+                    iy = jy;
+                    disq = djsq;
+                }
+            }
+        }
+    }
+    
+    static void removeDuplicates(VectList vects){
+        if(vects.isEmpty()){
+            return;
+        }
+        int s = vects.size() - 1;
+        double bx = vects.getX(s);
+        double by = vects.getY(s);
+        while(s-- > 0){
+            double ax = vects.getX(s);
+            double ay = vects.getY(s);
+            if(Vect.compare(ax, ay, bx, by) == 0){
+                vects.remove(s+1);
+            }else{
+                bx = ax;
+                by = ay;
+            }
         }
     }
 

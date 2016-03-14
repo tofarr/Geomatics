@@ -800,15 +800,19 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        GeoShape ret = other.toGeoShape(flatness, tolerance).union(this, flatness, tolerance);
+    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        GeoShape ret = other.toGeoShape(flatness, accuracy).union(this, flatness, accuracy);
         return ret;
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        GeoShape ret = other.toGeoShape(flatness, tolerance).intersection(this, flatness, tolerance);
-        return ret;
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(other.getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return null;
+        }else{
+            GeoShape ret = other.toGeoShape(flatness, accuracy).intersection(this, flatness, accuracy);
+            return ret;
+        }
     }
 
     @Override

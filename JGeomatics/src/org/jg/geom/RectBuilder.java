@@ -310,6 +310,10 @@ public final class RectBuilder implements Cloneable, Serializable {
     public Rect build() {
         return valid ? new Rect(minX, minY, maxX, maxY) : null;
     }
+    
+    public boolean isOverlapping(){
+        
+    }
 
     @Override
     public int hashCode() {
