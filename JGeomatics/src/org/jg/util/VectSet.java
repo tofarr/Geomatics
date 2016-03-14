@@ -238,8 +238,11 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
                 case 0:
                     return this; // exists
                 case -1:
-                    capacity = capacity << 1;
-                    double[] newOrds = rehash(ords, maxJumps, capacity);
+                    double[] newOrds;
+                    do{
+                        capacity = capacity << 1;
+                        newOrds = rehash(ords, maxJumps, capacity);
+                    }while(newOrds == null);
                     ords = newOrds;
                     break;
                 default: // case 1
@@ -453,10 +456,9 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
             double x = ords[--index];
             if (!Double.isNaN(x)) {
                 int added = addToOrds(x, y, newOrds, maxJumps);
-                THIS CAN MOST CERTAINLY FAIL - SEE MAP
-                //if (added == -1) { // only adds bits to address space, so this can never fail
-                //    return null;
-                //}
+                if (added == -1) { // add failed
+                    return null;
+                }
             }
         }
         return newOrds;
