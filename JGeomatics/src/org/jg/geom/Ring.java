@@ -438,12 +438,12 @@ public class Ring implements Serializable, Cloneable {
         network.addAllLinks(vects);
     }
     
-    public RingSet buffer(double amt, Tolerance flatness, Tolerance tolerance){
+    public Area buffer(double amt, Tolerance flatness, Tolerance tolerance){
         VectList edgeBuffer = getEdgeBuffer(amt, flatness, tolerance);
         Network network = new Network();
         network.addAllLinks(edgeBuffer);
         LineString.removeWithinBuffer(vects, network, amt, flatness, tolerance);
-        return RingSet.valueOf(network);
+        return Area.valueOf(network);
     }
     
     public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance){

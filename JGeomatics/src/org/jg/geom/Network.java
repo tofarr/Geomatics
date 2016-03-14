@@ -698,8 +698,8 @@ public final class Network implements Serializable, Cloneable {
     SpatialNode<Line> getLineIndex(Geom geom, Tolerance flatness){
         if(geom instanceof LineString){
             return ((LineString)geom).getLineIndex();
-        }else if(geom instanceof RingSet){
-            return((RingSet)geom).getLineIndex();
+        }else if(geom instanceof Area){
+            return((Area)geom).getLineIndex();
         }else{
             Network network = new Network();
             geom.addTo(network, flatness);
@@ -902,7 +902,7 @@ public final class Network implements Serializable, Cloneable {
     
     public Geom toGeom(){
         final List<Geom> geoms = new ArrayList<>();
-        RingSet ringSet = RingSet.valueOf(this);
+        Area ringSet = Area.valueOf(this);
         int numVectsInRings;
         if(ringSet == null){
             numVectsInRings = 0;

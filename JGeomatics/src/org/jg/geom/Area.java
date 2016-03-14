@@ -18,39 +18,39 @@ import org.jg.util.VectSet;
  *
  * @author tofar_000
  */
-public class RingSet implements Geom {
+public class Area implements Geom {
 
-    public static final RingSet[] EMPTY = new RingSet[0];
+    public static final Area[] EMPTY = new Area[0];
 
     final Ring shell;
-    final RingSet[] children;
+    final Area[] children;
     SpatialNode<Line> lineIndex;
     Boolean valid;
 
-    RingSet(Ring shell, RingSet[] children) {
+    Area(Ring shell, Area[] children) {
         this.shell = shell;
         this.children = children;
     }
 
-    public RingSet(Ring shell, Collection<RingSet> children) {
+    public Area(Ring shell, Collection<Area> children) {
         this.shell = shell;
-        this.children = ((children == null) || children.isEmpty()) ? EMPTY : children.toArray(new RingSet[children.size()]);
+        this.children = ((children == null) || children.isEmpty()) ? EMPTY : children.toArray(new Area[children.size()]);
         if ((shell == null) && children.isEmpty()) {
             throw new IllegalArgumentException("Must define either an outer shell or children");
         }
     }
 
-    public RingSet(Ring shell) {
+    public Area(Ring shell) {
         this(shell, EMPTY);
     }
 
-    public static RingSet valueOf(Network network) {
+    public static Area valueOf(Network network) {
         List<Ring> rings = Ring.valueOf(network);
         switch (rings.size()) {
             case 0:
                 return null;
             case 1:
-                return new RingSet(rings.get(0), EMPTY);
+                return new Area(rings.get(0), EMPTY);
             default:
                 RingSetBuilder builder = new RingSetBuilder(null);
                 for (Ring ring : rings) {
@@ -63,13 +63,13 @@ public class RingSet implements Geom {
     public double getArea() {
         if (shell == null) {
             double ret = 0;
-            for (RingSet ringSet : children) {
+            for (Area ringSet : children) {
                 ret += ringSet.getArea();
             }
             return ret;
         } else {
             double ret = shell.getArea();
-            for (RingSet ringSet : children) {
+            for (Area ringSet : children) {
                 ret -= ringSet.getArea();
             }
             return ret;
@@ -85,7 +85,7 @@ public class RingSet implements Geom {
             if (shell != null) {
                 shell.addBoundsTo(bounds);
             }
-            for (RingSet ringSet : children) {
+            for (Area ringSet : children) {
                 bounds.add(ringSet.getBounds());
             }
             return bounds.build();
@@ -93,13 +93,13 @@ public class RingSet implements Geom {
     }
 
     @Override
-    public RingSet transform(Transform transform) throws NullPointerException {
+    public Area transform(Transform transform) throws NullPointerException {
         Ring transformedShell = (shell == null) ? null : shell.transform(transform);
-        RingSet[] transformedChildren = (children.length == 0) ? EMPTY : new RingSet[children.length];
+        Area[] transformedChildren = (children.length == 0) ? EMPTY : new Area[children.length];
         for (int c = 0; c < transformedChildren.length; c++) {
             transformedChildren[c] = children[c].transform(transform);
         }
-        return new RingSet(transformedShell, transformedChildren);
+        return new Area(transformedShell, transformedChildren);
     }
 
     @Override
@@ -163,13 +163,13 @@ public class RingSet implements Geom {
     }
 
     @Override
-    public RingSet clone() {
+    public Area clone() {
         return this;
     }
 
     public int numRings() {
         int ret = (shell == null) ? 0 : 1;
-        for (RingSet child : children) {
+        for (Area child : children) {
             ret += child.numRings();
         }
         return ret;
@@ -180,7 +180,7 @@ public class RingSet implements Geom {
         if (shell != null) {
             ret += shell.numLines();
         }
-        for (RingSet child : children) {
+        for (Area child : children) {
             ret += child.numLines();
         }
         return ret;
@@ -191,7 +191,7 @@ public class RingSet implements Geom {
         if (shell != null) {
             ret += shell.numVects();
         }
-        for (RingSet child : children) {
+        for (Area child : children) {
             ret += child.numVects();
         }
         return ret;
@@ -220,7 +220,7 @@ public class RingSet implements Geom {
                 index++;
             }
         }
-        for (RingSet child : children) {
+        for (Area child : children) {
             index = child.addLines(bounds, lines, index);
         }
         return index;
@@ -236,7 +236,7 @@ public class RingSet implements Geom {
         if (shell != null) {
             result.add(shell);
         }
-        for (RingSet child : children) {
+        for (Area child : children) {
             child.getRings(result);
         }
     }
@@ -245,7 +245,7 @@ public class RingSet implements Geom {
         if (shell != null) {
             result.addAll(shell.vects);
         }
-        for (RingSet child : children) {
+        for (Area child : children) {
             child.getVects(result);
         }
         return result;
@@ -297,18 +297,18 @@ public class RingSet implements Geom {
     public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         Network network = new Network();
         buffer(amt, flatness, tolerance, network);
-        return RingSet.valueOf(network);
+        return Area.valueOf(network);
     }
 
     void buffer(double amt, Tolerance flatness, Tolerance tolerance, Network result) {
         if (shell != null) {
-            RingSet ringSet = shell.buffer(amt, flatness, tolerance);
+            Area ringSet = shell.buffer(amt, flatness, tolerance);
             if (ringSet != null) {
                 ringSet.addTo(result, tolerance);
             }
             amt = -amt;
         }
-        for (RingSet child : children) {
+        for (Area child : children) {
             child.buffer(amt, flatness, tolerance, result);
         }
     }
@@ -337,11 +337,11 @@ public class RingSet implements Geom {
         return Network.union(flatness, tolerance, this, other);
     }
 
-    public RingSet union(Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+    public Area union(Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (valid) {
             return this;
         }
-        return (RingSet) Network.union(flatness, tolerance, this);
+        return (Area) Network.union(flatness, tolerance, this);
     }
 
     @Override
@@ -371,17 +371,17 @@ public class RingSet implements Geom {
             children = new ArrayList<>();
         }
 
-        RingSet build() {
+        Area build() {
             if (shell == null) {
                 if (children.size() == 1) {
                     return children.get(0).build();
                 }
             }
-            RingSet[] _children = new RingSet[children.size()];
+            Area[] _children = new Area[children.size()];
             for (int c = 0; c < _children.length; c++) {
                 _children[c] = children.get(c).build();
             }
-            RingSet ret = new RingSet(shell, _children);
+            Area ret = new Area(shell, _children);
             ret.valid = true;
             return ret;
         }
@@ -427,10 +427,10 @@ public class RingSet implements Geom {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof RingSet)) {
+        if (!(obj instanceof Area)) {
             return false;
         }
-        RingSet other = (RingSet) obj;
+        Area other = (Area) obj;
         return Objects.equals(this.shell, other.shell)
                 && Arrays.equals(this.children, other.children);
     }

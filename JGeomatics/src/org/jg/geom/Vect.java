@@ -208,7 +208,7 @@ public final class Vect implements Geom, Comparable<Vect> {
             double angleSize = 2 * Math.PI;
             double sy = y + amt;
             linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
-            return (result.size() > 2) ? new RingSet(new Ring(result)) : this;
+            return (result.size() > 2) ? new Area(new Ring(result)) : this;
         }
     }
 

@@ -171,7 +171,7 @@ public class GeomSet implements Geom, Serializable {
             }
         
         });
-        return RingSet.valueOf(network);
+        return Area.valueOf(network);
     }
 
     @Override

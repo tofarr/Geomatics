@@ -181,7 +181,7 @@ public class MultiPoint implements Serializable, Geom {
         network.explicitIntersections(tolerance);
         removeWithinBuffer(vects, network, amt, flatness, tolerance);
         
-        return RingSet.valueOf(network);
+        return Area.valueOf(network);
     }
     
     //remove any link from network with a mid point closer than the amt to one of the lines in this

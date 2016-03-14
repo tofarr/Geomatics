@@ -317,7 +317,7 @@ public class LineString implements Geom {
 
         removeWithinBuffer(vects, network, amt, flatness, tolerance);
 
-        return RingSet.valueOf(network);
+        return Area.valueOf(network);
     }
     
     //remove any link from network with a mid point closer than the amt to one of the lines in this

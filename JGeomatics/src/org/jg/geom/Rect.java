@@ -442,7 +442,7 @@ public class Rect implements Geom {
         Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, flatness.getTolerance(), result);
         result.add(_minX, minY);
 
-        return new RingSet(new Ring(result));
+        return new Area(new Ring(result));
     }
 
     @Override
