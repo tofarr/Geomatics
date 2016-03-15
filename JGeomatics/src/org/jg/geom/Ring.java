@@ -1,5 +1,6 @@
 package org.jg.geom;
 
+import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -8,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
-import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -46,7 +46,8 @@ public class Ring implements Serializable, Cloneable, Geom {
      *
      * @param vects
      * @throws NullPointerException if vects was null
-     * @throws IllegalArgumentException if the list was less than 4 vectors long, or was unclosed
+     * @throws IllegalArgumentException if the list was less than 4 vectors
+     * long, or was unclosed
      */
     public Ring(VectList vects) throws NullPointerException, IllegalArgumentException {
         int last = vects.size() - 1;
@@ -178,7 +179,8 @@ public class Ring implements Serializable, Cloneable, Geom {
     }
 
     /**
-     * Get the area of the vect list given, assuming that it is a valid closed linear ring.
+     * Get the area of the vect list given, assuming that it is a valid closed
+     * linear ring.
      *
      * @param vects
      * @return area
@@ -215,12 +217,12 @@ public class Ring implements Serializable, Cloneable, Geom {
         }
         return ret;
     }
-    
-    public int numVects(){
+
+    public int numVects() {
         return vects.size();
     }
-    
-    public int numLines(){
+
+    public int numLines() {
         return vects.size() - 1;
     }
 
@@ -230,6 +232,7 @@ public class Ring implements Serializable, Cloneable, Geom {
      * @return
      */
     @Transient
+    @Override
     public Rect getBounds() {
         return vects.getBounds();
     }
@@ -248,12 +251,18 @@ public class Ring implements Serializable, Cloneable, Geom {
      * Determine the relation between the point given and this ring
      *
      * @param vect
-     * @param tolerance tolerance for touch
+     * @param accuracy tolerance for touch
      * @return relation
      * @throws NullPointerException if vect or tolerance was null
      */
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        return relateInternal(vect.x, vect.y, tolerance);
+    @Override
+    public Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException {
+        return relateInternal(vect.x, vect.y, accuracy);
+    }
+
+    @Override
+    public Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+        return relateInternal(vect.getX(), vect.getY(), accuracy);
     }
 
     /**
@@ -274,8 +283,8 @@ public class Ring implements Serializable, Cloneable, Geom {
     Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
         return relateInternal(x, y, getLineIndex(), tolerance);
     }
-    
-    static Relate relateInternal(double x, double y, SpatialNode<Line> lineIndex, Tolerance tolerance) throws NullPointerException{
+
+    static Relate relateInternal(double x, double y, SpatialNode<Line> lineIndex, Tolerance tolerance) throws NullPointerException {
         Rect bounds = lineIndex.getBounds();
         if (bounds.relateInternal(x, y, tolerance) == Relate.OUTSIDE) { // If outside bounds, then cant be inside
             return Relate.OUTSIDE;
@@ -330,7 +339,7 @@ public class Ring implements Serializable, Cloneable, Geom {
             return this;
         }
         VectList rotated = rotate(vects, index);
-        if(getArea() < 0){
+        if (getArea() < 0) {
             rotated.reverse();
         }
         Ring ret = new Ring(rotated, Math.abs(area));
@@ -415,12 +424,14 @@ public class Ring implements Serializable, Cloneable, Geom {
     }
 
     /**
-     * Determine if the linear ring represented by the vectList given contains only convex angles. Results are undefined if the edges are
-     * unclosed or self intersect
+     * Determine if the linear ring represented by the vectList given contains
+     * only convex angles. Results are undefined if the edges are unclosed or
+     * self intersect
      *
      * @param vects
      * @return
-     * @throws IndexOutOfBoundsException if the vect list does not have at least 4 elements
+     * @throws IndexOutOfBoundsException if the vect list does not have at least
+     * 4 elements
      */
     public static boolean isConvex(VectList vects) throws IndexOutOfBoundsException {
         int s = vects.size();
@@ -446,33 +457,31 @@ public class Ring implements Serializable, Cloneable, Geom {
         return target.addAll(vects);
     }
 
-    public void addTo(Network network, Tolerance tolerance) {
+    public void addTo(Network network) {
         network.addAllLinks(vects);
     }
-    
-    public Area buffer(double amt, Tolerance flatness, Tolerance tolerance){
-        VectList edgeBuffer = getEdgeBuffer(amt, flatness, tolerance);
-        Network network = new Network();
-        network.addAllLinks(edgeBuffer);
-        LineString.removeWithinBuffer(vects, network, amt, flatness, tolerance);
-        return Area.valueOf(network);
+
+    @Override
+    public Ring buffer(double amt, Tolerance flatness, Tolerance accuracy) {
+        WITH THIS NEED THE OLD METHOD OF REMOVING POINTS WITHIN DISTANCE OF A LINE
+        return toArea().buffer(amt, flatness, accuracy);
     }
-    
-    public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance){
+
+    public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance) {
         Vect.check(amt, "Invalid amt {0}");
         if (amt == 0) {
             return vects.clone();
         }
         return getEdgeBuffer(vects, amt, flatness, tolerance);
     }
-    
+
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
     static VectList getEdgeBuffer(VectList vects, double amt, Tolerance flatness, Tolerance tolerance) {
         VectList result = new VectList(vects.size() << 1);
         VectBuilder vect = new VectBuilder();
 
-        double ax = vects.getX(vects.size()-2);
-        double ay = vects.getY(vects.size()-2);
+        double ax = vects.getX(vects.size() - 2);
+        double ay = vects.getY(vects.size() - 2);
         double bx = vects.getX(0);
         double by = vects.getY(0);
 
@@ -492,14 +501,59 @@ public class Ring implements Serializable, Cloneable, Geom {
 
         return result;
     }
-    
-    public Ring transform(Transform transform){
+
+    @Override
+    public Ring transform(Transform transform) {
         VectList transformed = vects.clone();
         transformed.transform(transform);
         Ring ring = new Ring(transformed);
         return ring;
     }
-    
+
+    @Override
+    public PathIterator pathIterator() {
+        return new Area(this, Area.EMPTY).pathIterator();
+    }
+
+    @Override
+    public Ring clone() {
+        return this;
+    }
+
+    @Override
+    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return toGeoShape();
+    }
+
+    public GeoShape toGeoShape() {
+        return new GeoShape(toArea(), GeoShape.NO_LINES, GeoShape.NO_POINTS);
+    }
+
+    public Area toArea() throws NullPointerException {
+        return new Area(this);
+    }
+
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return toArea().union(other, flatness, accuracy);
+    }
+
+    @Override
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return null;
+        }
+        return toArea().intersection(other, flatness, accuracy);
+    }
+
+    @Override
+    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return this;
+        }
+        return toArea().less(other, flatness, accuracy);
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
@@ -542,7 +596,8 @@ public class Ring implements Serializable, Cloneable, Geom {
      * @param in
      * @return a VectList
      * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws IllegalArgumentException if the stream contained infinite or NaN
+     * ordinates
      * @throws GeomException if there was an IO error
      */
     public static Ring read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException {

@@ -193,7 +193,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        GeoShape ret =  new GeoShape(GeoShape.NO_RINGS, GeoShape.NO_LINES, new VectList().add(this));
+        GeoShape ret =  new GeoShape(null, GeoShape.NO_LINES, new VectList().add(this));
         ret.normalized = true;
         return ret;
     }
@@ -312,13 +312,13 @@ public final class Vect implements Geom, Comparable<Vect> {
         switch(other.relate(this, accuracy)){
             case INSIDE:
             case TOUCH:
-                return this;
+                return other;
             default:
                 if(other instanceof Vect){
                     VectList points = new VectList(2);
                     points.add((Vect)other);
                     points.add(this);
-                    GeoShape ret = new GeoShape(GeoShape.NO_RINGS, GeoShape.NO_LINES, points);
+                    GeoShape ret = new GeoShape(null, GeoShape.NO_LINES, points);
                     ret.normalized = true;
                     return ret;
                 }else{
@@ -326,7 +326,7 @@ public final class Vect implements Geom, Comparable<Vect> {
                     VectList points = new VectList(geoShape.points.size()+1);
                     points.addAll(geoShape.points);
                     points.sort();
-                    GeoShape ret = new GeoShape(geoShape.rings, geoShape.hangLines, points);
+                    GeoShape ret = new GeoShape(geoShape.area, geoShape.lines, points);
                     ret.normalized = true;
                     return ret;
                 }

@@ -43,23 +43,7 @@ public class Area implements Geom {
     public Area(Ring shell) {
         this(shell, EMPTY);
     }
-
-    public static Area valueOf(Network network) {
-        List<Ring> rings = Ring.valueOf(network);
-        switch (rings.size()) {
-            case 0:
-                return null;
-            case 1:
-                return new Area(rings.get(0), EMPTY);
-            default:
-                RingSetBuilder builder = new RingSetBuilder(null);
-                for (Ring ring : rings) {
-                    builder.add(ring);
-                }
-                return builder.build();
-        }
-    }
-
+    
     public double getArea() {
         if (shell == null) {
             double ret = 0;
@@ -283,28 +267,34 @@ public class Area implements Geom {
         }
     }
 
-    @Override
-    public void addTo(Network network, Tolerance tolerance) throws NullPointerException, IllegalArgumentException {
+    public void addTo(Network network) throws NullPointerException, IllegalArgumentException {
         if (shell != null) {
-            shell.addTo(network, tolerance);
+            shell.addTo(network);
         }
         for (int c = 0; c < children.length; c++) {
-            children[c].addTo(network, tolerance);
+            children[c].addTo(network);
         }
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return new GeoShape(this, GeoShape.NO_LINES, GeoShape.NO_POINTS);
+    }
+
+    @Override
+    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
         Network network = new Network();
-        buffer(amt, flatness, tolerance, network);
-        return Area.valueOf(network);
+        buffer(amt, flatness, accuracy, network);
+        network.explicitIntersections(accuracy);
+        return GeoShape.consumeNetwork(network, accuracy);
     }
 
     void buffer(double amt, Tolerance flatness, Tolerance tolerance, Network result) {
         if (shell != null) {
+            
             Area ringSet = shell.buffer(amt, flatness, tolerance);
             if (ringSet != null) {
-                ringSet.addTo(result, tolerance);
+                ringSet.addTo(result);
             }
             amt = -amt;
         }
@@ -337,6 +327,10 @@ public class Area implements Geom {
         return Network.union(flatness, tolerance, this, other);
     }
 
+    public Geom union(GeoShape other, Tolerance accuracy) throws NullPointerException {
+        
+    }
+    
     public Area union(Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (valid) {
             return this;
@@ -352,7 +346,12 @@ public class Area implements Geom {
             return Network.intersection(flatness, tolerance, this, other);
         }
     }
-
+    
+    public Geom intersection(GeoShape other, Tolerance accuracy) throws NullPointerException {
+        
+    }
+    
+    
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds())) {
@@ -361,61 +360,11 @@ public class Area implements Geom {
         return Network.less(flatness, tolerance, this, other);
     }
 
-    static class RingSetBuilder {
-
-        final Ring shell;
-        final ArrayList<RingSetBuilder> children;
-
-        RingSetBuilder(Ring shell) {
-            this.shell = shell;
-            children = new ArrayList<>();
-        }
-
-        Area build() {
-            if (shell == null) {
-                if (children.size() == 1) {
-                    return children.get(0).build();
-                }
-            }
-            Area[] _children = new Area[children.size()];
-            for (int c = 0; c < _children.length; c++) {
-                _children[c] = children.get(c).build();
-            }
-            Area ret = new Area(shell, _children);
-            ret.valid = true;
-            return ret;
-        }
-
-        boolean add(Ring ring) {
-            if (!canAdd(ring)) {
-                return false;
-            }
-            for (RingSetBuilder child : children) {
-                if (child.add(ring)) {
-                    return true;
-                }
-            }
-            children.add(new RingSetBuilder(ring));
-            return true;
-        }
-
-        boolean canAdd(Ring ring) {
-            if (shell == null) {
-                return true;
-            }
-            int i = 0;
-            while (true) {
-                Relate relate = shell.relate(ring.vects.getX(i), ring.vects.getY(i), Tolerance.ZERO);
-                switch (relate) {
-                    case INSIDE:
-                        return true;
-                    case OUTSIDE:
-                        return false;
-                }
-                i++;
-            }
-        }
+    public Geom less(GeoShape other, Tolerance accuracy) throws NullPointerException {
+        
     }
+    
+    
 
     @Override
     public int hashCode() {

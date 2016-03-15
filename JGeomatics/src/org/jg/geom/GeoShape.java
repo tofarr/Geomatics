@@ -9,41 +9,70 @@ import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 //TODO: Do not need multi point
-
 /**
  *
  * @author tofarrell
  */
 public class GeoShape implements Geom {
 
-    static final List<Ring> NO_RINGS = new ArrayList<>();
     static final List<LineString> NO_LINES = new ArrayList<>();
     static final VectList NO_POINTS = new VectList();
-    public static final GeoShape EMPTY = new GeoShape(NO_RINGS, NO_LINES, NO_POINTS, true, null);
+    public static final GeoShape EMPTY = new GeoShape(Area.EMPTY, NO_LINES, NO_POINTS, true, null);
     // Area for this geom (may be null) 
-    final List<Ring> rings;
+    final Area area;
     //ine strings which are not part of an area 
-    final List<LineString> hangLines;
+    final List<LineString> lines;
     // Points which are not part of a line 
     final VectList points;
     // Flag indicating whether or not this geom is normalized 
     Boolean normalized;
     // Bounds for this geo shape 
     Rect bounds;
-    
-    GeoShape(List<Ring> rings, List<LineString> hangLines, VectList points, Boolean normalized, Rect bounds) {
-        this.rings = rings;
+
+    GeoShape(Area area, List<LineString> hangLines, VectList points, Boolean normalized, Rect bounds) {
+        this.area = area;
         this.hangLines = hangLines;
         this.points = points;
         this.normalized = normalized;
         this.bounds = bounds;
     }
-    
-    GeoShape(List<Ring> rings, List<LineString> hangLines, VectList points) {
-        this.rings = rings;
+
+    GeoShape(Area area, List<LineString> hangLines, VectList points) {
+        this.area = area;
         this.hangLines = hangLines;
         this.points = points;
     }
+    
+    
+    public static GeoShape consumeNetwork(Network network, Tolerance accuracy){
+        //network.explicitIntersections(accuracy);
+        //while network is not empty...
+            //get the min point in the network.
+            //get line with lowest dydx.
+            //follow line, getting next ccw link at each point
+            //other linesets should be removed.
+            //when get back to start, you have a linear ring
+        
+    }
+
+    
+    
+    public static Area valueOf(Network network) {
+        List<Ring> rings = Ring.valueOf(network);
+        switch (rings.size()) {
+            case 0:
+                return null;
+            case 1:
+                return new Area(rings.get(0), Area.EMPTY);
+            default:
+                RingSetBuilder builder = new RingSetBuilder(null);
+                for (Ring ring : rings) {
+                    builder.add(ring);
+                }
+                return builder.build();
+        }
+    }
+
 
     @Override
     public Rect getBounds() {
@@ -95,9 +124,17 @@ public class GeoShape implements Geom {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public GeoShape union(GeoShape other) {
+
+    }
+
     @Override
     public GeoShape intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public GeoShape intersection(GeoShape other) {
+
     }
 
     @Override
@@ -105,11 +142,116 @@ public class GeoShape implements Geom {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public GeoShape normalize(Tolerance accuracy){
+    public GeoShape less(GeoShape other) {
+
+    }
+
+    public GeoShape normalize(Tolerance accuracy) {
+
+    }
+
+    public String toWKT() {
+
+    }
+
+    void addNonRingsTo(Network network) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    void addNonRingsTo(Network network) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    Area getArea() {
+
+    }
+    
+    boolean hasArea(){
         
     }
     
-    public String toWKT(){
+    boolean hasPoints(){
         
+    }
+    
+    boolean hasLines(){
+        
+    }
+    
+    boolean hasNonLines(){
+        
+    }
+    
+    boolean hasNonArea(){
+        
+    }
+    
+    boolean hasNonPoints(){
+        
+    }
+    
+    boolean isEmpty(){
+        
+    }
+
+    void addTo(Network network) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    
+    static class RingSetBuilder {
+
+        final Ring shell;
+        final ArrayList<RingSetBuilder> children;
+
+        RingSetBuilder(Ring shell) {
+            this.shell = shell;
+            children = new ArrayList<>();
+        }
+
+        Area build() {
+            if (shell == null) {
+                if (children.size() == 1) {
+                    return children.get(0).build();
+                }
+            }
+            Area[] _children = new Area[children.size()];
+            for (int c = 0; c < _children.length; c++) {
+                _children[c] = children.get(c).build();
+            }
+            Area ret = new Area(shell, _children);
+            ret.valid = true;
+            return ret;
+        }
+
+        boolean add(Ring ring) {
+            if (!canAdd(ring)) {
+                return false;
+            }
+            for (RingSetBuilder child : children) {
+                if (child.add(ring)) {
+                    return true;
+                }
+            }
+            children.add(new RingSetBuilder(ring));
+            return true;
+        }
+
+        boolean canAdd(Ring ring) {
+            if (shell == null) {
+                return true;
+            }
+            int i = 0;
+            while (true) {
+                Relate relate = shell.relate(ring.vects.getX(i), ring.vects.getY(i), Tolerance.ZERO);
+                switch (relate) {
+                    case INSIDE:
+                        return true;
+                    case OUTSIDE:
+                        return false;
+                }
+                i++;
+            }
+        }
     }
 }

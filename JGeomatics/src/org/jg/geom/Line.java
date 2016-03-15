@@ -726,7 +726,7 @@ public class Line implements Geom, Comparable<Line> {
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         List<LineString> lines = new ArrayList<>();
         lines.add(new LineString(new VectList(ax, ay, bx, by)));
-        GeoShape ret = new GeoShape(GeoShape.NO_RINGS, lines, GeoShape.NO_POINTS, Boolean.TRUE, null);
+        GeoShape ret = new GeoShape(null, lines, GeoShape.NO_POINTS, Boolean.TRUE, null);
         return ret;
     }
 
@@ -807,18 +807,18 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other.getBounds().isDisjoint(other.getBounds(), accuracy)){
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
             return null;
-        }else{
-            GeoShape ret = other.toGeoShape(flatness, accuracy).intersection(this, flatness, accuracy);
-            return ret;
         }
+        return toGeoShape(flatness, accuracy).intersection(other, flatness, accuracy);
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        GeoShape ret = other.toGeoShape(flatness, tolerance).less(this, flatness, tolerance);
-        return ret;
+    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds())){
+            return this;
+        }
+        return toGeoShape(flatness, accuracy).less(other, flatness, accuracy);
     }
 
     @Override

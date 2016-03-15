@@ -433,11 +433,14 @@ public class Rect implements Geom {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        List<Ring> rings = new ArrayList<>();
-        rings.add(toRing());
-        GeoShape ret = new GeoShape(rings, GeoShape.NO_LINES, GeoShape.NO_POINTS);
+        Area area = toArea();
+        GeoShape ret = new GeoShape(area, GeoShape.NO_LINES, GeoShape.NO_POINTS);
         ret.bounds = this;
         return ret;
+    }
+    
+    public Area toArea(){
+        return new Area(toRing());
     }
     
     public Ring toRing(){
@@ -502,21 +505,10 @@ public class Rect implements Geom {
         if (contains(other.getBounds())) {
             return this;
         } else{
-            GeoShape otherShape = other.toGeoShape(flatness, tolerance);
-            if (!isOverlapping(other.getBounds())) {
-                List<Ring> rings = new ArrayList<>(otherShape.rings.size()+1);
-                rings.add(toRing());
-                rings.addAll(otherShape.rings);
-                rings.sort(COMPARATOR);
-                GeoShape ret = new GeoShape(rings, otherShape.hangLines, otherShape.points);
-                return ret;
-            }else{
-                GeoShape ret = otherShape.union(this, flatness, tolerance);
-                return ret;
-            }
+            return toArea().union(other.toGeoShape(flatness, tolerance), tolerance);
         }
     }
-
+    
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (contains(other)) {
@@ -531,8 +523,7 @@ public class Rect implements Geom {
                 return intersection(otherRect);
             }
         } else {
-            GeoShape ret = other.toGeoShape(flatness, accuracy).union(this, flatness, accuracy);
-            return ret;
+            return toArea().intersection(other.toGeoShape(flatness, accuracy), accuracy);
         }
     }
 
