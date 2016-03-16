@@ -215,7 +215,7 @@ public final class Network implements Serializable, Cloneable {
         return addLinkInternal(a.x, a.y, b.x, b.y);
     }
 
-//does nothing if points are the same
+    //does nothing if points are the same
     public boolean addLink(VectBuilder a, VectBuilder b) throws NullPointerException {
         return addLinkInternal(a.getX(), a.getY(), b.getX(), b.getY());
     }
@@ -328,6 +328,17 @@ public final class Network implements Serializable, Cloneable {
         numLinks--;
         cachedLinks = null;
         return true;
+    }
+    
+    public void removeAllLinks(VectList vects){
+        int index = vects.size() - 1;
+        double bx = vects.getX(index);
+        double by = vects.getY(index);
+        while(--index >= 0){
+            double ax = vects.getX(index);
+            double ay = vects.getY(index);
+            removeLinkInternal(ax, ay, bx, by);
+        }
     }
 
     public Network clear() {
@@ -624,45 +635,6 @@ public final class Network implements Serializable, Cloneable {
         return results;
     }
 
-//    public boolean hasHangLines() {
-//        return !map.forEach(new VectMapProcessor<VectList>() {
-//            @Override
-//            public boolean process(double ax, double ay, VectList value) {
-//                return (value.size() != 1);
-//            }
-//        });
-//    }
-//
-//    public Network removeHangLines() {
-//        map.forEach(new VectMapProcessor<VectList>() {
-//            @Override
-//            public boolean process(double ax, double ay, VectList value) {
-//                if(value.size() == 1){
-//                    while(true){
-//                        numLinks--;
-//                        map.remove(ax, ay);
-//                        double bx = value.getX(0);
-//                        double by = value.getY(0);
-//                        value = map.get(bx, by);
-//                        switch(value.size()){
-//                            case 1: // other end of a hang line
-//                                map.remove(bx, by);
-//                                return true;
-//                            case 2: // mid point of a hang line
-//                                ax = bx;
-//                                ay = by;
-//                            default: // nexus
-//                                int index = value.indexOf(ax, ay, 0);
-//                                value.remove(index);
-//                                return true;
-//                        }
-//                    }
-//                }
-//                return true;
-//            }
-//        });
-//        return this;
-//    }
     public void extractHangLines(final Collection<VectList> results) {
         map.forEach(new VectMapProcessor<VectList>() {
             @Override
@@ -696,79 +668,6 @@ public final class Network implements Serializable, Cloneable {
             bx = cx;
             by = cy;
         }
-    }
-    
-    
-    public void removeOutside(final Geom geom, Tolerance flatness, Tolerance tolerance){
-        SpatialNode<Line> lines= getLineIndex(geom, flatness);
-        explicitIntersectionsWith(lines, tolerance);
-        removeOutsideInternal(geom, tolerance);
-    }
-    
-    SpatialNode<Line> getLineIndex(Geom geom, Tolerance flatness){
-        if(geom instanceof LineString){
-            return ((LineString)geom).getLineIndex();
-        }else if(geom instanceof Area){
-            return((Area)geom).getLineIndex();
-        }else{
-            Network network = new Network();
-            geom.addTo(network, flatness);
-            return network.getLinks();
-        }
-    }
-
-    private void removeOutsideInternal(final Geom geom, final Tolerance tolerance) {
-        final VectBuilder vect = new VectBuilder();
-        map.forEach(new VectMapProcessor<VectList>(){    
-            @Override
-            public boolean process(double x, double y, VectList value) {
-                vect.set(x, y);
-                if(Relate.OUTSIDE == geom.relate(vect, tolerance)){
-                    removeVertex(vect);
-                }
-                return true;
-            }
-        });
-        getLinks().forEach(new NodeProcessor<Line>(){
-            @Override
-            public boolean process(Rect bounds, Line line) {
-                line.getMid(vect);
-                if(Relate.OUTSIDE == geom.relate(vect, tolerance)){
-                    removeLink(line);
-                }
-                return true;
-            }
-        });
-    }
-    
-    public void removeInside(Area area){
-        SpatialNode<Line> lines = getLineIndex(geom, flatness);
-        explicitIntersectionsWith(lines, tolerance);
-        removeInsideInternal(geom, tolerance);
-    }
-
-    private void removeInsideInternal(final Geom geom, final Tolerance tolerance) {
-        final VectBuilder vect = new VectBuilder();
-        map.forEach(new VectMapProcessor<VectList>(){
-            @Override
-            public boolean process(double x, double y, VectList value) {
-                vect.set(x, y);
-                if(Relate.INSIDE == geom.relate(vect, tolerance)){
-                    removeVertex(vect);
-                }
-                return true;
-            }
-        });
-        getLinks().forEach(new NodeProcessor<Line>(){
-            @Override
-            public boolean process(Rect bounds, Line line) {
-                line.getMid(vect);
-                if(Relate.INSIDE == geom.relate(vect, tolerance)){
-                    removeLink(line);
-                }
-                return true;
-            }
-        });
     }
 
     @Override
@@ -810,166 +709,67 @@ public final class Network implements Serializable, Cloneable {
         toString(str);
         return str.toString();
     }
-
-    public String toWKT() {
-        final VectList points = new VectList();
-        forEachVertex(new VertexProcessor() {
-            @Override
-            public boolean process(double x, double y, int numLinks) {
-                if (numLinks == 0) {
-                    points.add(x, y);
-                }
-                return true;
-            }
-
-        });
-        StringBuilder str = new StringBuilder();
-        if (points.size() == 0) {
-            str.append("MULTILINESTRING(");
-            List<VectList> lineStrings = new ArrayList<>();
-            extractLines(lineStrings, false);
-            for (int i = 0; i < lineStrings.size(); i++) {
-                VectList lineString = lineStrings.get(i);
-                if (i != 0) {
-                    str.append(',');
-                }
-                str.append('(');
-                for (int j = 0; j < lineString.size(); j++) {
-                    if (j != 0) {
-                        str.append(", ");
-                    }
-                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
-                }
-                str.append(')');
-            }
-        } else if (points.size() == map.size()) {
-            str.append("MULTIPOINT(");
-            for (int i = 0; i < points.size(); i++) {
-                if (i != 0) {
-                    str.append(", ");
-                }
-                str.append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i)));
-            }
-        } else {
-            str.append("GEOMETRYCOLLECTION(");
-            for (int i = 0; i < points.size(); i++) {
-                if (i != 0) {
-                    str.append(",");
-                }
-                str.append("POINT(").append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i))).append(')');
-            }
-            List<VectList> lineStrings = new ArrayList<>();
-            extractLines(lineStrings, false);
-            for (int i = 0; i < lineStrings.size(); i++) {
-                VectList lineString = lineStrings.get(i);
-                str.append(",LINESTRING(");
-                for (int j = 0; j < lineString.size(); j++) {
-                    if (j != 0) {
-                        str.append(", ");
-                    }
-                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
-                }
-                str.append(')');
-            }
-        }
-        str.append(')');
-        return str.toString();
-    }
-    
-    public static Geom union(Tolerance flatness, Tolerance tolerance, Geom... geoms){
-        Network network = new Network();
-        for(Geom geom : geoms){
-            geom.addTo(network, flatness);
-        }
-        network.explicitIntersections(tolerance);
-        for(Geom geom : geoms){
-            network.removeInsideInternal(geom, tolerance);
-        }
-        return network.toGeom();   
-    }
-    
-    public static Geom intersection(Tolerance flatness, Tolerance tolerance, Geom... geoms){
-        Network network = new Network();
-        for(Geom geom : geoms){
-            geom.addTo(network, flatness);
-        }
-        network.explicitIntersections(tolerance);
-        for(Geom geom : geoms){
-            network.removeOutsideInternal(geom, tolerance);
-        }
-        return network.toGeom();   
-    }
-    
-    public static Geom less(Tolerance flatness, Tolerance tolerance, Geom geom, Geom less){
-        Network network = new Network();
-        geom.addTo(network, flatness);
-        less.addTo(network, flatness);
-        network.explicitIntersections(tolerance);
-        network.removeOutsideInternal(geom, tolerance);
-        network.removeInsideInternal(less, tolerance);
-        return network.toGeom();   
-    }
-    
-    public Geom toGeom(){
-        final List<Geom> geoms = new ArrayList<>();
-        Area ringSet = Area.valueOf(this);
-        int numVectsInRings;
-        if(ringSet == null){
-            numVectsInRings = 0;
-        }else{
-            numVectsInRings = ringSet.numVects();
-            geoms.add(ringSet);
-        }
-        if(numVectsInRings < map.size()){
-            final VectList points = new VectList();
-            map.forEach(new VectMapProcessor<VectList>(){
-                final VectList lineString = new VectList();
-                @Override
-                public boolean process(double x, double y, VectList value) {
-                    switch(value.size()){
-                        case 0:
-                            points.add(x, y);
-                            break;
-                        case 1:
-                            lineString.clear();
-                            followLine(x, y, value.getX(0), value.getY(0), lineString);
-                            int end = lineString.size()-1;
-                            double endX = lineString.getX(end);
-                            double endY = lineString.getY(end);
-                            if((map.get(endX, endY).size() != 1) || Vect.compare(x, y, endX, endY) < 0){
-                                if(!lineString.isOrdered()){
-                                    lineString.reverse();
-                                }
-                                if(lineString.size() == 2){
-                                    geoms.add(new Line(lineString.getX(0), lineString.getY(0), lineString.getX(1), lineString.getY(1)));
-                                }else{
-                                    geoms.add(new LineString(lineString.clone()));
-                                }
-                            }
-                    }
-                    return true;
-                }
-            
-            });
-            if(!points.isEmpty()){
-                if(points.size() == 1){
-                    geoms.add(points.getVect(0));
-                }else{
-                    geoms.add(new MultiPoint(points));
-                }
-            }
-        }
-        switch(geoms.size()){
-            case 0:
-                return null;
-            case 1:
-                return geoms.get(0);
-            default:
-                Geom[] ret = geoms.toArray(new Geom[geoms.size()]);
-                Arrays.sort(ret, Geom.COMPARATOR);
-                return new GeomSet(ret);
-        }
-    }
+   
+//    public Geom toGeom(Tolerance accuracy){
+//        final List<Geom> geoms = new ArrayList<>();
+//        Area area = Area.valueOf(this, accuracy);
+//        int numVectsInRings;
+//        if(ringSet == null){
+//            numVectsInRings = 0;
+//        }else{
+//            numVectsInRings = ringSet.numVects();
+//            geoms.add(ringSet);
+//        }
+//        if(numVectsInRings < map.size()){
+//            final VectList points = new VectList();
+//            map.forEach(new VectMapProcessor<VectList>(){
+//                final VectList lineString = new VectList();
+//                @Override
+//                public boolean process(double x, double y, VectList value) {
+//                    switch(value.size()){
+//                        case 0:
+//                            points.add(x, y);
+//                            break;
+//                        case 1:
+//                            lineString.clear();
+//                            followLine(x, y, value.getX(0), value.getY(0), lineString);
+//                            int end = lineString.size()-1;
+//                            double endX = lineString.getX(end);
+//                            double endY = lineString.getY(end);
+//                            if((map.get(endX, endY).size() != 1) || Vect.compare(x, y, endX, endY) < 0){
+//                                if(!lineString.isOrdered()){
+//                                    lineString.reverse();
+//                                }
+//                                if(lineString.size() == 2){
+//                                    geoms.add(new Line(lineString.getX(0), lineString.getY(0), lineString.getX(1), lineString.getY(1)));
+//                                }else{
+//                                    geoms.add(new LineString(lineString.clone()));
+//                                }
+//                            }
+//                    }
+//                    return true;
+//                }
+//            
+//            });
+//            if(!points.isEmpty()){
+//                if(points.size() == 1){
+//                    geoms.add(points.getVect(0));
+//                }else{
+//                    geoms.add(new MultiPoint(points));
+//                }
+//            }
+//        }
+//        switch(geoms.size()){
+//            case 0:
+//                return null;
+//            case 1:
+//                return geoms.get(0);
+//            default:
+//                Geom[] ret = geoms.toArray(new Geom[geoms.size()]);
+//                Arrays.sort(ret, Geom.COMPARATOR);
+//                return new GeomSet(ret);
+//        }
+//    }
 
     public void toString(Appendable appendable) throws GeomException {
         try {
@@ -1058,9 +858,9 @@ public final class Network implements Serializable, Cloneable {
         });
     }
 
-    void removeInside(GeoShape other, Tolerance accuracy, Tolerance accuracy0) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+//    void removeInside(GeoShape other, Tolerance accuracy, Tolerance accuracy0) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 
     class IntersectionFinder implements NodeProcessor<Line> {
 

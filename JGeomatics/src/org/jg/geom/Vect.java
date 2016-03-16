@@ -199,6 +199,11 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
+    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        network.addVertex(this);
+    }
+    
+    @Override
     public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         return match(vect, tolerance) ? Relate.TOUCH : Relate.OUTSIDE;
     }

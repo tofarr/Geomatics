@@ -434,9 +434,17 @@ public class Rect implements Geom {
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         Area area = toArea();
-        GeoShape ret = new GeoShape(area, GeoShape.NO_LINES, GeoShape.NO_POINTS);
+        GeoShape ret = new GeoShape(area, GeoShape.NO_LINES, null);
         ret.bounds = this;
         return ret;
+    }
+
+    @Override
+    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        network.addLink(minX, minY, minX, maxY);
+        network.addLink(minX, minY, maxX, minY);
+        network.addLink(minX, maxY, maxX, maxY);
+        network.addLink(maxX, minY, maxX, maxY);
     }
     
     public Area toArea(){

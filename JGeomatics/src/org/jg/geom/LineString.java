@@ -5,6 +5,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
@@ -12,6 +13,7 @@ import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
+import org.jg.util.VectMap.VectMapProcessor;
 
 /**
  *
@@ -148,8 +150,14 @@ public class LineString implements Geom {
     
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        List<LineString> hangLines = splitOnIntersect(getLineIndex(), accuracy);
-        return new GeoShape(null, hangLines, GeoShape.NO_POINTS, normalized, getBounds());
+        List<LineString> lineList = splitOnSelfIntersect(accuracy);
+        LineString[] lines = lineList.toArray(new LineString[lineList.size()]);
+        return new GeoShape(null, lines, null, normalized, getBounds());
+    }
+
+    @Override
+    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        network.addAllLinks(vects);
     }
     
     public List<LineString> splitOnSelfIntersect(Tolerance accuracy){
@@ -217,7 +225,7 @@ public class LineString implements Geom {
         return ret;
     }
 
-    public boolean isValid(Tolerance accuracy) {
+    public boolean isNormalized(Tolerance accuracy) {
         if (vects.size() < 2) {
             return false;
         }
@@ -246,7 +254,7 @@ public class LineString implements Geom {
     public boolean isNormalized(){
         Boolean ret = normalized;
         if(ret == null){
-            ret = isValid(Tolerance.ZERO);
+            ret = isNormalized(Tolerance.ZERO);
             normalized = ret;
         }
         return ret;
@@ -340,16 +348,24 @@ public class LineString implements Geom {
         } else if (vects.size() == 1) {
             return vects.getVect(0).buffer(amt, flatness, accuracy);
         }
-
         VectList buffer = bufferInternal(vects, amt, flatness, accuracy);
-
-        //Since the buffer may self intersect, we need to identify points of self intersection
         Network network = new Network();
         network.addAllLinks(buffer);
-
         network.explicitIntersections(accuracy);
-        Geom ret = GeoShape.consumeNetwork(network, accuracy);
-        return ret;
+        removeNearLines(network, vects, amt);
+        return Area.valueOf(network, accuracy);
+    }
+    
+    static void removeNearLines(Network network, VectList lines, double threshold){
+        final SpatialNode<Line> lineIndex = network.getLinks();
+        final NearLinkRemover remover = new NearLinkRemover(threshold, network);
+        int index = lines.size() - 1;
+        RectBuilder bounds = new RectBuilder();
+        while (index-- > 0) {
+            Line i = lines.getLine(index);
+            bounds.reset().addInternal(i.ax, i.ay).addInternal(i.bx, i.by).buffer(threshold);
+            lineIndex.forOverlapping(bounds.build(), remover);
+        }
     }
     
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
@@ -427,16 +443,17 @@ public class LineString implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        RelateProcessor processor = new RelateProcessor(vect.x, vect.y, tolerance);
-        return getLineIndex().forInteracting(vect.getBounds(), processor) ? Relate.OUTSIDE : Relate.TOUCH;
+    public Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException {
+        return relateInternal(vect.x, vect.y, accuracy);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
-        double x = vect.getX();
-        double y = vect.getY();
-        RelateProcessor processor = new RelateProcessor(x, y, tolerance);
+    public Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+        return relateInternal(vect.getX(), vect.getY(), accuracy);
+    }
+    
+    Relate relateInternal(double x, double y, Tolerance accuracy){
+        RelateProcessor processor = new RelateProcessor(x, y, accuracy);
         return getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor) ? Relate.OUTSIDE : Relate.TOUCH;
     }
 
@@ -450,30 +467,38 @@ public class LineString implements Geom {
         if(other.isEmpty()){
             return this;
         }else if(other.getBounds().isDisjoint(getBounds(), accuracy)){ // quick way - disjoint
-            List<LineString> lines = new ArrayList<>(other.lines.size()+1);
-            lines.addAll(other.lines);
-            lines.add(this);
-            lines.sort(COMPARATOR);
+            LineString[] lines = new LineString[other.lines.length+1];
+            lines[0] = this;
+            System.arraycopy(other.lines, 0, lines, 1, other.lines.length);
+            Arrays.sort(lines, COMPARATOR);
             return new GeoShape(other.area, lines, other.points);
-        }
+        }        
         Network network = new Network();
-        other.addNonRingsTo(network);
+        other.addLinesTo(network);
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
         Area area = other.getArea();
         if(area != null){
-            network.removeInside(other.area);
+            other.area.removeWithRelation(network, accuracy, Relate.INSIDE);
         }
         List<LineString> lineStrings = network.extractLineStrings();
         if((!other.hasNonLines()) && (lineStrings.size() == 1)){ // only a line returned
             return lineStrings.get(0);
         }
+        LineString[] lines = lineStrings.toArray(new LineString[lineStrings.size()]);
         VectList points = other.points;
-        if(!points.isEmpty()){
-            points = new VectList();
-            network.extractPoints(points);
+        if(points != null){
+            VectList newPoints = new VectList();
+            for(int p = 0; p < points.size(); p++){
+                double x = points.getX(p);
+                double y = points.getY(p);
+                if(relateInternal(x, y, accuracy) == Relate.OUTSIDE){
+                    newPoints.add(x, y);
+                }
+            }
+            points = newPoints.isEmpty() ? null : newPoints;
         }
-        return new GeoShape(other.area, lineStrings, points);
+        return new GeoShape(other.area, lines, points);
     }
 
     @Override
@@ -494,13 +519,14 @@ public class LineString implements Geom {
         network.addAllLinks(vects);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        network.removeOutside(this, accuracy, accuracy);
-        network.removeOutside(other, accuracy, accuracy);
+        removeWithRelation(network, accuracy, Relate.OUTSIDE);
+        other.removeWithRelation(network, accuracy, Relate.OUTSIDE);
         List<LineString> lineStrings = network.extractLineStrings();
         if((!other.hasNonLines()) && (lineStrings.size() == 1)){ // only a line returned
             return lineStrings.get(0);
         }
-        return new GeoShape(null, lineStrings, GeoShape.NO_POINTS);
+        LineString[] lines = lineStrings.toArray(new LineString[lineStrings.size()]);
+        return new GeoShape(null, lines, null);
     }
     
     @Override
@@ -521,13 +547,17 @@ public class LineString implements Geom {
         network.addAllLinks(vects);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        network.removeOutside(this, accuracy, accuracy);
-        network.removeInside(other, accuracy, accuracy);
+        removeWithRelation(network, accuracy, Relate.OUTSIDE);
+        other.removeWithRelation(network, accuracy, Relate.INSIDE);
         List<LineString> lineStrings = network.extractLineStrings();
         if((!other.hasNonLines()) && (lineStrings.size() == 1)){ // only a line returned
             return lineStrings.get(0);
         }
-        return new GeoShape(null, lineStrings, GeoShape.NO_POINTS);
+        if(lineStrings.isEmpty()){
+            return null;
+        }
+        LineString[] lines = lineStrings.toArray(new LineString[lineStrings.size()]);
+        return new GeoShape(null, lines, null);
     }
     
     public Vect getVect(int index) throws IndexOutOfBoundsException {
@@ -556,6 +586,18 @@ public class LineString implements Geom {
 
     public int numLines() {
         return Math.max(vects.size() - 1, 0);
+    }
+
+    private void removeWithRelation(final Network network, final Tolerance accuracy, final Relate relate) {
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                if(LineString.this.relateInternal(x, y, accuracy) == relate){
+                    network.removeVertexInternal(x, y);
+                }
+                return true;
+            }
+        });
     }
 
     static class NearLinkRemover implements NodeProcessor<Line> {

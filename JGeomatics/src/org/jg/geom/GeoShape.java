@@ -2,7 +2,6 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -15,13 +14,12 @@ import org.jg.util.VectList;
  */
 public class GeoShape implements Geom {
 
-    static final List<LineString> NO_LINES = new ArrayList<>();
-    static final VectList NO_POINTS = new VectList();
-    public static final GeoShape EMPTY = new GeoShape(Area.EMPTY, NO_LINES, NO_POINTS, true, null);
+    static final LineString[] NO_LINES = new LineString[0];
+    public static final GeoShape EMPTY = new GeoShape(null, NO_LINES, null, true, null);
     // Area for this geom (may be null) 
     final Area area;
     //ine strings which are not part of an area 
-    final List<LineString> lines;
+    final LineString[] lines;
     // Points which are not part of a line 
     final VectList points;
     // Flag indicating whether or not this geom is normalized 
@@ -29,19 +27,82 @@ public class GeoShape implements Geom {
     // Bounds for this geo shape 
     Rect bounds;
 
-    GeoShape(Area area, List<LineString> hangLines, VectList points, Boolean normalized, Rect bounds) {
+    GeoShape(Area area, LineString[] lines, VectList points, Boolean normalized, Rect bounds) {
         this.area = area;
-        this.hangLines = hangLines;
+        this.lines = lines;
         this.points = points;
         this.normalized = normalized;
         this.bounds = bounds;
     }
 
-    GeoShape(Area area, List<LineString> hangLines, VectList points) {
+    GeoShape(Area area, LineString[] lines, VectList points) {
         this.area = area;
-        this.hangLines = hangLines;
+        this.lines = lines;
         this.points = points;
     }
+    
+    
+    public Geom toGeom(){
+        final List<Geom> geoms = new ArrayList<>();
+        Area ringSet = Area.valueOf(this);
+        int numVectsInRings;
+        if(ringSet == null){
+            numVectsInRings = 0;
+        }else{
+            numVectsInRings = ringSet.numVects();
+            geoms.add(ringSet);
+        }
+        if(numVectsInRings < map.size()){
+            final VectList points = new VectList();
+            map.forEach(new VectMapProcessor<VectList>(){
+                final VectList lineString = new VectList();
+                @Override
+                public boolean process(double x, double y, VectList value) {
+                    switch(value.size()){
+                        case 0:
+                            points.add(x, y);
+                            break;
+                        case 1:
+                            lineString.clear();
+                            followLine(x, y, value.getX(0), value.getY(0), lineString);
+                            int end = lineString.size()-1;
+                            double endX = lineString.getX(end);
+                            double endY = lineString.getY(end);
+                            if((map.get(endX, endY).size() != 1) || Vect.compare(x, y, endX, endY) < 0){
+                                if(!lineString.isOrdered()){
+                                    lineString.reverse();
+                                }
+                                if(lineString.size() == 2){
+                                    geoms.add(new Line(lineString.getX(0), lineString.getY(0), lineString.getX(1), lineString.getY(1)));
+                                }else{
+                                    geoms.add(new LineString(lineString.clone()));
+                                }
+                            }
+                    }
+                    return true;
+                }
+            
+            });
+            if(!points.isEmpty()){
+                if(points.size() == 1){
+                    geoms.add(points.getVect(0));
+                }else{
+                    geoms.add(new MultiPoint(points));
+                }
+            }
+        }
+        switch(geoms.size()){
+            case 0:
+                return null;
+            case 1:
+                return geoms.get(0);
+            default:
+                Geom[] ret = geoms.toArray(new Geom[geoms.size()]);
+                Arrays.sort(ret, Geom.COMPARATOR);
+                return new GeomSet(ret);
+        }
+    }
+
     
     
     public static GeoShape consumeNetwork(Network network, Tolerance accuracy){
@@ -54,25 +115,6 @@ public class GeoShape implements Geom {
             //when get back to start, you have a linear ring
         
     }
-
-    
-    
-    public static Area valueOf(Network network) {
-        List<Ring> rings = Ring.valueOf(network);
-        switch (rings.size()) {
-            case 0:
-                return null;
-            case 1:
-                return new Area(rings.get(0), Area.EMPTY);
-            default:
-                RingSetBuilder builder = new RingSetBuilder(null);
-                for (Ring ring : rings) {
-                    builder.add(ring);
-                }
-                return builder.build();
-        }
-    }
-
 
     @Override
     public Rect getBounds() {
@@ -154,13 +196,13 @@ public class GeoShape implements Geom {
 
     }
 
-    void addNonRingsTo(Network network) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    void addNonRingsTo(Network network) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+//    void addNonRingsTo(Network network) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
+//
+//    void addNonRingsTo(Network network) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 
     Area getArea() {
 
@@ -197,61 +239,85 @@ public class GeoShape implements Geom {
     void addTo(Network network) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    void addLinesTo(Network network) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    void removeWithRelation(Network network, Tolerance accuracy, Relate relate) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    void addLinesTo(Network network) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    void addLinesTo(Network network) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
-    
-    static class RingSetBuilder {
-
-        final Ring shell;
-        final ArrayList<RingSetBuilder> children;
-
-        RingSetBuilder(Ring shell) {
-            this.shell = shell;
-            children = new ArrayList<>();
-        }
-
-        Area build() {
-            if (shell == null) {
-                if (children.size() == 1) {
-                    return children.get(0).build();
+    public String toWKT() {
+        final VectList points = new VectList();
+        forEachVertex(new VertexProcessor() {
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                if (numLinks == 0) {
+                    points.add(x, y);
                 }
-            }
-            Area[] _children = new Area[children.size()];
-            for (int c = 0; c < _children.length; c++) {
-                _children[c] = children.get(c).build();
-            }
-            Area ret = new Area(shell, _children);
-            ret.valid = true;
-            return ret;
-        }
-
-        boolean add(Ring ring) {
-            if (!canAdd(ring)) {
-                return false;
-            }
-            for (RingSetBuilder child : children) {
-                if (child.add(ring)) {
-                    return true;
-                }
-            }
-            children.add(new RingSetBuilder(ring));
-            return true;
-        }
-
-        boolean canAdd(Ring ring) {
-            if (shell == null) {
                 return true;
             }
-            int i = 0;
-            while (true) {
-                Relate relate = shell.relate(ring.vects.getX(i), ring.vects.getY(i), Tolerance.ZERO);
-                switch (relate) {
-                    case INSIDE:
-                        return true;
-                    case OUTSIDE:
-                        return false;
+
+        });
+        StringBuilder str = new StringBuilder();
+        if (points.size() == 0) {
+            str.append("MULTILINESTRING(");
+            List<VectList> lineStrings = new ArrayList<>();
+            extractLines(lineStrings, false);
+            for (int i = 0; i < lineStrings.size(); i++) {
+                VectList lineString = lineStrings.get(i);
+                if (i != 0) {
+                    str.append(',');
                 }
-                i++;
+                str.append('(');
+                for (int j = 0; j < lineString.size(); j++) {
+                    if (j != 0) {
+                        str.append(", ");
+                    }
+                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
+                }
+                str.append(')');
+            }
+        } else if (points.size() == map.size()) {
+            str.append("MULTIPOINT(");
+            for (int i = 0; i < points.size(); i++) {
+                if (i != 0) {
+                    str.append(", ");
+                }
+                str.append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i)));
+            }
+        } else {
+            str.append("GEOMETRYCOLLECTION(");
+            for (int i = 0; i < points.size(); i++) {
+                if (i != 0) {
+                    str.append(",");
+                }
+                str.append("POINT(").append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i))).append(')');
+            }
+            List<VectList> lineStrings = new ArrayList<>();
+            extractLines(lineStrings, false);
+            for (int i = 0; i < lineStrings.size(); i++) {
+                VectList lineString = lineStrings.get(i);
+                str.append(",LINESTRING(");
+                for (int j = 0; j < lineString.size(); j++) {
+                    if (j != 0) {
+                        str.append(", ");
+                    }
+                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
+                }
+                str.append(')');
             }
         }
+        str.append(')');
+        return str.toString();
     }
 }

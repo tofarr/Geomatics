@@ -724,10 +724,14 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        List<LineString> lines = new ArrayList<>();
-        lines.add(new LineString(new VectList(ax, ay, bx, by)));
-        GeoShape ret = new GeoShape(null, lines, GeoShape.NO_POINTS, Boolean.TRUE, null);
+        LineString[] lines = new LineString[]{new LineString(new VectList(ax, ay, bx, by))};
+        GeoShape ret = new GeoShape(null, lines, null, Boolean.TRUE, null);
         return ret;
+    }
+
+    @Override
+    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        network.addLinkInternal(ax, ay, bx, by);
     }
 
     /**

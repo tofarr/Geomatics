@@ -61,14 +61,16 @@ public interface Geom extends Cloneable, Serializable {
      */
     GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException;
     
-//    /**
-//     * Add this shape to the network given, using the flatness given to convert
-//     * any curves to lines
-//     *
-//     * @param network network to which to add this geometry
-//     * @param flatness flatness for converting curves to lines
-//     */
-//    void addTo(Network network, Tolerance flatness) throws NullPointerException, IllegalArgumentException;
+    /**
+     * Add this shape to the network given, using the flatness given to convert
+     * any curves to lines
+     *
+     * @param network network to which to add this geometry
+     * @param flatness flatness for converting curves to lines
+     * @param accuracy
+     * @throws NullPointerException if network flatness or accuracy was null
+     */
+    void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Create a buffered version of this geometry
