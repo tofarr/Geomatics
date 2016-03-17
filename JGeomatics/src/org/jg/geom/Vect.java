@@ -193,7 +193,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        GeoShape ret =  new GeoShape(null, GeoShape.NO_LINES, new VectList().add(this));
+        GeoShape ret =  new GeoShape(null, null, new MultiPoint(new VectList().add(this)));
         ret.normalized = true;
         return ret;
     }
@@ -314,28 +314,50 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        switch(other.relate(this, accuracy)){
-            case INSIDE:
-            case TOUCH:
-                return other;
-            default:
-                if(other instanceof Vect){
-                    VectList points = new VectList(2);
-                    points.add((Vect)other);
-                    points.add(this);
-                    GeoShape ret = new GeoShape(null, GeoShape.NO_LINES, points);
-                    ret.normalized = true;
-                    return ret;
-                }else{
-                    GeoShape geoShape = other.toGeoShape(flatness, accuracy);
-                    VectList points = new VectList(geoShape.points.size()+1);
-                    points.addAll(geoShape.points);
-                    points.sort();
-                    GeoShape ret = new GeoShape(geoShape.area, geoShape.lines, points);
-                    ret.normalized = true;
-                    return ret;
-                }
+        if(other instanceof Vect){
+            return union((Vect)other, accuracy);
+        }else if(other instanceof MultiPoint){
+            return union((MultiPoint)other, accuracy);
+        }else{
+            return union((GeoShape)other, accuracy);
         }
+    }
+    
+    public Geom union(Vect other, Tolerance accuracy){
+        if(accuracy.match(x, y, other.x, other.y)){
+            return this;
+        }
+        VectList points = new VectList(2);
+        points.add((Vect)other);
+        points.add(this);
+        points.sort();
+        return new MultiPoint(points);
+    }
+    
+    public Geom union(MultiPoint other, Tolerance accuracy){
+        if(other.relate(this, accuracy) != Relate.OUTSIDE){
+            return other;
+        }
+        int numPoints = other.numPoints() + 1;
+        if(numPoints == 1){
+            return this;
+        }
+        VectList points = new VectList(numPoints);
+        points.addAll(other.vects);
+        points.add(this);
+        points.sort();
+        return new MultiPoint(points);
+    }
+    
+    public Geom union(GeoShape other, Tolerance accuracy){
+        if(other.isEmpty()){
+            return this;
+        }else if(other.relate(this, accuracy) != Relate.OUTSIDE){
+            return other;
+        }
+        MultiPoint points = other.points.union(this, accuracy);
+        return GeoShape.reduce(other.area, other.lines, points);
+        
     }
 
     @Override
@@ -345,7 +367,7 @@ public final class Vect implements Geom, Comparable<Vect> {
         }
         return this;
     }
-
+    
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if(other.relate(this, tolerance) == Relate.INSIDE){
@@ -354,8 +376,6 @@ public final class Vect implements Geom, Comparable<Vect> {
         return this;
     }
     
-    
-
     /**
      * Determine if this vect matches the vector given within the tolerance
      * given

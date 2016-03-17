@@ -21,8 +21,9 @@ import org.jg.util.VectSet;
  * @author tofar_000
  */
 public class Area implements Geom {
-
-    public static final Area[] EMPTY = new Area[0];
+    
+    public static final Area EMPTY = null;
+    public static final Area[] NO_CHILDREN = new Area[0];
 
     final Ring shell;
     final Area[] children;
@@ -39,23 +40,29 @@ public class Area implements Geom {
 
     public Area(Ring shell, Collection<Area> children) {
         this.shell = shell;
-        this.children = ((children == null) || children.isEmpty()) ? EMPTY : children.toArray(new Area[children.size()]);
+        this.children = ((children == null) || children.isEmpty()) ? NO_CHILDREN : children.toArray(new Area[children.size()]);
         if ((shell == null) && children.isEmpty()) {
             throw new IllegalArgumentException("Must define either an outer shell or children");
         }
     }
 
     public Area(Ring shell) {
-        this(shell, EMPTY, null);
+        this(shell, NO_CHILDREN, null);
     }
 
     public static Area valueOf(Network network, Tolerance accuracy) {
-        List<Ring> rings = Ring.valueOf(network);
+        network = network.clone();
+        network.explicitIntersections(accuracy);
+        return valueOfInternal(network, accuracy);
+    }
+    
+    static Area valueOfInternal(Network network, Tolerance accuracy) {
+        List<Ring> rings = Ring.valueOfInternal(network, accuracy);
         switch (rings.size()) {
             case 0:
                 return null;
             case 1:
-                return new Area(rings.get(0), EMPTY, true);
+                return new Area(rings.get(0), NO_CHILDREN, true);
             default:
                 AreaBuilder builder = new AreaBuilder(null);
                 for (Ring ring : rings) {
@@ -128,7 +135,7 @@ public class Area implements Geom {
     @Override
     public Area transform(Transform transform) throws NullPointerException {
         Ring transformedShell = (shell == null) ? null : shell.transform(transform);
-        Area[] transformedChildren = (children.length == 0) ? EMPTY : new Area[children.length];
+        Area[] transformedChildren = (children.length == 0) ? NO_CHILDREN : new Area[children.length];
         for (int c = 0; c < transformedChildren.length; c++) {
             transformedChildren[c] = children[c].transform(transform);
         }
@@ -414,7 +421,7 @@ public class Area implements Geom {
         network.explicitIntersections(accuracy);
         removeWithRelation(network, accuracy, Relate.INSIDE);
         other.removeWithRelation(network, accuracy, Relate.INSIDE);
-        return Area.valueOf(network, accuracy);
+        return Area.valueOfInternal(network, accuracy);
     }
 
     public Area union(Ring other, Tolerance accuracy) {
@@ -470,7 +477,7 @@ public class Area implements Geom {
         return intersection(other.toGeoShape(flatness, accuracy), accuracy);
     }
 
-    public Area intersection(Area other, Tolerance accuracy) {
+    public Geom intersection(Area other, Tolerance accuracy) {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
             return null;
         }
@@ -480,7 +487,9 @@ public class Area implements Geom {
         network.explicitIntersections(accuracy);
         removeWithRelation(network, accuracy, Relate.OUTSIDE);
         other.removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        return Area.valueOf(network, accuracy);
+        MultiPoint points = MultiPoint.valueOf(network, accuracy);
+        MultiLineString = MultiLineString.valueOf(network, accuracy);
+        Area area =  Area.valueOfInternal(network, accuracy);
     }
 
     public Area intersection(Ring other, Tolerance accuracy) {
@@ -546,7 +555,7 @@ public class Area implements Geom {
         network.explicitIntersections(accuracy);
         removeWithRelation(network, accuracy, Relate.OUTSIDE);
         other.removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        return Area.valueOf(network, accuracy);
+        return Area.valueOfInternal(network, accuracy);
     }
 
     public Area less(Ring other, Tolerance accuracy) {

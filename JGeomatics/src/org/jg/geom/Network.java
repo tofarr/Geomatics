@@ -533,12 +533,13 @@ public final class Network implements Serializable, Cloneable {
         return target;
     }
     
-    public List<LineString> extractLineStrings(){
+    
+    public LineString[] extractLineStrings(){
         ArrayList<VectList> results = new ArrayList<>();
         extractLines(results, false);
-        ArrayList<LineString> ret = new ArrayList();
-        for(VectList result : results){
-            ret.add(new LineString(result));
+        LineString[] ret = new LineString[results.size()];
+        for(int i = ret.length; i-- > 0;){
+            ret[i] = new LineString(results.get(i));
         }
         return ret;
     }

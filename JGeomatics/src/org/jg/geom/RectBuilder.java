@@ -2,6 +2,7 @@ package org.jg.geom;
 
 import java.beans.Transient;
 import java.io.Serializable;
+import org.jg.util.VectList;
 
 /**
  *
@@ -189,7 +190,7 @@ public final class RectBuilder implements Cloneable, Serializable {
         }
         return this;
     }
-
+    
     public RectBuilder addRects(Rect... rects) throws NullPointerException {
         return addRects(rects, 0, rects.length);
     }

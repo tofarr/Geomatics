@@ -2,12 +2,14 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 //TODO: Do not need multi point
+//TODO: Rename to LineGeom
 /**
  *
  * @author tofarrell
@@ -16,119 +18,145 @@ public class GeoShape implements Geom {
 
     static final LineString[] NO_LINES = new LineString[0];
     public static final GeoShape EMPTY = new GeoShape(null, NO_LINES, null, true, null);
+
+    static Geom reduce(Area area, MultiLineString lines, MultiPoint mp) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     // Area for this geom (may be null) 
     final Area area;
     //ine strings which are not part of an area 
-    final LineString[] lines;
+    final MultiLineString lines;
     // Points which are not part of a line 
-    final VectList points;
+    final MultiPoint points;
     // Flag indicating whether or not this geom is normalized 
     Boolean normalized;
     // Bounds for this geo shape 
     Rect bounds;
 
-    GeoShape(Area area, LineString[] lines, VectList points, Boolean normalized, Rect bounds) {
-        this.area = area;
-        this.lines = lines;
-        this.points = points;
+    GeoShape(Area area, MultiLineString lines, MultiPoint points, Boolean normalized, Rect bounds) {
+        this(area, lines, points);
         this.normalized = normalized;
         this.bounds = bounds;
     }
 
-    GeoShape(Area area, LineString[] lines, VectList points) {
+    GeoShape(Area area, MultiLineString lines, MultiPoint points) {
+        if(true){
+            throw new UnsupportedOperationException("Rename to LineGeom");
+        }
         this.area = area;
         this.lines = lines;
         this.points = points;
     }
-    
-    
-    public Geom toGeom(){
-        final List<Geom> geoms = new ArrayList<>();
-        Area ringSet = Area.valueOf(this);
-        int numVectsInRings;
-        if(ringSet == null){
-            numVectsInRings = 0;
-        }else{
-            numVectsInRings = ringSet.numVects();
-            geoms.add(ringSet);
-        }
-        if(numVectsInRings < map.size()){
-            final VectList points = new VectList();
-            map.forEach(new VectMapProcessor<VectList>(){
-                final VectList lineString = new VectList();
-                @Override
-                public boolean process(double x, double y, VectList value) {
-                    switch(value.size()){
-                        case 0:
-                            points.add(x, y);
-                            break;
-                        case 1:
-                            lineString.clear();
-                            followLine(x, y, value.getX(0), value.getY(0), lineString);
-                            int end = lineString.size()-1;
-                            double endX = lineString.getX(end);
-                            double endY = lineString.getY(end);
-                            if((map.get(endX, endY).size() != 1) || Vect.compare(x, y, endX, endY) < 0){
-                                if(!lineString.isOrdered()){
-                                    lineString.reverse();
-                                }
-                                if(lineString.size() == 2){
-                                    geoms.add(new Line(lineString.getX(0), lineString.getY(0), lineString.getX(1), lineString.getY(1)));
-                                }else{
-                                    geoms.add(new LineString(lineString.clone()));
-                                }
-                            }
-                    }
-                    return true;
-                }
-            
-            });
-            if(!points.isEmpty()){
-                if(points.size() == 1){
-                    geoms.add(points.getVect(0));
-                }else{
-                    geoms.add(new MultiPoint(points));
-                }
-            }
-        }
-        switch(geoms.size()){
-            case 0:
-                return null;
-            case 1:
-                return geoms.get(0);
-            default:
-                Geom[] ret = geoms.toArray(new Geom[geoms.size()]);
-                Arrays.sort(ret, Geom.COMPARATOR);
-                return new GeomSet(ret);
-        }
+
+    public static GeoShape valueOf(Network network, Tolerance accuracy) {
+        network.clone();
+        network.explicitIntersections(accuracy);
+        return valueOfInternal(network, accuracy);
     }
 
-    
-    
-    public static GeoShape consumeNetwork(Network network, Tolerance accuracy){
-        //network.explicitIntersections(accuracy);
-        //while network is not empty...
-            //get the min point in the network.
-            //get line with lowest dydx.
-            //follow line, getting next ccw link at each point
-            //other linesets should be removed.
-            //when get back to start, you have a linear ring
-        
+    static GeoShape valueOfInternal(Network network, Tolerance accuracy) {
+        if(true){
+            throw new UnsupportedOperationException("Can return other types of geom?");
+        }
+        VectList points = new VectList();
+        network.extractPoints(points);
+        List<VectList> linePaths = new ArrayList<>();
+        network.extractHangLines(linePaths);
+        Area area = Area.valueOfInternal(network, accuracy);
+        if (area != null) { // validate points and lines against area
+            Network lineNetwork = new Network();
+            for (VectList linePath : linePaths) {
+                lineNetwork.addAllLinks(linePath);
+            }
+            lineNetwork.addAllVertices(points);
+            area.removeWithRelation(lineNetwork, accuracy, Relate.INSIDE);
+            points.clear();
+            network.extractPoints(points);
+            linePaths.clear();
+            network.extractHangLines(linePaths);
+        }
+
+        LineString[] lines = linePaths.isEmpty() ? NO_LINES : new LineString[linePaths.size()];
+        for (int i = lines.length; i-- > 0;) {
+            LineString line = new LineString(linePaths.get(i));
+            line.normalized = true;
+            lines[i] = line;
+        }
+        if (points.isEmpty()) {
+            points = null;
+        }
+
+        return new GeoShape(area, lines, points);
     }
 
     @Override
     public Rect getBounds() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Rect ret = bounds;
+        if(ret == null){
+            RectBuilder builder = new RectBuilder();
+            if(area != null){
+                builder.add(area.getBounds());
+            }
+            for(int i = lines.length; i-- > 0;){
+                builder.add(lines[i].getBounds());
+            }
+            if(points != null){
+                builder.add(points.getBounds());
+            }
+            ret = builder.build();
+            bounds = ret;
+        }
+        return ret;
     }
 
     @Override
     public Geom transform(Transform transform) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Area _area = (area == null) ? null : area.transform(transform);
+        LineString[] _lines = new LineString[lines.length];
+        for(int i = _lines.length; i-- > 0;){
+            _lines[i] = lines[i].transform(transform);
+        }
+        Arrays.sort(_lines, COMPARATOR);
+        VectList _points = null;
+        if(points != null){
+            _points = points.clone();
+            _points.transform(transform);
+            _points.sort();
+        }
+        return new GeoShape(_area, _lines, _points);
     }
 
     @Override
     public PathIterator pathIterator() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new PathIterator(){
+            int state = -1;
+
+            @Override
+            public int getWindingRule() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public boolean isDone() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void next() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public int currentSegment(float[] coords) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public int currentSegment(double[] coords) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+            
+        };
     }
 
     @Override
@@ -203,37 +231,36 @@ public class GeoShape implements Geom {
 //    void addNonRingsTo(Network network) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 //    }
-
     Area getArea() {
 
     }
-    
-    boolean hasArea(){
-        
+
+    boolean hasArea() {
+
     }
-    
-    boolean hasPoints(){
-        
+
+    boolean hasPoints() {
+
     }
-    
-    boolean hasLines(){
-        
+
+    boolean hasLines() {
+
     }
-    
-    boolean hasNonLines(){
-        
+
+    boolean hasNonLines() {
+
     }
-    
-    boolean hasNonArea(){
-        
+
+    boolean hasNonArea() {
+
     }
-    
-    boolean hasNonPoints(){
-        
+
+    boolean hasNonPoints() {
+
     }
-    
-    boolean isEmpty(){
-        
+
+    boolean isEmpty() {
+
     }
 
     void addTo(Network network) {
@@ -255,7 +282,7 @@ public class GeoShape implements Geom {
     void addLinesTo(Network network) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     public String toWKT() {
         final VectList points = new VectList();
         forEachVertex(new VertexProcessor() {
@@ -319,5 +346,13 @@ public class GeoShape implements Geom {
         }
         str.append(')');
         return str.toString();
+    }
+
+    int numPoints() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    void addPointsTo(VectList points) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
