@@ -225,7 +225,7 @@ public final class Vect implements Geom, Comparable<Vect> {
             double sy = y + amt;
             linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
             if(result.size() < 4){
-                return null;
+                return this;
             }
             Ring ring = new Ring(result, null, null, null, this, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
             return ring;
@@ -324,7 +324,10 @@ public final class Vect implements Geom, Comparable<Vect> {
         }else if(other instanceof MultiPoint){
             return union((MultiPoint)other, accuracy);
         }else{
-            return union((GeoShape)other, accuracy);
+            if(other.relate(this, accuracy) != Relate.OUTSIDE){
+                return other;
+            }
+            return union(other.toGeoShape(flatness, accuracy), accuracy);
         }
     }
     
@@ -354,7 +357,7 @@ public final class Vect implements Geom, Comparable<Vect> {
         if(other.relate(this, accuracy) != Relate.OUTSIDE){
             return other;
         }
-        MultiPoint points = this.union(other.points, accuracy);
+        MultiPoint points = (other.points == null) ? toMultiPoint() : this.union(other.points, accuracy);
         return new GeoShape(other.area, other.lines, points);
     }
 

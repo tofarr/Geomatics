@@ -4,6 +4,7 @@ import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -632,7 +633,9 @@ public class Ring implements Serializable, Cloneable, Geom {
 
     @Override
     public String toString() {
-        return vects.toString();
+        StringBuilder str = new StringBuilder();
+        toString(str);
+        return str.toString();
     }
 
     /**
@@ -641,7 +644,15 @@ public class Ring implements Serializable, Cloneable, Geom {
      * @throws GeomException
      */
     public void toString(Appendable appendable) throws GeomException {
-        vects.toString(appendable);
+        try {
+            appendable.append("[\"RG\"");
+            for (int i = 0; i < vects.size(); i++) {
+                appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
+            }
+            appendable.append(']');
+        } catch (IOException ex) {
+            throw new GeomException("Error writing LineStirng", ex);
+        }
     }
 
     /**

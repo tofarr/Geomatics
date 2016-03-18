@@ -254,33 +254,33 @@ public class Area implements Geom {
 
     @Override
     public String toString() {
-        return "{shell:" + shell + ", holes:" + Arrays.toString(children) + '}';
+        StringBuilder str = new StringBuilder();
+        toString(str);
+        return str.toString();
     }
 
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append('{');
-            if (shell != null) {
-                appendable.append("shell:");
-                shell.toString(appendable);
-            }
-            if (children.length > 0) {
-                if (shell != null) {
-                    appendable.append(',');
-                }
-                appendable.append("children:[");
-                for (int c = 0; c < children.length; c++) {
-                    if (c != 0) {
-                        appendable.append(',');
-                    }
-                    children[c].toString(appendable);
-                }
-                appendable.append("]}");
-
-            }
+            appendable.append("[\"AR\"");
+            toStringInternal(appendable);
+            appendable.append("]");
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
+        }
+    }
+
+    private void toStringInternal(Appendable appendable) throws IOException {
+        if(shell != null){
+            appendable.append("[");
+            shell.vects.toString(appendable);
+        }
+        for (int c = 0; c < children.length; c++) {
+            appendable.append(',');
+            children[c].toStringInternal(appendable);
+        }
+        if(shell != null){
+            appendable.append("]");
         }
     }
 
@@ -435,9 +435,11 @@ public class Area implements Geom {
             return null;
         }
         Network network = new Network();
+        addTo(network);
         other.addTo(network, flatness, accuracy);
-        network.explicitIntersectionsWith(getLineIndex(), accuracy);
+        network.explicitIntersections(accuracy);
         network.removeWithRelation(this, accuracy, Relate.OUTSIDE);
+        network.removeWithRelation(other, accuracy, Relate.OUTSIDE);
         return GeoShape.valueOfInternal(network, accuracy);
     }
 

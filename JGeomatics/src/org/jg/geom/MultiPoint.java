@@ -2,6 +2,7 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.io.IOException;
+import java.util.Objects;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -367,6 +368,24 @@ public class MultiPoint implements Geom {
     public double getY(int index) {
         return vects.getY(index);
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + this.vects.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof MultiPoint){
+            final MultiPoint other = (MultiPoint) obj;
+            return this.vects.equals(other.vects);
+        }
+        return false;
+    }
+    
+    
     static class NearLinkRemover implements SpatialNode.NodeProcessor<Line> {
 
         final double thresholdSq;

@@ -512,6 +512,8 @@ public class Rect implements Geom {
     public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (contains(other.getBounds())) {
             return this;
+        } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
+            return other;
         } else{
             return toArea().union(other.toGeoShape(flatness, tolerance), tolerance);
         }
@@ -539,6 +541,8 @@ public class Rect implements Geom {
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (!isOverlapping(other.getBounds())) {
             return this;
+        } else if((other instanceof Rect) && ((Rect)other).contains(this)){
+            return null;
         } else {
             GeoShape gs = toGeoShape(flatness, tolerance);
             GeoShape ret = gs.less(other, flatness, tolerance);

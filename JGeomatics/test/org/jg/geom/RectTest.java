@@ -629,8 +629,7 @@ public class RectTest {
         Area e = new Area(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
         assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        fail("NotYetImplemented");           
-        //assertEquals(new GeomSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals("[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
         Area expected = new Area(
             new Ring(new VectList(10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20))
         );
@@ -649,10 +648,11 @@ public class RectTest {
         assertSame(c, c.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        Area result = new Area(
-            new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
-        );
+        GeoShape result = new GeoShape(new Area(
+                    new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
+                ),null,null);
         assertEquals(result, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(result, a.intersection(d.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT), Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 
     @Test
@@ -663,12 +663,12 @@ public class RectTest {
         Rect d = Rect.valueOf(15, 25, 35, 45);
         assertSame(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(c.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new Area(
+        assertEquals(new GeoShape(new Area(
                 new Ring(new VectList(10,20, 30,20, 30,40, 10,40, 10,20)),
                 new Area[]{
                     new Area(new Ring(new VectList(11,21, 29,21, 29,39, 11,39, 11,21)))
                 }
-        ), a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        ), null, null), a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(new Area(
             new Ring(new VectList(10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20))
         ), a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));

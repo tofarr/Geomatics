@@ -14,6 +14,7 @@ import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
+import org.jg.util.VectSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -392,15 +393,15 @@ public class VectTest {
     @Test
     public void testBuffer(){
         Vect vect = Vect.valueOf(3, 7);
-        Area ringSet = (Area)vect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
-        assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
-        assertEquals(Math.PI * 4, ringSet.getArea(), 0.5);
-        assertEquals(Math.PI * 4, ringSet.shell.getLength(), 0.5);
+        Ring buffered = (Ring)vect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
+        assertEquals(Rect.valueOf(1, 5, 5, 9), buffered.getBounds());
+        assertEquals(Math.PI * 4, buffered.getArea(), 0.5);
+        assertEquals(Math.PI * 4, buffered.getLength(), 0.5);
         
-        ringSet = (Area)vect.buffer(2, new Tolerance(0.1), Tolerance.DEFAULT);
-        assertEquals(Rect.valueOf(1, 5, 5, 9), ringSet.getBounds());
-        assertEquals(Math.PI * 4, ringSet.getArea(), 0.1);
-        assertEquals(Math.PI * 4, ringSet.shell.getLength(), 0.1);
+        buffered = (Ring)vect.buffer(2, new Tolerance(0.1), Tolerance.DEFAULT);
+        assertEquals(Rect.valueOf(1, 5, 5, 9), buffered.getBounds());
+        assertEquals(Math.PI * 4, buffered.getArea(), 0.1);
+        assertEquals(Math.PI * 4, buffered.getLength(), 0.1);
         
         assertNull(vect.buffer(-1, new Tolerance(0.1), Tolerance.DEFAULT));
         assertSame(vect, vect.buffer(0, new Tolerance(0.1), Tolerance.DEFAULT));
@@ -466,8 +467,7 @@ public class VectTest {
         assertSame(rect, Vect.valueOf(15, 20).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Vect a = Vect.valueOf(5, 30);
-        fail("NotYetImplemented");        
-        //assertEquals(new GeoShape(a, rect), a.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals("[\"GS\",[\"AR\"[[10,20, 30,20, 30,40, 10,40, 10,20]]],[\"MP\", 5,30]]", a.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Vect b = Vect.valueOf(10, 25);
@@ -475,6 +475,18 @@ public class VectTest {
         assertEquals(c, a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         assertEquals(new MultiPoint(new VectList(5, 30, 10, 25, 15, 35)), Vect.valueOf(15, 35).union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        GeoShape gs = b.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
+        assertSame(gs, b.union(gs, Tolerance.DEFAULT));
+        
+        gs = MultiPoint.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
+        assertEquals("[\"GS\",[\"MP\", 10,20, 10,25, 10,30]]", b.union(gs, Tolerance.DEFAULT).toString());
+        
+        gs = MultiPoint.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
+        assertEquals("[\"GS\",[\"MP\", 10,20, 10,25]]", b.union(gs, Tolerance.DEFAULT).toString());
+        
+        MultiPoint mp = MultiPoint.valueOf(new VectSet().add(10, 20).add(10, 25));
+        assertSame(mp, b.union(mp, Tolerance.DEFAULT));
     }
     
     @Test
