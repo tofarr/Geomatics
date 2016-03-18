@@ -724,8 +724,8 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        LineString[] lines = new LineString[]{new LineString(new VectList(ax, ay, bx, by))};
-        GeoShape ret = new GeoShape(null, lines, null, Boolean.TRUE, null);
+        MultiLineString lines = new MultiLineString(new LineString[]{new LineString(new VectList(ax, ay, bx, by))});
+        GeoShape ret = new GeoShape(null, lines, null, null);
         return ret;
     }
 

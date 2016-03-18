@@ -3,11 +3,10 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
+import org.jg.util.VectMap.VectMapProcessor;
 
 /**
  *
@@ -15,14 +14,17 @@ import org.jg.util.VectList;
  */
 public class MultiLineString implements Geom {
 
-    public static final MultiLineString EMPTY = new MultiLineString(new LineString[0]);
+    LineString[] lineStrings;
 
-    private LineString[] lineStrings;
-
-    private Rect bounds;
+    Rect bounds;
 
     MultiLineString(LineString[] lineStrings) {
         this.lineStrings = lineStrings;
+    }
+
+    public static MultiLineString valueOfInternal(Network network) throws NullPointerException {
+        LineString[] lineStrings = LineString.valueOf(network);
+        return (lineStrings.length == 0) ? null : new MultiLineString(lineStrings);
     }
 
     public int numLines() {
@@ -48,7 +50,7 @@ public class MultiLineString implements Geom {
     }
 
     @Override
-    public Geom transform(Transform transform) throws NullPointerException {
+    public MultiLineString transform(Transform transform) throws NullPointerException {
         if (transform.mode == Transform.NO_OP) {
             return this;
         }
@@ -141,7 +143,11 @@ public class MultiLineString implements Geom {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return new GeoShape(Area.EMPTY, this, MultiPoint.EMPTY);
+        return toGeoShape();
+    }
+    
+    public GeoShape toGeoShape(){
+        return new GeoShape(null, this, null);
     }
 
     @Override
@@ -158,7 +164,7 @@ public class MultiLineString implements Geom {
     @Override
     public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
         if (amt < 0) {
-            return EMPTY;
+            return null;
         } else if (amt == 0) {
             return this;
         }
@@ -176,24 +182,20 @@ public class MultiLineString implements Geom {
 
     @Override
     public Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().relate(vect, accuracy) == Relate.OUTSIDE) {
-            return Relate.OUTSIDE;
-        }
-        for (LineString lineString : lineStrings) {
-            if (lineString.relate(vect, accuracy) == Relate.TOUCH) {
-                return Relate.TOUCH;
-            }
-        }
-        return Relate.OUTSIDE;
+        return relateInternal(vect.x, vect.y, accuracy);
     }
 
     @Override
     public Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().relate(vect, accuracy) == Relate.OUTSIDE) {
+        return relateInternal(vect.getX(), vect.getY(), accuracy);
+    }
+
+    Relate relateInternal(double x, double y, Tolerance accuracy) {
+        if (getBounds().relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
             return Relate.OUTSIDE;
         }
         for (LineString lineString : lineStrings) {
-            if (lineString.relate(vect, accuracy) == Relate.TOUCH) {
+            if (lineString.relateInternal(x, y, accuracy) == Relate.TOUCH) {
                 return Relate.TOUCH;
             }
         }
@@ -203,33 +205,11 @@ public class MultiLineString implements Geom {
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
-            return union((LineString) other, accuracy);
+            return ((LineString) other).union(this, accuracy);
         } else if (other instanceof MultiLineString) {
             return union((MultiLineString) other, accuracy);
         } else {
             return union(other.toGeoShape(flatness, accuracy), accuracy);
-        }
-    }
-
-    public Geom union(LineString other, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds())) {
-            LineString[] lines = new LineString[lineStrings.length + 1];
-            System.arraycopy(lineStrings, 0, lines, 1, lineStrings.length);
-            lines[0] = other;
-            Arrays.sort(lines, COMPARATOR);
-            return new MultiLineString(lines);
-        }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        LineString[] ret = network.extractLineStrings();
-        if (ret.length == 0) {
-            return null;
-        } else if (ret.length == 1) {
-            return ret[0];
-        } else {
-            return new MultiLineString(ret);
         }
     }
 
@@ -245,26 +225,109 @@ public class MultiLineString implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        LineString[] ret = network.extractLineStrings();
+        LineString[] ret = LineString.valueOf(network);
         if (ret.length == 0) {
-            return EMPTY;
+            return null;
         } else {
             return new MultiLineString(ret);
         }
     }
 
-    public Geom union(GeoShape other, Tolerance accuracy) throws NullPointerException {
+    public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
+        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
+            LineString[] lines = new LineString[numLines() + ((other.lines == null) ? 0 : other.lines.numLines())];
+            System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
+            System.arraycopy(other.lines.lineStrings, 0, lines, lineStrings.length, other.lines.lineStrings.length);
+            Arrays.sort(lines, COMPARATOR);
+            return new GeoShape(other.area, new MultiLineString(lines), other.points);
+        }
 
+        Network network = new Network();
+        addTo(network);
+        other.lines.addTo(network);
+        network.explicitIntersections(accuracy);
+        Area area = other.area;
+        if (area != null) {
+            network.removeWithRelation(area, accuracy, Relate.INSIDE);
+        }
+        MultiLineString lines = new MultiLineString(LineString.valueOf(network));
+
+        MultiPoint points = other.points;
+        if (points != null) {
+            VectList newPoints = new VectList();
+            for (int p = 0; p < points.numPoints(); p++) {
+                double x = points.getX(p);
+                double y = points.getY(p);
+                if (relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
+                    newPoints.add(x, y);
+                }
+            }
+            if (newPoints.size() == 0) {
+                points = null;
+            } else if (newPoints.size() != points.numPoints()) {
+                points = new MultiPoint(newPoints);
+            }
+        }
+        return new GeoShape(area, lines, points);
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
+            return null;
+        } else {
+            return intersection(other.toGeoShape(flatness, accuracy), accuracy);
+        }
+    }
 
+    public GeoShape intersection(GeoShape other, Tolerance accuracy) throws NullPointerException {
+        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
+            return null;
+        }
+        Network network = new Network();
+        addTo(network);
+        other.addTo(network);
+        network.explicitIntersections(accuracy);
+        removeWithRelation(network, accuracy, Relate.OUTSIDE);
+        network.removeWithRelation(other, accuracy, Relate.OUTSIDE);
+        MultiLineString lines = valueOfInternal(network);
+        MultiPoint points = MultiPoint.valueOf(network);
+        return new GeoShape(null, lines, points);
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-
+        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
+            return this;
+        }
+        return less(other.toGeoShape(flatness, accuracy), accuracy);
+    }
+    
+    
+    public GeoShape less(GeoShape other, Tolerance accuracy) throws NullPointerException {
+        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
+            return toGeoShape();
+        }
+        Network network = new Network();
+        addTo(network);
+        other.lines.addTo(network);
+        network.explicitIntersections(accuracy);
+        removeWithRelation(network, accuracy, Relate.OUTSIDE);
+        network.removeWithRelation(other, accuracy, Relate.INSIDE);
+        MultiLineString lines = valueOfInternal(network);
+        MultiPoint points = MultiPoint.valueOf(network);
+        return new GeoShape(null, lines, points);
     }
 
+    private void removeWithRelation(final Network network, final Tolerance accuracy, final Relate relate) {
+        network.map.forEach(new VectMapProcessor<VectList>() {
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                if (MultiLineString.this.relateInternal(x, y, accuracy) == relate) {
+                    network.removeVertexInternal(x, y);
+                }
+                return true;
+            }
+        });
+    }
 }

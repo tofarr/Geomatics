@@ -383,9 +383,9 @@ public class VectTest {
     public void testAddTo() {
         Vect vect = Vect.valueOf(3, 7);
         Network network = new Network();
-        vect.addTo(network, Tolerance.DEFAULT);
+        vect.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[[3,7]]", network.toString());
-        vect.addTo(network, Tolerance.DEFAULT);
+        vect.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[[3,7]]", network.toString());
     }
     
@@ -466,7 +466,8 @@ public class VectTest {
         assertSame(rect, Vect.valueOf(15, 20).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Vect a = Vect.valueOf(5, 30);
-        assertEquals(new GeomSet(a, rect), a.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        fail("NotYetImplemented");        
+        //assertEquals(new GeoShape(a, rect), a.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Vect b = Vect.valueOf(10, 25);

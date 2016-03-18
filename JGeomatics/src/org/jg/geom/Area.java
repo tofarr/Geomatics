@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
@@ -22,32 +21,21 @@ import org.jg.util.VectSet;
  */
 public class Area implements Geom {
     
-    public static final Area EMPTY = null;
     public static final Area[] NO_CHILDREN = new Area[0];
 
     final Ring shell;
     final Area[] children;
     Rect bounds;
     SpatialNode<Line> lineIndex;
-    Boolean normalized;
     Double area;
 
-    Area(Ring shell, Area[] children, Boolean normalized) {
+    Area(Ring shell, Area[] children) {
         this.shell = shell;
         this.children = children;
-        this.normalized = normalized;
-    }
-
-    public Area(Ring shell, Collection<Area> children) {
-        this.shell = shell;
-        this.children = ((children == null) || children.isEmpty()) ? NO_CHILDREN : children.toArray(new Area[children.size()]);
-        if ((shell == null) && children.isEmpty()) {
-            throw new IllegalArgumentException("Must define either an outer shell or children");
-        }
     }
 
     public Area(Ring shell) {
-        this(shell, NO_CHILDREN, null);
+        this(shell, NO_CHILDREN);
     }
 
     public static Area valueOf(Network network, Tolerance accuracy) {
@@ -62,7 +50,7 @@ public class Area implements Geom {
             case 0:
                 return null;
             case 1:
-                return new Area(rings.get(0), NO_CHILDREN, true);
+                return new Area(rings.get(0), NO_CHILDREN);
             default:
                 AreaBuilder builder = new AreaBuilder(null);
                 for (Ring ring : rings) {
@@ -70,34 +58,6 @@ public class Area implements Geom {
                 }
                 return builder.build();
         }
-    }
-
-    public Area normalize(Tolerance tolerance) throws NullPointerException {
-        if (normalized) {
-            return this;
-        }
-        Network network = new Network();
-        addTo(network);
-        return valueOf(network, tolerance);
-    }
-    
-    public boolean isNormalized(){
-        Boolean ret = normalized;
-        if(ret == null){
-            ret = isNormalized(Tolerance.ZERO);
-            normalized = ret;
-        }
-        return ret;
-    }
-    
-    public boolean isNormalized(Tolerance accuracy){
-        Network network = new Network();
-        addTo(network);
-        if(network.numLinks() != numLines()){
-            return false;
-        }
-        network.explicitIntersections(accuracy);
-        return (network.numLinks() == numLines());
     }
 
     public double getArea() {
@@ -139,7 +99,8 @@ public class Area implements Geom {
         for (int c = 0; c < transformedChildren.length; c++) {
             transformedChildren[c] = children[c].transform(transform);
         }
-        return new Area(transformedShell, transformedChildren, normalized);
+        Arrays.sort(transformedChildren, COMPARATOR);
+        return new Area(transformedShell, transformedChildren);
     }
 
     @Override
@@ -339,7 +300,11 @@ public class Area implements Geom {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return new GeoShape(this, GeoShape.NO_LINES, null);
+        return toGeoShape();
+    }
+    
+    public GeoShape toGeoShape(){
+        return new GeoShape(this, null, null);
     }
 
     @Override
@@ -347,7 +312,7 @@ public class Area implements Geom {
         Network network = new Network();
         buffer(amt, flatness, accuracy, network);
         network.explicitIntersections(accuracy);
-        return GeoShape.consumeNetwork(network, accuracy);
+        return GeoShape.valueOf(network, accuracy);
     }
 
     void buffer(double amt, Tolerance flatness, Tolerance accuracy, Network result) {
@@ -407,20 +372,14 @@ public class Area implements Geom {
             addDisjoint(other, areas);
             Area[] children = areas.toArray(new Area[areas.size()]);
             Arrays.sort(children, COMPARATOR);
-            Boolean _valid = null;
-            if((normalized == Boolean.TRUE) && (other.normalized == Boolean.TRUE)){
-                _valid = true;
-            }else if((normalized == Boolean.FALSE) || (other.normalized == Boolean.FALSE)){
-                _valid = false;
-            }
-            return new Area(null, children, _valid);
+            return new Area(null, children);
         }
         Network network = new Network();
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        removeWithRelation(network, accuracy, Relate.INSIDE);
-        other.removeWithRelation(network, accuracy, Relate.INSIDE);
+        network.removeWithRelation(this, accuracy, Relate.INSIDE);
+        network.removeWithRelation(other, accuracy, Relate.INSIDE);
         return Area.valueOfInternal(network, accuracy);
     }
 
@@ -429,148 +388,70 @@ public class Area implements Geom {
     }
 
     public Geom union(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        Area area = other.hasArea() ? union(other.getArea(), accuracy) : this;
-        if (!other.hasNonArea()) {
+        Area area = (other.area != null) ? union(other.area, accuracy) : this;
+        if ((other.lines == null) && (other.points == null)) {
             return area;
         }
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) {
             return new GeoShape(area, other.lines, other.points); // can skip mergint points and lines
         }
-        LineString[] lines;
-        if (other.hasLines()) {
+        MultiLineString lines;
+        if (other.lines != null) {
             Network network = new Network();
-            for (LineString ls : other.lines) {
-                ls.addTo(network);
-            }
+            other.lines.addTo(network);
             network.explicitIntersectionsWith(getLineIndex(), accuracy);
-            removeWithRelation(network, accuracy, Relate.INSIDE);
-            List<LineString> lineStrings = network.extractLineStrings();
-            lines = lineStrings.toArray(new LineString[lineStrings.size()]);
+            network.removeWithRelation(this, accuracy, Relate.INSIDE);
+            lines = MultiLineString.valueOfInternal(network);
         } else {
-            lines = GeoShape.NO_LINES;
+            lines = null;
         }
-        VectList points = other.points;
+        MultiPoint points = other.points;
         if (points != null) {
             VectList newPoints = new VectList();
-            for (int p = 0; p < points.size(); p++) {
+            for (int p = 0; p < points.numPoints(); p++) {
                 double x = points.getX(p);
                 double y = points.getY(p);
                 if (relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
                     newPoints.add(x, y);
                 }
             }
-            points = newPoints.isEmpty() ? null : newPoints;
+            if(newPoints.isEmpty()){
+                points = null;
+            }else if(newPoints.size() == other.points.numPoints()){
+                points = other.points;
+            }else{
+                points = new MultiPoint(newPoints);
+            }
         }
-        if ((lines.length == 0) && points.isEmpty()) {
+        if ((lines == null) && (points == null)) {
             return area;
         }
-        return new GeoShape(other.area, lines, points);
+        return new GeoShape(area, lines, points);
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other instanceof Area) {
-            return intersection((Area) other, accuracy);
-        } else if (other instanceof Ring) {
-            return intersection((Ring) other, accuracy);
-        }
-        return intersection(other.toGeoShape(flatness, accuracy), accuracy);
-    }
-
-    public Geom intersection(Area other, Tolerance accuracy) {
+    public GeoShape intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
             return null;
         }
         Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        other.removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        MultiPoint points = MultiPoint.valueOf(network, accuracy);
-        MultiLineString = MultiLineString.valueOf(network, accuracy);
-        Area area =  Area.valueOfInternal(network, accuracy);
-    }
-
-    public Area intersection(Ring other, Tolerance accuracy) {
-        return intersection(other.toArea(), accuracy);
-    }
-
-    public Geom intersection(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
-            return null;
-        }
-        if (other.hasArea()) { // only intersection on area returned
-            return intersection(other.getArea(), accuracy);
-        } else {
-            LineString[] lines;
-            if (other.hasLines()) {
-                Network network = new Network();
-                for (LineString ls : other.lines) {
-                    ls.addTo(network);
-                }
-                network.explicitIntersectionsWith(getLineIndex(), accuracy);
-                removeWithRelation(network, accuracy, Relate.INSIDE);
-                List<LineString> lineStrings = network.extractLineStrings();
-                lines = lineStrings.toArray(new LineString[lineStrings.size()]);
-            } else {
-                lines = GeoShape.NO_LINES;
-            }
-            VectList points = other.points;
-            if (points != null) {
-                VectList newPoints = new VectList();
-                for (int p = 0; p < points.size(); p++) {
-                    double x = points.getX(p);
-                    double y = points.getY(p);
-                    if (relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
-                        newPoints.add(x, y);
-                    }
-                }
-                points = newPoints.isEmpty() ? null : newPoints;
-            }
-            if ((lines.length == 0) && points.isEmpty()) {
-                return null;
-            }
-            return new GeoShape(null, lines, points);
-        }
+        other.addTo(network, flatness, accuracy);
+        network.explicitIntersectionsWith(getLineIndex(), accuracy);
+        network.removeWithRelation(this, accuracy, Relate.OUTSIDE);
+        return GeoShape.valueOfInternal(network, accuracy);
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other instanceof Area) {
-            return less((Area) other, accuracy);
-        } else if (other instanceof Ring) {
-            return less((Ring) other, accuracy);
-        }
-        return less(other.toGeoShape(flatness, accuracy), accuracy);
-    }
-
-    public Area less(Area other, Tolerance accuracy) {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
-            return null;
+            return this;
         }
         Network network = new Network();
         addTo(network);
-        other.addTo(network);
+        other.addTo(network, flatness, accuracy);
         network.explicitIntersections(accuracy);
-        removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        other.removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        return Area.valueOfInternal(network, accuracy);
-    }
-
-    public Area less(Ring other, Tolerance accuracy) {
-        return less(other.toArea(), accuracy);
-    }
-
-    public Geom less(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
-            return null;
-        }
-        if (!other.hasArea()) { // only intersection on area returned
-            return this;
-        } else {
-            return less(other.getArea(), accuracy);
-        }
+        network.removeWithRelation(other, accuracy, Relate.INSIDE);
+        return GeoShape.valueOfInternal(network, accuracy);
     }
 
     @Override
@@ -591,18 +472,23 @@ public class Area implements Geom {
                 && Arrays.equals(this.children, other.children);
     }
 
-    void removeWithRelation(final Network network, final Tolerance accuracy, final Relate relate) {
-        network.map.forEach(new VectMapProcessor<VectList>() {
-
-            @Override
-            public boolean process(double x, double y, VectList value) {
-                if (Area.this.relateInternal(x, y, accuracy) == Relate.INSIDE) {
-                    network.removeVertexInternal(x, y);
-                }
-                return true;
-            }
-        });
+    public int getDepth() {
+        int ret = 0;
+        for(Area child : children){
+            ret = Math.max(ret, child.getDepth());
+        }
+        ret++;
+        return ret;
     }
+    
+    public int numChildren(){
+        return children.length;
+    }
+    
+    public Area getChild(int index){
+        return children[index];
+    }
+
 
     static class AreaBuilder {
 
@@ -624,8 +510,7 @@ public class Area implements Geom {
             for (int c = 0; c < _children.length; c++) {
                 _children[c] = children.get(c).build();
             }
-            Area ret = new Area(shell, _children, true);
-            ret.normalized = true;
+            Area ret = new Area(shell, _children);
             return ret;
         }
 

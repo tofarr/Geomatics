@@ -686,7 +686,7 @@ public class LineTest {
     public void testAddTo() {
         Line a = Line.valueOf(2, 3, 7, 13);
         Network network = new Network();
-        a.addTo(network, Tolerance.DEFAULT);
+        a.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[[2,3, 7,13]]", network.toString());
     }
     
@@ -793,7 +793,8 @@ public class LineTest {
         Line b = new Line(0,100, 100,0);
         Rect c = new Rect(150,0,200,50);
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        Geom expected = new GeomSet(
+        fail("NotYetImplemented");   
+        /*Geom expected = new GeomSet(
             Line.valueOf(0,0,50,50),
             Line.valueOf(0,100,50,50),
             Line.valueOf(50,50,100,0),
@@ -801,7 +802,7 @@ public class LineTest {
         );
         Geom found = a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals(expected, found);
-        assertEquals(new GeomSet(a, c), a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new GeomSet(a, c), a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));*/
     }
 
     @Test

@@ -6,6 +6,7 @@ import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
+import org.jg.util.VectSet;
 
 /**
  *
@@ -13,11 +14,26 @@ import org.jg.util.VectList;
  */
 public class MultiPoint implements Geom {
 
-    public static final MultiPoint EMPTY = new MultiPoint(new VectList());
     final VectList vects;
 
     MultiPoint(VectList vects) {
         this.vects = vects;
+    }
+
+    public static MultiPoint valueOf(VectSet vectSet) throws NullPointerException {
+        if (vectSet.isEmpty()) {
+            return null;
+        }
+        VectList vects = new VectList();
+        vectSet.toList(vects);
+        vects.sort();
+        return new MultiPoint(vects);
+    }
+    
+    public static MultiPoint valueOf(Network network){
+        VectList vects = new VectList();
+        network.extractPoints(vects);
+        return vects.isEmpty() ? null : new MultiPoint(vects);
     }
 
     @Override
@@ -113,6 +129,10 @@ public class MultiPoint implements Geom {
 
     @Override
     public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        addTo(network);
+    }
+    
+    public void addTo(Network network){
         network.addAllVertices(vects);
     }
 
@@ -192,56 +212,44 @@ public class MultiPoint implements Geom {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other instanceof Vect){
-            return ((Vect)other).union(this, accuracy);
-        }else if(other instanceof MultiPoint){
-            return union((MultiPoint)other, accuracy);
-        }else{
+        if (other instanceof Vect) {
+            return ((Vect) other).union(this, accuracy);
+        } else if (other instanceof MultiPoint) {
+            return union((MultiPoint) other, accuracy);
+        } else {
             return union(other.toGeoShape(flatness, accuracy), accuracy);
         }
     }
-    
-    public MultiPoint union(Vect other, Tolerance accuracy){
-        if(relate(other, accuracy) != Relate.OUTSIDE){
-            return this;
-        }
-        int numPoints = vects.size() + 1;
-        VectList points = new VectList(numPoints);
-        points.addAll(vects);
-        points.add(other);
-        points.sort();
-        return new MultiPoint(points);
-    }
-    
-    public MultiPoint union(MultiPoint other, Tolerance accuracy){
+
+    public MultiPoint union(MultiPoint other, Tolerance accuracy) {
         VectList otherVects = other.vects;
-        if(otherVects.isEmpty()){
+        if (otherVects.isEmpty()) {
             return this;
         }
         VectList newVects = new VectList(vects.size() + otherVects.size());
         newVects.addAll(vects);
         VectBuilder vect = new VectBuilder();
-        for(int i = 0; i < otherVects.size(); i++){
+        for (int i = 0; i < otherVects.size(); i++) {
             otherVects.getVect(i, vect);
-            if(relate(vect, accuracy) == Relate.OUTSIDE){
+            if (relate(vect, accuracy) == Relate.OUTSIDE) {
                 newVects.add(vect);
             }
         }
-        if(newVects.size() == vects.size()){
+        if (newVects.size() == vects.size()) {
             return this;
-        }else if(newVects.size() == other.vects.size()){
+        } else if (newVects.size() == other.vects.size()) {
             return other;
         }
         newVects.sort();
         return new MultiPoint(newVects);
     }
-    
-    public GeoShape union(GeoShape other, Tolerance accuracy){
+
+    public GeoShape union(GeoShape other, Tolerance accuracy) {
         VectList newVects = new VectList();
         VectBuilder vect = new VectBuilder();
-        for(int i = 0; i < vects.size(); i++){
+        for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, vect);
-            if(other.relate(vect, accuracy) == Relate.OUTSIDE){
+            if (other.relate(vect, accuracy) == Relate.OUTSIDE) {
                 newVects.add(vect);
             }
         }
@@ -249,64 +257,61 @@ public class MultiPoint implements Geom {
         newVects.size();
         MultiPoint mp = new MultiPoint(newVects);
         GeoShape ret = new GeoShape(other.area, other.lines, mp);
-        ret.normalized = other.normalized;
         return ret;
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other instanceof Vect){
-            return ((Vect)other).intersection(other, flatness, accuracy);
-        }else if(other instanceof MultiPoint){
-            return intersection((MultiPoint)other, accuracy);
-        }else{
+        if (other instanceof Vect) {
+            return ((Vect) other).intersection(other, flatness, accuracy);
+        } else if (other instanceof MultiPoint) {
+            return intersection((MultiPoint) other, accuracy);
+        } else {
             return intersection(other.toGeoShape(flatness, accuracy), accuracy);
         }
-    }    
-    
-    public MultiPoint intersection(MultiPoint other, Tolerance accuracy){
-        if(isEmpty() || other.isEmpty()){
-            return EMPTY;
+    }
+
+    public MultiPoint intersection(MultiPoint other, Tolerance accuracy) {
+        if (isEmpty() || other.isEmpty()) {
+            return null;
         }
-        
+
         VectList otherVects = other.vects;
         VectList newVects = new VectList(Math.min(vects.size(), otherVects.size()));
         VectBuilder vect = new VectBuilder();
-        for(int i = 0; i < otherVects.size(); i++){
+        for (int i = 0; i < otherVects.size(); i++) {
             otherVects.getVect(i, vect);
-            if(relate(vect, accuracy) == Relate.OUTSIDE){
+            if (relate(vect, accuracy) == Relate.OUTSIDE) {
                 newVects.add(vect);
             }
         }
-        if(newVects.size() == vects.size()){
+        if (newVects.size() == vects.size()) {
             return this;
-        }else if(newVects.size() == otherVects.size()){
+        } else if (newVects.size() == otherVects.size()) {
             return other;
         }
         return new MultiPoint(newVects);
     }
-    
-    public GeoShape intersection(GeoShape other, Tolerance accuracy){
+
+    public GeoShape intersection(GeoShape other, Tolerance accuracy) {
         MultiPoint mp = intersection(other.points, accuracy);
-        GeoShape ret = new GeoShape(Area.EMPTY, MultiLineString.EMPTY, other.points);
-        ret.normalized = other.normalized;
+        GeoShape ret = new GeoShape(null, null, other.points);
         return ret;
     }
 
-    
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other instanceof Vect){
-            return ((Vect)other).less(other, flatness, accuracy);
-        }else if(other instanceof MultiPoint){
-            return less((MultiPoint)other, accuracy);
-        }else{
+        if (other instanceof Vect) {
+            return ((Vect) other).less(other, flatness, accuracy);
+        } else if (other instanceof MultiPoint) {
+            return less((MultiPoint) other, accuracy);
+        } else {
             return less(other.toGeoShape(flatness, accuracy), accuracy);
         }
     }
-    
-    public MultiPoint less(MultiPoint other, Tolerance accuracy){
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+
+    public MultiPoint less(MultiPoint other, Tolerance accuracy) {
+        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return this;
         }
         VectList ret = new VectList(vects.size());
@@ -317,18 +322,18 @@ public class MultiPoint implements Geom {
                 ret.add(vect);
             }
         }
-        if(ret.isEmpty()){
-            return EMPTY;
+        if (ret.isEmpty()) {
+            return null;
         }
         return new MultiPoint(ret);
     }
-    
-    public GeoShape less(GeoShape other, Tolerance accuracy){
+
+    public GeoShape less(GeoShape other, Tolerance accuracy) {
         VectList newVects = new VectList();
         VectBuilder vect = new VectBuilder();
-        for(int i = 0; i < vects.size(); i++){
+        for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, vect);
-            if(other.relate(vect, accuracy) == Relate.OUTSIDE){
+            if (other.relate(vect, accuracy) == Relate.OUTSIDE) {
                 newVects.add(vect);
             }
         }
@@ -338,15 +343,30 @@ public class MultiPoint implements Geom {
         GeoShape ret = new GeoShape(other.area, other.lines, mp);
         return ret;
     }
-    
+
     public int numPoints() {
         return vects.size();
     }
-    
-    public boolean isEmpty(){
+
+    public boolean isEmpty() {
         return vects.isEmpty();
     }
 
+    public Vect getPoint(int index) {
+        return vects.getVect(index);
+    }
+
+    public VectBuilder getPoint(int index, VectBuilder target) {
+        return vects.getVect(index, target);
+    }
+    
+    public double getX(int index) throws IndexOutOfBoundsException {
+        return vects.getX(index);
+    }
+
+    public double getY(int index) {
+        return vects.getY(index);
+    }
     static class NearLinkRemover implements SpatialNode.NodeProcessor<Line> {
 
         final double thresholdSq;

@@ -534,16 +534,6 @@ public final class Network implements Serializable, Cloneable {
     }
     
     
-    public LineString[] extractLineStrings(){
-        ArrayList<VectList> results = new ArrayList<>();
-        extractLines(results, false);
-        LineString[] ret = new LineString[results.size()];
-        for(int i = ret.length; i-- > 0;){
-            ret[i] = new LineString(results.get(i));
-        }
-        return ret;
-    }
-
     public Collection<VectList> extractLines(Collection<VectList> results, boolean includePoints) {
         VectList vects = getVects(new VectList());
         VectList result = new VectList();
@@ -859,9 +849,22 @@ public final class Network implements Serializable, Cloneable {
         });
     }
 
-//    void removeInside(GeoShape other, Tolerance accuracy, Tolerance accuracy0) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
+
+    public void removeWithRelation(final Geom geom, final Tolerance accuracy, final Relate relate) {
+        map.forEach(new VectMapProcessor<VectList>() {
+            final VectBuilder vect = new VectBuilder();
+            
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                vect.set(x, y);
+                if (geom.relate(vect, accuracy) == relate) {
+                    removeVertexInternal(x, y);
+                }
+                return true;
+            }
+        });
+    }
+
 
     class IntersectionFinder implements NodeProcessor<Line> {
 

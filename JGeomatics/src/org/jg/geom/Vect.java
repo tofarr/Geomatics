@@ -194,7 +194,6 @@ public final class Vect implements Geom, Comparable<Vect> {
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         GeoShape ret =  new GeoShape(null, null, new MultiPoint(new VectList().add(this)));
-        ret.normalized = true;
         return ret;
     }
 
@@ -311,6 +310,12 @@ public final class Vect implements Geom, Comparable<Vect> {
         }
         
     }
+    
+    public MultiPoint toMultiPoint(){
+        VectList vects = new VectList(1);
+        vects.add(this);
+        return new MultiPoint(vects);
+    }
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
@@ -334,30 +339,23 @@ public final class Vect implements Geom, Comparable<Vect> {
         return new MultiPoint(points);
     }
     
-    public Geom union(MultiPoint other, Tolerance accuracy){
+    public MultiPoint union(MultiPoint other, Tolerance accuracy){
         if(other.relate(this, accuracy) != Relate.OUTSIDE){
             return other;
         }
-        int numPoints = other.numPoints() + 1;
-        if(numPoints == 1){
-            return this;
-        }
-        VectList points = new VectList(numPoints);
+        VectList points = new VectList(other.numPoints() + 1);
         points.addAll(other.vects);
         points.add(this);
         points.sort();
         return new MultiPoint(points);
     }
     
-    public Geom union(GeoShape other, Tolerance accuracy){
-        if(other.isEmpty()){
-            return this;
-        }else if(other.relate(this, accuracy) != Relate.OUTSIDE){
+    public GeoShape union(GeoShape other, Tolerance accuracy){
+        if(other.relate(this, accuracy) != Relate.OUTSIDE){
             return other;
         }
-        MultiPoint points = other.points.union(this, accuracy);
-        return GeoShape.reduce(other.area, other.lines, points);
-        
+        MultiPoint points = this.union(other.points, accuracy);
+        return new GeoShape(other.area, other.lines, points);
     }
 
     @Override

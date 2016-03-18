@@ -578,7 +578,7 @@ public class RectTest {
     public void testAddTo() {
         Network network = new Network();
         Rect a = Rect.valueOf(3, 7, 13, 29);
-        a.addTo(network, Tolerance.DEFAULT);
+        a.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[[3,7, 13,7, 13,29, 3,29, 3,7]]", network.toString());
     }
 
@@ -629,7 +629,8 @@ public class RectTest {
         Area e = new Area(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
         assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new GeomSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        fail("NotYetImplemented");           
+        //assertEquals(new GeomSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         Area expected = new Area(
             new Ring(new VectList(10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20))
         );

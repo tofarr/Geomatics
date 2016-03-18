@@ -7,14 +7,12 @@ import java.io.DataOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import org.jg.geom.LineString.NearLinkRemover;
 import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 import org.jg.util.VectMap;
-import org.jg.util.VectSet;
 
 /**
  * Linear Ring
@@ -470,9 +468,9 @@ public class Ring implements Serializable, Cloneable, Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) {
+    public Area buffer(double amt, Tolerance flatness, Tolerance accuracy) {
         if (amt == 0) {
-            return this;
+            return new Area(this, Area.NO_CHILDREN);
         }
         VectList buffer = getEdgeBuffer(amt, flatness, accuracy);
         Network network = new Network();
@@ -587,7 +585,7 @@ public class Ring implements Serializable, Cloneable, Geom {
     }
 
     public GeoShape toGeoShape() {
-        return new GeoShape(toArea(), GeoShape.NO_LINES, null);
+        return new GeoShape(toArea(), null, null);
     }
 
     @Override

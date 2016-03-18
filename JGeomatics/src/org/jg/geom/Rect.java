@@ -434,7 +434,7 @@ public class Rect implements Geom {
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         Area area = toArea();
-        GeoShape ret = new GeoShape(area, GeoShape.NO_LINES, null);
+        GeoShape ret = new GeoShape(area, null, null);
         ret.bounds = this;
         return ret;
     }
@@ -531,7 +531,7 @@ public class Rect implements Geom {
                 return intersection(otherRect);
             }
         } else {
-            return toArea().intersection(other.toGeoShape(flatness, accuracy), accuracy);
+            return toArea().intersection(other, flatness, accuracy);
         }
     }
 

@@ -1,12 +1,16 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
+import org.jg.util.VectMap.VectMapProcessor;
 
 //TODO: Do not need multi point
 //TODO: Rename to LineGeom
@@ -16,31 +20,25 @@ import org.jg.util.VectList;
  */
 public class GeoShape implements Geom {
 
-    static final LineString[] NO_LINES = new LineString[0];
-    public static final GeoShape EMPTY = new GeoShape(null, NO_LINES, null, true, null);
-
     static Geom reduce(Area area, MultiLineString lines, MultiPoint mp) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     // Area for this geom (may be null) 
-    final Area area;
+    public final Area area;
     //ine strings which are not part of an area 
-    final MultiLineString lines;
+    public final MultiLineString lines;
     // Points which are not part of a line 
-    final MultiPoint points;
-    // Flag indicating whether or not this geom is normalized 
-    Boolean normalized;
+    public final MultiPoint points;
     // Bounds for this geo shape 
     Rect bounds;
 
-    GeoShape(Area area, MultiLineString lines, MultiPoint points, Boolean normalized, Rect bounds) {
+    GeoShape(Area area, MultiLineString lines, MultiPoint points, Rect bounds) {
         this(area, lines, points);
-        this.normalized = normalized;
         this.bounds = bounds;
     }
 
     GeoShape(Area area, MultiLineString lines, MultiPoint points) {
-        if(true){
+        if (true) {
             throw new UnsupportedOperationException("Rename to LineGeom");
         }
         this.area = area;
@@ -55,11 +53,11 @@ public class GeoShape implements Geom {
     }
 
     static GeoShape valueOfInternal(Network network, Tolerance accuracy) {
-        if(true){
+        if (true) {
             throw new UnsupportedOperationException("Can return other types of geom?");
         }
-        VectList points = new VectList();
-        network.extractPoints(points);
+        VectList pointVects = new VectList();
+        network.extractPoints(pointVects);
         List<VectList> linePaths = new ArrayList<>();
         network.extractHangLines(linePaths);
         Area area = Area.valueOfInternal(network, accuracy);
@@ -68,39 +66,36 @@ public class GeoShape implements Geom {
             for (VectList linePath : linePaths) {
                 lineNetwork.addAllLinks(linePath);
             }
-            lineNetwork.addAllVertices(points);
-            area.removeWithRelation(lineNetwork, accuracy, Relate.INSIDE);
-            points.clear();
-            network.extractPoints(points);
+            lineNetwork.addAllVertices(pointVects);
+            network.removeWithRelation(area, accuracy, Relate.INSIDE);
+            pointVects.clear();
+            network.extractPoints(pointVects);
             linePaths.clear();
             network.extractHangLines(linePaths);
         }
-
-        LineString[] lines = linePaths.isEmpty() ? NO_LINES : new LineString[linePaths.size()];
-        for (int i = lines.length; i-- > 0;) {
-            LineString line = new LineString(linePaths.get(i));
-            line.normalized = true;
-            lines[i] = line;
+        MultiPoint points = pointVects.isEmpty() ? null : new MultiPoint(pointVects);
+        MultiLineString lines = null;
+        if (!linePaths.isEmpty()) {
+            LineString[] lineStrings = new LineString[linePaths.size()];
+            for (int i = lineStrings.length; i-- > 0;) {
+                lineStrings[i] = new LineString(linePaths.get(i));
+            }
         }
-        if (points.isEmpty()) {
-            points = null;
-        }
-
         return new GeoShape(area, lines, points);
     }
 
     @Override
     public Rect getBounds() {
         Rect ret = bounds;
-        if(ret == null){
+        if (ret == null) {
             RectBuilder builder = new RectBuilder();
-            if(area != null){
+            if (area != null) {
                 builder.add(area.getBounds());
             }
-            for(int i = lines.length; i-- > 0;){
-                builder.add(lines[i].getBounds());
+            if (lines != null) {
+                builder.add(lines.getBounds());
             }
-            if(points != null){
+            if (points != null) {
                 builder.add(points.getBounds());
             }
             ret = builder.build();
@@ -112,61 +107,114 @@ public class GeoShape implements Geom {
     @Override
     public Geom transform(Transform transform) throws NullPointerException {
         Area _area = (area == null) ? null : area.transform(transform);
-        LineString[] _lines = new LineString[lines.length];
-        for(int i = _lines.length; i-- > 0;){
-            _lines[i] = lines[i].transform(transform);
-        }
-        Arrays.sort(_lines, COMPARATOR);
-        VectList _points = null;
-        if(points != null){
-            _points = points.clone();
-            _points.transform(transform);
-            _points.sort();
-        }
+        MultiLineString _lines = (lines == null) ? null : lines.transform(transform);
+        MultiPoint _points = (points == null) ? null : points.transform(transform);
         return new GeoShape(_area, _lines, _points);
     }
 
     @Override
     public PathIterator pathIterator() {
-        return new PathIterator(){
-            int state = -1;
+        return new PathIterator() {
+            int state = nextPathIterator(-1);
+            PathIterator iter;
 
             @Override
             public int getWindingRule() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                return WIND_NON_ZERO;
             }
 
             @Override
             public boolean isDone() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                return (iter == null);
             }
 
             @Override
             public void next() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                if (iter.isDone()) {
+                    nextPathIterator(state);
+                } else {
+                    iter.next();
+                }
             }
 
             @Override
             public int currentSegment(float[] coords) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                return iter.currentSegment(coords);
             }
 
             @Override
             public int currentSegment(double[] coords) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                return iter.currentSegment(coords);
             }
-            
+
+            int nextPathIterator(int state) {
+                state++;
+                Geom geom;
+                switch (state) {
+                    case 0:
+                        geom = area;
+                        break;
+                    case 1:
+                        geom = lines;
+                        break;
+                    case 2:
+                        geom = points;
+                        break;
+                    default:
+                        geom = null;
+                }
+                if ((geom == null) && (state < 3)) {
+                    return nextPathIterator(state);
+                }
+                iter = geom.pathIterator();
+                return state;
+            }
+
         };
     }
 
+    public void addTo(Network network){
+        if(area != null){
+            area.addTo(network);
+        }
+        if(lines != null){
+            lines.addTo(network);
+        }
+        if(points != null){
+            points.addTo(network);
+        }
+    }
+    
     @Override
-    public Geom clone() {
+    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public GeoShape clone() {
+        return this;
     }
 
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            appendable.append("[\"LG\"");
+            if (area != null) {
+                appendable.append(',');
+                area.toString(appendable);
+            }
+            if (lines != null) {
+                appendable.append(',');
+                lines.toString(appendable);
+            }
+            if (points != null) {
+                appendable.append(',');
+                points.toString(appendable);
+            }
+            appendable.append(']');
+        } catch (IOException ex) {
+            throw new GeomException("Error writing", ex);
+        }
     }
 
     @Override
@@ -181,178 +229,306 @@ public class GeoShape implements Geom {
 
     @Override
     public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if((points != null) && (points.relate(vect, tolerance) == Relate.TOUCH)){
+            return Relate.TOUCH;
+        }
+        if((lines != null) && (lines.relate(vect, tolerance) == Relate.TOUCH)){
+            return Relate.TOUCH;
+        }
+        if(area == null){
+            return area.relate(vect, tolerance);
+        }
+        return Relate.OUTSIDE;
     }
 
     @Override
     public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if((points != null) && (points.relate(vect, tolerance) == Relate.TOUCH)){
+            return Relate.TOUCH;
+        }
+        if((lines != null) && (lines.relate(vect, tolerance) == Relate.TOUCH)){
+            return Relate.TOUCH;
+        }
+        if(area == null){
+            return area.relate(vect, tolerance);
+        }
+        return Relate.OUTSIDE;
     }
 
     @Override
-    public GeoShape union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public GeoShape union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return union(other.toGeoShape(flatness, accuracy), accuracy);
     }
 
-    public GeoShape union(GeoShape other) {
-
+    public GeoShape union(GeoShape other, Tolerance accuracy) {
+        final Area _area;
+        final MultiLineString _lines;
+        final MultiPoint _points;
+        if(area == null){
+            _area = other.area;
+        }else if(other.area == null){
+            _area = area;
+        }else{
+            _area = area.union(other.area, accuracy);
+        }
+        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // No network - just merge 
+            if(lines == null){
+                _lines = other.lines;
+            }else if(other.lines == null){
+                _lines = lines;
+            }else{
+                _lines = lines.union(other.lines, accuracy);
+            }
+            if(points == null){
+                _points = other.points;
+            }else if(other.points == null){
+                _points = points;
+            }else{
+                _points = points.union(other.points, accuracy);
+            }
+            return new GeoShape(_area, _lines, _points, getBounds().union(other.getBounds()));
+        }else{
+            Network network = new Network();
+            if(lines != null){
+                lines.addTo(network);
+            }
+            if(other.lines != null){
+                other.lines.addTo(network);
+            }
+            if(points != null){
+                points.addTo(network);
+            }
+            if(other.points != null){
+                other.points.addTo(network);
+            }
+            network.explicitIntersections(accuracy);
+            if(_area != null){
+                network.removeWithRelation(_area, accuracy, Relate.INSIDE);
+            }
+            _lines = MultiLineString.valueOfInternal(network);
+            _points = MultiPoint.valueOf(network);
+            return new GeoShape(_area, _lines, _points, getBounds().union(other.getBounds()));
+        }
     }
 
     @Override
-    public GeoShape intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public GeoShape intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return null;
+        }
+        return union(other.toGeoShape(flatness, accuracy), accuracy);
     }
 
-    public GeoShape intersection(GeoShape other) {
-
+    public GeoShape intersection(GeoShape other, final Tolerance accuracy) {
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return null;
+        }
+        
+        //First we get an area if there was one...
+        final Area _area;
+        if((area != null) && (other.area != null)){
+            Network areaNetwork = new Network();
+            area.addTo(areaNetwork);
+            other.area.addTo(areaNetwork);
+            areaNetwork.removeWithRelation(area, accuracy, Relate.OUTSIDE);
+            areaNetwork.removeWithRelation(other.area, accuracy, Relate.OUTSIDE);
+            _area = Area.valueOfInternal(areaNetwork, accuracy);
+        }else
+            _area = null;
+        
+        //Next we build a network for everything else
+        final Network network = new Network();
+        if(lines != null){
+            lines.addTo(network);
+        }
+        if(other.lines != null){
+            other.lines.addTo(network);
+        }
+        if(points != null){
+            points.addTo(network);
+        }
+        if(other.points != null){
+            other.points.addTo(network);
+        }
+        if(network.numVects() == 0){
+            return new GeoShape(_area, null, null);
+        }
+        network.explicitIntersections(accuracy);
+        
+        network.removeWithRelation(this, accuracy, Relate.OUTSIDE);
+        network.removeWithRelation(other, accuracy, Relate.OUTSIDE);
+        
+        if(_area != null){
+            //Remove all vertices which are inside, or touch and are not linked to an external vertex
+            network.map.forEach(new VectMapProcessor<VectList>(){
+                @Override
+                public boolean process(double x, double y, VectList links) {
+                    Relate relate = area.relateInternal(x, y, accuracy);
+                    if(relate == Relate.INSIDE){
+                        network.removeVertexInternal(x, y);
+                    }else if(relate == Relate.TOUCH){
+                        for(int i = links.size(); i-- > 0;){
+                            if(area.relateInternal(links.getX(i), links.getY(i), accuracy) == Relate.OUTSIDE){
+                                return true; // linked to an external vertex
+                            }
+                            network.removeVertexInternal(x, y);
+                        }
+                    }
+                    return true;
+                }
+            
+            });
+        }
+        
+        MultiPoint _points = MultiPoint.valueOf(network);
+        MultiLineString _lines = MultiLineString.valueOfInternal(network);
+        return new GeoShape(_area, _lines, _points);
     }
 
     @Override
     public GeoShape less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+        //if other has an area
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public GeoShape less(GeoShape other) {
-
-    }
-
-    public GeoShape normalize(Tolerance accuracy) {
-
-    }
-
-    public String toWKT() {
-
-    }
-
-//    void addNonRingsTo(Network network) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
-//
-//    void addNonRingsTo(Network network) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
-    Area getArea() {
-
-    }
-
-    boolean hasArea() {
-
-    }
-
-    boolean hasPoints() {
-
-    }
-
-    boolean hasLines() {
-
-    }
-
-    boolean hasNonLines() {
-
-    }
-
-    boolean hasNonArea() {
-
-    }
-
-    boolean hasNonPoints() {
-
-    }
-
-    boolean isEmpty() {
-
-    }
-
-    void addTo(Network network) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    void addLinesTo(Network network) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    void removeWithRelation(Network network, Tolerance accuracy, Relate relate) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    void addLinesTo(Network network) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    void addLinesTo(Network network) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public String toWKT() {
-        final VectList points = new VectList();
-        forEachVertex(new VertexProcessor() {
-            @Override
-            public boolean process(double x, double y, int numLinks) {
-                if (numLinks == 0) {
-                    points.add(x, y);
-                }
-                return true;
-            }
-
-        });
+    public String toWkt() {
         StringBuilder str = new StringBuilder();
-        if (points.size() == 0) {
-            str.append("MULTILINESTRING(");
-            List<VectList> lineStrings = new ArrayList<>();
-            extractLines(lineStrings, false);
-            for (int i = 0; i < lineStrings.size(); i++) {
-                VectList lineString = lineStrings.get(i);
-                if (i != 0) {
-                    str.append(',');
-                }
-                str.append('(');
-                for (int j = 0; j < lineString.size(); j++) {
-                    if (j != 0) {
-                        str.append(", ");
-                    }
-                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
-                }
-                str.append(')');
-            }
-        } else if (points.size() == map.size()) {
-            str.append("MULTIPOINT(");
-            for (int i = 0; i < points.size(); i++) {
-                if (i != 0) {
-                    str.append(", ");
-                }
-                str.append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i)));
-            }
-        } else {
-            str.append("GEOMETRYCOLLECTION(");
-            for (int i = 0; i < points.size(); i++) {
-                if (i != 0) {
-                    str.append(",");
-                }
-                str.append("POINT(").append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i))).append(')');
-            }
-            List<VectList> lineStrings = new ArrayList<>();
-            extractLines(lineStrings, false);
-            for (int i = 0; i < lineStrings.size(); i++) {
-                VectList lineString = lineStrings.get(i);
-                str.append(",LINESTRING(");
-                for (int j = 0; j < lineString.size(); j++) {
-                    if (j != 0) {
-                        str.append(", ");
-                    }
-                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
-                }
-                str.append(')');
-            }
-        }
-        str.append(')');
+        toWkt(str);
         return str.toString();
     }
-
-    int numPoints() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    
+    public void toWkt(Appendable appendable) throws GeomException {
+        try{
+            if((area == null) && (lines == null)){
+                toPointWkt(appendable);
+            }else if((area == null) && (points == null)){
+                toLineWkt(appendable);
+            }else if((lines == null) && (points == null)){
+                toPolygonWkt(appendable);
+            }else{
+                toCollectionWkt(appendable);
+            }
+        }catch(IOException ex){
+            throw new GeomException("Error writing WKT", ex);
+        }
+    }
+    
+    private void toPointWkt(Appendable appendable) throws IOException {
+        if(points.numPoints() == 1){
+            toPointWkt(points.getX(0), points.getY(0), appendable);
+        }else{
+            appendable.append("MULTIPOINT");
+            toVectsWkt(points.vects, appendable);
+        }
+    }
+    
+    private void toLineWkt(Appendable appendable) throws IOException {
+        if(lines.numLines() == 1){
+            appendable.append("LINESTRING");
+            toVectsWkt(lines.getLineString(0).vects, appendable);
+        }else{
+            appendable.append("MULTILINESTRING");
+            toVectsWkt(points.vects, appendable);
+        }
+    }
+    
+    private void toPolygonWkt(Appendable appendable) throws IOException {
+        if((area.shell != null) && (area.getDepth() < 3)){
+            toPolygonWkt(area, appendable);
+        }else{
+            appendable.append("MULTIPOLYGON(");
+            if(area.shell != null){
+                toMultiPolygonWkt(area, appendable);    
+            }else{
+                for(int i = 0; i < area.numChildren(); i++){
+                    if(i != 0){
+                        appendable.append(',');
+                    }
+                    toMultiPolygonWkt(area.getChild(i), appendable);
+                }
+            }
+            appendable.append(')');
+            
+        }
+    }
+    
+    private void toCollectionWkt(Appendable appendable) throws IOException {
+        appendable.append("GEOMETRYCOLLECTION(");
+        boolean comma = false;
+        if(area != null){
+            
+        }
+        if(lines != null){
+            for(int i = 0; i < lines.numLines(); i++){
+                if(comma){
+                    appendable.append(',');
+                }else{
+                    comma = true;
+                }
+                appendable.append("LINESTRING");
+                toVectsWkt(lines.getLineString(i).vects, appendable);
+            }
+        }
+        if(points != null){
+            for(int i = 0; i < points.numPoints(); i++){
+                if(comma){
+                    appendable.append(',');
+                }else{
+                    comma = true;
+                }
+                toPointWkt(points.getX(i), points.getY(i), appendable);
+            }
+        }
+        appendable.append(')');
+    }
+    
+    private static void toPointWkt(double x, double y, Appendable appendable) throws IOException{
+        appendable.append("POINT(").append(Vect.ordToStr(x)).append(' ').append(Vect.ordToStr(y)).append(')');
+    }
+  
+    private static void toVectsWkt(VectList vects, Appendable appendable) throws IOException {
+        appendable.append('(');
+        for (int i = 0; i < vects.size(); i++) {
+            if (i == 0) {
+                appendable.append(", ");
+            }
+            appendable.append(Vect.ordToStr(vects.getX(0)))
+                    .append(' ').append(Vect.ordToStr(vects.getY(0)));
+        }
+        appendable.append(')');
     }
 
-    void addPointsTo(VectList points) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private static void toMultiPolygonWkt(Area area, Appendable appendable) throws IOException {
+        appendable.append('(');
+        toVectsWkt(area.shell.vects, appendable);
+        for(int i = 0; i < area.numChildren(); i++){
+            appendable.append(',');
+            toVectsWkt(area.getChild(i).shell.vects, appendable);
+        }
+        appendable.append(')');
+        for(int i = 0; i < area.numChildren(); i++){
+            Area child = area.getChild(i);
+            for(int j = 0; j < child.numChildren(); j++){
+                appendable.append(',');
+                toMultiPolygonWkt(child.getChild(j), appendable);
+            }
+        }
+    }
+    
+    private static void toPolygonWkt(Area area, Appendable appendable) throws IOException{
+        appendable.append("POLYGON(");
+        toVectsWkt(area.shell.vects, appendable);
+        for(int i = 0; i < area.numChildren(); i++){
+            appendable.append(',');
+            toVectsWkt(area.getChild(i).shell.vects, appendable);
+        }
+        appendable.append(')');
+        for(int i = 0; i < area.numChildren(); i++){
+            Area child = area.getChild(i);
+            for(int j = 0; j < child.numChildren(); j++){
+                appendable.append(',');
+                toPolygonWkt(child.getChild(j), appendable);
+            }
+        }   
     }
 }
