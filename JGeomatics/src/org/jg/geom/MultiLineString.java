@@ -145,8 +145,8 @@ public class MultiLineString implements Geom {
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         return toGeoShape();
     }
-    
-    public GeoShape toGeoShape(){
+
+    public GeoShape toGeoShape() {
         return new GeoShape(null, this, null);
     }
 
@@ -248,25 +248,15 @@ public class MultiLineString implements Geom {
         network.explicitIntersections(accuracy);
         Area area = other.area;
         if (area != null) {
-            network.removeWithRelation(area, accuracy, Relate.INSIDE);
+            VectBuilder workingVect = new VectBuilder();
+            network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, workingVect);
+            network.removeTouchingInternal(area, accuracy, workingVect);
         }
         MultiLineString lines = new MultiLineString(LineString.valueOf(network));
 
         MultiPoint points = other.points;
         if (points != null) {
-            VectList newPoints = new VectList();
-            for (int p = 0; p < points.numPoints(); p++) {
-                double x = points.getX(p);
-                double y = points.getY(p);
-                if (relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
-                    newPoints.add(x, y);
-                }
-            }
-            if (newPoints.size() == 0) {
-                points = null;
-            } else if (newPoints.size() != points.numPoints()) {
-                points = new MultiPoint(newPoints);
-            }
+            points = points.less(this, accuracy);
         }
         return new GeoShape(area, lines, points);
     }
@@ -288,10 +278,14 @@ public class MultiLineString implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        network.removeWithRelation(other, accuracy, Relate.OUTSIDE);
+        VectBuilder workingVect = new VectBuilder();
+        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
         MultiLineString lines = valueOfInternal(network);
         MultiPoint points = MultiPoint.valueOf(network);
+        if ((lines == null) && (points == null)) {
+            return null; // no intersection
+        }
         return new GeoShape(null, lines, points);
     }
 
@@ -300,34 +294,25 @@ public class MultiLineString implements Geom {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
             return this;
         }
-        return less(other.toGeoShape(flatness, accuracy), accuracy);
+        MultiLineString ret = less(other.toGeoShape(flatness, accuracy), accuracy);
+        if ((ret != null) && (ret.numLines() == 1)) {
+            return ret.getLineString(0);
+        }
+        return ret;
     }
-    
-    
-    public GeoShape less(GeoShape other, Tolerance accuracy) throws NullPointerException {
+
+    public MultiLineString less(GeoShape other, Tolerance accuracy) throws NullPointerException {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            return toGeoShape();
+            return this;
         }
         Network network = new Network();
         addTo(network);
-        other.lines.addTo(network);
+        other.addTo(network);
         network.explicitIntersections(accuracy);
-        removeWithRelation(network, accuracy, Relate.OUTSIDE);
-        network.removeWithRelation(other, accuracy, Relate.INSIDE);
+        VectBuilder workingVect = new VectBuilder();
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
+        network.removeTouchingInternal(other, accuracy, workingVect);
         MultiLineString lines = valueOfInternal(network);
-        MultiPoint points = MultiPoint.valueOf(network);
-        return new GeoShape(null, lines, points);
-    }
-
-    private void removeWithRelation(final Network network, final Tolerance accuracy, final Relate relate) {
-        network.map.forEach(new VectMapProcessor<VectList>() {
-            @Override
-            public boolean process(double x, double y, VectList value) {
-                if (MultiLineString.this.relateInternal(x, y, accuracy) == relate) {
-                    network.removeVertexInternal(x, y);
-                }
-                return true;
-            }
-        });
+        return lines;
     }
 }

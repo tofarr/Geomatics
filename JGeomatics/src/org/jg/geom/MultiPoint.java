@@ -263,58 +263,41 @@ public class MultiPoint implements Geom {
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other instanceof Vect) {
-            return ((Vect) other).intersection(other, flatness, accuracy);
-        } else if (other instanceof MultiPoint) {
-            return intersection((MultiPoint) other, accuracy);
-        } else {
-            return intersection(other.toGeoShape(flatness, accuracy), accuracy);
+        MultiPoint ret = intersection(other, accuracy);
+        if((ret != null) && (ret.numPoints() == 1)){
+            return ret.getPoint(0);
         }
+        return ret;
     }
-
-    public MultiPoint intersection(MultiPoint other, Tolerance accuracy) {
-        if (isEmpty() || other.isEmpty()) {
-            return null;
-        }
-
-        VectList otherVects = other.vects;
-        VectList newVects = new VectList(Math.min(vects.size(), otherVects.size()));
+    
+    public MultiPoint intersection(Geom other, Tolerance accuracy) throws NullPointerException {
+        VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
-        for (int i = 0; i < otherVects.size(); i++) {
-            otherVects.getVect(i, vect);
-            if (relate(vect, accuracy) == Relate.OUTSIDE) {
-                newVects.add(vect);
+        for (int i = 0; i < vects.size(); i++) {
+            vects.getVect(i, vect);
+            if (other.relate(vect, accuracy) != Relate.OUTSIDE) {
+                ret.add(vect);
             }
         }
-        if (newVects.size() == vects.size()) {
+        if (ret.isEmpty()) {
+            return null;
+        }else if(ret.size() == vects.size()){
             return this;
-        } else if (newVects.size() == otherVects.size()) {
-            return other;
+        }else{
+            return new MultiPoint(ret);
         }
-        return new MultiPoint(newVects);
-    }
-
-    public GeoShape intersection(GeoShape other, Tolerance accuracy) {
-        MultiPoint mp = intersection(other.points, accuracy);
-        GeoShape ret = new GeoShape(null, null, other.points);
-        return ret;
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other instanceof Vect) {
-            return ((Vect) other).less(other, flatness, accuracy);
-        } else if (other instanceof MultiPoint) {
-            return less((MultiPoint) other, accuracy);
-        } else {
-            return less(other.toGeoShape(flatness, accuracy), accuracy);
+        MultiPoint ret = less(other, accuracy);
+        if((ret != null) && (ret.numPoints() == 1)){
+            return ret.getPoint(0);
         }
+        return ret;
     }
-
-    public MultiPoint less(MultiPoint other, Tolerance accuracy) {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
-            return this;
-        }
+    
+    public MultiPoint less(Geom other, Tolerance accuracy) throws NullPointerException {
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
@@ -325,32 +308,15 @@ public class MultiPoint implements Geom {
         }
         if (ret.isEmpty()) {
             return null;
+        }else if(ret.size() == vects.size()){
+            return this;
+        }else{
+            return new MultiPoint(ret);
         }
-        return new MultiPoint(ret);
-    }
-
-    public GeoShape less(GeoShape other, Tolerance accuracy) {
-        VectList newVects = new VectList();
-        VectBuilder vect = new VectBuilder();
-        for (int i = 0; i < vects.size(); i++) {
-            vects.getVect(i, vect);
-            if (other.relate(vect, accuracy) == Relate.OUTSIDE) {
-                newVects.add(vect);
-            }
-        }
-        newVects.addAll(other.points.vects);
-        newVects.size();
-        MultiPoint mp = new MultiPoint(newVects);
-        GeoShape ret = new GeoShape(other.area, other.lines, mp);
-        return ret;
     }
 
     public int numPoints() {
         return vects.size();
-    }
-
-    public boolean isEmpty() {
-        return vects.isEmpty();
     }
 
     public Vect getPoint(int index) {

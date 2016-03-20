@@ -669,8 +669,12 @@ public class RectTest {
                     new Area(new Ring(new VectList(11,21, 29,21, 29,39, 11,39, 11,21)))
                 }
         ), null, null), a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new Area(
+        GeoShape e = new GeoShape(new Area(
             new Ring(new VectList(10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20))
-        ), a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        ), null, null);
+        GeoShape f = new GeoShape(new Area(
+            new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
+        ), null, null);
+        assertEquals(f, a.less(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 }

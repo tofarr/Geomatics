@@ -69,7 +69,10 @@ public class LineString implements Geom {
         if(ret.isEmpty()){
             return EMPTY;
         }
-        LineString[] lines = ret.toArray(new LineString[ret.size()]);
+        LineString[] lines = new LineString[ret.size()];
+        for(int i = 0; i < lines.length; i++){
+            lines[i] = new LineString(ret.get(i));
+        }
         return lines;
     }
 

@@ -459,6 +459,27 @@ public class Ring implements Serializable, Cloneable, Geom {
         }
         return true;
     }
+    
+    public Vect getVect(int index){
+        return vects.getVect(index);
+    }
+    
+    public VectBuilder getVect(int index, VectBuilder target){
+        return vects.getVect(index, target);
+    }
+    
+    public Line getLine(int index){
+        return vects.getLine(index);
+    }
+
+    public double getX(int index) throws IndexOutOfBoundsException {
+        return vects.getX(index);
+    }
+
+    public double getY(int index) {
+        return vects.getY(index);
+    }
+    
 
     public VectList getVects(VectList target) {
         return target.addAll(vects);

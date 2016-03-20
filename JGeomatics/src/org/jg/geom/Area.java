@@ -378,8 +378,9 @@ public class Area implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        network.removeWithRelation(this, accuracy, Relate.INSIDE);
-        network.removeWithRelation(other, accuracy, Relate.INSIDE);
+        VectBuilder workingVect = new VectBuilder();
+        network.removeInsideOrOutsideInternal(this, accuracy, Relate.INSIDE, workingVect);
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
         return Area.valueOfInternal(network, accuracy);
     }
 
@@ -395,33 +396,13 @@ public class Area implements Geom {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) {
             return new GeoShape(area, other.lines, other.points); // can skip mergint points and lines
         }
-        MultiLineString lines;
-        if (other.lines != null) {
-            Network network = new Network();
-            other.lines.addTo(network);
-            network.explicitIntersectionsWith(getLineIndex(), accuracy);
-            network.removeWithRelation(this, accuracy, Relate.INSIDE);
-            lines = MultiLineString.valueOfInternal(network);
-        } else {
-            lines = null;
+        MultiLineString lines = other.lines;
+        if (lines != null) {
+            lines = lines.less(area.toGeoShape(), accuracy);
         }
         MultiPoint points = other.points;
         if (points != null) {
-            VectList newPoints = new VectList();
-            for (int p = 0; p < points.numPoints(); p++) {
-                double x = points.getX(p);
-                double y = points.getY(p);
-                if (relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
-                    newPoints.add(x, y);
-                }
-            }
-            if(newPoints.isEmpty()){
-                points = null;
-            }else if(newPoints.size() == other.points.numPoints()){
-                points = other.points;
-            }else{
-                points = new MultiPoint(newPoints);
-            }
+            points = points.less(this, accuracy);
         }
         if ((lines == null) && (points == null)) {
             return area;
@@ -438,13 +419,84 @@ public class Area implements Geom {
         addTo(network);
         other.addTo(network, flatness, accuracy);
         network.explicitIntersections(accuracy);
-        network.removeWithRelation(this, accuracy, Relate.OUTSIDE);
-        network.removeWithRelation(other, accuracy, Relate.OUTSIDE);
+        VectBuilder workingVect = new VectBuilder();
+        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
         return GeoShape.valueOfInternal(network, accuracy);
     }
 
+    public GeoShape intersection(Area other, Tolerance accuracy) throws NullPointerException {
+        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
+            return null;
+        }
+        Network network = new Network();
+        addTo(network);
+        other.addTo(network);
+        network.explicitIntersections(accuracy);
+        VectBuilder workingVect = new VectBuilder();
+        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
+        return GeoShape.valueOfInternal(network, accuracy);
+    }
+    
+    public Area less(final Area other, final Tolerance accuracy) throws NullPointerException {
+        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
+            return this;
+        }
+        
+        //remove inside other
+        //remove outside this
+        //still have case where an external ring needs to be chopped
+        
+        //traverse polygons CCW always taking next CW link
+        //disgard if not CCW
+        
+        //if ccw mark processed
+        //only add if at least one line does not touch both?
+        //DOES NOT WORK. (Inner ring which already exists)
+        
+        //Why not build intersection using inside and outside
+        //build union
+        //any link which touches both and is in union must die.
+        
+        final VectBuilder workingVect = new VectBuilder();
+        
+        final Network network = new Network();
+        addTo(network);
+        other.addTo(network);
+        network.explicitIntersections(accuracy);
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
+        
+        final Network union = network.clone();
+        union.removeInsideOrOutsideInternal(this, accuracy, Relate.INSIDE, workingVect);
+        
+        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
+        
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                //remove any link which touches both and is in the union
+                for(int i = links.size(); i-- > 0;){
+                    double bx = links.getX(i);
+                    double by = links.getY(i);
+                    if(Vect.compare(x, y, bx, by) < 0){
+                        workingVect.set((x + bx) / 2, (y + by) / 2);
+                        if(union.hasLink(x, y, bx, by) && (relate(workingVect, accuracy) == Relate.TOUCH)
+                                 && (other.relate(workingVect, accuracy) == Relate.TOUCH)){
+                            network.removeLinkInternal(x, y, bx, by);
+                        }
+                    }
+                }
+                return true;
+            }
+        
+        });
+        
+        return Area.valueOfInternal(network, accuracy);
+    }
+    
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Area less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
             return this;
         }
@@ -452,8 +504,12 @@ public class Area implements Geom {
         addTo(network);
         other.addTo(network, flatness, accuracy);
         network.explicitIntersections(accuracy);
-        network.removeWithRelation(other, accuracy, Relate.INSIDE);
-        return GeoShape.valueOfInternal(network, accuracy);
+        
+        VectBuilder workingVect = new VectBuilder();
+        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
+        network.removeTouchingInternal(other, accuracy, workingVect);
+        
+        return Area.valueOfInternal(network, accuracy);
     }
 
     @Override

@@ -65,7 +65,7 @@ public class GeoShape implements Geom {
                 lineNetwork.addAllLinks(linePath);
             }
             lineNetwork.addAllVertices(pointVects);
-            network.removeWithRelation(area, accuracy, Relate.INSIDE);
+            network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, new VectBuilder());
             pointVects.clear();
             lineNetwork.extractPoints(pointVects);
             linePaths.clear();
@@ -265,9 +265,8 @@ public class GeoShape implements Geom {
     }
 
     public GeoShape union(GeoShape other, Tolerance accuracy) {
-        final Area _area;
-        final MultiLineString _lines;
-        final MultiPoint _points;
+        
+        Area _area;
         if (area == null) {
             _area = other.area;
         } else if (other.area == null) {
@@ -275,44 +274,35 @@ public class GeoShape implements Geom {
         } else {
             _area = area.union(other.area, accuracy);
         }
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // No network - just merge 
-            if (lines == null) {
-                _lines = other.lines;
-            } else if (other.lines == null) {
-                _lines = lines;
-            } else {
-                _lines = lines.union(other.lines, accuracy);
-            }
-            if (points == null) {
-                _points = other.points;
-            } else if (other.points == null) {
-                _points = points;
-            } else {
-                _points = points.union(other.points, accuracy);
-            }
-            return new GeoShape(_area, _lines, _points, getBounds().union(other.getBounds()));
+        
+        MultiLineString _lines;
+        if (lines == null) {
+            _lines = other.lines;
+        } else if (other.lines == null) {
+            _lines = lines;
         } else {
-            Network network = new Network();
-            if (lines != null) {
-                lines.addTo(network);
-            }
-            if (other.lines != null) {
-                other.lines.addTo(network);
-            }
-            if (points != null) {
-                points.addTo(network);
-            }
-            if (other.points != null) {
-                other.points.addTo(network);
-            }
-            network.explicitIntersections(accuracy);
-            if (_area != null) {
-                network.removeWithRelation(_area, accuracy, Relate.INSIDE);
-            }
-            _lines = MultiLineString.valueOfInternal(network);
-            _points = MultiPoint.valueOf(network);
-            return new GeoShape(_area, _lines, _points, getBounds().union(other.getBounds()));
+            _lines = lines.union(other.lines, accuracy);
         }
+        if((_lines != null) && (_area != null)){
+            _lines = _lines.less(_area.toGeoShape(), accuracy);
+        }
+        
+        MultiPoint _points;
+        if (points == null) {
+            _points = other.points;
+        } else if (other.points == null) {
+            _points = points;
+        } else {
+            _points = points.union(other.points, accuracy);
+        }
+        if((_points != null) && (_area != null)){
+            _points = _points.less(_area, accuracy);
+        }
+        if((_points != null) && (_lines != null)){
+            _points = _points.less(_lines, accuracy);
+        }
+        
+        return new GeoShape(_area, _lines, _points, getBounds().union(other.getBounds()));
     }
 
     @Override
@@ -327,40 +317,64 @@ public class GeoShape implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return null;
         }
-
-        //First we get an area if there was one...
-        final Area _area;
-        if ((area != null) && (other.area != null)) {
-            Network areaNetwork = new Network();
-            area.addTo(areaNetwork);
-            other.area.addTo(areaNetwork);
-            areaNetwork.removeWithRelation(area, accuracy, Relate.OUTSIDE);
-            areaNetwork.removeWithRelation(other.area, accuracy, Relate.OUTSIDE);
-            _area = Area.valueOfInternal(areaNetwork, accuracy);
-        } else {
-            _area = null;
-        }
-
-        //Next we build a network for everything else
-        final Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
         
-        network.removeWithRelation(this, accuracy, Relate.OUTSIDE);
-        network.removeWithRelation(other, accuracy, Relate.OUTSIDE);
-
-        removeTouchingOrInsideArea(network, _area, accuracy);
-
-        MultiPoint _points = MultiPoint.valueOf(network);
+        GeoShape _area;
+        if (area == null) {
+            _area = (other.area == null) ? null : other.area.toGeoShape();
+        } else if (other.area == null) {
+            _area = area.toGeoShape();
+        } else {
+            _area = area.intersection(other.area, accuracy);
+        }
+        
+        Network network = new Network();
+        if (lines != null) {
+            lines.addTo(network);
+        }
+        if(other.lines != null){
+            other.lines.addTo(network);
+        }
+        if (points != null) {
+            points.addTo(network);
+        }
+        if(other.points != null){
+            other.points.addTo(network);
+        }
+        
+        network.explicitIntersections(accuracy);
         MultiLineString _lines = MultiLineString.valueOfInternal(network);
-        return (_area != null) || (lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
+        MultiPoint _points = MultiPoint.valueOf(network);
+        if((_points != null) && (_lines != null)){
+            _points = _points.less(_lines, accuracy);
+        }
+        if(_area == null){
+            return new GeoShape(null, _lines, _points);
+        }
+        if(_lines != null){
+            _lines = _lines.less(_area, accuracy);
+            if(_lines == null){
+                _lines = _area.lines;
+            }else if(_area.lines != null){
+                _lines = _lines.union(_area.lines, accuracy);
+            }
+        }
+        if(_points != null){
+            _points = _points.less(_area, accuracy);
+            if(_points == null){
+                _points = _area.points;
+            }else if(_area.points != null){
+                _points = _points.union(_area.points, accuracy);
+            }
+        }
+        Area _areaA = null;
+        if(_area != null){
+            _areaA = _area.area;
+        }
+        
+        return (_areaA != null) || (_lines != null) || (_points != null) ? new GeoShape(_areaA, _lines, _points) : null;
     }
     
     static void removeTouchingOrInsideArea(final Network network, final Area area, final Tolerance accuracy){
-        if(area == null){        
-            return;
-        }
         //Remove all vertices which are inside, or touch and are not linked to an external vertex
         network.map.forEach(new VectMapProcessor<VectList>() {
             @Override
@@ -373,8 +387,8 @@ public class GeoShape implements Geom {
                         if (area.relateInternal(links.getX(i), links.getY(i), accuracy) == Relate.OUTSIDE) {
                             return true; // linked to an external vertex
                         }
-                        network.removeVertexInternal(x, y);
                     }
+                    network.removeVertexInternal(x, y);
                 }
                 return true;
             }
@@ -394,36 +408,38 @@ public class GeoShape implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return this;
         }
-
         //First we get an area if there was one...
-        final Area _area;
-        if ((area != null) && (other.area != null)) {
-            Network areaNetwork = new Network();
-            area.addTo(areaNetwork);
-            other.area.addTo(areaNetwork);
-            areaNetwork.removeWithRelation(area, accuracy, Relate.OUTSIDE);
-            areaNetwork.removeWithRelation(other.area, accuracy, Relate.INSIDE);
-            _area = Area.valueOfInternal(areaNetwork, accuracy);
-        } else {
-            _area = null;
+        Area _area = area;
+        if ((_area != null) && (other.area != null)) {
+            _area = _area.less(other.area, accuracy);
         }
-
-        //Next we build a network for everything else
-        final Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        
-        network.removeWithRelation(this, accuracy, Relate.OUTSIDE);
-        network.removeWithRelation(other, accuracy, Relate.INSIDE);
-
-        removeTouchingOrInsideArea(network, _area, accuracy);
-
-        MultiPoint _points = MultiPoint.valueOf(network);
-        MultiLineString _lines = MultiLineString.valueOfInternal(network);
+        MultiLineString _lines = null;
+        if(lines != null){
+            _lines = lines.less(other, accuracy);
+        }
+        MultiPoint _points = null;
+        if(points != null){
+            _points = points.less(other, accuracy);
+        }
         return (_area != null) || (lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
     }
-
+    
+    void addWithRelation(Network src, final Area toTest, final Relate relate, final Tolerance accuracy, final Network result){
+        src.map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                if(toTest.relateInternal(x, y, accuracy) == relate){
+                    for(int i = links.size(); i-- > 0;){
+                        result.addLinkInternal(x, y, links.getX(i), links.getY(i));
+                    }
+                }
+                return true;
+            }
+        
+        });
+    }
+    
+    
     @Override
     public int hashCode() {
         int hash = 3;
@@ -555,11 +571,11 @@ public class GeoShape implements Geom {
     private static void toVectsWkt(VectList vects, Appendable appendable) throws IOException {
         appendable.append('(');
         for (int i = 0; i < vects.size(); i++) {
-            if (i == 0) {
+            if (i != 0) {
                 appendable.append(", ");
             }
-            appendable.append(Vect.ordToStr(vects.getX(0)))
-                    .append(' ').append(Vect.ordToStr(vects.getY(0)));
+            appendable.append(Vect.ordToStr(vects.getX(i)))
+                    .append(' ').append(Vect.ordToStr(vects.getY(i)));
         }
         appendable.append(')');
     }
@@ -594,6 +610,17 @@ public class GeoShape implements Geom {
             for (int j = 0; j < child.numChildren(); j++) {
                 appendable.append(',');
                 toPolygonWkt(child.getChild(j), appendable);
+            }
+        }
+    }
+
+    void addIntersections(Network network, Tolerance accuracy) {
+        if(area != null){
+            network.explicitIntersectionsWith(area.getLineIndex(), accuracy);
+        }
+        if(lines != null){
+            for(int i = lines.numLines(); i-- > 0;){
+                network.explicitIntersectionsWith(lines.getLineString(i).getLineIndex(), accuracy);
             }
         }
     }

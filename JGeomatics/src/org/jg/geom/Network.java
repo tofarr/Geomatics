@@ -341,6 +341,40 @@ public final class Network implements Serializable, Cloneable {
         }
     }
 
+    
+    //does nothing if points are the same
+    public boolean toggleLink(Vect a, Vect b) throws NullPointerException {
+        return toggleLinkInternal(a.x, a.y, b.x, b.y);
+    }
+
+    //does nothing if points are the same
+    public boolean toggleLink(VectBuilder a, VectBuilder b) throws NullPointerException {
+        return toggleLinkInternal(a.getX(), a.getY(), b.getX(), b.getY());
+    }
+
+    public boolean toggleLink(Line line) throws NullPointerException {
+        return toggleLinkInternal(line.ax, line.ay, line.bx, line.by);
+    }
+
+    //does nothing if points are the same
+    public boolean toggleLink(double ax, double ay, double bx, double by) throws IllegalArgumentException {
+        Vect.check(ax, ay);
+        Vect.check(bx, by);
+        return toggleLinkInternal(ax, ay, bx, by);
+    }
+
+    //does nothing if points are the same
+    public boolean toggleLinkInternal(double ax, double ay, double bx, double by) {
+        if(hasLink(ax, ay, bx, by)){
+            removeLinkInternal(ax, ay, bx, by);
+            return true;
+        }else{
+            addLinkInternal(ax, ay, bx, by);
+            return false;
+        }
+    }
+
+    
     public Network clear() {
         map.clear();
         numLinks = 0;
@@ -848,21 +882,150 @@ public final class Network implements Serializable, Cloneable {
 
         });
     }
-
-
-    public void removeWithRelation(final Geom geom, final Tolerance accuracy, final Relate relate) {
-        map.forEach(new VectMapProcessor<VectList>() {
-            final VectBuilder vect = new VectBuilder();
-            
+    
+    public Network removeWithRelation(Geom geom, Tolerance flatness, Tolerance accuracy, Relate relate) {
+        Network other = new Network();
+        geom.addTo(other, accuracy, accuracy);
+        explicitIntersectionsWith(other, accuracy);
+        if(relate == Relate.TOUCH){
+            return removeTouchingInternal(geom, accuracy, new VectBuilder());
+        }else{
+            return removeInsideOrOutsideInternal(geom, accuracy, relate, new VectBuilder());
+        }
+    }
+    
+    
+    Network removeInsideOrOutsideInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final VectBuilder workingVect) {
+        map.forEach(new VectMapProcessor<VectList>(){
             @Override
-            public boolean process(double x, double y, VectList value) {
-                vect.set(x, y);
-                if (geom.relate(vect, accuracy) == relate) {
+            public boolean process(double x, double y, VectList links) {
+                workingVect.set(x, y);
+                Relate result = geom.relate(workingVect, accuracy);
+                if(result == relate){
                     removeVertexInternal(x, y);
+                }else if(result == Relate.TOUCH){
+                    for(int i = links.size(); i-- > 0;){
+                        double bx = links.getX(i);
+                        double by = links.getY(i);
+                        if(Vect.compare(x, y, bx, by) < 0){ // filter here avoids checking twice
+                            workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
+                            if(geom.relate(workingVect, accuracy) == relate){
+                                removeLinkInternal(x, y, bx, by);
+                            }
+                        }
+                    }
                 }
                 return true;
             }
         });
+        return this;
+    }
+    
+    Network removeTouchingInternal(final Geom geom, final Tolerance accuracy, final VectBuilder workingVect) {
+        map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                workingVect.set(x, y);
+                if(geom.relate(workingVect, accuracy) == Relate.TOUCH){ // if the vect is touching, we may have more work to do
+                    //Remove any touching links
+                    for(int i = links.size(); i-- > 0;){
+                        double bx = links.getX(i);
+                        double by = links.getY(i);
+                        workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
+                        if(geom.relate(workingVect, accuracy) == Relate.TOUCH){
+                            removeLinkInternal(x, y, bx, by);
+                        }
+                    }
+                    if(links.isEmpty()){ // if point is unlinked remove it
+                        removeVertexInternal(x, y);
+                    }
+                }
+                return true;
+            }
+        });
+        return this;
+    }
+    
+    
+    void mergeInternal(Network other) {
+        other.map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double ax, double ay, VectList links) {
+                for(int i = links.size(); i-- > 0;){
+                    double bx = links.getX(i);
+                    double by = links.getY(i);
+                    if(Vect.compare(ax, ay, bx, by) < 0){
+                        toggleLinkInternal(ax, ay, bx, by);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+    
+    public String toWKT() {
+        final VectList points = new VectList();
+        forEachVertex(new VertexProcessor() {
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                if (numLinks == 0) {
+                    points.add(x, y);
+                }
+                return true;
+            }
+
+        });
+        StringBuilder str = new StringBuilder();
+        if (points.size() == 0) {
+            str.append("MULTILINESTRING(");
+            List<VectList> lineStrings = new ArrayList<>();
+            extractLines(lineStrings, false);
+            for (int i = 0; i < lineStrings.size(); i++) {
+                VectList lineString = lineStrings.get(i);
+                if (i != 0) {
+                    str.append(',');
+                }
+                str.append('(');
+                for (int j = 0; j < lineString.size(); j++) {
+                    if (j != 0) {
+                        str.append(", ");
+                    }
+                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
+                }
+                str.append(')');
+            }
+        } else if (points.size() == map.size()) {
+            str.append("MULTIPOINT(");
+            for (int i = 0; i < points.size(); i++) {
+                if (i != 0) {
+                    str.append(", ");
+                }
+                str.append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i)));
+            }
+        } else {
+            str.append("GEOMETRYCOLLECTION(");
+            for (int i = 0; i < points.size(); i++) {
+                if (i != 0) {
+                    str.append(",");
+                }
+                str.append("POINT(").append(Vect.ordToStr(points.getX(i))).append(' ').append(Vect.ordToStr(points.getY(i))).append(')');
+            }
+            List<VectList> lineStrings = new ArrayList<>();
+            extractLines(lineStrings, false);
+            for (int i = 0; i < lineStrings.size(); i++) {
+                VectList lineString = lineStrings.get(i);
+                str.append(",LINESTRING(");
+                for (int j = 0; j < lineString.size(); j++) {
+                    if (j != 0) {
+                        str.append(", ");
+                    }
+                    str.append(Vect.ordToStr(lineString.getX(j))).append(' ').append(Vect.ordToStr(lineString.getY(j)));
+                }
+                str.append(')');
+            }
+        }
+        str.append(')');
+        return str.toString();
     }
 
 
