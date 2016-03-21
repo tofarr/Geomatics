@@ -26,16 +26,16 @@ public class GeoShape implements Geom {
     //ine strings which are not part of an area 
     public final MultiLineString lines;
     // Points which are not part of a line 
-    public final MultiPoint points;
+    public final PointSet points;
     // Bounds for this geo shape 
     Rect bounds;
 
-    GeoShape(Area area, MultiLineString lines, MultiPoint points, Rect bounds) {
+    GeoShape(Area area, MultiLineString lines, PointSet points, Rect bounds) {
         this(area, lines, points);
         this.bounds = bounds;
     }
 
-    GeoShape(Area area, MultiLineString lines, MultiPoint points) {
+    GeoShape(Area area, MultiLineString lines, PointSet points) {
         this.area = area;
         this.lines = lines;
         this.points = points;
@@ -68,7 +68,7 @@ public class GeoShape implements Geom {
             linePaths.clear();
             lineNetwork.extractHangLines(linePaths);
         }
-        MultiPoint points = pointVects.isEmpty() ? null : new MultiPoint(pointVects);
+        PointSet points = pointVects.isEmpty() ? null : new PointSet(pointVects);
         MultiLineString lines = null;
         if (!linePaths.isEmpty()) {
             LineString[] lineStrings = new LineString[linePaths.size()];
@@ -103,7 +103,7 @@ public class GeoShape implements Geom {
     public Geom transform(Transform transform) throws NullPointerException {
         Area _area = (area == null) ? null : area.transform(transform);
         MultiLineString _lines = (lines == null) ? null : lines.transform(transform);
-        MultiPoint _points = (points == null) ? null : points.transform(transform);
+        PointSet _points = (points == null) ? null : points.transform(transform);
         return new GeoShape(_area, _lines, _points);
     }
 
@@ -284,7 +284,7 @@ public class GeoShape implements Geom {
             _lines = _lines.less(_area.toGeoShape(), accuracy);
         }
         
-        MultiPoint _points;
+        PointSet _points;
         if (points == null) {
             _points = other.points;
         } else if (other.points == null) {
@@ -340,7 +340,7 @@ public class GeoShape implements Geom {
         
         network.explicitIntersections(accuracy);
         MultiLineString _lines = MultiLineString.valueOfInternal(network);
-        MultiPoint _points = MultiPoint.valueOf(network);
+        PointSet _points = PointSet.valueOf(network, accuracy);
         if((_points != null) && (_lines != null)){
             _points = _points.less(_lines, accuracy);
         }
@@ -414,7 +414,7 @@ public class GeoShape implements Geom {
         if(lines != null){
             _lines = lines.less(other, accuracy);
         }
-        MultiPoint _points = null;
+        PointSet _points = null;
         if(points != null){
             _points = points.less(other, accuracy);
         }
@@ -505,7 +505,7 @@ public class GeoShape implements Geom {
     }
     
     /*
-    static Geom reduce(Area area, MultiLineString lines, MultiPoint mp) {
+    static Geom reduce(Area area, MultiLineString lines, PointSet mp) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     */

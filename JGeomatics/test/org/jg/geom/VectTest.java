@@ -471,21 +471,21 @@ public class VectTest {
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Vect b = Vect.valueOf(10, 25);
-        MultiPoint c = new MultiPoint(new VectList(5, 30, 10,25));
+        PointSet c = new PointSet(new VectList(5, 30, 10,25));
         assertEquals(c, a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
-        assertEquals(new MultiPoint(new VectList(5, 30, 10, 25, 15, 35)), Vect.valueOf(15, 35).union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new PointSet(new VectList(5, 30, 10, 25, 15, 35)), Vect.valueOf(15, 35).union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         GeoShape gs = b.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertSame(gs, b.union(gs, Tolerance.DEFAULT));
         
-        gs = MultiPoint.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
+        gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[\"GS\",[\"MP\", 10,20, 10,25, 10,30]]", b.union(gs, Tolerance.DEFAULT).toString());
         
-        gs = MultiPoint.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
+        gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[\"GS\",[\"MP\", 10,20, 10,25]]", b.union(gs, Tolerance.DEFAULT).toString());
         
-        MultiPoint mp = MultiPoint.valueOf(new VectSet().add(10, 20).add(10, 25));
+        PointSet mp = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25));
         assertSame(mp, b.union(mp, Tolerance.DEFAULT));
     }
     

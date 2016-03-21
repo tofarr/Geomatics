@@ -11,15 +11,28 @@ import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
- * Immutable 2D Rectangle
+ * Immutable 2D Rectangle. Checks are in place to insure that ordinates are never infinite or NaN, or that a min value is greater than a max
+ * value.
  *
  * @author tofar_000
  */
 public class Rect implements Geom {
 
+    /**
+     * min X value
+     */
     public final double minX;
+    /**
+     * min Y value
+     */
     public final double minY;
+    /**
+     * max X value
+     */
     public final double maxX;
+    /**
+     * max Y value
+     */
     public final double maxY;
 
     Rect(double minX, double minY, double maxX, double maxY) {
@@ -54,18 +67,38 @@ public class Rect implements Geom {
         return new Rect(minX, minY, maxX, maxY);
     }
 
+    /**
+     * Get min X value
+     *
+     * @return
+     */
     public double getMinX() {
         return minX;
     }
 
+    /**
+     * Get min Y value
+     *
+     * @return
+     */
     public double getMinY() {
         return minY;
     }
 
+    /**
+     * Get max X value
+     *
+     * @return
+     */
     public double getMaxX() {
         return maxX;
     }
 
+    /**
+     * Get max Y value
+     *
+     * @return
+     */
     public double getMaxY() {
         return maxY;
     }
@@ -120,14 +153,19 @@ public class Rect implements Geom {
         return (minY + maxY) / 2;
     }
 
+    /**
+     * Get the centroid of this rect
+     *
+     * @return
+     */
     @Transient
     public Vect getCentroid() {
         return new Vect(getCx(), getCy());
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or
-     * share any internal area). Invalid rects are considered disjoint.
+     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
+     * disjoint.
      *
      * @param rect
      * @return true if rects are disjoint or rect was null, false otherwise
@@ -138,8 +176,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or
-     * share any internal area). Invalid rects are considered disjoint.
+     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
+     * disjoint.
      *
      * @param rect
      * @return true if rects are disjoint or rect was null, false otherwise
@@ -150,8 +188,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or
-     * share any internal area). Invalid rects are considered disjoint.
+     * Determine if this rect is disjoint from that given (does not touch or share any internal area). Invalid rects are considered
+     * disjoint.
      *
      * @param rect
      * @param accuracy
@@ -160,15 +198,28 @@ public class Rect implements Geom {
      */
     public boolean isDisjoint(Rect rect, Tolerance accuracy) throws NullPointerException {
         double tolerance = accuracy.tolerance;
-        return ((minX - tolerance) > rect.maxX) 
+        return ((minX - tolerance) > rect.maxX)
                 || ((minY - tolerance) > rect.maxY)
                 || ((maxX + tolerance) < rect.minX)
                 || ((maxY + tolerance) < rect.minY);
     }
-    
+
+
+    static boolean disjoint(double minX, double minY, double maxX, double maxY, double x, double y, Tolerance accuracy) throws NullPointerException {
+        return disjoint(minX, minY, maxX, maxY, x, y, x, y, accuracy);
+    }
+
+    static boolean disjoint(double aMinX, double aMinY, double aMaxX, double aMaxY, 
+            double bMinX, double bMinY, double bMaxX, double bMaxY, Tolerance accuracy) throws NullPointerException {
+        double tolerance = accuracy.tolerance;
+        return ((aMinX - tolerance) > bMaxX)
+                || ((aMinY - tolerance) > bMaxY)
+                || ((aMaxX + tolerance) < bMinX)
+                || ((aMaxY + tolerance) < bMinY);
+    }
+
     /**
-     * Determine if this rect overlaps (Shares some internal area with) that
-     * given. Invalid rects are considered disjoint, and never overlap
+     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects are considered disjoint, and never overlap
      *
      * @param rect
      * @return true if overlapping, false otherwise
@@ -178,8 +229,7 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect overlaps (Shares some internal area with) that
-     * given. Invalid rects are considered disjoint, and never overlap
+     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects are considered disjoint, and never overlap
      *
      * @param rect
      * @return true if overlapping, false otherwise
@@ -189,8 +239,7 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is
-     * outside this)
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this)
      *
      * @param rect
      * @return true if contains rect, false otherwise
@@ -201,9 +250,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is
-     * outside this) Invalid rects cannot overlap, and so cannot contain other
-     * rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -214,8 +262,7 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the geom given. (ie: No part of geom is
-     * outside this)
+     * Determine if this rect covers the geom given. (ie: No part of geom is outside this)
      *
      * @param geom
      * @return true if contains rect, false otherwise
@@ -235,9 +282,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is
-     * outside this) Invalid rects cannot overlap, and so cannot contain other
-     * rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -248,9 +294,8 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is
-     * outside this) Invalid rects cannot overlap, and so cannot contain other
-     * rects or be contained within other rects
+     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid rects cannot overlap, and so cannot
+     * contain other rects or be contained within other rects
      *
      * @param rect
      * @return true if contains rect, false otherwise or if rect was invalid
@@ -283,8 +328,7 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if the rect given contains the point given. (Is inside or
-     * touching)
+     * Determine if the rect given contains the point given. (Is inside or touching)
      *
      * @param aMinX
      * @param aMinY
@@ -444,12 +488,22 @@ public class Rect implements Geom {
         network.addLink(minX, maxY, maxX, maxY);
         network.addLink(maxX, minY, maxX, maxY);
     }
-    
-    public Area toArea(){
+
+    /**
+     * Create a new area based on this rect
+     *
+     * @return
+     */
+    public Area toArea() {
         return new Area(toRing());
     }
-    
-    public Ring toRing(){
+
+    /**
+     * Create a new ring based on this rect
+     *
+     * @return
+     */
+    public Ring toRing() {
         VectList vects = new VectList(5);
         vects.add(minX, minY);
         vects.add(maxX, minY);
@@ -496,6 +550,10 @@ public class Rect implements Geom {
     }
 
     Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
+        return relate(x, y, minX, minY, maxX, maxY, tolerance);
+    }
+
+    static Relate relate(double x, double y, double minX, double minY, double maxX, double maxY, Tolerance tolerance) throws NullPointerException {
         double t = tolerance.tolerance;
         if ((x < (minX - t)) || (x > (maxX + t)) || (y < (minY - t)) || (y > (maxY + t))) {
             return Relate.OUTSIDE;
@@ -512,11 +570,11 @@ public class Rect implements Geom {
             return this;
         } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
             return other;
-        } else{
+        } else {
             return toArea().union(other.toGeoShape(flatness, tolerance), tolerance);
         }
     }
-    
+
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (contains(other)) {
@@ -539,7 +597,7 @@ public class Rect implements Geom {
     public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if (!isOverlapping(other.getBounds())) {
             return this;
-        } else if((other instanceof Rect) && ((Rect)other).contains(this)){
+        } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
             return null;
         } else {
             GeoShape gs = toGeoShape(flatness, tolerance);
@@ -576,6 +634,12 @@ public class Rect implements Geom {
         }
     }
 
+    /**
+     * Write this rect to the output given
+     *
+     * @param out
+     * @throws IOException
+     */
     public void write(DataOutput out) throws IOException {
         out.writeDouble(minX);
         out.writeDouble(minY);
@@ -583,6 +647,13 @@ public class Rect implements Geom {
         out.writeDouble(maxY);
     }
 
+    /**
+     * Read a Rectangle from the input given
+     *
+     * @param in
+     * @return a Rectangle
+     * @throws IOException
+     */
     public static Rect read(DataInput in) throws IOException {
         return valueOf(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
     }
@@ -615,6 +686,13 @@ public class Rect implements Geom {
         }
     }
 
+    /**
+     * Write the rectangle given to the appendable given
+     *
+     * @param rect
+     * @param appendable
+     * @throws GeomException if there was an IO error
+     */
     public static void toString(Rect rect, Appendable appendable) throws GeomException {
         try {
             appendable.append('[')
@@ -627,18 +705,53 @@ public class Rect implements Geom {
         }
     }
 
-    public static void check(double minX, double minY, double maxX, double maxY) {
+    /**
+     * Check the rectangle defined by the ordinates given.
+     *
+     * @param minX
+     * @param minY
+     * @param maxX
+     * @param maxY
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
+    public static void check(double minX, double minY, double maxX, double maxY) throws IllegalArgumentException {
         Vect.check(minX, "Invalid minX : {0}");
         Vect.check(minY, "Invalid minY : {0}");
         Vect.check(maxX, "Invalid maxX : {0}");
         Vect.check(maxY, "Invalid maxY : {0}");
     }
 
+    /**
+     * Determine if the ordinates given represent disjoint rectangles (not overlapping or touching)
+     *
+     * @param aMinX
+     * @param aMinY
+     * @param aMaxX
+     * @param aMaxY
+     * @param bMinX
+     * @param bMinY
+     * @param bMaxX
+     * @param bMaxY
+     * @return
+     */
     public static boolean disjoint(double aMinX, double aMinY, double aMaxX, double aMaxY,
             double bMinX, double bMinY, double bMaxX, double bMaxY) {
         return (aMinX > bMaxX) || (aMinY > bMaxY) || (aMaxX < bMinX) || (aMaxY < bMinY);
     }
 
+    /**
+     * Determine if the ordinates given represent overlapping rectangles (sharing internal area)
+     *
+     * @param aMinX
+     * @param aMinY
+     * @param aMaxX
+     * @param aMaxY
+     * @param bMinX
+     * @param bMinY
+     * @param bMaxX
+     * @param bMaxY
+     * @return
+     */
     public static boolean overlaps(double aMinX, double aMinY, double aMaxX, double aMaxY,
             double bMinX, double bMinY, double bMaxX, double bMaxY) {
         return (aMinX < bMaxX) && (aMinY < bMaxY) && (aMaxX > bMinX) && (aMaxY > bMinY);

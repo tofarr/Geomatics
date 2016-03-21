@@ -329,19 +329,18 @@ public final class Network implements Serializable, Cloneable {
         cachedLinks = null;
         return true;
     }
-    
-    public void removeAllLinks(VectList vects){
+
+    public void removeAllLinks(VectList vects) {
         int index = vects.size() - 1;
         double bx = vects.getX(index);
         double by = vects.getY(index);
-        while(--index >= 0){
+        while (--index >= 0) {
             double ax = vects.getX(index);
             double ay = vects.getY(index);
             removeLinkInternal(ax, ay, bx, by);
         }
     }
 
-    
     //does nothing if points are the same
     public boolean toggleLink(Vect a, Vect b) throws NullPointerException {
         return toggleLinkInternal(a.x, a.y, b.x, b.y);
@@ -365,16 +364,15 @@ public final class Network implements Serializable, Cloneable {
 
     //does nothing if points are the same
     public boolean toggleLinkInternal(double ax, double ay, double bx, double by) {
-        if(hasLink(ax, ay, bx, by)){
+        if (hasLink(ax, ay, bx, by)) {
             removeLinkInternal(ax, ay, bx, by);
             return true;
-        }else{
+        } else {
             addLinkInternal(ax, ay, bx, by);
             return false;
         }
     }
 
-    
     public Network clear() {
         map.clear();
         numLinks = 0;
@@ -466,16 +464,40 @@ public final class Network implements Serializable, Cloneable {
         return getLinks().forOverlapping(rect, processor);
     }
 
+    public boolean pointTouchesLine(Vect vect, Tolerance tolerance){
+        return pointTouchesLineInternal(vect.x, vect.y, getLinks(), tolerance);
+    }
+    
+    boolean pointTouchesLineInternal(double x, double y, SpatialNode<Line> node, Tolerance tolerance){
+        if(Rect.disjoint(node.getMinX(), node.getMinY(), node.getMaxX(), node.getMaxY(), x, y, tolerance)){
+            return false;
+        }
+        if(node.isBranch()){
+            return pointTouchesLineInternal(x, y, node.getA(), tolerance)
+                    || pointTouchesLineInternal(x, y, node.getB(), tolerance);
+        }else{
+            double tol = tolerance.tolerance * tolerance.tolerance;
+            for(int i = node.size(); i-- > 0;){
+                Line line = node.getItemValue(i);
+                double distSq = Line.distSegVectSq(line.ax, line.ay, line.bx, line.by, x, y);
+                if(distSq <= tol){
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
     //Make all points of self intersection explicit
     public Network explicitIntersections(Tolerance tolerance) {
         return explicitIntersectionsWith(this, tolerance);
     }
-    
-    public Network explicitIntersectionsWith(Network other, Tolerance tolerance){
+
+    public Network explicitIntersectionsWith(Network other, Tolerance tolerance) {
         return explicitIntersectionsWith(other.getLinks(), tolerance);
     }
-    
-    public Network explicitIntersectionsWith(final SpatialNode<Line> otherLinks, Tolerance tolerance){
+
+    public Network explicitIntersectionsWith(final SpatialNode<Line> otherLinks, Tolerance tolerance) {
         SpatialNode<Line> links = getLinks();
         final IntersectionFinder finder = new IntersectionFinder(tolerance);
         links.forEach(new NodeProcessor<Line>() {
@@ -566,8 +588,7 @@ public final class Network implements Serializable, Cloneable {
         });
         return target;
     }
-    
-    
+
     public Collection<VectList> extractLines(Collection<VectList> results, boolean includePoints) {
         VectList vects = getVects(new VectList());
         VectList result = new VectList();
@@ -704,13 +725,13 @@ public final class Network implements Serializable, Cloneable {
         if (network.numVects() != numVects()) {
             return false;
         }
-        return map.forEach(new VectMapProcessor<VectList>(){
+        return map.forEach(new VectMapProcessor<VectList>() {
             @Override
             public boolean process(double x, double y, VectList a) {
                 VectList b = network.map.get(x, y);
                 return a.equals(b);
             }
-        
+
         });
     }
 
@@ -734,7 +755,7 @@ public final class Network implements Serializable, Cloneable {
         toString(str);
         return str.toString();
     }
-   
+
 //    public Geom toGeom(Tolerance accuracy){
 //        final List<Geom> geoms = new ArrayList<>();
 //        Area area = Area.valueOf(this, accuracy);
@@ -795,7 +816,6 @@ public final class Network implements Serializable, Cloneable {
 //                return new GeomSet(ret);
 //        }
 //    }
-
     public void toString(Appendable appendable) throws GeomException {
         try {
             ArrayList<VectList> linesAndPointList = new ArrayList<>();
@@ -882,34 +902,33 @@ public final class Network implements Serializable, Cloneable {
 
         });
     }
-    
+
     public Network removeWithRelation(Geom geom, Tolerance flatness, Tolerance accuracy, Relate relate) {
         Network other = new Network();
         geom.addTo(other, accuracy, accuracy);
         explicitIntersectionsWith(other, accuracy);
-        if(relate == Relate.TOUCH){
+        if (relate == Relate.TOUCH) {
             return removeTouchingInternal(geom, accuracy, new VectBuilder());
-        }else{
+        } else {
             return removeInsideOrOutsideInternal(geom, accuracy, relate, new VectBuilder());
         }
     }
-    
-    
+
     Network removeInsideOrOutsideInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final VectBuilder workingVect) {
-        map.forEach(new VectMapProcessor<VectList>(){
+        map.forEach(new VectMapProcessor<VectList>() {
             @Override
             public boolean process(double x, double y, VectList links) {
                 workingVect.set(x, y);
                 Relate result = geom.relate(workingVect, accuracy);
-                if(result == relate){
+                if (result == relate) {
                     removeVertexInternal(x, y);
-                }else if(result == Relate.TOUCH){
-                    for(int i = links.size(); i-- > 0;){
+                } else if (result == Relate.TOUCH) {
+                    for (int i = links.size(); i-- > 0;) {
                         double bx = links.getX(i);
                         double by = links.getY(i);
-                        if(Vect.compare(x, y, bx, by) < 0){ // filter here avoids checking twice
+                        if (Vect.compare(x, y, bx, by) < 0) { // filter here avoids checking twice
                             workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
-                            if(geom.relate(workingVect, accuracy) == relate){
+                            if (geom.relate(workingVect, accuracy) == relate) {
                                 removeLinkInternal(x, y, bx, by);
                             }
                         }
@@ -920,23 +939,23 @@ public final class Network implements Serializable, Cloneable {
         });
         return this;
     }
-    
+
     Network removeTouchingInternal(final Geom geom, final Tolerance accuracy, final VectBuilder workingVect) {
-        map.forEach(new VectMapProcessor<VectList>(){
+        map.forEach(new VectMapProcessor<VectList>() {
             @Override
             public boolean process(double x, double y, VectList links) {
                 workingVect.set(x, y);
-                if(geom.relate(workingVect, accuracy) == Relate.TOUCH){ // if the vect is touching, we may have more work to do
+                if (geom.relate(workingVect, accuracy) == Relate.TOUCH) { // if the vect is touching, we may have more work to do
                     //Remove any touching links
-                    for(int i = links.size(); i-- > 0;){
+                    for (int i = links.size(); i-- > 0;) {
                         double bx = links.getX(i);
                         double by = links.getY(i);
                         workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
-                        if(geom.relate(workingVect, accuracy) == Relate.TOUCH){
+                        if (geom.relate(workingVect, accuracy) == Relate.TOUCH) {
                             removeLinkInternal(x, y, bx, by);
                         }
                     }
-                    if(links.isEmpty()){ // if point is unlinked remove it
+                    if (links.isEmpty()) { // if point is unlinked remove it
                         removeVertexInternal(x, y);
                     }
                 }
@@ -945,16 +964,15 @@ public final class Network implements Serializable, Cloneable {
         });
         return this;
     }
-    
-    
+
     void mergeInternal(Network other) {
-        other.map.forEach(new VectMapProcessor<VectList>(){
+        other.map.forEach(new VectMapProcessor<VectList>() {
             @Override
             public boolean process(double ax, double ay, VectList links) {
-                for(int i = links.size(); i-- > 0;){
+                for (int i = links.size(); i-- > 0;) {
                     double bx = links.getX(i);
                     double by = links.getY(i);
-                    if(Vect.compare(ax, ay, bx, by) < 0){
+                    if (Vect.compare(ax, ay, bx, by) < 0) {
                         toggleLinkInternal(ax, ay, bx, by);
                     }
                 }
@@ -962,8 +980,8 @@ public final class Network implements Serializable, Cloneable {
             }
         });
     }
-    
-    public String toWKT() {
+
+    public String toWkt() {
         final VectList points = new VectList();
         forEachVertex(new VertexProcessor() {
             @Override
@@ -1027,7 +1045,6 @@ public final class Network implements Serializable, Cloneable {
         str.append(')');
         return str.toString();
     }
-
 
     class IntersectionFinder implements NodeProcessor<Line> {
 

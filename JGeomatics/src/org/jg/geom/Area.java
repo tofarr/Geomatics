@@ -404,7 +404,7 @@ public class Area implements Geom {
         if (lines != null) {
             lines = lines.less(area.toGeoShape(), accuracy);
         }
-        MultiPoint points = other.points;
+        PointSet points = other.points;
         if (points != null) {
             points = points.less(this, accuracy);
         }

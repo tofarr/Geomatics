@@ -277,7 +277,7 @@ public class MultiLineString implements Geom {
         }
         MultiLineString lines = new MultiLineString(LineString.valueOfInternal(network));
 
-        MultiPoint points = other.points;
+        PointSet points = other.points;
         if (points != null) {
             points = points.less(this, accuracy);
         }
@@ -305,7 +305,7 @@ public class MultiLineString implements Geom {
         network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
         MultiLineString lines = valueOfInternal(network);
-        MultiPoint points = MultiPoint.valueOf(network);
+        PointSet points = PointSet.valueOf(network, accuracy);
         if ((lines == null) && (points == null)) {
             return null; // no intersection
         }

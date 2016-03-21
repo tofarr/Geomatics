@@ -90,6 +90,42 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
     
     /**
+     * Get the bounds minX for this node
+     *
+     * @return
+     */
+    public double getMinX() {
+        return bounds.getMinX();
+    }
+    
+    /**
+     * Get the bounds minY for this node
+     *
+     * @return
+     */
+    public double getMinY() {
+        return bounds.getMinY();
+    }
+    
+    /**
+     * Get the bounds maxX for this node
+     *
+     * @return
+     */
+    public double getMaxX() {
+        return bounds.getMaxX();
+    }
+    
+    /**
+     * Get the bounds maxY for this node
+     *
+     * @return
+     */
+    public double getMaxY() {
+        return bounds.getMaxY();
+    }
+    
+    /**
      * Determine if this node is disjoint from the bounds given
      * @param minX
      * @param minY

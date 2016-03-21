@@ -12,7 +12,8 @@ import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
- * Immutable 2D vector / Point
+ * Immutable 2D vector / Point. Checks are in place to insure that ordinates are
+ * never Infinite or NaN
  *
  * @author tofar_000
  */
@@ -193,7 +194,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        GeoShape ret =  new GeoShape(null, null, new MultiPoint(new VectList().add(this)));
+        GeoShape ret =  new GeoShape(null, null, new PointSet(new VectList().add(this)));
         return ret;
     }
 
@@ -311,18 +312,18 @@ public final class Vect implements Geom, Comparable<Vect> {
         
     }
     
-    public MultiPoint toMultiPoint(){
+    public PointSet toMultiPoint(){
         VectList vects = new VectList(1);
         vects.add(this);
-        return new MultiPoint(vects);
+        return new PointSet(vects);
     }
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if(other instanceof Vect){
             return union((Vect)other, accuracy);
-        }else if(other instanceof MultiPoint){
-            return union((MultiPoint)other, accuracy);
+        }else if(other instanceof PointSet){
+            return union((PointSet)other, accuracy);
         }else{
             if(other.relate(this, accuracy) != Relate.OUTSIDE){
                 return other;
@@ -339,10 +340,10 @@ public final class Vect implements Geom, Comparable<Vect> {
         points.add((Vect)other);
         points.add(this);
         points.sort();
-        return new MultiPoint(points);
+        return new PointSet(points);
     }
     
-    public MultiPoint union(MultiPoint other, Tolerance accuracy){
+    public PointSet union(PointSet other, Tolerance accuracy){
         if(other.relate(this, accuracy) != Relate.OUTSIDE){
             return other;
         }
@@ -350,14 +351,14 @@ public final class Vect implements Geom, Comparable<Vect> {
         points.addAll(other.vects);
         points.add(this);
         points.sort();
-        return new MultiPoint(points);
+        return new PointSet(points);
     }
     
     public GeoShape union(GeoShape other, Tolerance accuracy){
         if(other.relate(this, accuracy) != Relate.OUTSIDE){
             return other;
         }
-        MultiPoint points = (other.points == null) ? toMultiPoint() : this.union(other.points, accuracy);
+        PointSet points = (other.points == null) ? toMultiPoint() : this.union(other.points, accuracy);
         return new GeoShape(other.area, other.lines, points);
     }
 

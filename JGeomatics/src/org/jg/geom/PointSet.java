@@ -2,7 +2,6 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.io.IOException;
-import java.util.Objects;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -10,31 +9,47 @@ import org.jg.util.VectList;
 import org.jg.util.VectSet;
 
 /**
+ * Immutable set of 2D points. Checks are in place to insure that no ordinates are NaN or Infinite, and that no point is repeated. Points
+ * are ordered in the standard Natural ordering for vectors
  *
  * @author tofar
  */
-public class MultiPoint implements Geom {
+public final class PointSet implements Geom {
 
     final VectList vects;
 
-    MultiPoint(VectList vects) {
+    PointSet(VectList vects) {
         this.vects = vects;
     }
 
-    public static MultiPoint valueOf(VectSet vectSet) throws NullPointerException {
+    /**
+     * Get / Create a PointSet based on the set of vectors given
+     *
+     * @param vectSet
+     * @return a PointSet, or null if the set of vectors was empty
+     * @throws NullPointerException if vectSet was null
+     */
+    public static PointSet valueOf(VectSet vectSet) throws NullPointerException {
         if (vectSet.isEmpty()) {
             return null;
         }
         VectList vects = new VectList();
         vectSet.toList(vects);
         vects.sort();
-        return new MultiPoint(vects);
+        return new PointSet(vects);
     }
-    
-    public static MultiPoint valueOf(Network network){
+
+    static PointSet valueOf(Network network, Tolerance tolerance) throws NullPointerException {
         VectList vects = new VectList();
         network.extractPoints(vects);
-        return vects.isEmpty() ? null : new MultiPoint(vects);
+        SpatialNode<Line> links = network.getLinks();
+        for (int v = vects.size(); v-- > 0;) {
+            if (network.pointTouchesLineInternal(vects.getX(v), vects.getY(v), links, tolerance)) {
+                vects.remove(v);
+            }
+        }
+        vects.sort();
+        return vects.isEmpty() ? null : new PointSet(vects);
     }
 
     @Override
@@ -43,20 +58,20 @@ public class MultiPoint implements Geom {
     }
 
     @Override
-    public MultiPoint transform(Transform transform) throws NullPointerException {
+    public PointSet transform(Transform transform) throws NullPointerException {
         if (transform.mode == Transform.NO_OP) {
             return this;
         }
         VectList _vects = vects.clone();
         _vects.transform(transform);
         _vects.sort();
-        return new MultiPoint(_vects);
+        return new PointSet(_vects);
     }
 
-    public Geom simplify(){
+    public Geom simplify() {
         return (vects.size() == 1) ? vects.getVect(0) : this;
     }
-    
+
     @Override
     public PathIterator pathIterator() {
         return new PathIterator() {
@@ -72,14 +87,14 @@ public class MultiPoint implements Geom {
 
             @Override
             public boolean isDone() {
-                return (index < max);
+                return (index > max);
             }
 
             @Override
             public void next() {
                 if (seg == SEG_MOVETO) {
                     seg = SEG_LINETO;
-                } else if (index < max) {
+                } else if (index <= max) {
                     index++;
                     seg = SEG_MOVETO;
                 }
@@ -88,14 +103,14 @@ public class MultiPoint implements Geom {
             @Override
             public int currentSegment(float[] coords) {
                 coords[0] = (float) vects.getX(index);
-                coords[0] = (float) vects.getY(index);
+                coords[1] = (float) vects.getY(index);
                 return seg;
             }
 
             @Override
             public int currentSegment(double[] coords) {
                 coords[0] = vects.getX(index);
-                coords[0] = vects.getY(index);
+                coords[1] = vects.getY(index);
                 return seg;
             }
 
@@ -103,14 +118,14 @@ public class MultiPoint implements Geom {
     }
 
     @Override
-    public MultiPoint clone() {
+    public PointSet clone() {
         return this;
     }
 
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"MP\"");
+            appendable.append("[\"PS\"");
             for (int i = 0; i < vects.size(); i++) {
                 appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
             }
@@ -129,6 +144,14 @@ public class MultiPoint implements Geom {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return toGeoShape();
+    }
+
+    /**
+     * Convert this PointSet to a GeoShape
+     * @return
+     */
+    public GeoShape toGeoShape() {
         return new GeoShape(null, null, this);
     }
 
@@ -137,7 +160,10 @@ public class MultiPoint implements Geom {
         addTo(network);
     }
     
-    public void addTo(Network network){
+    /**
+     * Add this PointSet to a Network
+     */
+    public void addTo(Network network) {
         network.addAllVertices(vects);
     }
 
@@ -185,8 +211,8 @@ public class MultiPoint implements Geom {
         final NearLinkRemover remover = new NearLinkRemover(threshold, network);
         RectBuilder bounds = new RectBuilder();
         for (int i = vects.size(); i-- > 0;) {
-            double y = vects.getX(i);
             double x = vects.getX(i);
+            double y = vects.getY(i);
             bounds.reset().add(x, y).buffer(threshold);
             remover.reset(x, y);
             lines.forOverlapping(bounds.build(), remover);
@@ -219,14 +245,14 @@ public class MultiPoint implements Geom {
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Vect) {
             return ((Vect) other).union(this, accuracy);
-        } else if (other instanceof MultiPoint) {
-            return union((MultiPoint) other, accuracy);
+        } else if (other instanceof PointSet) {
+            return union((PointSet) other, accuracy);
         } else {
             return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
-    public MultiPoint union(MultiPoint other, Tolerance accuracy) {
+    public PointSet union(PointSet other, Tolerance accuracy) {
         VectList otherVects = other.vects;
         if (otherVects.isEmpty()) {
             return this;
@@ -246,7 +272,7 @@ public class MultiPoint implements Geom {
             return other;
         }
         newVects.sort();
-        return new MultiPoint(newVects);
+        return new PointSet(newVects);
     }
 
     public GeoShape union(GeoShape other, Tolerance accuracy) {
@@ -260,21 +286,21 @@ public class MultiPoint implements Geom {
         }
         newVects.addAll(other.points.vects);
         newVects.size();
-        MultiPoint mp = new MultiPoint(newVects);
+        PointSet mp = new PointSet(newVects);
         GeoShape ret = new GeoShape(other.area, other.lines, mp);
         return ret;
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        MultiPoint ret = intersection(other, accuracy);
-        if((ret != null) && (ret.numPoints() == 1)){
+        PointSet ret = intersection(other, accuracy);
+        if ((ret != null) && (ret.numPoints() == 1)) {
             return ret.getPoint(0);
         }
         return ret;
     }
-    
-    public MultiPoint intersection(Geom other, Tolerance accuracy) throws NullPointerException {
+
+    public PointSet intersection(Geom other, Tolerance accuracy) throws NullPointerException {
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
@@ -285,20 +311,20 @@ public class MultiPoint implements Geom {
         }
         if (ret.isEmpty()) {
             return null;
-        }else if(ret.size() == vects.size()){
+        } else if (ret.size() == vects.size()) {
             return this;
-        }else{
-            return new MultiPoint(ret);
+        } else {
+            return new PointSet(ret);
         }
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        MultiPoint ret = less(other, accuracy);
+        PointSet ret = less(other, accuracy);
         return ret.simplify();
     }
-    
-    public MultiPoint less(Geom other, Tolerance accuracy) throws NullPointerException {
+
+    public PointSet less(Geom other, Tolerance accuracy) throws NullPointerException {
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
@@ -309,10 +335,10 @@ public class MultiPoint implements Geom {
         }
         if (ret.isEmpty()) {
             return null;
-        }else if(ret.size() == vects.size()){
+        } else if (ret.size() == vects.size()) {
             return this;
-        }else{
-            return new MultiPoint(ret);
+        } else {
+            return new PointSet(ret);
         }
     }
 
@@ -327,7 +353,7 @@ public class MultiPoint implements Geom {
     public VectBuilder getPoint(int index, VectBuilder target) {
         return vects.getVect(index, target);
     }
-    
+
     public double getX(int index) throws IndexOutOfBoundsException {
         return vects.getX(index);
     }
@@ -345,14 +371,13 @@ public class MultiPoint implements Geom {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof MultiPoint){
-            final MultiPoint other = (MultiPoint) obj;
+        if (obj instanceof PointSet) {
+            final PointSet other = (PointSet) obj;
             return this.vects.equals(other.vects);
         }
         return false;
     }
-    
-    
+
     static class NearLinkRemover implements SpatialNode.NodeProcessor<Line> {
 
         final double thresholdSq;
@@ -380,5 +405,4 @@ public class MultiPoint implements Geom {
             return true;
         }
     }
-
 }
