@@ -362,7 +362,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+    public Vect intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if(other.relate(this, tolerance) == Relate.OUTSIDE){
             return null;   
         }
@@ -370,7 +370,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
     
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+    public Vect less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
         if(other.relate(this, tolerance) == Relate.INSIDE){
             return null;   
         }

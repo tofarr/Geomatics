@@ -53,6 +53,10 @@ public class MultiPoint implements Geom {
         return new MultiPoint(_vects);
     }
 
+    public Geom simplify(){
+        return (vects.size() == 1) ? vects.getVect(0) : this;
+    }
+    
     @Override
     public PathIterator pathIterator() {
         return new PathIterator() {
@@ -218,7 +222,7 @@ public class MultiPoint implements Geom {
         } else if (other instanceof MultiPoint) {
             return union((MultiPoint) other, accuracy);
         } else {
-            return union(other.toGeoShape(flatness, accuracy), accuracy);
+            return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
@@ -291,10 +295,7 @@ public class MultiPoint implements Geom {
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         MultiPoint ret = less(other, accuracy);
-        if((ret != null) && (ret.numPoints() == 1)){
-            return ret.getPoint(0);
-        }
-        return ret;
+        return ret.simplify();
     }
     
     public MultiPoint less(Geom other, Tolerance accuracy) throws NullPointerException {

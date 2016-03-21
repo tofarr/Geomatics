@@ -32,28 +32,31 @@ public class LineString implements Geom {
     /**
      * Get linestrings based on the ords given. LineStrings
      *
+     * @param accuracy
      * @param ords ordinates
      * @return a LineString
      * @throws IllegalArgumentException if an ordinate was infinite or NaN
      * @throws NullPointerException if ords was null
      */
-    public static LineString[] valueOf(double... ords) throws IllegalArgumentException, NullPointerException {
-        return valueOf(new VectList(ords));
+    public static LineString[] valueOf(Tolerance accuracy, double... ords) throws IllegalArgumentException, NullPointerException {
+        return valueOf(new VectList(ords), accuracy);
     }
 
     /**
      * Get a linestring based on the list of vectors given. (Includes defensive copy)
      *
      * @param vects
+     * @param accuracy
      * @return a linestring, or null if the list of vectors was empty
      * @throws NullPointerException if vects was null
      */
-    public static LineString[] valueOf(VectList vects) throws NullPointerException {
+    public static LineString[] valueOf(VectList vects, Tolerance accuracy) throws NullPointerException {
         if (vects.size() < 2) {
             return EMPTY;
         }
         Network network = new Network();
         network.addAllLinks(vects);
+        network.explicitIntersections(accuracy);
         List<VectList> ret = new ArrayList<>();
         network.extractLines(ret, false);
         if(ret.isEmpty()){
@@ -62,8 +65,14 @@ public class LineString implements Geom {
         LineString[] lines = ret.toArray(new LineString[ret.size()]);
         return lines;
     }
+        
+    public static LineString[] valueOf(Network network, Tolerance accuracy) throws NullPointerException {
+        network = network.clone();
+        network.explicitIntersections(accuracy);
+        return valueOfInternal(network);
+    }
     
-    public static LineString[] valueOf(Network network) throws NullPointerException {
+    static LineString[] valueOfInternal(Network network) throws NullPointerException {
         List<VectList> ret = new ArrayList<>();
         network.extractLines(ret, false);
         if(ret.isEmpty()){
@@ -93,6 +102,10 @@ public class LineString implements Geom {
         }
         LineString ret = new LineString(transformed);
         return ret;
+    }
+    
+    public Geom simplify(){
+        return (vects.size() == 2) ? vects.getLine(0) : this;
     }
 
     @Override
@@ -369,15 +382,15 @@ public class LineString implements Geom {
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
-            return union((LineString) other, accuracy);
+            return union((LineString) other, accuracy).simplify();
         } else if (other instanceof MultiLineString) {
-            return union((MultiLineString)other, accuracy);
+            return union((MultiLineString)other, accuracy).simplify();
         } else {
-            return union(other.toGeoShape(flatness, accuracy), accuracy);
+            return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
-    public Geom union(LineString other, Tolerance accuracy) throws NullPointerException {
+    public MultiLineString union(LineString other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             LineString[] lines = new LineString[]{this, other};
             Arrays.sort(lines, COMPARATOR);
@@ -387,8 +400,8 @@ public class LineString implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        LineString[] lineStrings = valueOf(network);
-        return (lineStrings.length == 1) ? lineStrings[0] : new MultiLineString(lineStrings);
+        LineString[] lineStrings = valueOfInternal(network);
+        return new MultiLineString(lineStrings);
     }
     
     public MultiLineString union(MultiLineString other, Tolerance accuracy) throws NullPointerException {
@@ -403,7 +416,7 @@ public class LineString implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        return new MultiLineString(valueOf(network));
+        return new MultiLineString(valueOfInternal(network));
     }
 
     public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {

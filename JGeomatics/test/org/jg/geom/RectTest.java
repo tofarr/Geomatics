@@ -122,6 +122,44 @@ public class RectTest {
         }
         assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(new RectBuilder()));
     }
+    
+    @Test
+    public void testIsDisjoint_Tolerance() {
+        Tolerance tolerance = new Tolerance(1);
+        Rect a = Rect.valueOf(10, 10, 20, 20);
+        RectBuilder b = new RectBuilder();
+        for (int x1 = 0; x1 < 30; x1 += 5) {
+            for (int y1 = 0; y1 < 30; y1 += 5) {
+                for (int x2 = x1; x2 < 30; x2 += 5) {
+                    for (int y2 = y1; y2 < 30; y2 += 5) {
+                        b.set(x1, y1, x2, y2);
+                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+                        boolean disjoint = (c.minX > a.maxX) || (c.minY > a.maxY) || (c.maxX < a.minX) || (c.maxY < a.minY);
+                        assertEquals(disjoint, a.isDisjoint(c, tolerance));
+                        assertEquals(disjoint, c.isDisjoint(a, tolerance));
+                    }
+                }
+            }
+        }
+        
+        assertFalse(a.isDisjoint(Rect.valueOf(0, 10, 9, 20), tolerance));
+        assertFalse(a.isDisjoint(Rect.valueOf(21, 10, 30, 20), tolerance));
+        assertFalse(a.isDisjoint(Rect.valueOf(10, 0, 20, 9), tolerance));
+        assertFalse(a.isDisjoint(Rect.valueOf(10, 21, 20, 30), tolerance));
+        
+        try {
+            a.isDisjoint((Rect) null, tolerance);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+        try {
+            a.isDisjoint(a, null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+            //expected
+        }
+    }
 
     @Test
     public void testIsOverlapping() {

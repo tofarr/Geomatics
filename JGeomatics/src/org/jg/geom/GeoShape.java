@@ -21,9 +21,6 @@ import org.jg.util.VectMap.VectMapProcessor;
  */
 public class GeoShape implements Geom {
 
-    static Geom reduce(Area area, MultiLineString lines, MultiPoint mp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
     // Area for this geom (may be null) 
     public final Area area;
     //ine strings which are not part of an area 
@@ -494,6 +491,24 @@ public class GeoShape implements Geom {
             throw new GeomException("Error writing WKT", ex);
         }
     }
+    
+    public Geom simplify(){
+        if ((area == null) && (lines == null)) {
+            return points.simplify();
+        } else if ((area == null) && (points == null)) {
+            return lines.simplify();
+        } else if ((lines == null) && (points == null)) {
+            return area.simplify();
+        } else {
+            return this;
+        }
+    }
+    
+    /*
+    static Geom reduce(Area area, MultiLineString lines, MultiPoint mp) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    */
 
     private void toPointWkt(Appendable appendable) throws IOException {
         if (points.numPoints() == 1) {

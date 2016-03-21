@@ -3,10 +3,10 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
-import org.jg.util.VectMap.VectMapProcessor;
 
 /**
  *
@@ -18,15 +18,28 @@ public class MultiLineString implements Geom {
 
     Rect bounds;
 
-    MultiLineString(LineString[] lineStrings) {
+    MultiLineString(LineString... lineStrings) {
         this.lineStrings = lineStrings;
     }
 
-    public static MultiLineString valueOfInternal(Network network) throws NullPointerException {
-        LineString[] lineStrings = LineString.valueOf(network);
+    static MultiLineString valueOfInternal(Network network) throws NullPointerException {
+        LineString[] lineStrings = LineString.valueOfInternal(network);
         return (lineStrings.length == 0) ? null : new MultiLineString(lineStrings);
     }
-
+    
+    public static MultiLineString valueOf(Network network, Tolerance accuracy){
+        network = network.clone();
+        network.explicitIntersections(accuracy);
+        return valueOfInternal(network);
+    }
+    
+    public static MultiLineString valueOf(VectList vects, Tolerance accuracy){
+        Network network = new Network();
+        network.addAllLinks(vects);
+        network.explicitIntersections(accuracy);
+        return valueOfInternal(network);
+    }
+    
     public int numLines() {
         return lineStrings.length;
     }
@@ -60,6 +73,10 @@ public class MultiLineString implements Geom {
         }
         Arrays.sort(transformed, COMPARATOR);
         return new MultiLineString(transformed);
+    }
+    
+    public Geom simplify(){
+        return (lineStrings.length == 1) ? lineStrings[0].simplify() : this;
     }
 
     @Override
@@ -225,7 +242,7 @@ public class MultiLineString implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        LineString[] ret = LineString.valueOf(network);
+        LineString[] ret = LineString.valueOfInternal(network);
         if (ret.length == 0) {
             return null;
         } else {
@@ -235,11 +252,17 @@ public class MultiLineString implements Geom {
 
     public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            LineString[] lines = new LineString[numLines() + ((other.lines == null) ? 0 : other.lines.numLines())];
-            System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
-            System.arraycopy(other.lines.lineStrings, 0, lines, lineStrings.length, other.lines.lineStrings.length);
-            Arrays.sort(lines, COMPARATOR);
-            return new GeoShape(other.area, new MultiLineString(lines), other.points);
+            MultiLineString _lines;
+            if(other.lines == null){
+                _lines = this;
+            }else{
+                LineString[] lines = new LineString[numLines() + other.lines.numLines()];
+                System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
+                System.arraycopy(other.lines.lineStrings, 0, lines, lineStrings.length, other.lines.numLines());
+                Arrays.sort(lines, COMPARATOR);
+                _lines = new MultiLineString(lines);
+            }
+            return new GeoShape(other.area, _lines, other.points);
         }
 
         Network network = new Network();
@@ -252,7 +275,7 @@ public class MultiLineString implements Geom {
             network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, workingVect);
             network.removeTouchingInternal(area, accuracy, workingVect);
         }
-        MultiLineString lines = new MultiLineString(LineString.valueOf(network));
+        MultiLineString lines = new MultiLineString(LineString.valueOfInternal(network));
 
         MultiPoint points = other.points;
         if (points != null) {
@@ -266,7 +289,7 @@ public class MultiLineString implements Geom {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
             return null;
         } else {
-            return intersection(other.toGeoShape(flatness, accuracy), accuracy);
+            return intersection(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
@@ -315,4 +338,22 @@ public class MultiLineString implements Geom {
         MultiLineString lines = valueOfInternal(network);
         return lines;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 89 * hash + Arrays.hashCode(this.lineStrings);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof MultiLineString){
+            final MultiLineString other = (MultiLineString) obj;
+            return Arrays.equals(lineStrings, other.lineStrings);
+        }
+        return true;
+    }
+    
+    
 }

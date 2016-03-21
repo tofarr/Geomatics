@@ -102,6 +102,10 @@ public class Area implements Geom {
         Arrays.sort(transformedChildren, COMPARATOR);
         return new Area(transformedShell, transformedChildren);
     }
+    
+    public Geom simplify(){
+        return (children.length == 0) ? shell : this;
+    }
 
     @Override
     public PathIterator pathIterator() {

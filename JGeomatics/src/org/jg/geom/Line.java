@@ -722,9 +722,13 @@ public class Line implements Geom, Comparable<Line> {
         return path.getPathIterator(null);
     }
 
+    public LineString toLineString(){
+        return new LineString(new VectList(ax, ay, bx, by));
+    }
+    
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        MultiLineString lines = new MultiLineString(new LineString[]{new LineString(new VectList(ax, ay, bx, by))});
+        MultiLineString lines = new MultiLineString(new LineString[]{toLineString()});
         GeoShape ret = new GeoShape(null, lines, null, null);
         return ret;
     }
@@ -805,8 +809,7 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        GeoShape ret = other.toGeoShape(flatness, accuracy).union(this, flatness, accuracy);
-        return ret;
+        return toLineString().union(other, flatness, accuracy);
     }
 
     @Override
@@ -814,7 +817,7 @@ public class Line implements Geom, Comparable<Line> {
         if(getBounds().isDisjoint(other.getBounds(), accuracy)){
             return null;
         }
-        return toGeoShape(flatness, accuracy).intersection(other, flatness, accuracy);
+        return toLineString().intersection(other, flatness, accuracy);
     }
 
     @Override
@@ -822,7 +825,7 @@ public class Line implements Geom, Comparable<Line> {
         if(getBounds().isDisjoint(other.getBounds())){
             return this;
         }
-        return toGeoShape(flatness, accuracy).less(other, flatness, accuracy);
+        return toLineString().less(other, flatness, accuracy);
     }
 
     @Override

@@ -102,6 +102,7 @@ public class LineTest {
         assertEquals(277, line.getLengthSq(), 0.00001);
         assertEquals(Math.sqrt(277), line.getLength(), 0.00001);
         assertEquals(Math.atan2(14, 9), line.getDirectionInRadians(), 0.00001);
+        assertEquals(new VectBuilder(6.5, 12), line.getMid(new VectBuilder()));
     }
 
     @Test
@@ -793,16 +794,19 @@ public class LineTest {
         Line b = new Line(0,100, 100,0);
         Rect c = new Rect(150,0,200,50);
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        fail("NotYetImplemented");   
-        /*Geom expected = new GeomSet(
-            Line.valueOf(0,0,50,50),
-            Line.valueOf(0,100,50,50),
-            Line.valueOf(50,50,100,0),
-            Line.valueOf(50,50,100,100)
+        MultiLineString expected = new MultiLineString(
+            new LineString(new VectList(0,0,50,50)),
+            new LineString(new VectList(0,100,50,50)),
+            new LineString(new VectList(50,50,100,0)),
+            new LineString(new VectList(50,50,100,100))
         );
         Geom found = a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals(expected, found);
-        assertEquals(new GeomSet(a, c), a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));*/
+        expected = new MultiLineString(
+            new LineString(new VectList(0,0,100,100)),
+            new LineString(new VectList(150,0,200,50))
+        );
+        assertEquals(expected, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 
     @Test
@@ -823,6 +827,9 @@ public class LineTest {
         Rect d = new Rect(-1,-1,101,101);
         assertEquals(a, a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(LineString.valueOf(0,0, 50,50, 100,100), a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        Geom geom = a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        Geom expected = MultiLineString.valueOf(new VectList(0,0, 50,50, 100,100), Tolerance.DEFAULT).simplify();
+        assertEquals(expected, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }    
 }
