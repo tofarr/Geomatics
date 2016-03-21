@@ -194,7 +194,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        GeoShape ret =  new GeoShape(null, null, new PointSet(new VectList().add(this)));
+        GeoShape ret = new GeoShape(null, null, new PointSet(new VectList().add(this)));
         return ret;
     }
 
@@ -202,7 +202,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         network.addVertex(this);
     }
-    
+
     @Override
     public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         return match(vect, tolerance) ? Relate.TOUCH : Relate.OUTSIDE;
@@ -212,20 +212,20 @@ public final class Vect implements Geom, Comparable<Vect> {
     public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return tolerance.match(x, y, vect.getX(), vect.getY()) ? Relate.TOUCH : Relate.OUTSIDE;
     }
-    
+
     @Override
     public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         check(amt, "Invalid buffer amt {0}");
-        if(amt == 0){
+        if (amt == 0) {
             return this;
-        }else if(amt < 0){
+        } else if (amt < 0) {
             return null;
-        }else{
+        } else {
             VectList result = new VectList();
             double angleSize = 2 * Math.PI;
             double sy = y + amt;
             linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
-            if(result.size() < 4){
+            if (result.size() < 4) {
                 return this;
             }
             Ring ring = new Ring(result, null, null, null, this, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
@@ -234,19 +234,19 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     //Assumes CCW direction
-    static void linearizeArc(double ox, double oy, double ax, double ay, double bx, double by, double radius, double flatness, VectList result) throws NullPointerException{
+    static void linearizeArc(double ox, double oy, double ax, double ay, double bx, double by, double radius, double flatness, VectList result) throws NullPointerException {
         double angleA = Vect.directionInRadiansTo(ox, oy, ax, ay);
         double angleB = Vect.directionInRadiansTo(ox, oy, bx, by);
         double angleSize = angleB - angleA;
-        if(angleSize < 0){
+        if (angleSize < 0) {
             angleSize += 2 * Math.PI;
         }
         linearizeArcInternal(ox, oy, angleSize, ax, ay, bx, by, radius, flatness, result);
     }
-    
-    static void linearizeArc(double ox, double oy, double angleA, double angleB, double radius, double flatness, VectList result) throws NullPointerException{
+
+    static void linearizeArc(double ox, double oy, double angleA, double angleB, double radius, double flatness, VectList result) throws NullPointerException {
         double angleSize = angleB - angleA;
-        if(angleSize < 0){
+        if (angleSize < 0) {
             angleSize += 2 * Math.PI;
         }
         double ax = ox + (Math.cos(angleA) * radius);
@@ -255,17 +255,16 @@ public final class Vect implements Geom, Comparable<Vect> {
         double by = oy + (Math.sin(angleB) * radius);
         linearizeArcInternal(ox, oy, angleSize, ax, ay, bx, by, radius, flatness, result);
     }
-    
-    
+
     static void linearizeArcInternal(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
-            double radius, double flatness, VectList result){
-        if(radius <= flatness){
+            double radius, double flatness, VectList result) {
+        if (radius <= flatness) {
             result.add(ox, oy);
             return;
         }
         double radiusSq = radius * radius;
         double flatnessSq = flatness * flatness;
-        if(angleSize >= 2 * Math.PI){
+        if (angleSize >= 2 * Math.PI) {
             bx = ox + (ox - ax);
             by = oy + (oy - ay);
             linearizeArcSegment(ox, oy, Math.PI, ax, ay, bx, by, radius, radiusSq, flatnessSq, result);
@@ -276,43 +275,48 @@ public final class Vect implements Geom, Comparable<Vect> {
         linearizeArcSegment(ox, oy, angleSize, ax, ay, bx, by, radius, radiusSq, flatnessSq, result);
         result.add(bx, by);
     }
-    
+
     private static void linearizeArcSegment(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
-            double radius, double radiusSq, double flatnessSq, VectList result){
-                
+            double radius, double radiusSq, double flatnessSq, VectList result) {
+
         double mx = (ax + bx) / 2; //get mid point between a and b
         double my = (ay + by) / 2;
-        
-        if(angleSize > Math.PI){ // If angle is greater than 180 degrees, invert vector direction.
+
+        if (angleSize > Math.PI) { // If angle is greater than 180 degrees, invert vector direction.
             mx = ox + (ox - mx);
             my = oy + (oy - my);
         }
-        
+
         double distSq = Vect.distSq(ox, oy, mx, my);
         double diffSq = radiusSq - distSq; //Diff calculation is wrong. need mid vs radius - using normal is wrong
-        if(diffSq <= flatnessSq){ // If the value is less than flatnes, simply add a - b will be added later
+        if (diffSq <= flatnessSq) { // If the value is less than flatnes, simply add a - b will be added later
             result.add(ax, ay);
-        }else{
+        } else {
             double nx, ny;
-            if(distSq == 0){ // project normal 
+            if (distSq == 0) { // project normal 
                 double dx = mx - ax;
                 double dy = my - ay;
                 nx = mx + dy; // normals are (-dy,dx) and (dy,-dx)
                 ny = my - dx; //TODO : is this on the right?
-            }else{
+            } else {
                 double dist = Math.sqrt(distSq);
                 nx = (mx - ox) * radius / dist + ox; //calculate a new mid point
                 ny = (my - oy) * radius / dist + oy;
             }
             angleSize /= 2; // angle size is halved
-            
+
             linearizeArcSegment(ox, oy, angleSize, ax, ay, nx, ny, radius, radiusSq, flatnessSq, result);
             linearizeArcSegment(ox, oy, angleSize, nx, ny, bx, by, radius, radiusSq, flatnessSq, result);
         }
-        
+
     }
-    
-    public PointSet toMultiPoint(){
+
+    /**
+     * Get a PointSet version of this Vector
+     *
+     * @return
+     */
+    public PointSet toPointSet() {
         VectList vects = new VectList(1);
         vects.add(this);
         return new PointSet(vects);
@@ -320,31 +324,31 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other instanceof Vect){
-            return union((Vect)other, accuracy);
-        }else if(other instanceof PointSet){
-            return union((PointSet)other, accuracy);
-        }else{
-            if(other.relate(this, accuracy) != Relate.OUTSIDE){
+        if (other instanceof Vect) {
+            return union((Vect) other, accuracy);
+        } else if (other instanceof PointSet) {
+            return union((PointSet) other, accuracy);
+        } else {
+            if (other.relate(this, accuracy) != Relate.OUTSIDE) {
                 return other;
             }
             return union(other.toGeoShape(flatness, accuracy), accuracy);
         }
     }
-    
-    public Geom union(Vect other, Tolerance accuracy){
-        if(accuracy.match(x, y, other.x, other.y)){
+
+    public Geom union(Vect other, Tolerance accuracy) {
+        if (accuracy.match(x, y, other.x, other.y)) {
             return this;
         }
         VectList points = new VectList(2);
-        points.add((Vect)other);
+        points.add((Vect) other);
         points.add(this);
         points.sort();
         return new PointSet(points);
     }
-    
-    public PointSet union(PointSet other, Tolerance accuracy){
-        if(other.relate(this, accuracy) != Relate.OUTSIDE){
+
+    public PointSet union(PointSet other, Tolerance accuracy) {
+        if (other.relate(this, accuracy) != Relate.OUTSIDE) {
             return other;
         }
         VectList points = new VectList(other.numPoints() + 1);
@@ -353,31 +357,31 @@ public final class Vect implements Geom, Comparable<Vect> {
         points.sort();
         return new PointSet(points);
     }
-    
-    public GeoShape union(GeoShape other, Tolerance accuracy){
-        if(other.relate(this, accuracy) != Relate.OUTSIDE){
+
+    public GeoShape union(GeoShape other, Tolerance accuracy) {
+        if (other.relate(this, accuracy) != Relate.OUTSIDE) {
             return other;
         }
-        PointSet points = (other.points == null) ? toMultiPoint() : this.union(other.points, accuracy);
+        PointSet points = (other.points == null) ? toPointSet() : this.union(other.points, accuracy);
         return new GeoShape(other.area, other.lines, points);
     }
 
     @Override
     public Vect intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(other.relate(this, tolerance) == Relate.OUTSIDE){
-            return null;   
+        if (other.relate(this, tolerance) == Relate.OUTSIDE) {
+            return null;
         }
         return this;
     }
-    
+
     @Override
     public Vect less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if(other.relate(this, tolerance) == Relate.INSIDE){
-            return null;   
+        if (other.relate(this, tolerance) == Relate.INSIDE) {
+            return null;
         }
         return this;
     }
-    
+
     /**
      * Determine if this vect matches the vector given within the tolerance
      * given
@@ -482,11 +486,12 @@ public final class Vect implements Geom, Comparable<Vect> {
      * @param in
      * @return a vector
      * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
+     * @throws IllegalArgumentException if the stream contained infinite or NaN
+     * ordinates
      * @throws GeomException if there was an IO error
      */
-    public static Vect read(DataInput in) throws NullPointerException, IllegalArgumentException, 
-        GeomException {
+    public static Vect read(DataInput in) throws NullPointerException, IllegalArgumentException,
+            GeomException {
         try {
             return Vect.valueOf(in.readDouble(), in.readDouble());
         } catch (IOException ex) {

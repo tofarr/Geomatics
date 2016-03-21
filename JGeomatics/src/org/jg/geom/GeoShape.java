@@ -448,26 +448,13 @@ public class GeoShape implements Geom {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if(!(obj instanceof GeoShape)){
             return false;
         }
         final GeoShape other = (GeoShape) obj;
-        if (!Objects.equals(this.area, other.area)) {
-            return false;
-        }
-        if (!Objects.equals(this.lines, other.lines)) {
-            return false;
-        }
-        if (!Objects.equals(this.points, other.points)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.area, other.area) && 
+                Objects.equals(this.lines, other.lines) &&
+                Objects.equals(this.points, other.points);
     }
 
     public String toWkt() {

@@ -162,6 +162,7 @@ public final class PointSet implements Geom {
     
     /**
      * Add this PointSet to a Network
+     * @param network
      */
     public void addTo(Network network) {
         network.addAllVertices(vects);
@@ -201,7 +202,7 @@ public final class PointSet implements Geom {
         network.explicitIntersections(accuracy);
         removeWithinBuffer(vects, network, amt, flatness, accuracy);
 
-        return Area.valueOf(network, accuracy);
+        return Area.valueOfInternal(network, accuracy);
     }
 
     //remove any link from network with a mid point closer than the amt to one of the lines in this
@@ -252,31 +253,49 @@ public final class PointSet implements Geom {
         }
     }
 
-    public PointSet union(PointSet other, Tolerance accuracy) {
+    /**
+     * Get the union of this point set and the point set given
+     * @param other
+     * @param accuracy
+     * @return a point set
+     * @throws NullPointerException if other or accuracy was null
+     */
+    public PointSet union(PointSet other, Tolerance accuracy) throws NullPointerException {
         VectList otherVects = other.vects;
-        if (otherVects.isEmpty()) {
-            return this;
-        }
         VectList newVects = new VectList(vects.size() + otherVects.size());
         newVects.addAll(vects);
-        VectBuilder vect = new VectBuilder();
-        for (int i = 0; i < otherVects.size(); i++) {
-            otherVects.getVect(i, vect);
-            if (relate(vect, accuracy) == Relate.OUTSIDE) {
-                newVects.add(vect);
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            newVects.addAll(other.vects);
+        }else{
+            VectBuilder vect = new VectBuilder();
+            for (int i = 0; i < otherVects.size(); i++) {
+                otherVects.getVect(i, vect);
+                if (relate(vect, accuracy) == Relate.OUTSIDE) {
+                    newVects.add(vect);
+                }
             }
-        }
-        if (newVects.size() == vects.size()) {
-            return this;
-        } else if (newVects.size() == other.vects.size()) {
-            return other;
+            if (newVects.size() == vects.size()) {
+                return this;
+            } else if (newVects.size() == other.vects.size()) {
+                return other;
+            }
         }
         newVects.sort();
         return new PointSet(newVects);
     }
-
+    
+    /**
+     * Get the union of this point set and the geoshape given
+     * @param other
+     * @param accuracy
+     * @return a point set
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape union(GeoShape other, Tolerance accuracy) {
         VectList newVects = new VectList();
+        if(other.points != null){
+            newVects.addAll(other.points.vects);
+        }
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, vect);
@@ -284,10 +303,8 @@ public final class PointSet implements Geom {
                 newVects.add(vect);
             }
         }
-        newVects.addAll(other.points.vects);
-        newVects.size();
-        PointSet mp = new PointSet(newVects);
-        GeoShape ret = new GeoShape(other.area, other.lines, mp);
+        PointSet _points = newVects.isEmpty() ? null : new PointSet(newVects);
+        GeoShape ret = new GeoShape(other.area, other.lines, _points);
         return ret;
     }
 
@@ -300,7 +317,17 @@ public final class PointSet implements Geom {
         return ret;
     }
 
+    /**
+     * Get the intersection of this point set and the geom given
+     * @param other
+     * @param accuracy
+     * @return a point set
+     * @throws NullPointerException if other or accuracy was null
+     */
     public PointSet intersection(Geom other, Tolerance accuracy) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return null;
+        }
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
@@ -321,10 +348,13 @@ public final class PointSet implements Geom {
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         PointSet ret = less(other, accuracy);
-        return ret.simplify();
+        return (ret == null) ? null : ret.simplify();
     }
 
     public PointSet less(Geom other, Tolerance accuracy) throws NullPointerException {
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            return this;
+        }
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
@@ -342,23 +372,53 @@ public final class PointSet implements Geom {
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public int numPoints() {
         return vects.size();
     }
 
-    public Vect getPoint(int index) {
+    /**
+     * Get point at index
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
+    public Vect getPoint(int index) throws IndexOutOfBoundsException {
         return vects.getVect(index);
     }
 
-    public VectBuilder getPoint(int index, VectBuilder target) {
+    /**
+     * Get point at index, and place it in target
+     * @param index
+     * @param target
+     * @return target
+     * @throws IndexOutOfBoundsException
+     * @throws NullPointerException if target was null
+     */
+    public VectBuilder getPoint(int index, VectBuilder target) throws IndexOutOfBoundsException, NullPointerException {
         return vects.getVect(index, target);
     }
 
+    /**
+     * Get x value of point at index given
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public double getX(int index) throws IndexOutOfBoundsException {
         return vects.getX(index);
     }
 
-    public double getY(int index) {
+    /**
+     * Get y value of point at index given
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
+    public double getY(int index) throws IndexOutOfBoundsException {
         return vects.getY(index);
     }
 

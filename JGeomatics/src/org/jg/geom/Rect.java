@@ -197,11 +197,7 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public boolean isDisjoint(Rect rect, Tolerance accuracy) throws NullPointerException {
-        double tolerance = accuracy.tolerance;
-        return ((minX - tolerance) > rect.maxX)
-                || ((minY - tolerance) > rect.maxY)
-                || ((maxX + tolerance) < rect.minX)
-                || ((maxY + tolerance) < rect.minY);
+        return disjoint(minX, minY, maxX, maxY, rect.minX, rect.minY, rect.maxX, rect.maxY, accuracy);
     }
 
 

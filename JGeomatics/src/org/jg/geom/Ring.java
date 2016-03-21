@@ -89,7 +89,7 @@ public class Ring implements Serializable, Cloneable, Geom {
 
         //get vectors in correct order - it is important that they are processed left to right
         VectList allVects = network.getVects(new VectList(numVects)); 
-
+        
         // First we need to make sure there are no hang lines (lines ending in a vector linked to only one other vector)
         // as the algorithm can't process these
         VectList path = new VectList();
@@ -107,6 +107,9 @@ public class Ring implements Serializable, Cloneable, Geom {
             double ax = allVects.getX(a);
             double ay = allVects.getY(a);
             VectList links = network.map.get(ax, ay);
+            if(links == null){
+                continue;
+            }
             for (int b = 0; b < links.size(); b++) {
                 double bx = links.getX(b);
                 double by = links.getY(b);
@@ -144,10 +147,20 @@ public class Ring implements Serializable, Cloneable, Geom {
     
     static void removeHangLines(Network network, double nx, double ny){
         VectList _links = network.map.get(nx, ny);
+        if(_links == null){
+            return;
+        }
+        if(_links.size() == 0){
+            network.map.remove(nx, ny);
+        }
         while(_links.size() == 1){
             double mx = _links.getX(0);
             double my = _links.getY(0);
-            network.removeLinkInternal(nx, ny, mx, my);
+            network.removeVertexInternal(nx, ny);
+            _links = network.map.get(mx, my);
+            nx = mx;
+            ny = my;
+            //network.removeLinkInternal(nx, ny, mx, my);
         }
     }
     
