@@ -4,9 +4,13 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Tolerance;
@@ -620,6 +624,28 @@ public class LineTest {
             b = Line.read(in);
         }
         assertEquals(a, b);
+        
+        try{
+            a.write(new DataOutputStream(new OutputStream(){
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
+        
+        try{
+            Line.read(new DataInputStream(new InputStream(){
+                @Override
+                public int read() throws IOException {
+                    throw new IOException();
+                }
+            }));
+            fail("Exception expected");
+        }catch(GeomException ex){   
+        }
     }
 
     @Test
@@ -794,7 +820,7 @@ public class LineTest {
         Line b = new Line(0,100, 100,0);
         Rect c = new Rect(150,0,200,50);
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        MultiLineString expected = new MultiLineString(
+        LineSet expected = new LineSet(
             new LineString(new VectList(0,0,50,50)),
             new LineString(new VectList(0,100,50,50)),
             new LineString(new VectList(50,50,100,0)),
@@ -802,7 +828,7 @@ public class LineTest {
         );
         Geom found = a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals(expected, found);
-        expected = new MultiLineString(
+        expected = new LineSet(
             new LineString(new VectList(0,0,100,100)),
             new LineString(new VectList(150,0,200,50))
         );
@@ -829,7 +855,7 @@ public class LineTest {
         assertNull(a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Geom geom = a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
-        Geom expected = MultiLineString.valueOf(new VectList(0,0, 50,50, 100,100), Tolerance.DEFAULT).simplify();
+        Geom expected = LineSet.valueOf(new VectList(0,0, 50,50, 100,100), Tolerance.DEFAULT).simplify();
         assertEquals(expected, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }    
 }

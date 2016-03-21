@@ -172,7 +172,7 @@ public class LineString implements Geom {
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         LineString[] array = new LineString[]{this};
-        MultiLineString lines = new MultiLineString(array);
+        LineSet lines = new LineSet(array);
         return new GeoShape(null, lines, null, getBounds());
     }
 
@@ -375,48 +375,48 @@ public class LineString implements Geom {
         return getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor) ? Relate.OUTSIDE : Relate.TOUCH;
     }
     
-    public MultiLineString toMultiLineString(){
-        return new MultiLineString(new LineString[]{this});
+    public LineSet toMultiLineString(){
+        return new LineSet(new LineString[]{this});
     }
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
             return union((LineString) other, accuracy).simplify();
-        } else if (other instanceof MultiLineString) {
-            return union((MultiLineString)other, accuracy).simplify();
+        } else if (other instanceof LineSet) {
+            return union((LineSet)other, accuracy).simplify();
         } else {
             return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
-    public MultiLineString union(LineString other, Tolerance accuracy) throws NullPointerException {
+    public LineSet union(LineString other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             LineString[] lines = new LineString[]{this, other};
             Arrays.sort(lines, COMPARATOR);
-            return new MultiLineString(lines);
+            return new LineSet(lines);
         }
         Network network = new Network();
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
         LineString[] lineStrings = valueOfInternal(network);
-        return new MultiLineString(lineStrings);
+        return new LineSet(lineStrings);
     }
     
-    public MultiLineString union(MultiLineString other, Tolerance accuracy) throws NullPointerException {
+    public LineSet union(LineSet other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             LineString[] lines = new LineString[other.lineStrings.length+1];
             lines[0] = this;
             System.arraycopy(other.lineStrings, 0, lines, 1, other.lineStrings.length);
             Arrays.sort(lines, COMPARATOR);
-            return new MultiLineString(lines);
+            return new LineSet(lines);
         }
         Network network = new Network();
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        return new MultiLineString(valueOfInternal(network));
+        return new LineSet(valueOfInternal(network));
     }
 
     public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
@@ -467,6 +467,45 @@ public class LineString implements Geom {
         return Math.max(vects.size() - 1, 0);
     }
 
+    
+    /**
+     * Write this vect to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws GeomException if there was an IO error
+     */
+    public void write(DataOutput out) throws NullPointerException, IOException {
+        vects.write(out);
+    }
+
+    /**
+     * Write this vector to the DataOutput given
+     *
+     * @param out
+     * @throws NullPointerException if out was null
+     * @throws IOException if there was an IO error
+     */
+    public static void write(double x, double y, DataOutput out) throws NullPointerException, IOException {
+        out.writeDouble(x);
+        out.writeDouble(y);
+    }
+
+    /**
+     * Read a vector from to the DataInput given
+     *
+     * @param in
+     * @return a vector
+     * @throws NullPointerException if in was null
+     * @throws IllegalArgumentException if the stream contained infinite or NaN
+     * ordinates
+     * @throws IOException if there was an IO error
+     */
+    public static Vect read(DataInput in) throws NullPointerException, IllegalArgumentException,
+            IOException {
+        return Vect.valueOf(in.readDouble(), in.readDouble());
+    }
+    
     static class NearLinkRemover implements NodeProcessor<Line> {
 
         final double thresholdSq;

@@ -400,7 +400,7 @@ public class Area implements Geom {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) {
             return new GeoShape(area, other.lines, other.points); // can skip mergint points and lines
         }
-        MultiLineString lines = other.lines;
+        LineSet lines = other.lines;
         if (lines != null) {
             lines = lines.less(area.toGeoShape(), accuracy);
         }
