@@ -13,9 +13,14 @@ import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
-import org.jg.util.VectMap.VectMapProcessor;
 
 /**
+ * Immutable 2D LineString. Checks are in place so that ordinates are not
+ * infinite or NaN, that duplicate sequential coordinates are not present, and
+ * that LineStrings do not self intersect (except at the start and end point,
+ * which may be the same) Line strings are always ordered such that the end
+ * point with the lower natural ordering is first, or that the line string is
+ * anti clockwise if it is a ring
  *
  * @author tofar_000
  */
@@ -30,25 +35,27 @@ public class LineString implements Geom {
     }
 
     /**
-     * Get linestrings based on the ords given. LineStrings
+     * Get linestrings based on the ords given. (Returns array since may be
+     * split if self intersecting)
      *
      * @param accuracy
      * @param ords ordinates
      * @return a LineString
      * @throws IllegalArgumentException if an ordinate was infinite or NaN
-     * @throws NullPointerException if ords was null
+     * @throws NullPointerException if ords or accuracy was null
      */
     public static LineString[] valueOf(Tolerance accuracy, double... ords) throws IllegalArgumentException, NullPointerException {
         return valueOf(new VectList(ords), accuracy);
     }
 
     /**
-     * Get a linestring based on the list of vectors given. (Includes defensive copy)
+     * Get linestrings based on the list of vectors given. (Returns array since
+     * may be split if self intersecting) copy)
      *
      * @param vects
      * @param accuracy
      * @return a linestring, or null if the list of vectors was empty
-     * @throws NullPointerException if vects was null
+     * @throws NullPointerException if vects or accuracy was null
      */
     public static LineString[] valueOf(VectList vects, Tolerance accuracy) throws NullPointerException {
         if (vects.size() < 2) {
@@ -59,27 +66,35 @@ public class LineString implements Geom {
         network.explicitIntersections(accuracy);
         List<VectList> ret = new ArrayList<>();
         network.extractLines(ret, false);
-        if(ret.isEmpty()){
+        if (ret.isEmpty()) {
             return EMPTY;
         }
         LineString[] lines = ret.toArray(new LineString[ret.size()]);
         return lines;
     }
-        
+
+    /**
+     * Extract line strings from the network given
+     *
+     * @param network
+     * @param accuracy
+     * @return array of line strings
+     * @throws NullPointerException if network or tolerance was null
+     */
     public static LineString[] valueOf(Network network, Tolerance accuracy) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
         return valueOfInternal(network);
     }
-    
+
     static LineString[] valueOfInternal(Network network) throws NullPointerException {
         List<VectList> ret = new ArrayList<>();
         network.extractLines(ret, false);
-        if(ret.isEmpty()){
+        if (ret.isEmpty()) {
             return EMPTY;
         }
         LineString[] lines = new LineString[ret.size()];
-        for(int i = 0; i < lines.length; i++){
+        for (int i = 0; i < lines.length; i++) {
             lines[i] = new LineString(ret.get(i));
         }
         return lines;
@@ -103,8 +118,14 @@ public class LineString implements Geom {
         LineString ret = new LineString(transformed);
         return ret;
     }
-    
-    public Geom simplify(){
+
+    /**
+     * Attempt to get a simplified version of this LineString. If it has only 2
+     * points, return a line, otherwise return this.
+     *
+     * @return
+     */
+    public Geom simplify() {
         return (vects.size() == 2) ? vects.getLine(0) : this;
     }
 
@@ -165,6 +186,12 @@ public class LineString implements Geom {
         }
     }
 
+    /**
+     * Add this linestring to the network given
+     *
+     * @param network
+     * @throws NullPointerException
+     */
     public void addTo(Network network) throws NullPointerException {
         network.addAllLinks(vects);
     }
@@ -181,6 +208,11 @@ public class LineString implements Geom {
         network.addAllLinks(vects);
     }
 
+    /**
+     * Get the total length of this line string
+     *
+     * @return
+     */
     public double getLength() {
         return getLength(vects);
     }
@@ -225,6 +257,11 @@ public class LineString implements Geom {
         return str.toString();
     }
 
+    /**
+     * Get an index of the lines in this line string
+     *
+     * @return
+     */
     public SpatialNode<Line> getLineIndex() {
         SpatialNode<Line> ret = lineIndex;
         if (ret == null) {
@@ -248,10 +285,24 @@ public class LineString implements Geom {
         return ret;
     }
 
+    /**
+     * Alias for getLineIndex().forInteracting(bounds, lineProcessor)
+     *
+     * @param bounds
+     * @param lineProcessor
+     * @return
+     */
     public boolean forInteractingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
         return getLineIndex().forInteracting(bounds, lineProcessor);
     }
 
+    /**
+     * Alias for getLineIndex().forInteracting(bounds, lineProcessor)
+     *
+     * @param bounds
+     * @param lineProcessor
+     * @return
+     */
     public boolean forOverlappingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
         return getLineIndex().forOverlapping(bounds, lineProcessor);
     }
@@ -374,8 +425,13 @@ public class LineString implements Geom {
         RelateProcessor processor = new RelateProcessor(x, y, accuracy);
         return getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor) ? Relate.OUTSIDE : Relate.TOUCH;
     }
-    
-    public LineSet toMultiLineString(){
+
+    /**
+     * Create a LineSet based on this lineString
+     *
+     * @return
+     */
+    public LineSet toLineSet() {
         return new LineSet(new LineString[]{this});
     }
 
@@ -384,12 +440,20 @@ public class LineString implements Geom {
         if (other instanceof LineString) {
             return union((LineString) other, accuracy).simplify();
         } else if (other instanceof LineSet) {
-            return union((LineSet)other, accuracy).simplify();
+            return union((LineSet) other, accuracy).simplify();
         } else {
             return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
+    /**
+     * Get the union of this LineString and that given
+     *
+     * @param other
+     * @param accuracy
+     * @return a LineSet
+     * @throws NullPointerException
+     */
     public LineSet union(LineString other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             LineString[] lines = new LineString[]{this, other};
@@ -403,10 +467,18 @@ public class LineString implements Geom {
         LineString[] lineStrings = valueOfInternal(network);
         return new LineSet(lineStrings);
     }
-    
+
+    /**
+     * Get the union of this LineString and the LineSet given
+     *
+     * @param other
+     * @param accuracy
+     * @return a LineSet
+     * @throws NullPointerException
+     */
     public LineSet union(LineSet other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
-            LineString[] lines = new LineString[other.lineStrings.length+1];
+            LineString[] lines = new LineString[other.lineStrings.length + 1];
             lines[0] = this;
             System.arraycopy(other.lineStrings, 0, lines, 1, other.lineStrings.length);
             Arrays.sort(lines, COMPARATOR);
@@ -419,8 +491,16 @@ public class LineString implements Geom {
         return new LineSet(valueOfInternal(network));
     }
 
+    /**
+     * Get the union of this shape and that given
+     *
+     * @param other
+     * @param accuracy
+     * @return a GeoShape
+     * @throws NullPointerException
+     */
     public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        return toMultiLineString().union(other, accuracy);
+        return toLineSet().union(other, accuracy);
     }
 
     @Override
@@ -428,7 +508,7 @@ public class LineString implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return null;
         }
-        return toMultiLineString().intersection(other.toGeoShape(flatness, accuracy), flatness, accuracy);
+        return toLineSet().intersection(other.toGeoShape(flatness, accuracy), flatness, accuracy);
     }
 
     @Override
@@ -436,59 +516,91 @@ public class LineString implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return this;
         }
-        return toMultiLineString().less(other.toGeoShape(flatness, accuracy), flatness, accuracy);
+        return toLineSet().less(other.toGeoShape(flatness, accuracy), flatness, accuracy);
     }
 
+    /**
+     * Get the point at the index given
+     *
+     * @param index
+     * @return vector
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
     public Vect getPoint(int index) throws IndexOutOfBoundsException {
         return vects.getVect(index);
     }
 
+    /**
+     * Get the point at the index given
+     *
+     * @param index
+     * @param target target point
+     * @return target
+     * @throws IndexOutOfBoundsException if index is out of bounds
+     * @throws NullPointerException if target was null
+     */
     public VectBuilder getPoint(int index, VectBuilder target) throws IndexOutOfBoundsException, NullPointerException {
         return vects.getVect(index, target);
     }
 
+    /**
+     * Get the line at the index given
+     *
+     * @param index
+     * @return target
+     * @throws IndexOutOfBoundsException if index is out of bounds
+     */
     public Line getLine(int index) throws IndexOutOfBoundsException, NullPointerException {
         return vects.getLine(index);
     }
-
+    
+    /**
+     * Get x value at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index is out of bounds
+     */
     public double getX(int index) throws IndexOutOfBoundsException {
         return vects.getX(index);
     }
-
-    public double getY(int index) {
+    
+    /**
+     * Get y value at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index is out of bounds
+     */
+    public double getY(int index) throws IndexOutOfBoundsException {
         return vects.getY(index);
     }
 
-    public int numVects() {
+    /**
+     * Get the number of Points in this lineString
+     * @return
+     */
+    public int numPoints() {
         return vects.size();
     }
-
+    
+    /**
+     * Get the number of Lines in this lineString
+     * @return
+     */
     public int numLines() {
         return Math.max(vects.size() - 1, 0);
     }
 
-    
     /**
-     * Write this vect to the DataOutput given
+     * Write this lineString to the DataOutput given
      *
      * @param out
      * @throws NullPointerException if out was null
      * @throws GeomException if there was an IO error
      */
-    public void write(DataOutput out) throws NullPointerException, IOException {
+    public void write(DataOutput out) throws NullPointerException, GeomException {
         vects.write(out);
-    }
-
-    /**
-     * Write this vector to the DataOutput given
-     *
-     * @param out
-     * @throws NullPointerException if out was null
-     * @throws IOException if there was an IO error
-     */
-    public static void write(double x, double y, DataOutput out) throws NullPointerException, IOException {
-        out.writeDouble(x);
-        out.writeDouble(y);
     }
 
     /**
@@ -501,11 +613,11 @@ public class LineString implements Geom {
      * ordinates
      * @throws IOException if there was an IO error
      */
-    public static Vect read(DataInput in) throws NullPointerException, IllegalArgumentException,
-            IOException {
-        return Vect.valueOf(in.readDouble(), in.readDouble());
+    public static LineString read(DataInput in) throws NullPointerException, IllegalArgumentException,
+            GeomException {
+        return new LineString(VectList.read(in)); NEED BOTH NORMALIZED AND NON NORMALIZED LINESTRINGS. FOR THIS WOULD NEED TO STORE TOLERANCE?
     }
-    
+
     static class NearLinkRemover implements NodeProcessor<Line> {
 
         final double thresholdSq;
