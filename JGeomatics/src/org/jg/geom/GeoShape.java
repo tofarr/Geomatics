@@ -511,8 +511,14 @@ public class GeoShape implements Geom {
             appendable.append("LINESTRING");
             toVectsWkt(lines.getLineString(0).vects, appendable);
         } else {
-            appendable.append("MULTILINESTRING");
-            toVectsWkt(points.vects, appendable);
+            appendable.append("MULTILINESTRING(");
+            for(int i = 0; i < lines.numLines(); i++){
+                if(i != 0){
+                    appendable.append(", ");
+                }
+                toVectsWkt(lines.getLineString(i).vects, appendable);
+            }
+            appendable.append(")");
         }
     }
 
@@ -540,7 +546,8 @@ public class GeoShape implements Geom {
         appendable.append("GEOMETRYCOLLECTION(");
         boolean comma = false;
         if (area != null) {
-
+            toPolygonWkt(area, appendable);
+            comma = true;
         }
         if (lines != null) {
             for (int i = 0; i < lines.numLines(); i++) {

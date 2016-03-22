@@ -10,7 +10,8 @@ import org.jg.geom.RectBuilder;
 import org.jg.geom.Vect;
 
 /**
- * Node for use in spatial trees and indexes. A node may be a branch with 2 child nodes, or a leaf containing a number of bounds and values.
+ * Node for use in spatial trees and indexes. A node may be a branch with 2 child nodes, or a leaf
+ * containing a number of bounds and values.
  *
  * @author tim.ofarrell
  * @param <E>
@@ -88,7 +89,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     public Rect getBounds() {
         return bounds.build();
     }
-    
+
     /**
      * Get the bounds minX for this node
      *
@@ -97,7 +98,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     public double getMinX() {
         return bounds.getMinX();
     }
-    
+
     /**
      * Get the bounds minY for this node
      *
@@ -106,7 +107,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     public double getMinY() {
         return bounds.getMinY();
     }
-    
+
     /**
      * Get the bounds maxX for this node
      *
@@ -115,7 +116,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     public double getMaxX() {
         return bounds.getMaxX();
     }
-    
+
     /**
      * Get the bounds maxY for this node
      *
@@ -124,19 +125,36 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     public double getMaxY() {
         return bounds.getMaxY();
     }
-    
+
     /**
      * Determine if this node is disjoint from the bounds given
+     *
      * @param minX
      * @param minY
      * @param maxX
      * @param maxY
      * @return
      */
-    public boolean isDisjoint(double minX, double minY, double maxX, double maxY){
+    public boolean isDisjoint(double minX, double minY, double maxX, double maxY) {
         return Rect.disjoint(minX, minY, maxX, maxY, bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY());
     }
-    
+
+    /**
+     * Determine if this node is disjoint from the bounds given and more than the tolerance distance
+     * given away
+     *
+     * @param minX
+     * @param minY
+     * @param maxX
+     * @param maxY
+     * @param tolerance
+     * @return
+     */
+    public boolean isDisjoint(double minX, double minY, double maxX, double maxY, Tolerance tolerance) {
+        return Rect.disjoint(minX, minY, maxX, maxY,
+                bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(), tolerance);
+    }
+
     /**
      * Get the number of entries
      *
@@ -163,7 +181,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else {
             int ret = 0;
             for (int i = 0; i < size; i++) {
-                if(!rect.isDisjoint(itemBounds[i])){
+                if (!rect.isDisjoint(itemBounds[i])) {
                     ret++;
                 }
             }
@@ -188,7 +206,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else {
             int ret = 0;
             for (int i = 0; i < size; i++) {
-                if(rect.isOverlapping(itemBounds[i])){
+                if (rect.isOverlapping(itemBounds[i])) {
                     ret++;
                 }
             }
@@ -221,7 +239,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return a.isEmpty(rect) && b.isEmpty(rect);
         } else {
             for (int i = 0; i < size; i++) {
-                if(rect.isOverlapping(itemBounds[i])){
+                if (rect.isOverlapping(itemBounds[i])) {
                     return false;
                 }
             }
@@ -244,7 +262,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else if (isBranch()) {
             return a.isDisjoint(rect) && b.isDisjoint(rect);
         } else {
-            for (int i = 0; i < size; i++){
+            for (int i = 0; i < size; i++) {
                 if (!rect.isDisjoint(itemBounds[i])) {
                     return false;
                 }
@@ -341,7 +359,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else if (isBranch()) {
             return a.contains(rect, value) || b.contains(rect, value);
         } else {
-            for(int i = 0; i < size; i++){
+            for (int i = 0; i < size; i++) {
                 if (itemBounds[i].equals(rect) && Objects.equals(itemValues[i], value)) {
                     return true;
                 }
@@ -424,7 +442,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Determine if this node is a branch. (Has child nodes A and B, and does not directly contain items).
+     * Determine if this node is a branch. (Has child nodes A and B, and does not directly contain
+     * items).
      *
      * @return
      */
@@ -433,7 +452,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Determine if this node is a leaf. (Directly contains items, and does not have child nodes A and B).
+     * Determine if this node is a leaf. (Directly contains items, and does not have child nodes A
+     * and B).
      *
      * @return
      */
@@ -442,8 +462,9 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Get the depth of this node - the max number of children one must go through before reacing a leaf node - Typically for the same
-     * entries in a node, the lower this number the more balanced the tree.
+     * Get the depth of this node - the max number of children one must go through before reacing a
+     * leaf node - Typically for the same entries in a node, the lower this number the more balanced
+     * the tree.
      *
      * @return
      */
@@ -518,7 +539,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
                         return a.equals(tree.a) && b.equals(tree.b);
                     }
                 } else if (!tree.isBranch()) {
-                    for(int i = 0; i < size; i++){
+                    for (int i = 0; i < size; i++) {
                         if (!itemBounds[i].equals(tree.itemBounds[i])) {
                             return false;
                         }
@@ -543,8 +564,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Convert this spatial node to a string and add it to the appendable given. Leaves are in the format
-     * {itemBounds:[...],itemValues:[...]} and branches are in the format {a:{...},b:{...})
+     * Convert this spatial node to a string and add it to the appendable given. Leaves are in the
+     * format {itemBounds:[...],itemValues:[...]} and branches are in the format {a:{...},b:{...})
      *
      * @param appendable
      * @throws IllegalStateException if there was an output error
@@ -591,7 +612,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Processor for nodes - a callback function repeatedly accepting a leaf node and index as parameters
+     * Processor for nodes - a callback function repeatedly accepting a leaf node and index as
+     * parameters
      *
      * @param <E>
      */
@@ -602,7 +624,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
          *
          * @param bounds
          * @param value
-         * @return true if more entries are acceptable, false if the node should return no more entries (if present)
+         * @return true if more entries are acceptable, false if the node should return no more
+         * entries (if present)
          */
         public boolean process(Rect bounds, E value);
     }

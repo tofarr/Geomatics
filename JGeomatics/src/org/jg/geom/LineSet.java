@@ -267,10 +267,13 @@ public class LineSet implements Geom {
 
         Network network = new Network();
         addTo(network);
-        other.lines.addTo(network);
-        network.explicitIntersections(accuracy);
+        if(other.lines != null){
+            other.lines.addTo(network);
+            network.explicitIntersections(accuracy);
+        }
         Area area = other.area;
         if (area != null) {
+            network.explicitIntersectionsWith(area.getLineIndex(), accuracy);
             VectBuilder workingVect = new VectBuilder();
             network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, workingVect);
             network.removeTouchingInternal(area, accuracy, workingVect);

@@ -561,15 +561,15 @@ public final class Network implements Serializable, Cloneable {
             while (++b < size) {
                 double bx = vects.getX(b);
                 double by = vects.getY(b);
-                if (!tolerance.match(ax, by)) {
+                if (!tolerance.match(ax, bx)) {
                     break;
                 }
                 if (tolerance.match(ax, ay, bx, by)) {
                     VectList links = map.get(bx, by);
-                    removeVertexInternal(bx, by);
                     for (int k = 0; k < links.size(); k++) {
                         addLinkInternal(ax, ay, links.getX(k), links.getY(k));
                     }
+                    removeVertexInternal(bx, by);
                 }
             }
         }

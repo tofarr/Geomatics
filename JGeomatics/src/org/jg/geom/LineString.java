@@ -4,6 +4,7 @@ import java.awt.geom.PathIterator;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,12 +16,11 @@ import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
- * Immutable 2D LineString. Checks are in place so that ordinates are not
- * infinite or NaN, that duplicate sequential coordinates are not present, and
- * that LineStrings do not self intersect (except at the start and end point,
- * which may be the same) Line strings are always ordered such that the end
- * point with the lower natural ordering is first, or that the line string is
- * anti clockwise if it is a ring
+ * Immutable 2D LineString. Checks are in place so that ordinates are not infinite or NaN, that
+ * duplicate sequential coordinates are not present, and that LineStrings do not self intersect
+ * (except at the start and end point, which may be the same) Line strings are always ordered such
+ * that the end point with the lower natural ordering is first. (Or the next point along if line is
+ * a ring)
  *
  * @author tofar_000
  */
@@ -35,8 +35,8 @@ public class LineString implements Geom {
     }
 
     /**
-     * Get linestrings based on the ords given. (Returns array since may be
-     * split if self intersecting)
+     * Get linestrings based on the ords given. (Returns array since may be split if self
+     * intersecting)
      *
      * @param accuracy
      * @param ords ordinates
@@ -44,13 +44,14 @@ public class LineString implements Geom {
      * @throws IllegalArgumentException if an ordinate was infinite or NaN
      * @throws NullPointerException if ords or accuracy was null
      */
-    public static LineString[] valueOf(Tolerance accuracy, double... ords) throws IllegalArgumentException, NullPointerException {
+    public static LineString[] valueOf(Tolerance accuracy, double... ords)
+            throws IllegalArgumentException, NullPointerException {
         return valueOf(new VectList(ords), accuracy);
     }
 
     /**
-     * Get linestrings based on the list of vectors given. (Returns array since
-     * may be split if self intersecting) copy)
+     * Get linestrings based on the list of vectors given. (Returns array since may be split if self
+     * intersecting) copy)
      *
      * @param vects
      * @param accuracy
@@ -64,12 +65,16 @@ public class LineString implements Geom {
         Network network = new Network();
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         List<VectList> ret = new ArrayList<>();
         network.extractLines(ret, false);
         if (ret.isEmpty()) {
             return EMPTY;
         }
-        LineString[] lines = ret.toArray(new LineString[ret.size()]);
+        LineString[] lines = new LineString[ret.size()];
+        for (int i = 0; i < lines.length; i++) {
+            lines[i] = new LineString(ret.get(i));
+        }
         return lines;
     }
 
@@ -84,6 +89,7 @@ public class LineString implements Geom {
     public static LineString[] valueOf(Network network, Tolerance accuracy) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         return valueOfInternal(network);
     }
 
@@ -120,8 +126,8 @@ public class LineString implements Geom {
     }
 
     /**
-     * Attempt to get a simplified version of this LineString. If it has only 2
-     * points, return a line, otherwise return this.
+     * Attempt to get a simplified version of this LineString. If it has only 2 points, return a
+     * line, otherwise return this.
      *
      * @return
      */
@@ -153,15 +159,15 @@ public class LineString implements Geom {
 
             @Override
             public int currentSegment(float[] coords) {
-                coords[0] = (float) vects.getX(0);
-                coords[1] = (float) vects.getY(0);
+                coords[0] = (float) vects.getX(index);
+                coords[1] = (float) vects.getY(index);
                 return (index == 0) ? SEG_MOVETO : SEG_LINETO;
             }
 
             @Override
             public int currentSegment(double[] coords) {
-                coords[0] = vects.getX(0);
-                coords[1] = vects.getY(0);
+                coords[0] = vects.getX(index);
+                coords[1] = vects.getY(index);
                 return (index == 0) ? SEG_MOVETO : SEG_LINETO;
             }
 
@@ -186,16 +192,6 @@ public class LineString implements Geom {
         }
     }
 
-    /**
-     * Add this linestring to the network given
-     *
-     * @param network
-     * @throws NullPointerException
-     */
-    public void addTo(Network network) throws NullPointerException {
-        network.addAllLinks(vects);
-    }
-
     @Override
     public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         LineString[] array = new LineString[]{this};
@@ -205,6 +201,16 @@ public class LineString implements Geom {
 
     @Override
     public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        addTo(network);
+    } 
+    
+    /**
+     * Add this linestring to the network given
+     *
+     * @param network
+     * @throws NullPointerException
+     */
+    public void addTo(Network network) throws NullPointerException {
         network.addAllLinks(vects);
     }
 
@@ -321,19 +327,57 @@ public class LineString implements Geom {
         Network network = new Network();
         network.addAllLinks(buffer);
         network.explicitIntersections(accuracy);
-        removeNearLines(network, vects, amt);
+        removeNearLines(network, vects, amt - (flatness.tolerance + accuracy.tolerance));
         return Area.valueOfInternal(network, accuracy);
     }
 
-    static void removeNearLines(Network network, VectList lines, double threshold) {
+    static void removeNearLines(Network network, VectList lines, double amt) {
         final SpatialNode<Line> lineIndex = network.getLinks();
-        final NearLinkRemover remover = new NearLinkRemover(threshold, network);
+        Tolerance tolerance = new Tolerance(amt);
         int index = lines.size() - 1;
-        RectBuilder bounds = new RectBuilder();
+        double bx = lines.getX(index);
+        double by = lines.getY(index);
         while (index-- > 0) {
-            Line i = lines.getLine(index);
-            bounds.reset().addInternal(i.ax, i.ay).addInternal(i.bx, i.by).buffer(threshold);
-            lineIndex.forOverlapping(bounds.build(), remover);
+            double ax = lines.getX(index);
+            double ay = lines.getY(index);
+            removeNearLines(lineIndex, network, ax, ay, bx, by, tolerance);
+            bx = ax;
+            by = ay;
+        }
+    }
+    
+    static void removeNearLines(SpatialNode<Line> node, Network network, 
+            double iax, double iay, double ibx, double iby, Tolerance amt){
+        double minX = Math.min(iax, ibx);
+        double minY = Math.min(iay, iby);
+        double maxX = Math.max(iax, ibx);
+        double maxY = Math.max(iay, iby);
+        double amtSq = amt.tolerance * amt.tolerance;
+        ArrayDeque<SpatialNode<Line>> nodes = new ArrayDeque<>();
+        nodes.push(node);
+        while(!nodes.isEmpty()){
+            node = nodes.pop();
+            if(node.isDisjoint(minX, minY, maxX, maxY, amt)){
+                continue;
+            }
+            if(node.isBranch()){
+                nodes.push(node.getA());
+                nodes.push(node.getB());
+                continue;
+            }
+            for(int i = node.size(); i-- > 0;){
+                Rect bounds = node.getItemBounds(i);
+                if(!Rect.disjoint(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY,
+                        minX, minY, maxX, maxY, amt)){
+                    Line line = node.getItemValue(i);
+                    double x = (line.ax + line.bx) / 2;
+                    double y = (line.ay + line.by) / 2;
+                    double distSq = Line.distSegVectSq(iax, iay, ibx, iby, x, y);
+                    if(distSq < amtSq){
+                        network.removeLink(line);
+                    }
+                }    
+            }
         }
     }
 
@@ -553,7 +597,7 @@ public class LineString implements Geom {
     public Line getLine(int index) throws IndexOutOfBoundsException, NullPointerException {
         return vects.getLine(index);
     }
-    
+
     /**
      * Get x value at the index given
      *
@@ -564,7 +608,7 @@ public class LineString implements Geom {
     public double getX(int index) throws IndexOutOfBoundsException {
         return vects.getX(index);
     }
-    
+
     /**
      * Get y value at the index given
      *
@@ -578,76 +622,20 @@ public class LineString implements Geom {
 
     /**
      * Get the number of Points in this lineString
+     *
      * @return
      */
     public int numPoints() {
         return vects.size();
     }
-    
+
     /**
      * Get the number of Lines in this lineString
+     *
      * @return
      */
     public int numLines() {
         return Math.max(vects.size() - 1, 0);
-    }
-
-    /**
-     * Write this lineString to the DataOutput given
-     *
-     * @param out
-     * @throws NullPointerException if out was null
-     * @throws GeomException if there was an IO error
-     */
-    public void write(DataOutput out) throws NullPointerException, GeomException {
-        vects.write(out);
-    }
-
-    /**
-     * Read a vector from to the DataInput given
-     *
-     * @param in
-     * @return a vector
-     * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN
-     * ordinates
-     * @throws IOException if there was an IO error
-     */
-    public static LineString read(DataInput in) throws NullPointerException, IllegalArgumentException,
-            GeomException {
-        return new LineString(VectList.read(in)); NEED BOTH NORMALIZED AND NON NORMALIZED LINESTRINGS. FOR THIS WOULD NEED TO STORE TOLERANCE?
-    }
-
-    static class NearLinkRemover implements NodeProcessor<Line> {
-
-        final double thresholdSq;
-        final Network network;
-        double iax;
-        double iay;
-        double ibx;
-        double iby;
-
-        public NearLinkRemover(double threshold, Network network) {
-            this.thresholdSq = threshold * threshold;
-            this.network = network;
-        }
-
-        void reset(double iax, double iay, double ibx, double iby) {
-            this.iax = iax;
-            this.iay = iay;
-            this.ibx = ibx;
-            this.iby = iby;
-        }
-
-        @Override
-        public boolean process(Rect bounds, Line j) {
-            double x = (j.ax + j.bx) / 2;
-            double y = (j.ay + j.by) / 2;
-            if (Line.distSegVectSq(iax, iay, ibx, iby, x, y) < thresholdSq) {
-                network.removeLink(j);
-            }
-            return true;
-        }
     }
 
     static class RelateProcessor implements NodeProcessor<Line> {
