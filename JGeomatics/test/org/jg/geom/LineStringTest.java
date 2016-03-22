@@ -66,6 +66,9 @@ public class LineStringTest {
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
+        transform = new TransformBuilder().flipXAround(17).build();
+        transformed = ls.transform(transform);
+        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 17, 29, 27, 13, 33, 3)[0], transformed);
     }
     
     @Test
@@ -165,9 +168,10 @@ public class LineStringTest {
     }
 
     @Test
-    public void testGetLength_0args() {
+    public void testGetLength() {
         LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0,0, 10,0, 13,4, 0,4, 0,0)[0];
         assertEquals(32, ls.getLength(), 0.00001);
+        assertEquals(0, LineString.getLength(new VectList()), 0.0001);
     }
 
     @Test
@@ -509,6 +513,8 @@ public class LineStringTest {
             new LineString(new VectList(90,50, 140,0))
         );
         assertEquals(e, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(e, a.union(c.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(e, a.unionLineSet(c.toLineSet(), Tolerance.DEFAULT));
         
         LineSet f = new LineSet(
             new LineString(new VectList(0,100, 100,100, 100,40)),
@@ -524,6 +530,10 @@ public class LineStringTest {
                 b.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
         assertEquals("GEOMETRYCOLLECTION(POLYGON((40 80, 95 80, 95 95, 40 95, 40 80)),LINESTRING(60 80, 140 0),POINT(10 10),POINT(30 90),POINT(30 100),POINT(100 100))",
                 c.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
+        
+        LineString g = new LineString(new VectList(0, 100, 100,100, 100, 200)); //touch on point
+        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
+        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.unionLineSet(g.toLineSet(), Tolerance.DEFAULT).toGeoShape().toWkt());
     }
 
     @Test
@@ -531,18 +541,32 @@ public class LineStringTest {
         LineString a = new LineString(new VectList(0, 90, 90,90, 90, 0)); //touch on point
         Rect b = Rect.valueOf(100,100,120,120); // disjoint
         LineString c = new LineString(new VectList(50,90, 50,50, 100,50)); //touch on point
-        LineString d = new LineString(new VectList(50, 90, 90,90, 90, 50)); //touch on line
+        LineString d = new LineString(new VectList(50,90, 90,90, 90,50)); //touch on line
         Rect e = Rect.valueOf(80,80, 100,100);
+        LineString f = new LineString(new VectList(10,10, 80,10, 80,80)); //disjoint but bounds not disjoint
         
         assertEquals(a, a.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(new PointSet(new VectList(50,90, 90,50)), a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(null, a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        
+        assertEquals(d, a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new LineString(new VectList(80,90, 90,90, 90,80)), a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.intersection(f, Tolerance.FLATNESS, Tolerance.ZERO));
     }
 
     @Test
     public void testLess() {
-        fail("Exception expected");
+        LineString a = new LineString(new VectList(0, 90, 90,90, 90, 0)); //touch on point
+        Rect b = Rect.valueOf(100,100,120,120); // disjoint
+        LineString c = new LineString(new VectList(50,90, 50,50, 100,50)); //touch on point
+        LineString d = new LineString(new VectList(50,90, 90,90, 90,50)); //touch on line
+        Rect e = Rect.valueOf(80,80, 100,100);
+        
+        assertNull(a.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals("[\"LS\", 0,90, 50,90, 90,90, 90,50, 90,0]",
+                a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        assertEquals("[\"LT\", [0,90, 50,90], [90,0, 90,50]]",
+                a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        assertEquals("[\"LT\", [0,90, 80,90], [90,0, 90,80]]", a.less(e, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
     }
 }

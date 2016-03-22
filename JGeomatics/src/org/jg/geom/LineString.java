@@ -1,8 +1,6 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -320,8 +318,6 @@ public class LineString implements Geom {
             return null;
         } else if (amt == 0) {
             return this;
-        } else if (vects.size() == 1) {
-            return vects.getVect(0).buffer(amt, flatness, accuracy);
         }
         VectList buffer = bufferInternal(vects, amt, flatness, accuracy);
         Network network = new Network();
@@ -482,11 +478,11 @@ public class LineString implements Geom {
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
-            return union((LineString) other, accuracy).simplify();
+            return unionLineString((LineString) other, accuracy).simplify();
         } else if (other instanceof LineSet) {
-            return union((LineSet) other, accuracy).simplify();
+            return unionLineSet((LineSet) other, accuracy).simplify();
         } else {
-            return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
+            return unionGeoShape(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
@@ -498,7 +494,7 @@ public class LineString implements Geom {
      * @return a LineSet
      * @throws NullPointerException
      */
-    public LineSet union(LineString other, Tolerance accuracy) throws NullPointerException {
+    public LineSet unionLineString(LineString other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             LineString[] lines = new LineString[]{this, other};
             Arrays.sort(lines, COMPARATOR);
@@ -520,7 +516,8 @@ public class LineString implements Geom {
      * @return a LineSet
      * @throws NullPointerException
      */
-    public LineSet union(LineSet other, Tolerance accuracy) throws NullPointerException {
+    public LineSet unionLineSet(LineSet other, Tolerance accuracy) throws NullPointerException {
+        
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             LineString[] lines = new LineString[other.lineStrings.length + 1];
             lines[0] = this;
@@ -543,7 +540,7 @@ public class LineString implements Geom {
      * @return a GeoShape
      * @throws NullPointerException
      */
-    public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
+    public GeoShape unionGeoShape(GeoShape other, Tolerance accuracy) throws NullPointerException {
         return toLineSet().union(other, accuracy);
     }
 

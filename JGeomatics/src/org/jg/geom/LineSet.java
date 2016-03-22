@@ -222,7 +222,7 @@ public class LineSet implements Geom {
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
-            return ((LineString) other).union(this, accuracy);
+            return ((LineString) other).unionLineSet(this, accuracy);
         } else if (other instanceof LineSet) {
             return union((LineSet) other, accuracy);
         } else {

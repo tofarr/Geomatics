@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeSet;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -464,23 +465,23 @@ public final class Network implements Serializable, Cloneable {
         return getLinks().forOverlapping(rect, processor);
     }
 
-    public boolean pointTouchesLine(Vect vect, Tolerance tolerance){
+    public boolean pointTouchesLine(Vect vect, Tolerance tolerance) {
         return pointTouchesLineInternal(vect.x, vect.y, getLinks(), tolerance);
     }
-    
-    boolean pointTouchesLineInternal(double x, double y, SpatialNode<Line> node, Tolerance tolerance){
-        if(Rect.disjoint(node.getMinX(), node.getMinY(), node.getMaxX(), node.getMaxY(), x, y, tolerance)){
+
+    boolean pointTouchesLineInternal(double x, double y, SpatialNode<Line> node, Tolerance tolerance) {
+        if (Rect.disjoint(node.getMinX(), node.getMinY(), node.getMaxX(), node.getMaxY(), x, y, tolerance)) {
             return false;
         }
-        if(node.isBranch()){
+        if (node.isBranch()) {
             return pointTouchesLineInternal(x, y, node.getA(), tolerance)
                     || pointTouchesLineInternal(x, y, node.getB(), tolerance);
-        }else{
+        } else {
             double tol = tolerance.tolerance * tolerance.tolerance;
-            for(int i = node.size(); i-- > 0;){
+            for (int i = node.size(); i-- > 0;) {
                 Line line = node.getItemValue(i);
                 double distSq = Line.distSegVectSq(line.ax, line.ay, line.bx, line.by, x, y);
-                if(distSq <= tol){
+                if (distSq <= tol) {
                     return true;
                 }
             }
@@ -547,22 +548,42 @@ public final class Network implements Serializable, Cloneable {
         return this;
     }
 
-    public Network snap(Tolerance tolerance) {
-        snap all points to lines...
+    public Network snap(final Tolerance tolerance) {
+        final ArrayList<Snap> snapList = new ArrayList<>();
+        Snap[] snaps = new Snap[10];
+        while(true){
+            snapList.clear();
+            map.forEach(new VectMapProcessor<VectList>(){
+
+                final VectBuilder workingVect = new VectBuilder();
+                final SpatialNode<Line> links = getLinks();
+
+                @Override
+                public boolean process(double x, double y, VectList links) {
+                    calculateSnapsForPoint(x, y, cachedLinks, tolerance, workingVect, snapList);
+                    return true;
+                }
+            });
+            calculateSnapsForPoints(tolerance, snapList);
+            if(snapList.isEmpty()){
+                return this;
+            }
+            snaps = snapList.toArray(snaps);
+            Arrays.sort(snaps, 0, snapList.size());
+            for(int i = 0; i < snapList.size(); i++){
+                snaps[i].snap(this);
+            }
+        }
+    }
         
-            for each line, find list of close points - map src to dst
-                    
-            sort close points and apply - kind of like intersections
-        
-        
-        //snap all points together
-        
+    void calculateSnapsForPoints(Tolerance tolerance, Collection<Snap> results){
         int size = map.size();
         int a = size - 1;
         if (a <= 0) {
-            return this;
+            return;
         }
         VectList vects = getVects(new VectList());
+        final double tolSq = tolerance.tolerance * tolerance.tolerance;
         while (a-- > 0) {
             double ax = vects.getX(a);
             double ay = vects.getY(a);
@@ -573,17 +594,38 @@ public final class Network implements Serializable, Cloneable {
                 if (!tolerance.match(ax, bx)) {
                     break;
                 }
-                if (tolerance.match(ax, ay, bx, by)) {
-                    VectList links = map.get(bx, by);
-                    for (int k = 0; k < links.size(); k++) {
-                        addLinkInternal(ax, ay, links.getX(k), links.getY(k));
-                    }
-                    removeVertexInternal(bx, by);
+                double distSq = Vect.distSq(ax, ay, bx, by);
+                if(distSq <= tolSq){
+                    results.add(new Snap(ax, ay, bx, by, distSq));
                 }
             }
         }
-        return this;
     }
+    
+    void calculateSnapsForPoint(double x, double y, SpatialNode<Line> node, Tolerance accuracy, VectBuilder workingVect, Collection<Snap> result){
+        if(node.isDisjoint(x, y, x, y, accuracy)){
+            return;
+        }
+        if(node.isBranch()){
+            calculateSnapsForPoint(x, y, node.getA(), accuracy, workingVect, result);
+            calculateSnapsForPoint(x, y, node.getB(), accuracy, workingVect, result);
+            return;
+        }
+        double tolSq = accuracy.tolerance * accuracy.tolerance;
+        for(int i = node.size(); i-- > 0;){
+            Line line = node.getItemValue(i);
+            if((line.ax == x) && (line.ay == y)){
+                continue; // if line.a == point, skip
+            }else if((line.bx == x) && (line.by == y)){
+                continue; // if line.b == point, skip
+            }
+            double distSq = Line.distSegVectSq(line.ax, line.ay, line.bx, line.by, x, y);
+            if(distSq <= tolSq){
+                result.add(new Snap(x, y, line.ax, line.ay, line.bx, line.by, distSq));
+            }
+        }
+    }
+    
 
     public VectList extractPoints(final VectList target) throws NullPointerException {
         map.forEach(new VectMapProcessor<VectList>() {
@@ -1088,5 +1130,69 @@ public final class Network implements Serializable, Cloneable {
     public interface VertexProcessor {
 
         public boolean process(double x, double y, int numLinks);
+    }
+
+    static class Snap implements Comparable<Snap> {
+
+        final double ax;
+        final double ay;
+        final double bx;
+        final double by;
+        final double cx;
+        final double cy;
+        final double distSq;
+
+        Snap(double ax, double ay, double bx, double by, double distSq) {
+            this.ax = ax;
+            this.ay = ay;
+            this.bx = bx;
+            this.by = by;
+            this.cx = this.cy = Double.NaN;
+            this.distSq = distSq;
+        }
+
+        Snap(double ax, double ay, double bx, double by, double cx, double cy, double distSq) {
+            this.ax = ax;
+            this.ay = ay;
+            this.bx = bx;
+            this.by = by;
+            this.cx = cx;
+            this.cy = cy;
+            this.distSq = distSq;
+        }
+        
+        boolean snap(Network network){
+            if(!network.hasVect(ax, ay)){
+                return false;
+            }
+            if(isSnapToPoint()){
+                VectList links = network.map.get(bx, by);
+                if(links == null){
+                    return false;
+                }
+                for(int i = links.size(); i-- > 0;){
+                    network.addLinkInternal(ax, ay, links.getX(i), links.getY(i));
+                }
+                network.removeVertexInternal(bx, by);
+            }else{
+                if(!network.removeLinkInternal(bx, by, cx, cy)){
+                    return false;
+                }
+                network.addLinkInternal(ax, ay, bx, by);
+                network.addLinkInternal(ax, ay, cx, cy);
+            }
+            return true;
+        }
+        
+        boolean isSnapToPoint(){
+            return Double.isNaN(cx);
+        }
+
+        @Override
+        public int compareTo(Snap other) {
+            int c = (isSnapToPoint() ? 0: 1) - (other.isSnapToPoint() ? 0 : 1);
+            return (c == 0) ? Double.compare(distSq, other.distSq) : c;
+        }
+
     }
 }
