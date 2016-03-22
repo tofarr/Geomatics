@@ -304,6 +304,7 @@ public class LineSet implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         VectBuilder workingVect = new VectBuilder();
         network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
@@ -335,6 +336,7 @@ public class LineSet implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         VectBuilder workingVect = new VectBuilder();
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
         network.removeTouchingInternal(other, accuracy, workingVect);

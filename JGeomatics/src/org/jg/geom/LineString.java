@@ -552,7 +552,8 @@ public class LineString implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return null;
         }
-        return toLineSet().intersection(other.toGeoShape(flatness, accuracy), flatness, accuracy);
+        GeoShape ret = toLineSet().intersection(other.toGeoShape(flatness, accuracy), accuracy);
+        return (ret == null) ? null : ret.simplify();
     }
 
     @Override
@@ -560,7 +561,8 @@ public class LineString implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return this;
         }
-        return toLineSet().less(other.toGeoShape(flatness, accuracy), flatness, accuracy);
+        LineSet ret = toLineSet().less(other.toGeoShape(flatness, accuracy), accuracy);
+        return (ret == null) ? null : ret.simplify();
     }
 
     /**

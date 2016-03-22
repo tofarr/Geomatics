@@ -548,6 +548,15 @@ public final class Network implements Serializable, Cloneable {
     }
 
     public Network snap(Tolerance tolerance) {
+        snap all points to lines...
+        
+            for each line, find list of close points - map src to dst
+                    
+            sort close points and apply - kind of like intersections
+        
+        
+        //snap all points together
+        
         int size = map.size();
         int a = size - 1;
         if (a <= 0) {

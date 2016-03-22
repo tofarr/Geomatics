@@ -497,7 +497,6 @@ public class LineStringTest {
         LineString b = new LineString(new VectList(0, 100, 100,100, 100, 0)); //touch on point
         LineString c = new LineString(new VectList(50,90, 140,0)); //touch on point
         GeoShape d = new GeoShape(Rect.valueOf(40, 80, 95, 95).toArea(), null, new PointSet(new VectList(10, 10, 30, 90, 30, 100, 100, 100)));
-        d.toWkt();
         
         assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(new LineSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
@@ -529,7 +528,17 @@ public class LineStringTest {
 
     @Test
     public void testIntersection() {
-        fail("Exception expected");
+        LineString a = new LineString(new VectList(0, 90, 90,90, 90, 0)); //touch on point
+        Rect b = Rect.valueOf(100,100,120,120); // disjoint
+        LineString c = new LineString(new VectList(50,90, 50,50, 100,50)); //touch on point
+        LineString d = new LineString(new VectList(50, 90, 90,90, 90, 50)); //touch on line
+        Rect e = Rect.valueOf(80,80, 100,100);
+        
+        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new PointSet(new VectList(50,90, 90,50)), a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(null, a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
     }
 
     @Test
