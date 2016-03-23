@@ -144,8 +144,6 @@ public class LineString implements Geom {
                 if(Ring.getArea(vects) < 0){
                     vects.reverse();
                 }
-            }else if(!vects.isOrdered()){
-                vects.reverse();
             }
             lines[i] = new LineString(vects);
         }
@@ -165,7 +163,16 @@ public class LineString implements Geom {
         }
         VectList transformed = vects.clone();
         transformed.transform(transform);
-        if (!transformed.isOrdered()) {
+        int end = transformed.size()-1;
+        if((transformed.getX(0) == transformed.getX(end)) && (transformed.getY(0) == transformed.getY(end))){
+            int index = Ring.minIndex(transformed);
+            if(index != 0){
+                transformed = Ring.rotate(transformed, index);
+            }
+            if(Ring.getArea(transformed) < 0){
+                transformed.reverse();
+            }
+        }else if(!transformed.isOrdered()){
             transformed.reverse();
         }
         LineString ret = new LineString(transformed);
@@ -372,6 +379,7 @@ public class LineString implements Geom {
         Network network = new Network();
         network.addAllLinks(buffer);
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         removeNearLines(network, vects, amt - (flatness.tolerance + accuracy.tolerance));
         return Area.valueOfInternal(accuracy, network);
     }

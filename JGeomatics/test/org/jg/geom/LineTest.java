@@ -828,11 +828,11 @@ public class LineTest {
         );
         Geom found = a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals(expected, found);
-        expected = new LineSet(
+        LineSet d = new LineSet(
             new LineString(new VectList(0,0,100,100)),
             new LineString(new VectList(150,0,200,50))
         );
-        assertEquals(expected, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(d, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 
     @Test

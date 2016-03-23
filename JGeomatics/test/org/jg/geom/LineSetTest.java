@@ -1,8 +1,11 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
+import java.io.IOException;
+import java.util.Arrays;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -80,206 +83,165 @@ public class LineSetTest {
         }
     }
 
-    /**
-     * Test of numLineStrings method, of class LineSet.
-     */
     @Test
     public void testNumLineStrings() {
-        System.out.println("numLineStrings");
-        LineSet instance = null;
-        int expResult = 0;
-        int result = instance.numLineStrings();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, 0,20, 80,20, 60,0, 40,20, 20,0, 0,20);
+        assertEquals(2, ls.numLineStrings());
     }
 
-    /**
-     * Test of getLineString method, of class LineSet.
-     */
     @Test
     public void testGetLineString() {
-        System.out.println("getLineString");
-        int index = 0;
-        LineSet instance = null;
-        LineString expResult = null;
-        LineString result = instance.getLineString(index);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, 0,20, 80,20, 60,0, 40,20, 20,0, 0,20);
+        assertEquals("[\"LS\", 0,20, 20,0, 40,20, 0,20]", ls.getLineString(0).toString());
+        assertEquals("[\"LS\", 40,20, 60,0, 80,20, 40,20]", ls.getLineString(1).toString());
+        try{
+            ls.getLineString(-1);
+            fail("Exception expected");
+        }catch(IndexOutOfBoundsException ex){
+        }
+        try{
+            ls.getLineString(2);
+            fail("Exception expected");
+        }catch(IndexOutOfBoundsException ex){
+        }
     }
 
-    /**
-     * Test of getBounds method, of class LineSet.
-     */
     @Test
     public void testGetBounds() {
-        System.out.println("getBounds");
-        LineSet instance = null;
-        Rect expResult = null;
-        Rect result = instance.getBounds();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, 0,20, 80,20, 60,0, 20,40, 0,20);
+        assertEquals(Rect.valueOf(0,0,80,40), ls.getBounds());
     }
 
-    /**
-     * Test of transform method, of class LineSet.
-     */
     @Test
     public void testTransform() {
-        System.out.println("transform");
-        Transform transform = null;
-        LineSet instance = null;
-        LineSet expResult = null;
-        LineSet result = instance.transform(transform);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet a = LineSet.valueOf(TOL, 0,20, 80,20, 60,0, 20,40, 0,20);
+        assertSame(a, a.transform(Transform.IDENTITY));
+        LineSet b = a.transform(new TransformBuilder().translate(2, 3).build());
+        LineSet c = LineSet.valueOf(TOL, 2,23, 82,23, 62,3, 22,43, 2,23);
+        assertEquals(c, b);
     }
 
-    /**
-     * Test of simplify method, of class LineSet.
-     */
     @Test
     public void testSimplify() {
-        System.out.println("simplify");
-        LineSet instance = null;
-        Geom expResult = null;
-        Geom result = instance.simplify();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet a = LineSet.valueOf(TOL, 0,20, 80,20, 60,0, 20,40, 0,20);
+        assertSame(a, a.simplify());
+        LineSet b = LineSet.valueOf(TOL, 4,5, 2,3);
+        assertEquals(Line.valueOf(2,3, 4,5), b.simplify());
     }
 
-    /**
-     * Test of pathIterator method, of class LineSet.
-     */
     @Test
     public void testPathIterator() {
-        System.out.println("pathIterator");
-        LineSet instance = null;
-        PathIterator expResult = null;
-        PathIterator result = instance.pathIterator();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
+        PathIterator iter = ls.pathIterator();
+        assertPath(iter, PathIterator.SEG_MOVETO, 0, 0);
+        iter.next();
+        assertPath(iter, PathIterator.SEG_LINETO, 50, 50);
+        iter.next();
+        assertPath(iter, PathIterator.SEG_LINETO, 0, 100);
+        iter.next();
+        assertPath(iter, PathIterator.SEG_LINETO, 0, 0);
+        
+        iter.next();
+        assertPath(iter, PathIterator.SEG_MOVETO, 50, 50);
+        iter.next();
+        assertPath(iter, PathIterator.SEG_LINETO, 100, 0);
+        iter.next();
+        assertPath(iter, PathIterator.SEG_LINETO, 100, 100);
+        iter.next();
+        assertPath(iter, PathIterator.SEG_LINETO, 50, 50);
+        
+        iter.next();
+        assertTrue(iter.isDone());
     }
-
-    /**
-     * Test of clone method, of class LineSet.
-     */
+    
+    void assertPath(PathIterator iter, int expectedResult, double... expectedCoords){
+        double[] coords = new double[6];
+        float[] fcoords = new float[6];
+        expectedCoords = Arrays.copyOf(expectedCoords, 6);
+        assertFalse(iter.isDone());
+        assertEquals(expectedResult, iter.currentSegment(coords));
+        assertEquals(expectedResult, iter.currentSegment(fcoords));
+        for(int i = 6; i-- > 0;){
+            assertEquals(expectedCoords[i], coords[i], 0.0001);
+            assertEquals(expectedCoords[i], fcoords[i], 0.0001);
+        }
+    }
+    
     @Test
     public void testClone() {
-        System.out.println("clone");
-        LineSet instance = null;
-        LineSet expResult = null;
-        LineSet result = instance.clone();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
+        assertSame(ls, ls.clone());
     }
 
-    /**
-     * Test of toString method, of class LineSet.
-     */
     @Test
-    public void testToString_0args() {
-        System.out.println("toString");
-        LineSet instance = null;
-        String expResult = "";
-        String result = instance.toString();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testToString() {
+        LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
+        assertEquals("[\"LT\", [0,0, 50,50, 0,100, 0,0], [50,50, 100,0, 100,100, 50,50]]", ls.toString());
+        try{
+            ls.toString(new Appendable(){
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
+            
+            });
+            fail("Exception expected");
+        }catch(GeomException ex){
+        }
     }
 
-    /**
-     * Test of toString method, of class LineSet.
-     */
     @Test
-    public void testToString_Appendable() {
-        System.out.println("toString");
-        Appendable appendable = null;
-        LineSet instance = null;
-        instance.toString(appendable);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testToGeoShape() {
+        LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
+        assertEquals(new GeoShape(null, ls, null), ls.toGeoShape(Tolerance.FLATNESS, TOL));
     }
 
-    /**
-     * Test of toGeoShape method, of class LineSet.
-     */
     @Test
-    public void testToGeoShape_Tolerance_Tolerance() {
-        System.out.println("toGeoShape");
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.toGeoShape(flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testAddTo() {
+        LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
+        Network network = new Network();
+        network.addLink(0, 100, 30, 80);
+        ls.addTo(network, Tolerance.FLATNESS, TOL);
+        assertEquals("[[0,100, 0,0, 50,50],[0,100, 30,80],[0,100, 50,50],[50,50, 100,0, 100,100, 50,50]]", network.toString());
     }
 
-    /**
-     * Test of toGeoShape method, of class LineSet.
-     */
-    @Test
-    public void testToGeoShape_0args() {
-        System.out.println("toGeoShape");
-        LineSet instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.toGeoShape();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of addTo method, of class LineSet.
-     */
-    @Test
-    public void testAddTo_3args() {
-        System.out.println("addTo");
-        Network network = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        instance.addTo(network, flatness, accuracy);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of addTo method, of class LineSet.
-     */
-    @Test
-    public void testAddTo_Network() {
-        System.out.println("addTo");
-        Network network = null;
-        LineSet instance = null;
-        instance.addTo(network);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of buffer method, of class LineSet.
-     */
     @Test
     public void testBuffer() {
-        System.out.println("buffer");
-        double amt = 0.0;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        Geom expResult = null;
-        Geom result = instance.buffer(amt, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
+        assertNull(ls.buffer(-1, Tolerance.FLATNESS, TOL));
+        assertSame(ls, ls.buffer(0, Tolerance.FLATNESS, TOL));
+        Area area = (Area)ls.buffer(5, Tolerance.FLATNESS, TOL);
+        assertEquals(3, area.numRings());
+        assertNotNull(area.shell);
+        assertEquals(2, area.numChildren());
+        Rect bounds = area.getBounds();
+        assertEquals(-5, bounds.minX, 0.1);
+        assertEquals(-5, bounds.minY, 0.1);
+        assertEquals(105, bounds.maxX, 0.1);
+        assertEquals(105, bounds.maxY, 0.1);
+        assertEquals(4604, area.getArea(), 1);
+
+        assertEquals(Relate.OUTSIDE, area.relate(-10, 50, TOL));
+        assertEquals(Relate.TOUCH, area.relate(Vect.valueOf(-5, 50), TOL));
+        assertEquals(Relate.INSIDE, area.relate(new VectBuilder(0, 50), TOL));
+        assertEquals(Relate.TOUCH, area.relate(5, 50, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(25, 50, TOL));
+        assertEquals(Relate.INSIDE, area.relate(50, 50, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(75, 50, TOL));
+        assertEquals(Relate.TOUCH, area.relate(95, 50, TOL));
+        assertEquals(Relate.INSIDE, area.relate(100, 50, TOL));
+        assertEquals(Relate.TOUCH, area.relate(105, 50, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(110, 50, TOL));
     }
 
     /**

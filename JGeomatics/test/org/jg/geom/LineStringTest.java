@@ -86,7 +86,7 @@ public class LineStringTest {
         assertEquals(0, LineString.parseAll(Tolerance.DEFAULT, new Network()).length);
         assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]",
                 Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, new Network().addAllLinks(new VectList(1,2, 3,5, 8,13)))));
-        assertEquals("[[\"LS\", 0,20, 20,20], [\"LS\", 20,0, 20,20], [\"LS\", 20,20, 20,40, 40,40, 40,20, 20,20]]",
+        assertEquals("[[\"LS\", 0,20, 20,20], [\"LS\", 20,0, 20,20], [\"LS\", 20,20, 40,20, 40,40, 20,40, 20,20]]",
                 Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, new Network().addAllLinks(new VectList(20,0, 20,40, 40,40, 40,20, 0,20)))));
         Network network = new Network();
         network.addVertex(1, 2);
@@ -114,6 +114,14 @@ public class LineStringTest {
         transform = new TransformBuilder().flipXAround(17).build();
         transformed = ls.transform(transform);
         assertEquals(LineString.valueOf(Tolerance.DEFAULT, 17, 29, 27, 13, 33, 3), transformed);
+        ls = LineString.valueOf(Tolerance.DEFAULT, 10,10, 20,10, 20,20, 10,20, 10,10);
+        transform = new TransformBuilder().flipY().build();
+        transformed = ls.transform(transform);
+        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 10,-20, 20,-20, 20,-10, 10,-10, 10,-20), transformed);
+        
+        ls = LineString.valueOf(Tolerance.DEFAULT, 10,10, 10,20);
+        transformed = ls.transform(transform);
+        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 10,-20, 10,-10), transformed);
     }
     
     @Test

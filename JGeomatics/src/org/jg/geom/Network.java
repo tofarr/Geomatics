@@ -339,6 +339,8 @@ public final class Network implements Serializable, Cloneable {
             double ax = vects.getX(index);
             double ay = vects.getY(index);
             removeLinkInternal(ax, ay, bx, by);
+            bx = ax;
+            by = ay;
         }
     }
 

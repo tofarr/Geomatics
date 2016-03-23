@@ -104,7 +104,6 @@ public class Ring implements Geom {
         // First we need to make sure there are no hang lines (lines ending in a vector linked to only one other vector)
         // as the algorithm can't process these
         VectList path = new VectList();
-        VectBuilder vect = new VectBuilder();
         for (int v = allVects.size(); v-- > 0;) {
             removeHangLines(network, allVects.getX(v), allVects.getY(v));
         }
@@ -484,7 +483,8 @@ public class Ring implements Geom {
         Network network = new Network();
         network.addAllLinks(buffer);
         network.explicitIntersections(accuracy);
-        LineString.removeNearLines(network, vects, amt);
+        double tol = amt - (flatness.tolerance + accuracy.tolerance);
+        LineString.removeNearLines(network, vects, tol);
         return Area.valueOfInternal(accuracy, network);
     }
 

@@ -145,7 +145,7 @@ public class LineSet implements Geom {
             @Override
             public void next() {
                 if (iter != null) {
-                    if (iter.isDone()) {
+                    if (!iter.isDone()) {
                         iter.next();
                     }
                     if (iter.isDone()) {
@@ -248,8 +248,10 @@ public class LineSet implements Geom {
             network.addAllLinks(buffer);
         }
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        double tol = amt - (flatness.tolerance + accuracy.tolerance);
         for (LineString lineString : lineStrings) {
-            LineString.removeNearLines(network, lineString.vects, amt);
+            LineString.removeNearLines(network, lineString.vects, tol);
         }
         return Area.valueOfInternal(accuracy, network);
     }
@@ -446,6 +448,6 @@ public class LineSet implements Geom {
             final LineSet other = (LineSet) obj;
             return Arrays.equals(lineStrings, other.lineStrings);
         }
-        return true;
+        return false;
     }
 }
