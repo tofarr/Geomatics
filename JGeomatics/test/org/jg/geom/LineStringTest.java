@@ -25,42 +25,87 @@ import static org.junit.Assert.*;
  * @author tofar
  */
 public class LineStringTest {
+    
+    @Test
+    public void testValueOf(){
+        assertEquals("[\"LS\", 0,0, 100,0, 100,100]", LineString.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100).toString());
+        try{
+            LineString.valueOf(Tolerance.DEFAULT, 1,2, 3);
+            fail("Exception expected");
+        }catch(IllegalArgumentException ex){
+        }
+        try{
+            LineString.valueOf(Tolerance.DEFAULT, 1,Double.NEGATIVE_INFINITY, 3,4);
+            fail("Exception expected");
+        }catch(IllegalArgumentException ex){
+        }
+        try{
+            LineString.valueOf(Tolerance.DEFAULT, 0,0);
+            fail("Exception expected");
+        }catch(IllegalArgumentException ex){
+        }
+        try{
+            LineString.valueOf(Tolerance.DEFAULT, 40,0, 40,60, 0,20, 60,20);
+            fail("Exception expected");
+        }catch(IllegalArgumentException ex){
+        }
+        try{
+            LineString.valueOf(Tolerance.DEFAULT);
+            fail("Exception expected");
+        }catch(IllegalArgumentException ex){
+        }
+        try{
+            LineString.valueOf(null, 40,0, 40,60, 0,20, 60,20);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        try{
+            LineString.valueOf(Tolerance.DEFAULT, (double[])null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        try{
+            LineString.valueOf(Tolerance.DEFAULT, (VectList)null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+    }
 
     @Test
-    public void testValueOf_ords() {
-        assertEquals(0, LineString.valueOf(Tolerance.DEFAULT).length);
-        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]", Arrays.toString(LineString.valueOf(Tolerance.DEFAULT, 1,2, 3,5, 8,13)));
+    public void testParseAll_ords() {
+        assertEquals(0, LineString.parseAll(Tolerance.DEFAULT).length);
+        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]", Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, 1,2, 3,5, 8,13)));
         assertEquals("[[\"LS\", 0,20, 20,20], [\"LS\", 20,0, 20,20], [\"LS\", 20,20, 20,40, 40,40, 40,20, 20,20]]",
-                Arrays.toString(LineString.valueOf(Tolerance.DEFAULT, 20,0, 20,40, 40,40, 40,20, 0,20)));
-        assertEquals(0, LineString.valueOf(Tolerance.DEFAULT, 1,2, 1,2, 1,2).length);
-        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]", Arrays.toString(LineString.valueOf(new Tolerance(0.5), 1,2, 1.1,2, 3,5, 8,13)));
+                Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, 20,0, 20,40, 40,40, 40,20, 0,20)));
+        assertEquals(0, LineString.parseAll(Tolerance.DEFAULT, 1,2, 1,2, 1,2).length);
+        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]", Arrays.toString(LineString.parseAll(new Tolerance(0.5), 1,2, 1.1,2, 3,5, 8,13)));
     }
     
     @Test
-    public void testValueOf_Network() {
-        assertEquals(0, LineString.valueOf(new Network(), Tolerance.DEFAULT).length);
+    public void testParseAll_Network() {
+        assertEquals(0, LineString.parseAll(Tolerance.DEFAULT, new Network()).length);
         assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]",
-                Arrays.toString(LineString.valueOf(new Network().addAllLinks(new VectList(1,2, 3,5, 8,13)), Tolerance.DEFAULT)));
+                Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, new Network().addAllLinks(new VectList(1,2, 3,5, 8,13)))));
         assertEquals("[[\"LS\", 0,20, 20,20], [\"LS\", 20,0, 20,20], [\"LS\", 20,20, 20,40, 40,40, 40,20, 20,20]]",
-                Arrays.toString(LineString.valueOf(new Network().addAllLinks(new VectList(20,0, 20,40, 40,40, 40,20, 0,20)), Tolerance.DEFAULT)));
+                Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, new Network().addAllLinks(new VectList(20,0, 20,40, 40,40, 40,20, 0,20)))));
         Network network = new Network();
         network.addVertex(1, 2);
-        assertEquals(0, LineString.valueOf(network, Tolerance.DEFAULT).length);
+        assertEquals(0, LineString.parseAll(Tolerance.DEFAULT, network).length);
     }
 
     @Test
     public void testGetBounds() {
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 10, 0, 10, 10, 20, 10)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 10, 0, 10, 10, 20, 10);
         assertEquals(Rect.valueOf(0, 0, 20, 10), ls.getBounds());
     }
 
     @Test
     public void testTransform() {
         Transform transform = new TransformBuilder().scale(2, 3).translate(-1, -2).build();
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
         assertSame(ls, ls.transform(Transform.IDENTITY));
         LineString transformed = ls.transform(transform);
-        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 1, 7, 13, 37, 33, 85)[0], transformed);
+        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 1, 7, 13, 37, 33, 85), transformed);
         try {
             ls.transform(null);
             fail("Exception expected");
@@ -68,20 +113,20 @@ public class LineStringTest {
         }
         transform = new TransformBuilder().flipXAround(17).build();
         transformed = ls.transform(transform);
-        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 17, 29, 27, 13, 33, 3)[0], transformed);
+        assertEquals(LineString.valueOf(Tolerance.DEFAULT, 17, 29, 27, 13, 33, 3), transformed);
     }
     
     @Test
     public void testSimplify(){
-        LineString a = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29)[0];
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
         assertSame(a, a.simplify());
-        LineString b = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13)[0];
+        LineString b = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13);
         assertEquals(Line.valueOf(1, 3, 7, 13), b.simplify());
     }
 
     @Test
     public void testPathIterator() {
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
         PathIterator iter = ls.pathIterator();
         assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
         assertFalse(iter.isDone());
@@ -116,13 +161,13 @@ public class LineStringTest {
 
     @Test
     public void testClone() {
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
         assertSame(ls, ls.clone());
     }
 
     @Test
     public void testToString_Appendable() {
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
         assertEquals("[\"LS\", 1,3, 7,13, 17,29]", ls.toString());
         try {
             ls.toString(null);
@@ -154,7 +199,7 @@ public class LineStringTest {
 
     @Test
     public void testAddTo() {
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 20, 20, 20, 0, 0, 0, 0, 20, 20, 20)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 20, 20, 20, 0, 0, 0, 0, 20, 20, 20);
         Network network = new Network();
         ls.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
         assertEquals("[[0,0, 20,0, 20,20, 0,20, 0,0]]", network.toString());
@@ -162,22 +207,22 @@ public class LineStringTest {
     
     @Test
     public void testToGeoShape(){
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0,0, 10,0, 13,4, 0,4, 0,0)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0,0, 10,0, 13,4, 0,4, 0,0);
         GeoShape gs = new GeoShape(null, new LineSet(ls), null);
         assertEquals(gs, ls.toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO));
     }
 
     @Test
     public void testGetLength() {
-        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0,0, 10,0, 13,4, 0,4, 0,0)[0];
+        LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0,0, 10,0, 13,4, 0,4, 0,0);
         assertEquals(32, ls.getLength(), 0.00001);
         assertEquals(0, LineString.getLength(new VectList()), 0.0001);
     }
 
     @Test
     public void testEquals() {
-        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 100, 1, 100, 100)[0];
-        LineString b = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 100, 0, 100, 100)[0];
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 100, 1, 100, 100);
+        LineString b = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 100, 0, 100, 100);
         assertEquals(a, a);
         assertNotEquals(a, b);
         assertNotEquals(a, "");
@@ -188,7 +233,7 @@ public class LineStringTest {
         Set<Integer> hashCodes = new HashSet<>();
         for (int x = 0; x < 10; x++) {
             for (int y = 0; y < 10; y++) {
-                LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0, 0, x, y, 10, 10)[0];
+                LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0, 0, x, y, 10, 10);
                 hashCodes.add(ls.hashCode());
             }
         }
@@ -220,7 +265,7 @@ public class LineStringTest {
             lines.add(line);
         }
         
-        LineString a = LineString.valueOf(vects, Tolerance.DEFAULT)[0];
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, vects);
         
         SpatialNode<Line> lineIndex = a.getLineIndex();
         assertEquals(Rect.valueOf(0, 0, max, max), lineIndex.getBounds());
@@ -240,7 +285,7 @@ public class LineStringTest {
 
     @Test
     public void testForInteractingLines() {
-        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20)[0];
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20);
         final Map<Rect, Line> map = new HashMap<>();
         map.put(Rect.valueOf(0, 0, 0, 50), Line.valueOf(0, 0, 0, 50));
         map.put(Rect.valueOf(0, 50, 50, 50), Line.valueOf(0, 50, 50, 50));
@@ -274,7 +319,7 @@ public class LineStringTest {
 
     @Test
     public void testForOverlappingLines() {
-        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20)[0];
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20);
         final Map<Rect, Line> map = new HashMap<>();
         map.put(Rect.valueOf(0, 50, 50, 50), Line.valueOf(0, 50, 50, 50));
 
@@ -291,7 +336,7 @@ public class LineStringTest {
 
     @Test
     public void testExternalize() throws Exception {
-        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20)[0];
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0, 0, 0, 50, 50, 50, 50, 0, 10, 0, 10, 40, 40, 40, 40, 10, 20, 10, 20, 30, 30, 30, 30, 20);
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
             out.writeObject(a);
@@ -306,7 +351,7 @@ public class LineStringTest {
     @Test
     public void testBuffer_RightAngle() {
         Tolerance flatness = new Tolerance(0.5);
-        LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 60, 60, 60)[0];
+        LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 60, 60, 60);
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
@@ -324,7 +369,7 @@ public class LineStringTest {
     @Test
     public void testBuffer_Loop() {
         Tolerance flatness = new Tolerance(0.5);
-        LineString s = LineString.valueOf(Tolerance.DEFAULT, 5,5, 25,5, 25,45, 5,45, 5,5)[0];
+        LineString s = LineString.valueOf(Tolerance.DEFAULT, 5,5, 25,5, 25,45, 5,45, 5,5);
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
@@ -343,7 +388,7 @@ public class LineStringTest {
     @Test
     public void testBuffer_V() {
         Tolerance flatness = new Tolerance(0.5);
-        LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 10, 19, 10.2, 20, 10.4, 20, 30)[0];
+        LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 10, 19, 10.2, 20, 10.4, 20, 30);
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 

@@ -34,18 +34,31 @@ public class Area implements Geom {
         this.children = children;
     }
 
-    public Area(Ring shell) {
+    public Area(Ring shell) throws NullPointerException {
         this(shell, NO_CHILDREN);
-    }
-
-    public static Area valueOf(Network network, Tolerance accuracy) {
-        network = network.clone();
-        network.explicitIntersections(accuracy);
-        return valueOfInternal(network, accuracy);
+        if(shell == null){
+            throw new NullPointerException();
+        }
     }
     
-    static Area valueOfInternal(Network network, Tolerance accuracy) {
-        List<Ring> rings = Ring.valueOfInternal(network, accuracy);
+    public static Area valueOf(Tolerance accuracy, double... ords) throws NullPointerException,IllegalArgumentException{
+        return valueOf(accuracy, new VectList(ords));
+    }
+    
+    public static Area valueOf(Tolerance accuracy, VectList vects) throws NullPointerException,IllegalArgumentException{
+        Network network = new Network();
+        network.addAllLinks(vects);
+        return valueOfInternal(accuracy, network);
+    }
+
+    public static Area valueOf(Tolerance accuracy, Network network) {
+        network = network.clone();
+        network.explicitIntersections(accuracy);
+        return valueOfInternal(accuracy, network);
+    }
+    
+    static Area valueOfInternal(Tolerance accuracy, Network network) {
+        List<Ring> rings = Ring.parseAllInternal(network, accuracy);
         switch (rings.size()) {
             case 0:
                 return null;
@@ -385,7 +398,7 @@ public class Area implements Geom {
         VectBuilder workingVect = new VectBuilder();
         network.removeInsideOrOutsideInternal(this, accuracy, Relate.INSIDE, workingVect);
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
-        return Area.valueOfInternal(network, accuracy);
+        return Area.valueOfInternal(accuracy, network);
     }
 
     public Area union(Ring other, Tolerance accuracy) {
@@ -496,7 +509,7 @@ public class Area implements Geom {
         
         });
         
-        return Area.valueOfInternal(network, accuracy);
+        return Area.valueOfInternal(accuracy, network);
     }
     
     @Override
@@ -513,7 +526,7 @@ public class Area implements Geom {
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
         network.removeTouchingInternal(other, accuracy, workingVect);
         
-        return Area.valueOfInternal(network, accuracy);
+        return Area.valueOfInternal(accuracy, network);
     }
 
     @Override

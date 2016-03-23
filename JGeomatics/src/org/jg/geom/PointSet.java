@@ -202,7 +202,7 @@ public final class PointSet implements Geom {
         network.explicitIntersections(accuracy);
         removeWithinBuffer(vects, network, amt, flatness, accuracy);
 
-        return Area.valueOfInternal(network, accuracy);
+        return Area.valueOfInternal(accuracy, network);
     }
 
     //remove any link from network with a mid point closer than the amt to one of the lines in this

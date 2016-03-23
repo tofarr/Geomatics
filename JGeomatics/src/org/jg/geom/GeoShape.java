@@ -3,11 +3,8 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -55,7 +52,7 @@ public class GeoShape implements Geom {
         network.extractPoints(pointVects);
         List<VectList> linePaths = new ArrayList<>();
         network.extractHangLines(linePaths);
-        Area area = Area.valueOfInternal(network, accuracy);
+        Area area = Area.valueOfInternal(accuracy, network);
         if (area != null) { // validate points and lines against area
             Network lineNetwork = new Network();
             for (VectList linePath : linePaths) {

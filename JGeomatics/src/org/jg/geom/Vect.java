@@ -228,7 +228,7 @@ public final class Vect implements Geom, Comparable<Vect> {
             if (result.size() < 4) {
                 return this;
             }
-            Ring ring = new Ring(result, null, null, null, this, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
+            Ring ring = new Ring(result, null, null, null, this, true);
             return ring;
         }
     }

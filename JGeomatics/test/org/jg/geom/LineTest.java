@@ -855,7 +855,7 @@ public class LineTest {
         assertNull(a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         Geom geom = a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
-        Geom expected = LineSet.valueOf(new VectList(0,0, 50,50, 100,100), Tolerance.DEFAULT).simplify();
+        Geom expected = LineSet.valueOf(Tolerance.DEFAULT, 0,0, 50,50, 100,100).simplify();
         assertEquals(expected, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }    
 }

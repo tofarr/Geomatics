@@ -23,21 +23,25 @@ public class LineSet implements Geom {
     }
 
     static LineSet valueOfInternal(Network network) throws NullPointerException {
-        LineString[] lineStrings = LineString.valueOfInternal(network);
+        LineString[] lineStrings = LineString.parseAllInternal(network);
         return (lineStrings.length == 0) ? null : new LineSet(lineStrings);
     }
     
-    public static LineSet valueOf(Network network, Tolerance accuracy){
+    public static LineSet valueOf(Tolerance accuracy, Network network){
         network = network.clone();
         network.explicitIntersections(accuracy);
         return valueOfInternal(network);
     }
     
-    public static LineSet valueOf(VectList vects, Tolerance accuracy){
+    public static LineSet valueOf(Tolerance accuracy, VectList vects){
         Network network = new Network();
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
         return valueOfInternal(network);
+    }
+    
+    public static LineSet valueOf(Tolerance accuracy, double... ords){
+        return valueOf(accuracy, new VectList(ords));
     }
     
     public int numLines() {
@@ -194,7 +198,7 @@ public class LineSet implements Geom {
         for (LineString lineString : lineStrings) {
             LineString.removeNearLines(network, lineString.vects, amt);
         }
-        return Area.valueOfInternal(network, accuracy);
+        return Area.valueOfInternal(accuracy, network);
     }
 
     @Override
@@ -242,7 +246,7 @@ public class LineSet implements Geom {
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        LineString[] ret = LineString.valueOfInternal(network);
+        LineString[] ret = LineString.parseAllInternal(network);
         if (ret.length == 0) {
             return null;
         } else {
@@ -278,7 +282,7 @@ public class LineSet implements Geom {
             network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, workingVect);
             network.removeTouchingInternal(area, accuracy, workingVect);
         }
-        LineSet lines = new LineSet(LineString.valueOfInternal(network));
+        LineSet lines = new LineSet(LineString.parseAllInternal(network));
 
         PointSet points = other.points;
         if (points != null) {

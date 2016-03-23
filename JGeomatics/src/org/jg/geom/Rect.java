@@ -538,7 +538,7 @@ public class Rect implements Geom {
         vects.add(minX, maxY);
         vects.add(minX, minY);
         double length = (getWidth() + getHeight()) * 2;
-        Ring ring = new Ring(vects, null, getArea(), length, getCentroid(), true, true, true);
+        Ring ring = new Ring(vects, null, getArea(), length, getCentroid(), true);
         return ring;
     }
 
@@ -563,7 +563,7 @@ public class Rect implements Geom {
         Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, flatness.getTolerance(), result);
         result.add(_minX, minY);
 
-        return new Area(new Ring(result));
+        return new Area(new Ring(result, null, null, null, getCentroid(), true));
     }
 
     @Override

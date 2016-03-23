@@ -688,13 +688,11 @@ public class RectTest {
         Rect b = Rect.valueOf(50, 60, 70, 80);
         Rect c = Rect.valueOf(11, 21, 29, 39);
         Rect d = Rect.valueOf(15, 25, 35, 45);
-        Area e = new Area(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
+        Area e = Area.valueOf(Tolerance.DEFAULT, 15,25, 35,25, 35,45, 15,45, 15,25);
         assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals("[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
-        Area expected = new Area(
-            new Ring(new VectList(10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20))
-        );
+        Area expected = Area.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20);
         assertEquals(expected, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(expected, a.union(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
@@ -705,14 +703,12 @@ public class RectTest {
         Rect b = Rect.valueOf(50, 60, 70, 80);
         Rect c = Rect.valueOf(11, 21, 29, 39);
         Rect d = Rect.valueOf(15, 25, 35, 45);
-        Area e = new Area(new Ring(new VectList(15,25, 35,25, 35,45, 15,45, 15,25)));
+        Area e = Area.valueOf(Tolerance.DEFAULT, 15,25, 35,25, 35,45, 15,45, 15,25);
         assertSame(c, a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(c, c.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        GeoShape result = new GeoShape(new Area(
-                    new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
-                ),null,null);
+        GeoShape result = new GeoShape(Area.valueOf(Tolerance.DEFAULT, 15,25, 30,25, 30,40, 15,40, 15,25),null,null);
         assertEquals(result, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(result, a.intersection(d.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT), Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
@@ -726,17 +722,13 @@ public class RectTest {
         assertSame(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertNull(c.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(new GeoShape(new Area(
-                new Ring(new VectList(10,20, 30,20, 30,40, 10,40, 10,20)),
+                Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,40, 10,40, 10,20),
                 new Area[]{
-                    new Area(new Ring(new VectList(11,21, 29,21, 29,39, 11,39, 11,21)))
+                    Area.valueOf(Tolerance.DEFAULT, 11,21, 29,21, 29,39, 11,39, 11,21)
                 }
         ), null, null), a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        GeoShape e = new GeoShape(new Area(
-            new Ring(new VectList(10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20))
-        ), null, null);
-        GeoShape f = new GeoShape(new Area(
-            new Ring(new VectList(15,25, 30,25, 30,40, 15,40, 15,25))
-        ), null, null);
+        GeoShape e = new GeoShape(Area.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20), null, null);
+        GeoShape f = new GeoShape(Area.valueOf(Tolerance.DEFAULT, 15,25, 30,25, 30,40, 15,40, 15,25), null, null);
         assertEquals(f, a.less(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 }

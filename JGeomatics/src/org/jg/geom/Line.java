@@ -864,7 +864,7 @@ public class Line implements Geom, Comparable<Line> {
 
         result.add(ix, iy);
 
-        return new Area(new Ring(result));
+        return new Area(new Ring(result, null));
     }
 
     @Override

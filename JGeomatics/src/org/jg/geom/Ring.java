@@ -2,13 +2,10 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -20,48 +17,26 @@ import org.jg.util.VectMap;
  *
  * @author tofar_000
  */
-public class Ring implements Serializable, Cloneable, Geom {
+public class Ring implements Geom {
 
+    public static final Ring[] EMPTY = new Ring[0];
     final VectList vects;
     private SpatialNode<Line> lineIndex;
     private Double area;
     private Double length;
     private Vect centroid;
-    private Boolean valid;
     private Boolean convex;
-    private Boolean normalized;
 
-    Ring(VectList vects, SpatialNode<Line> lineIndex, Double area, Double length, Vect centroid, Boolean valid, Boolean convex, Boolean normalized) {
+    Ring(VectList vects, SpatialNode<Line> lineIndex, Double area, Double length, Vect centroid, Boolean convex) {
         this.vects = vects;
         this.lineIndex = lineIndex;
         this.area = area;
         this.length = length;
         this.centroid = centroid;
-        this.valid = valid;
         this.convex = convex;
-        this.normalized = normalized;
     }
 
-    /**
-     * Create a ring based on the list of vectors given
-     *
-     * @param vects
-     * @throws NullPointerException if vects was null
-     * @throws IllegalArgumentException if the list was less than 4 vectors
-     * long, or was unclosed
-     */
-    public Ring(VectList vects) throws NullPointerException, IllegalArgumentException {
-        int last = vects.size() - 1;
-        if (last < 3) {
-            throw new IllegalArgumentException("Rings must have at least 4 points");
-        }
-        if ((vects.getX(0) != vects.getX(last)) || (vects.getY(0) != vects.getY(last))) {
-            throw new IllegalArgumentException("Rings must be closed!");
-        }
-        this.vects = vects.clone();
-    }
-
-    private Ring(VectList vects, Double area) {
+    Ring(VectList vects, Double area) {
         this.vects = vects;
         this.area = area;
     }
@@ -69,17 +44,53 @@ public class Ring implements Serializable, Cloneable, Geom {
     /**
      * Extract any available rings from the network given
      *
+     * @param accuracy
+     * @param ords
+     * @return list of rings
+     * @throws NullPointerException if ords or accuracy was null
+     * @throws IllegalArgumentException if the vectors did not form a single linear ring (unclosed or self intersecting)
+     */
+    public static Ring valueOf( Tolerance accuracy, double... ords) throws NullPointerException, IllegalArgumentException {
+        return valueOf(accuracy, new VectList(ords));
+    }
+    
+    /**
+     * Extract any available rings from the network given
+     *
+     * @param accuracy
+     * @param vects
+     * @return list of rings
+     * @throws NullPointerException if vects or accuracy was null
+     * @throws IllegalArgumentException if the vectors did not form a single linear ring (unclosed or self intersecting)
+     */
+    public static Ring valueOf( Tolerance accuracy, VectList vects) throws NullPointerException, IllegalArgumentException {
+        Network network = new Network();
+        network.addAllLinks(vects);
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        List<Ring> rings = parseAllInternal(network, accuracy);
+        if(rings.size() != 1){
+            throw new IllegalArgumentException("Vectors did not form a single linear ring : "+vects);
+        }
+        return rings.get(0);
+    }
+    
+    /**
+     * Extract any available rings from the network given
+     *
      * @param network
+     * @param accuracy
      * @return list of rings
      * @throws NullPointerException if network was null
      */
-    static List<Ring> valueOf(Network network, Tolerance accuracy) throws NullPointerException {
+    public static Ring[] parseAll(Network network, Tolerance accuracy) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
-        return valueOfInternal(network, accuracy);
+        List<Ring> rings = parseAllInternal(network, accuracy);
+        return rings.isEmpty() ? EMPTY : rings.toArray(new Ring[rings.size()]);
     }
     
-    static List<Ring> valueOfInternal(Network network, Tolerance accuracy) throws NullPointerException {
+    static List<Ring> parseAllInternal(Network network, Tolerance accuracy) throws NullPointerException {
         
         ArrayList<Ring> ret = new ArrayList<>();
         int numVects = network.numVects();
@@ -137,7 +148,7 @@ public class Ring implements Serializable, Cloneable, Geom {
                             removeHangLines(network, nx, ny);
                         }
                         
-                        ret.add(new Ring(ringPath, null, null, null, null, Boolean.TRUE, null, Boolean.TRUE));
+                        ret.add(new Ring(ringPath, null));
                     }
                 }
             }
@@ -330,44 +341,6 @@ public class Ring implements Serializable, Cloneable, Geom {
         return ret;
     }
 
-    @Transient
-    public boolean isValid() {
-        Boolean ret = valid;
-        if (ret == null) {
-
-            Network network = new Network();
-            network.addAllLinks(vects);
-            network.explicitIntersections(Tolerance.ZERO);
-            ret = network.forEachVertex(new VertexProcessor() {
-                @Override
-                public boolean process(double x, double y, int numLinks) {
-                    return numLinks == 2;
-                }
-            });
-
-            if (ret) {
-                ret = (getArea() > 0);
-            }
-            valid = ret;
-        }
-        return ret;
-    }
-
-    public Ring normalize() {
-        int index = minIndex(vects);
-        if (index == 0) {
-            return this;
-        }
-        VectList rotated = rotate(vects, index);
-        if (getArea() < 0) {
-            rotated.reverse();
-        }
-        Ring ret = new Ring(rotated, Math.abs(area));
-        ret.centroid = centroid;
-        ret.length = length;
-        return ret;
-    }
-
     static int minIndex(VectList ring) throws IndexOutOfBoundsException {
         int ret = 0;
         double x = ring.getX(0);
@@ -512,7 +485,7 @@ public class Ring implements Serializable, Cloneable, Geom {
         network.addAllLinks(buffer);
         network.explicitIntersections(accuracy);
         LineString.removeNearLines(network, vects, amt);
-        return Area.valueOfInternal(network, accuracy);
+        return Area.valueOfInternal(accuracy, network);
     }
 
     public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance) {
@@ -552,9 +525,12 @@ public class Ring implements Serializable, Cloneable, Geom {
 
     @Override
     public Ring transform(Transform transform) {
+        if(transform.mode == Transform.NO_OP){
+            return this;
+        }
         VectList transformed = vects.clone();
         transformed.transform(transform);
-        Ring ring = new Ring(transformed);
+        Ring ring = new Ring(transformed, null);
         return ring;
     }
 
@@ -697,30 +673,5 @@ public class Ring implements Serializable, Cloneable, Geom {
      */
     public String toString(boolean summarize) {
         return vects.toString(summarize);
-    }
-
-    /**
-     * Read a VectList from to the DataInput given
-     *
-     * @param in
-     * @return a VectList
-     * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN
-     * ordinates
-     * @throws GeomException if there was an IO error
-     */
-    public static Ring read(DataInput in) throws NullPointerException, IllegalArgumentException, GeomException {
-        return new Ring(VectList.read(in));
-    }
-
-    /**
-     * Write this Ring to the DataOutput given
-     *
-     * @param out
-     * @throws NullPointerException if out was null
-     * @throws GeomException if there was an IO error
-     */
-    public void write(DataOutput out) throws NullPointerException, GeomException {
-        vects.write(out);
     }
 }
