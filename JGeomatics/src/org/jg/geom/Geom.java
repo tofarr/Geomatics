@@ -45,7 +45,7 @@ public interface Geom extends Cloneable, Serializable {
     Geom clone();
 
     /**
-     * Convert this geometry to a string
+     * Convert this geometry to a string. String is not WKT, as WKT may not be able to handle all geometry types
      *
      * @param appendable appendable
      * @throws NullPointerException if appendable was null

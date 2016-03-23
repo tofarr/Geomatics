@@ -504,12 +504,12 @@ public class GeoShape implements Geom {
     }
 
     private void toLineWkt(Appendable appendable) throws IOException {
-        if (lines.numLines() == 1) {
+        if (lines.numLineStrings() == 1) {
             appendable.append("LINESTRING");
             toVectsWkt(lines.getLineString(0).vects, appendable);
         } else {
             appendable.append("MULTILINESTRING(");
-            for(int i = 0; i < lines.numLines(); i++){
+            for(int i = 0; i < lines.numLineStrings(); i++){
                 if(i != 0){
                     appendable.append(", ");
                 }
@@ -547,7 +547,7 @@ public class GeoShape implements Geom {
             comma = true;
         }
         if (lines != null) {
-            for (int i = 0; i < lines.numLines(); i++) {
+            for (int i = 0; i < lines.numLineStrings(); i++) {
                 if (comma) {
                     appendable.append(',');
                 } else {
@@ -625,7 +625,7 @@ public class GeoShape implements Geom {
             network.explicitIntersectionsWith(area.getLineIndex(), accuracy);
         }
         if(lines != null){
-            for(int i = lines.numLines(); i-- > 0;){
+            for(int i = lines.numLineStrings(); i-- > 0;){
                 network.explicitIntersectionsWith(lines.getLineString(i).getLineIndex(), accuracy);
             }
         }

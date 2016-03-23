@@ -134,8 +134,22 @@ public class LineString implements Geom {
         }
         LineString[] lines = new LineString[ret.size()];
         for (int i = 0; i < lines.length; i++) {
-            lines[i] = new LineString(ret.get(i));
+            VectList vects = ret.get(i);
+            int end = vects.size()-1;
+            if((vects.getX(0) == vects.getX(end)) && (vects.getY(0) == vects.getY(end))){
+                int index = Ring.minIndex(vects);
+                if(index != 0){
+                    vects = Ring.rotate(vects, index);
+                }
+                if(Ring.getArea(vects) < 0){
+                    vects.reverse();
+                }
+            }else if(!vects.isOrdered()){
+                vects.reverse();
+            }
+            lines[i] = new LineString(vects);
         }
+        Arrays.sort(lines, COMPARATOR);
         return lines;
     }
 

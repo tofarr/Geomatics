@@ -3,12 +3,13 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Objects;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
+ * Immutable set of 2D lines. Checks are in place to insure that no ordinates are NaN or Infinite,
+ * and that no line segment crosses or lies on another
  *
  * @author tofar
  */
@@ -26,28 +27,70 @@ public class LineSet implements Geom {
         LineString[] lineStrings = LineString.parseAllInternal(network);
         return (lineStrings.length == 0) ? null : new LineSet(lineStrings);
     }
-    
-    public static LineSet valueOf(Tolerance accuracy, Network network){
+
+    /**
+     * Get all line strings from the network given as a line set. Intersections are added,
+     * unconnected points are ignored, and rings are treated as line strings
+     *
+     * @param accuracy
+     * @param network
+     * @return a line set, or null if there were no lines
+     * @throws NullPointerException if accuracy or network was null
+     */
+    public static LineSet valueOf(Tolerance accuracy, Network network) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         return valueOfInternal(network);
     }
-    
-    public static LineSet valueOf(Tolerance accuracy, VectList vects){
+
+    /**
+     * Convert the vectList given to a line set. Intersections are added, unconnected points are
+     * ignored, and rings are treated as line strings
+     *
+     * @param accuracy
+     * @param vects
+     * @return a line set, or null if there were no lines
+     * @throws NullPointerException if accuracy or vects was null
+     */
+    public static LineSet valueOf(Tolerance accuracy, VectList vects) throws NullPointerException {
         Network network = new Network();
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         return valueOfInternal(network);
     }
-    
-    public static LineSet valueOf(Tolerance accuracy, double... ords){
+
+    /**
+     * Convert the ordinates given to a line set. Intersections are added, unconnected points are
+     * ignored, and rings are treated as line strings
+     *
+     * @param accuracy
+     * @param ords
+     * @return a line set, or null if there were no lines
+     * @throws NullPointerException if accuracy or ords was null
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
+    public static LineSet valueOf(Tolerance accuracy, double... ords) throws NullPointerException, IllegalArgumentException {
         return valueOf(accuracy, new VectList(ords));
     }
-    
-    public int numLines() {
+
+    /**
+     * Get the number of line strings
+     *
+     * @return
+     */
+    public int numLineStrings() {
         return lineStrings.length;
     }
 
+    /**
+     * Get the line string at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
     public LineString getLineString(int index) throws IndexOutOfBoundsException {
         return lineStrings[index];
     }
@@ -78,8 +121,8 @@ public class LineSet implements Geom {
         Arrays.sort(transformed, COMPARATOR);
         return new LineSet(transformed);
     }
-    
-    public Geom simplify(){
+
+    public Geom simplify() {
         return (lineStrings.length == 1) ? lineStrings[0].simplify() : this;
     }
 
@@ -167,6 +210,11 @@ public class LineSet implements Geom {
         return toGeoShape();
     }
 
+    /**
+     * Convert to GeoShape
+     *
+     * @return
+     */
     public GeoShape toGeoShape() {
         return new GeoShape(null, this, null);
     }
@@ -176,6 +224,11 @@ public class LineSet implements Geom {
         addTo(network);
     }
 
+    /**
+     * Add to network
+     *
+     * @param network
+     */
     public void addTo(Network network) {
         for (LineString lineString : lineStrings) {
             lineString.addTo(network);
@@ -234,9 +287,17 @@ public class LineSet implements Geom {
         }
     }
 
+    /**
+     * Get the union of this line set and that given
+     *
+     * @param other
+     * @param accuracy
+     * @return a line set
+     * @throws NullPointerException if other or accuracy was null
+     */
     public LineSet union(LineSet other, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds())) {
-            LineString[] lines = new LineString[numLines() + other.numLines()];
+            LineString[] lines = new LineString[numLineStrings() + other.numLineStrings()];
             System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
             System.arraycopy(other.lineStrings, 0, lines, lineStrings.length, other.lineStrings.length);
             Arrays.sort(lines, COMPARATOR);
@@ -254,15 +315,23 @@ public class LineSet implements Geom {
         }
     }
 
+    /**
+     * Get the union of this line set and the GeoShape given
+     *
+     * @param other
+     * @param accuracy
+     * @return a GeoShape
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
             LineSet _lines;
-            if(other.lines == null){
+            if (other.lines == null) {
                 _lines = this;
-            }else{
-                LineString[] lines = new LineString[numLines() + other.lines.numLines()];
+            } else {
+                LineString[] lines = new LineString[numLineStrings() + other.lines.numLineStrings()];
                 System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
-                System.arraycopy(other.lines.lineStrings, 0, lines, lineStrings.length, other.lines.numLines());
+                System.arraycopy(other.lines.lineStrings, 0, lines, lineStrings.length, other.lines.numLineStrings());
                 Arrays.sort(lines, COMPARATOR);
                 _lines = new LineSet(lines);
             }
@@ -271,7 +340,7 @@ public class LineSet implements Geom {
 
         Network network = new Network();
         addTo(network);
-        if(other.lines != null){
+        if (other.lines != null) {
             other.lines.addTo(network);
             network.explicitIntersections(accuracy);
         }
@@ -300,6 +369,14 @@ public class LineSet implements Geom {
         }
     }
 
+    /**
+     * Get the intersection of this LineSet and the GeoShape given
+     *
+     * @param other
+     * @param accuracy
+     * @return a GeoShape or null if there was no intersection
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape intersection(GeoShape other, Tolerance accuracy) throws NullPointerException {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
             return null;
@@ -326,12 +403,20 @@ public class LineSet implements Geom {
             return this;
         }
         LineSet ret = less(other.toGeoShape(flatness, accuracy), accuracy);
-        if ((ret != null) && (ret.numLines() == 1)) {
+        if ((ret != null) && (ret.numLineStrings() == 1)) {
             return ret.getLineString(0);
         }
         return ret;
     }
 
+    /**
+     * Get the lines in this LineSet which are not in the GeoShape given
+     *
+     * @param other
+     * @param accuracy
+     * @return a LineSet or null if other covered this
+     * @throws NullPointerException if other or accuracy was null
+     */
     public LineSet less(GeoShape other, Tolerance accuracy) throws NullPointerException {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
             return this;
@@ -357,12 +442,10 @@ public class LineSet implements Geom {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof LineSet){
+        if (obj instanceof LineSet) {
             final LineSet other = (LineSet) obj;
             return Arrays.equals(lineStrings, other.lineStrings);
         }
         return true;
     }
-    
-    
 }
