@@ -129,8 +129,8 @@ public class LineSet implements Geom {
     @Override
     public PathIterator pathIterator() {
         PathIterator iter = new PathIterator() {
-            PathIterator iter;
-            int index = -1;
+            PathIterator iter = lineStrings[0].pathIterator();
+            int index = 0;
 
             @Override
             public int getWindingRule() {
@@ -145,22 +145,14 @@ public class LineSet implements Geom {
             @Override
             public void next() {
                 if (iter != null) {
-                    if (!iter.isDone()) {
-                        iter.next();
-                    }
+                    iter.next();
                     if (iter.isDone()) {
-                        iter = null;
-                    }
-                }
-                while (iter == null) {
-                    index++;
-                    if (index < lineStrings.length) {
-                        iter = lineStrings[index].pathIterator();
-                    } else {
-                        return;
-                    }
-                    if (iter.isDone()) {
-                        iter = null;
+                        index++;
+                        if (index < lineStrings.length) {
+                            iter = lineStrings[index].pathIterator();
+                        } else {
+                            iter = null;
+                        }
                     }
                 }
             }
@@ -175,7 +167,6 @@ public class LineSet implements Geom {
                 return iter.currentSegment(coords);
             }
         };
-        iter.next();
         return iter;
     }
 
@@ -281,11 +272,11 @@ public class LineSet implements Geom {
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
-            return ((LineString) other).unionLineSet(this, accuracy);
+            return ((LineString) other).unionLineSet(this, accuracy).simplify();
         } else if (other instanceof LineSet) {
-            return union((LineSet) other, accuracy);
+            return union((LineSet) other, accuracy).simplify();
         } else {
-            return union(other.toGeoShape(flatness, accuracy), accuracy);
+            return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
         }
     }
 
@@ -310,11 +301,7 @@ public class LineSet implements Geom {
         other.addTo(network);
         network.explicitIntersections(accuracy);
         LineString[] ret = LineString.parseAllInternal(network);
-        if (ret.length == 0) {
-            return null;
-        } else {
-            return new LineSet(ret);
-        }
+        return new LineSet(ret);
     }
 
     /**
@@ -353,7 +340,7 @@ public class LineSet implements Geom {
             network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, workingVect);
             network.removeTouchingInternal(area, accuracy, workingVect);
         }
-        LineSet lines = new LineSet(LineString.parseAllInternal(network));
+        LineSet lines = LineSet.valueOfInternal(network);
 
         PointSet points = other.points;
         if (points != null) {
@@ -402,7 +389,7 @@ public class LineSet implements Geom {
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            return this;
+            return simplify();
         }
         LineSet ret = less(other.toGeoShape(flatness, accuracy), accuracy);
         if ((ret != null) && (ret.numLineStrings() == 1)) {

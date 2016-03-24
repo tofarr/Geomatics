@@ -3,10 +3,13 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
+import org.jg.util.VectSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -133,6 +136,7 @@ public class LineSetTest {
     public void testPathIterator() {
         LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
         PathIterator iter = ls.pathIterator();
+        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
         assertPath(iter, PathIterator.SEG_MOVETO, 0, 0);
         iter.next();
         assertPath(iter, PathIterator.SEG_LINETO, 50, 50);
@@ -150,6 +154,8 @@ public class LineSetTest {
         iter.next();
         assertPath(iter, PathIterator.SEG_LINETO, 50, 50);
         
+        iter.next();
+        assertTrue(iter.isDone());
         iter.next();
         assertTrue(iter.isDone());
     }
@@ -244,180 +250,137 @@ public class LineSetTest {
         assertEquals(Relate.OUTSIDE, area.relate(110, 50, TOL));
     }
 
-    /**
-     * Test of relate method, of class LineSet.
-     */
     @Test
     public void testRelate_Vect_Tolerance() {
-        System.out.println("relate");
-        Vect vect = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(vect, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, 0,0, 100,100, 200,0, 200,100, 100,0, 0,100);
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(0, 0), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(-10, 0), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(50, 50), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 100), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(150, 50), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(200, 0), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(200, 50), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(200, 100), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(210, 50), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(200, 110), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(175, 50), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(25, 50), TOL));
+        try{
+            ls.relate((Vect)null, TOL);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        try{
+            ls.relate(Vect.valueOf(0, 0), null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
     }
 
-    /**
-     * Test of relate method, of class LineSet.
-     */
     @Test
     public void testRelate_VectBuilder_Tolerance() {
-        System.out.println("relate");
-        VectBuilder vect = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(vect, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet ls = LineSet.valueOf(TOL, 0,0, 100,100, 200,0, 200,100, 100,0, 0,100);
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(0, 0), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(-10, 0), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(50, 50), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(100, 100), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(150, 50), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(200, 0), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(200, 50), TOL));
+        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(200, 100), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(210, 50), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(200, 110), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(175, 50), TOL));
+        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(25, 50), TOL));
+        try{
+            ls.relate((VectBuilder)null, TOL);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        try{
+            ls.relate(new VectBuilder(0, 0), null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
     }
 
-    /**
-     * Test of union method, of class LineSet.
-     */
     @Test
-    public void testUnion_3args() {
-        System.out.println("union");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        Geom expResult = null;
-        Geom result = instance.union(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testUnion() {
+        LineSet a = LineSet.valueOf(TOL, 0,40, 40,40, 40,0);
+        LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
+        LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
+        Rect d = Rect.valueOf(0,60, 40,100);
+        assertEquals(new LineSet(a.getLineString(0), b), a.union(b, Tolerance.FLATNESS, TOL));
+        assertEquals(new LineSet(a.getLineString(0), b), a.union(b.toLineSet(), TOL));
+        assertEquals("[\"LT\", [0,40, 20,40], [20,40, 20,20, 40,20], [20,40, 40,40, 40,20], [20,40, 20,80, 60,80], [40,0, 40,20], [40,20, 60,20]]",
+                a.union(c, Tolerance.FLATNESS, TOL).toString());
+        assertEquals(new GeoShape(d.toArea(), a, null), a.union(d, Tolerance.FLATNESS, TOL));
+        assertEquals(Ring.valueOf(TOL, 0,60, 40,60, 40,100, 0,100, 0,60), b.toLineSet().union(d, Tolerance.FLATNESS, TOL));
+        Geom e = c.union(d, Tolerance.FLATNESS, TOL);
+        assertEquals("[\"GS\",[\"AR\"[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80]]]",
+                e.toString());
+        LineSet f = LineSet.valueOf(TOL, 60,140, 80,140, 80,120);
+        assertEquals("[\"GS\",[\"AR\"[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80], [60,140, 80,140, 80,120]]]",
+                f.union(e, Tolerance.FLATNESS, TOL).toString());
+        
+        
+        
     }
 
-    /**
-     * Test of union method, of class LineSet.
-     */
     @Test
-    public void testUnion_LineSet_Tolerance() {
-        System.out.println("union");
-        LineSet other = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        LineSet expResult = null;
-        LineSet result = instance.union(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testIntersection() {
+        LineSet a = LineSet.valueOf(TOL, 0,40, 40,40, 40,0);
+        LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
+        LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
+        Rect d = Rect.valueOf(0,60, 40,100);
+        assertNull(a.intersection(b, Tolerance.FLATNESS, TOL));
+        assertNull(a.intersection(b.toGeoShape(Tolerance.FLATNESS, TOL), TOL));
+        assertEquals(PointSet.valueOf(new VectSet().add(20,40).add(40,20)),
+                a.intersection(c, Tolerance.FLATNESS, TOL));
+        assertNull(a.intersection(d, Tolerance.FLATNESS, TOL));
+        assertEquals(LineString.valueOf(TOL, 0,60, 40,60, 40,100), b.toLineSet().intersection(d, Tolerance.FLATNESS, TOL));
+        assertEquals(LineString.valueOf(TOL, 20,60, 20,80, 40,80),
+                c.intersection(d, Tolerance.FLATNESS, TOL));
     }
 
-    /**
-     * Test of union method, of class LineSet.
-     */
     @Test
-    public void testUnion_GeoShape_Tolerance() {
-        System.out.println("union");
-        GeoShape other = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.union(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testLess() {
+        LineSet a = LineSet.valueOf(TOL, 0,40, 40,40, 40,0);
+        LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
+        LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
+        Rect d = Rect.valueOf(0,60, 40,100);
+        assertSame(a.getLineString(0), a.less(b, Tolerance.FLATNESS, TOL));
+        assertSame(a, a.less(b.toGeoShape(Tolerance.FLATNESS, TOL), TOL));
+        assertEquals(LineString.valueOf(TOL, 0,40, 20,40, 40,40, 40,20, 40,0),
+                a.less(c, Tolerance.FLATNESS, TOL));
+        assertSame(a.getLineString(0), a.less(d, Tolerance.FLATNESS, TOL));
+        assertNull(b.toLineSet().less(d, Tolerance.FLATNESS, TOL));
+        assertEquals("[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80]]",
+                c.less(d, Tolerance.FLATNESS, TOL).toString());
     }
 
-    /**
-     * Test of intersection method, of class LineSet.
-     */
-    @Test
-    public void testIntersection_3args() {
-        System.out.println("intersection");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        Geom expResult = null;
-        Geom result = instance.intersection(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of intersection method, of class LineSet.
-     */
-    @Test
-    public void testIntersection_GeoShape_Tolerance() {
-        System.out.println("intersection");
-        GeoShape other = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.intersection(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of less method, of class LineSet.
-     */
-    @Test
-    public void testLess_3args() {
-        System.out.println("less");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        Geom expResult = null;
-        Geom result = instance.less(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of less method, of class LineSet.
-     */
-    @Test
-    public void testLess_GeoShape_Tolerance() {
-        System.out.println("less");
-        GeoShape other = null;
-        Tolerance accuracy = null;
-        LineSet instance = null;
-        LineSet expResult = null;
-        LineSet result = instance.less(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of hashCode method, of class LineSet.
-     */
-    @Test
-    public void testHashCode() {
-        System.out.println("hashCode");
-        LineSet instance = null;
-        int expResult = 0;
-        int result = instance.hashCode();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of equals method, of class LineSet.
-     */
     @Test
     public void testEquals() {
-        System.out.println("equals");
-        Object obj = null;
-        LineSet instance = null;
-        boolean expResult = false;
-        boolean result = instance.equals(obj);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        LineSet a = LineSet.valueOf(TOL, 0,0, 100,100, 100,0, 0,100, 0,0);
+        LineSet b = LineSet.valueOf(TOL, 100,100, 0,0, 0,100, 100,0, 100,100);
+        LineSet c = LineSet.valueOf(TOL, 0,0, 50,50, 0,100, 0,0);
+        LineSet d = LineSet.valueOf(TOL, 0,0, 100,100, 90,10, 0,100, 0,0);
+        assertEquals(a, a);
+        assertEquals(a, b);
+        assertNotEquals(a, c);
+        assertNotEquals(a, d);
+        assertNotEquals(a, "");
     }
 
+    @Test
+    public void testHashCode() {
+        Set<Integer> hashCodes = new HashSet<>();
+        for (int x = 0; x < 10; x++) {
+            for (int y = 0; y < 10; y++) {
+                LineSet ls = LineSet.valueOf(TOL, 0, 0, x, y, 10, 10);
+                hashCodes.add(ls.hashCode());
+            }
+        }
+        assertEquals(100, hashCodes.size());
+    }
 }

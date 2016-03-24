@@ -208,6 +208,7 @@ public final class Network implements Serializable, Cloneable {
             backLinks.remove(index);
         }
         numLinks -= links.size();
+        cachedLinks = null;
         return true;
     }
 
@@ -936,6 +937,7 @@ public final class Network implements Serializable, Cloneable {
             }
         });
         network.numLinks = numLinks;
+        network.cachedLinks = cachedLinks;
         return network;
     }
 
