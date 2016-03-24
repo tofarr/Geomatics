@@ -3,7 +3,6 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.jg.util.SpatialNode;
@@ -13,13 +12,21 @@ import org.jg.util.VectList;
 import org.jg.util.VectMap;
 
 /**
- * Linear Ring
- *
+ * Immutable 2D Linear Ring. Checks are in place to insure that:
+ * <ul>
+ * <li>Ordinates are not infinite or NaN</li>
+ * <li>The ring is closed (First and last point are the same)</li>
+ * <li>The ring has at least 4 coordinates (The first being the same as the last point)</li>
+ * <li>Duplicate coordinates are not present (Aside from the first and last point)</li>
+ * <li>That the ring does not self intersect</li>
+ * <li>Points of the ring are in anti clockwise order</li>
+ * </ul>
+ * 
  * @author tofar_000
  */
 public class Ring implements Geom {
 
-    public static final Ring[] EMPTY = new Ring[0];
+    static final Ring[] EMPTY = new Ring[0];
     final VectList vects;
     private SpatialNode<Line> lineIndex;
     private Double area;
@@ -40,7 +47,7 @@ public class Ring implements Geom {
         this.vects = vects;
         this.area = area;
     }
-    
+
     /**
      * Extract any available rings from the network given
      *
@@ -48,12 +55,13 @@ public class Ring implements Geom {
      * @param ords
      * @return list of rings
      * @throws NullPointerException if ords or accuracy was null
-     * @throws IllegalArgumentException if the vectors did not form a single linear ring (unclosed or self intersecting)
+     * @throws IllegalArgumentException if the vectors did not form a single linear ring (unclosed
+     * or self intersecting)
      */
-    public static Ring valueOf( Tolerance accuracy, double... ords) throws NullPointerException, IllegalArgumentException {
+    public static Ring valueOf(Tolerance accuracy, double... ords) throws NullPointerException, IllegalArgumentException {
         return valueOf(accuracy, new VectList(ords));
     }
-    
+
     /**
      * Extract any available rings from the network given
      *
@@ -61,37 +69,38 @@ public class Ring implements Geom {
      * @param vects
      * @return list of rings
      * @throws NullPointerException if vects or accuracy was null
-     * @throws IllegalArgumentException if the vectors did not form a single linear ring (unclosed or self intersecting)
+     * @throws IllegalArgumentException if the vectors did not form a single linear ring (unclosed
+     * or self intersecting)
      */
-    public static Ring valueOf( Tolerance accuracy, VectList vects) throws NullPointerException, IllegalArgumentException {
+    public static Ring valueOf(Tolerance accuracy, VectList vects) throws NullPointerException, IllegalArgumentException {
         Network network = new Network();
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
         List<Ring> rings = parseAllInternal(network, accuracy);
-        if(rings.size() != 1){
-            throw new IllegalArgumentException("Vectors did not form a single linear ring : "+vects);
+        if (rings.size() != 1) {
+            throw new IllegalArgumentException("Vectors did not form a single linear ring : " + vects);
         }
         return rings.get(0);
     }
-    
+
     /**
      * Extract any available rings from the network given
      *
-     * @param network
      * @param accuracy
+     * @param network
      * @return list of rings
      * @throws NullPointerException if network was null
      */
-    public static Ring[] parseAll(Network network, Tolerance accuracy) throws NullPointerException {
+    public static Ring[] parseAll(Tolerance accuracy, Network network) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
         List<Ring> rings = parseAllInternal(network, accuracy);
         return rings.isEmpty() ? EMPTY : rings.toArray(new Ring[rings.size()]);
     }
-    
+
     static List<Ring> parseAllInternal(Network network, Tolerance accuracy) throws NullPointerException {
-        
+
         ArrayList<Ring> ret = new ArrayList<>();
         int numVects = network.numVects();
         if (numVects == 0) {
@@ -99,8 +108,8 @@ public class Ring implements Geom {
         }
 
         //get vectors in correct order - it is important that they are processed left to right
-        VectList allVects = network.getVects(new VectList(numVects)); 
-        
+        VectList allVects = network.getVects(new VectList(numVects));
+
         // First we need to make sure there are no hang lines (lines ending in a vector linked to only one other vector)
         // as the algorithm can't process these
         VectList path = new VectList();
@@ -111,42 +120,42 @@ public class Ring implements Geom {
         //Process network
         VectBuilder workingVect = new VectBuilder();
         VectMap<Integer> vects = new VectMap<>();
-        
+
         // For each link in ascending order
-        for (int a = 0; a < allVects.size(); a++) { 
+        for (int a = 0; a < allVects.size(); a++) {
             double ax = allVects.getX(a);
             double ay = allVects.getY(a);
             VectList links = network.map.get(ax, ay);
-            if(links == null){
+            if (links == null) {
                 continue;
             }
             for (int b = 0; b < links.size(); b++) {
                 double bx = links.getX(b);
                 double by = links.getY(b);
-                    
+
                 followRing(ax, ay, bx, by, network, path, workingVect);
 
                 //split path on points of self intersection
                 vects.clear();
-                for(int p = 0; p < path.size(); p++){
+                for (int p = 0; p < path.size(); p++) {
                     double x = path.getX(p);
                     double y = path.getY(p);
                     Integer index = vects.get(x, y);
-                    if(index == null){
+                    if (index == null) {
                         vects.put(x, y, p);
-                    }else{
+                    } else {
                         int numRingVects = p + 1 - index;
                         VectList ringPath = new VectList(numRingVects);
                         ringPath.addAll(path, index, numRingVects);
                         network.removeAllLinks(ringPath); // remove these links from the network - effectively marking them as processed
-                        
+
                         //Any hanglines produced by removing the ring from the network need to be dealt with
-                        for(int n = numRingVects - 1; n-- > 0;){
+                        for (int n = numRingVects - 1; n-- > 0;) {
                             double nx = ringPath.getX(n);
                             double ny = ringPath.getY(n);
                             removeHangLines(network, nx, ny);
                         }
-                        
+
                         ret.add(new Ring(ringPath, null));
                     }
                 }
@@ -154,16 +163,16 @@ public class Ring implements Geom {
         }
         return ret;
     }
-    
-    static void removeHangLines(Network network, double nx, double ny){
+
+    static void removeHangLines(Network network, double nx, double ny) {
         VectList _links = network.map.get(nx, ny);
-        if(_links == null){
+        if (_links == null) {
             return;
         }
-        if(_links.size() == 0){
+        if (_links.size() == 0) {
             network.map.remove(nx, ny);
         }
-        while(_links.size() == 1){
+        while (_links.size() == 1) {
             double mx = _links.getX(0);
             double my = _links.getY(0);
             network.removeVertexInternal(nx, ny);
@@ -173,8 +182,7 @@ public class Ring implements Geom {
             //network.removeLinkInternal(nx, ny, mx, my);
         }
     }
-    
-    
+
     //follow a ring around the edge of a network
     static void followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectBuilder vect) {
         double ox = ax;
@@ -183,7 +191,7 @@ public class Ring implements Geom {
         while (true) {
             network.nextCCW(bx, by, ax, ay, vect);
             path.add(vect);
-            if(Vect.compare(ox, oy, vect.getX(), vect.getY()) == 0){
+            if (Vect.compare(ox, oy, vect.getX(), vect.getY()) == 0) {
                 return;
             }
             ax = bx;
@@ -192,7 +200,7 @@ public class Ring implements Geom {
             by = vect.getY();
         }
     }
-    
+
     /**
      * Get the area of this ring
      *
@@ -209,8 +217,7 @@ public class Ring implements Geom {
     }
 
     /**
-     * Get the area of the vect list given, assuming that it is a valid closed
-     * linear ring.
+     * Get the area of the vect list given, assuming that it is a valid closed linear ring.
      *
      * @param vects
      * @return area
@@ -248,10 +255,20 @@ public class Ring implements Geom {
         return ret;
     }
 
+    /**
+     * Get the number of vectors
+     *
+     * @return
+     */
     public int numVects() {
         return vects.size();
     }
 
+    /**
+     * Get the number of lines
+     *
+     * @return
+     */
     public int numLines() {
         return vects.size() - 1;
     }
@@ -369,6 +386,10 @@ public class Ring implements Geom {
         return ret;
     }
 
+    /**
+     * Get the centroid of this ring
+     * @return
+     */
     @Transient
     public Vect getCentroid() {
         Vect ret = centroid;
@@ -379,6 +400,12 @@ public class Ring implements Geom {
         return ret;
     }
 
+    /**
+     * Get the centroid of the vects given representing a non self intersecting closed ring
+     *
+     * @param vects
+     * @return
+     */
     public static Vect getCentroid(VectList vects) {
         int index = vects.size() - 1;
         double bx = vects.getX(index);
@@ -416,14 +443,12 @@ public class Ring implements Geom {
     }
 
     /**
-     * Determine if the linear ring represented by the vectList given contains
-     * only convex angles. Results are undefined if the edges are unclosed or
-     * self intersect
+     * Determine if the linear ring represented by the vectList given contains only convex angles.
+     * Results are undefined if the edges are unclosed or self intersect
      *
      * @param vects
      * @return
-     * @throws IndexOutOfBoundsException if the vect list does not have at least
-     * 4 elements
+     * @throws IndexOutOfBoundsException if the vect list does not have at least 4 elements
      */
     public static boolean isConvex(VectList vects) throws IndexOutOfBoundsException {
         int s = vects.size();
@@ -444,32 +469,78 @@ public class Ring implements Geom {
         }
         return true;
     }
-    
-    public Vect getVect(int index){
+
+    /**
+     * Get the vector at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
+    public Vect getVect(int index) throws IndexOutOfBoundsException {
         return vects.getVect(index);
     }
-    
-    public VectBuilder getVect(int index, VectBuilder target){
+
+    /**
+     * Get the vector at the index given
+     *
+     * @param index
+     * @param target target in which to place vector
+     * @return target
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
+    public VectBuilder getVect(int index, VectBuilder target) throws IndexOutOfBoundsException {
         return vects.getVect(index, target);
     }
-    
-    public Line getLine(int index){
+
+    /**
+     * Get the line at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
+    public Line getLine(int index) throws IndexOutOfBoundsException {
         return vects.getLine(index);
     }
 
+    /**
+     * Get the x value at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
     public double getX(int index) throws IndexOutOfBoundsException {
         return vects.getX(index);
     }
 
-    public double getY(int index) {
+    /**
+     * Get the y value at the index given
+     *
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
+    public double getY(int index) throws IndexOutOfBoundsException {
         return vects.getY(index);
     }
-    
 
+    /**
+     * Get vectors from this ring and add them to the target list given
+     *
+     * @param target
+     * @return
+     */
     public VectList getVects(VectList target) {
         return target.addAll(vects);
     }
 
+    /**
+     * Add this ring to the network given
+     *
+     * @param network
+     */
     public void addTo(Network network) {
         network.addAllLinks(vects);
     }
@@ -488,6 +559,14 @@ public class Ring implements Geom {
         return Area.valueOfInternal(accuracy, network);
     }
 
+    /**
+     * Get an edge buffer from this ring
+     *
+     * @param amt
+     * @param flatness
+     * @param tolerance
+     * @return a VectList representing an edge buffer
+     */
     public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance) {
         Vect.check(amt, "Invalid amt {0}");
         if (amt == 0) {
@@ -525,7 +604,7 @@ public class Ring implements Geom {
 
     @Override
     public Ring transform(Transform transform) {
-        if(transform.mode == Transform.NO_OP){
+        if (transform.mode == Transform.NO_OP) {
             return this;
         }
         VectList transformed = vects.clone();
@@ -536,11 +615,11 @@ public class Ring implements Geom {
 
     @Override
     public PathIterator pathIterator() {
-        return new PathIterator(){
-            
-            final int max = vects.size()-1;
+        return new PathIterator() {
+
+            final int max = vects.size() - 1;
             int index;
-                    
+
             @Override
             public int getWindingRule() {
                 return WIND_NON_ZERO;
@@ -558,13 +637,13 @@ public class Ring implements Geom {
 
             @Override
             public int currentSegment(float[] coords) {
-                coords[0] = (float)vects.getX(index);
-                coords[0] = (float)vects.getY(index);
-                if(index == 0){
+                coords[0] = (float) vects.getX(index);
+                coords[0] = (float) vects.getY(index);
+                if (index == 0) {
                     return SEG_MOVETO;
-                }else if(index == max){
+                } else if (index == max) {
                     return SEG_CLOSE;
-                }else{
+                } else {
                     return SEG_LINETO;
                 }
             }
@@ -573,15 +652,15 @@ public class Ring implements Geom {
             public int currentSegment(double[] coords) {
                 coords[0] = vects.getX(index);
                 coords[0] = vects.getY(index);
-                if(index == 0){
+                if (index == 0) {
                     return SEG_MOVETO;
-                }else if(index == max){
+                } else if (index == max) {
                     return SEG_CLOSE;
-                }else{
+                } else {
                     return SEG_LINETO;
                 }
             }
-                
+
         };
     }
 
@@ -595,6 +674,11 @@ public class Ring implements Geom {
         return toGeoShape();
     }
 
+    /**
+     * Convert this ring to a GeoShape
+     *
+     * @return
+     */
     public GeoShape toGeoShape() {
         return new GeoShape(toArea(), null, null);
     }
@@ -604,7 +688,12 @@ public class Ring implements Geom {
         network.addAllLinks(vects);
     }
 
-    public Area toArea() throws NullPointerException {
+    /**
+     * Create a new Area based on this ring
+     *
+     * @return
+     */
+    public Area toArea() {
         return new Area(this);
     }
 
@@ -612,10 +701,10 @@ public class Ring implements Geom {
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         return toArea().union(other, flatness, accuracy);
     }
-    
+
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return null;
         }
         return toArea().intersection(other, flatness, accuracy);
@@ -623,7 +712,7 @@ public class Ring implements Geom {
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return this;
         }
         return toArea().less(other, flatness, accuracy);
@@ -649,11 +738,14 @@ public class Ring implements Geom {
     }
 
     /**
+     * Convert this ring to astirng and place it in the appendable given
      *
      * @param appendable
-     * @throws GeomException
+     * @throws GeomException if there was an IO Error
+     * @throws NullPointerException if appendable was null
      */
-    public void toString(Appendable appendable) throws GeomException {
+    @Override
+    public void toString(Appendable appendable) throws GeomException, NullPointerException {
         try {
             appendable.append("[\"RG\"");
             for (int i = 0; i < vects.size(); i++) {
