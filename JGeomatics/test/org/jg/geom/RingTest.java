@@ -2,10 +2,12 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.jg.util.SpatialNode;
+import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -88,311 +90,218 @@ public class RingTest {
         assertTrue(expected.isEmpty());
     }
 
-    /**
-     * Test of getArea method, of class Ring.
-     */
     @Test
     public void testGetArea_0args() {
-        System.out.println("getArea");
-        Ring instance = null;
-        double expResult = 0.0;
-        double result = instance.getArea();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 100,0, 120,100, 20,100, 0,0);
+        assertEquals(10000, ring.getArea(), 0.0001);
+        assertEquals(10000, ring.getArea(), 0.0001);
     }
 
-    /**
-     * Test of getArea method, of class Ring.
-     */
-    @Test
-    public void testGetArea_VectList() {
-        System.out.println("getArea");
-        VectList vects = null;
-        double expResult = 0.0;
-        double result = Ring.getArea(vects);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getLength method, of class Ring.
-     */
     @Test
     public void testGetLength() {
-        System.out.println("getLength");
-        Ring instance = null;
-        double expResult = 0.0;
-        double result = instance.getLength();
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
+        assertEquals(30, ring.getLength(), 0.0001);
+        assertEquals(30, ring.getLength(), 0.0001);
     }
 
-    /**
-     * Test of numVects method, of class Ring.
-     */
     @Test
     public void testNumVects() {
-        System.out.println("numVects");
-        Ring instance = null;
-        int expResult = 0;
-        int result = instance.numVects();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
+        assertEquals(5, ring.numVects());
     }
 
-    /**
-     * Test of numLines method, of class Ring.
-     */
     @Test
     public void testNumLines() {
-        System.out.println("numLines");
-        Ring instance = null;
-        int expResult = 0;
-        int result = instance.numLines();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
+        assertEquals(4, ring.numVects());
     }
 
-    /**
-     * Test of getBounds method, of class Ring.
-     */
     @Test
     public void testGetBounds() {
-        System.out.println("getBounds");
-        Ring instance = null;
-        Rect expResult = null;
-        Rect result = instance.getBounds();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
+        Rect bounds = ring.getBounds();
+        assertEquals(Rect.valueOf(0,0,3,14), bounds);
+        assertSame(bounds, ring.getBounds());
     }
 
-    /**
-     * Test of addBoundsTo method, of class Ring.
-     */
     @Test
     public void testAddBoundsTo() {
-        System.out.println("addBoundsTo");
-        RectBuilder bounds = null;
-        Ring instance = null;
-        instance.addBoundsTo(bounds);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
+        RectBuilder builder = new RectBuilder().add(-1, -2);
+        ring.addBoundsTo(builder);
+        assertEquals(Rect.valueOf(-1,-2,3,14), builder.build());
     }
 
-    /**
-     * Test of relate method, of class Ring.
-     */
     @Test
-    public void testRelate_Vect_Tolerance() {
-        System.out.println("relate");
-        Vect vect = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(vect, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testRelate() {
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(Relate.TOUCH, ring.relate(Vect.ZERO, TOL));
+        assertEquals(Relate.TOUCH, ring.relate(new VectBuilder(), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(0, 5), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(0, 10), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(3, 4), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(6, 8), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(6, 12), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(6, 14), TOL));
+        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(3, 12), TOL));
+        assertEquals(Relate.OUTSIDE, ring.relate(Vect.valueOf(3, 1), TOL));
+        assertEquals(Relate.OUTSIDE, ring.relate(Vect.valueOf(7, 12), TOL));
+        assertEquals(Relate.INSIDE, ring.relate(Vect.valueOf(2, 3), TOL));
     }
 
-    /**
-     * Test of relate method, of class Ring.
-     */
-    @Test
-    public void testRelate_VectBuilder_Tolerance() {
-        System.out.println("relate");
-        VectBuilder vect = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(vect, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of relate method, of class Ring.
-     */
-    @Test
-    public void testRelate_3args() {
-        System.out.println("relate");
-        double x = 0.0;
-        double y = 0.0;
-        Tolerance tolerance = null;
-        Ring instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(x, y, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getLineIndex method, of class Ring.
-     */
     @Test
     public void testGetLineIndex() {
-        System.out.println("getLineIndex");
-        Ring instance = null;
-        SpatialNode<Line> expResult = null;
-        SpatialNode<Line> result = instance.getLineIndex();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        final Set<Line> expected = new HashSet<>(Arrays.asList(
+                new Line(0,0,6,8),
+                new Line(0,10,0,0),
+                new Line(6,8,6,14),
+                new Line(6,14,0,10)));
+        SpatialNode<Line> lineIndex = ring.getLineIndex();
+        assertSame(lineIndex, ring.getLineIndex());
+        lineIndex.forEach(new NodeProcessor<Line>() {
+            @Override
+            public boolean process(Rect bounds, Line value) {
+                assertTrue(expected.remove(value));
+                assertEquals(bounds, value.getBounds());
+                return true;
+            }
+        });
+        assertTrue(expected.isEmpty());
     }
-
-    /**
-     * Test of getCentroid method, of class Ring.
-     */
+    
     @Test
-    public void testGetCentroid_0args() {
-        System.out.println("getCentroid");
-        Ring instance = null;
-        Vect expResult = null;
-        Vect result = instance.getCentroid();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testGetCentroid() {
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        Vect centroid = ring.getCentroid();
+        assertEquals(Vect.valueOf(2.75,7.75), centroid);
+        assertSame(centroid, ring.getCentroid());
     }
 
-    /**
-     * Test of getCentroid method, of class Ring.
-     */
     @Test
-    public void testGetCentroid_VectList() {
-        System.out.println("getCentroid");
-        VectList vects = null;
-        Vect expResult = null;
-        Vect result = Ring.getCentroid(vects);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testIsConvex() {
+        VectList vects = new VectList(0,0, 6,8, 6,14, 0,10, 0,0);
+        Ring ring = Ring.valueOf(TOL, vects);
+        assertTrue(ring.isConvex());
+        assertTrue(ring.isConvex());
+        
+        VectBuilder target = new VectBuilder();
+        for(int i = 1; i < vects.size(); i++){
+            Line line = vects.getLine(i-1);
+            line.projectOutward(0.5, -0.8, TOL, target);
+            VectList newVects = vects.clone();
+            newVects.insert(i, target.build());
+            Ring newRing = Ring.valueOf(TOL, newVects);
+            assertFalse(newRing.isConvex());
+        }
+        
+        //Star test!
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 6,4, -1,4, 5,0,  2.5,7, 0,0));
+        Ring[] rings = Ring.parseAll(TOL, network); 
+        assertFalse(rings[0].isConvex());
+        assertTrue(rings[1].isConvex());
     }
-
-    /**
-     * Test of isConvex method, of class Ring.
-     */
-    @Test
-    public void testIsConvex_0args() {
-        System.out.println("isConvex");
-        Ring instance = null;
-        boolean expResult = false;
-        boolean result = instance.isConvex();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of isConvex method, of class Ring.
-     */
-    @Test
-    public void testIsConvex_VectList() {
-        System.out.println("isConvex");
-        VectList vects = null;
-        boolean expResult = false;
-        boolean result = Ring.isConvex(vects);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getVect method, of class Ring.
-     */
+    
     @Test
     public void testGetVect_int() {
-        System.out.println("getVect");
-        int index = 0;
-        Ring instance = null;
-        Vect expResult = null;
-        Vect result = instance.getVect(index);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(Vect.valueOf(6,8), ring.getVect(1));
+        try {
+            ring.getVect(-1);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        try {
+            ring.getVect(5);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
     }
 
-    /**
-     * Test of getVect method, of class Ring.
-     */
     @Test
     public void testGetVect_int_VectBuilder() {
-        System.out.println("getVect");
-        int index = 0;
-        VectBuilder target = null;
-        Ring instance = null;
-        VectBuilder expResult = null;
-        VectBuilder result = instance.getVect(index, target);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        VectBuilder target = new VectBuilder();
+        assertSame(target, ring.getVect(1, target));
+        assertEquals(new VectBuilder(6,8), target);
+        try {
+            ring.getVect(1, null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+        try {
+            ring.getVect(-1, target);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        try {
+            ring.getVect(5, target);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
     }
 
-    /**
-     * Test of getLine method, of class Ring.
-     */
     @Test
     public void testGetLine() {
-        System.out.println("getLine");
-        int index = 0;
-        Ring instance = null;
-        Line expResult = null;
-        Line result = instance.getLine(index);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(Line.valueOf(6,14,0,10), ring.getLine(2));
+        try {
+            ring.getLine(-1);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        try {
+            ring.getLine(4);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
     }
 
-    /**
-     * Test of getX method, of class Ring.
-     */
     @Test
     public void testGetX() {
-        System.out.println("getX");
-        int index = 0;
-        Ring instance = null;
-        double expResult = 0.0;
-        double result = instance.getX(index);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(6, ring.getX(1), 0.0001);
+        try {
+            ring.getX(-1);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        try {
+            ring.getX(5);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
     }
 
-    /**
-     * Test of getY method, of class Ring.
-     */
     @Test
     public void testGetY() {
-        System.out.println("getY");
-        int index = 0;
-        Ring instance = null;
-        double expResult = 0.0;
-        double result = instance.getY(index);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(8, ring.getY(1), 0.0001);
+        try {
+            ring.getX(-1);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        try {
+            ring.getX(5);
+            fail("Exception expected");
+        } catch (IndexOutOfBoundsException ex) {
+        }
     }
 
-    /**
-     * Test of getVects method, of class Ring.
-     */
     @Test
     public void testGetVects() {
-        System.out.println("getVects");
-        VectList target = null;
-        Ring instance = null;
-        VectList expResult = null;
-        VectList result = instance.getVects(target);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        VectList vects = new VectList(0,0, 6,8, 6,14, 0,10, 0,0);
+        Ring ring = Ring.valueOf(TOL, vects);
+        VectList target = new VectList();
+        ring.getVects(target);
+        try {
+            ring.getVects(null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+        assertEquals(vects, target);
     }
 
     /**

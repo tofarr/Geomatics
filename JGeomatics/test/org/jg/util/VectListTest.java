@@ -464,6 +464,22 @@ public class VectListTest {
         }
         assertEquals("[3,4, 7,8]", vects.toString());
     }
+    
+    @Test
+    public void testRemoveAll() {
+        VectList vects = new VectList(1, 2, 3, 4, 5, 6, 7, 8, 9, 0);
+        try{
+            assertSame(vects, vects.removeAll(-1, 4));
+        }catch(IndexOutOfBoundsException ex){
+        }
+        try{
+            assertSame(vects, vects.removeAll(2, 4));
+        }catch(IndexOutOfBoundsException ex){
+        }
+        assertEquals("[1,2, 3,4, 5,6, 7,8, 9,0]", vects.toString());
+        assertSame(vects, vects.removeAll(3, -2));
+        assertEquals("[1,2, 7,8, 9,0]", vects.toString());
+    }
 
     @Test
     public void testSet() {

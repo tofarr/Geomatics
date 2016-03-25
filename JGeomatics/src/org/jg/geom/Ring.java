@@ -143,17 +143,25 @@ public class Ring implements Geom {
                     Integer index = vects.get(x, y);
                     if (index == null) {
                         vects.put(x, y, p);
-                    } else {
+                    }else{
                         int numRingVects = p + 1 - index;
                         VectList ringPath = new VectList(numRingVects);
                         ringPath.addAll(path, index, numRingVects);
                         network.removeAllLinks(ringPath); // remove these links from the network - effectively marking them as processed
-
+                        numRingVects--;
+                        path.removeAll(index, numRingVects);
+                        p -= numRingVects;
+                        
                         //Any hanglines produced by removing the ring from the network need to be dealt with
-                        for (int n = numRingVects - 1; n-- > 0;) {
+                        for (int n = numRingVects; n-- > 0;) {
                             double nx = ringPath.getX(n);
                             double ny = ringPath.getY(n);
                             removeHangLines(network, nx, ny);
+                        }
+                        
+                        int minIndex = minIndex(ringPath);
+                        if(minIndex != 0){
+                            ringPath = rotate(ringPath, minIndex);
                         }
 
                         ret.add(new Ring(ringPath, null));

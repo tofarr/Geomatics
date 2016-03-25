@@ -4,7 +4,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.util.Iterator;
 import org.jg.geom.GeomException;
 import org.jg.geom.Line;
@@ -412,6 +411,30 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         return this;
     }
 
+    /**
+     * Remove the range of vectors at the index given
+     *
+     * @param index
+     * @param length
+     * @return this
+     * @throws IndexOutOfBoundsException if index was out of bounds
+     */
+    public VectList removeAll(int index, int length) throws IndexOutOfBoundsException {
+        if(length < 0){
+            index += length;
+            length = -length;
+        }
+        checkIndex(index);
+        checkLength(index + length);
+        ensureSize(size - length);
+        int fromIndex = (index+length) << 1;
+        int toIndex = (index << 1);
+        System.arraycopy(ords, fromIndex, ords, toIndex, (size << 1) - fromIndex);
+        size -= length;
+        cachedRect = null;
+        return this;
+    }
+    
     /**
      * Set the vector at the index given to the value given
      *
