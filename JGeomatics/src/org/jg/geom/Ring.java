@@ -561,11 +561,10 @@ public class Ring implements Geom {
             return new Area(this, Area.NO_CHILDREN);
         }
         VectList buffer = getEdgeBuffer(amt, flatness, accuracy);
-        List<Ring> rings = buildRingList(buffer, accuracy);
-        return Area.valueOfInternal(rings);
+        return buildAreaFromRing(buffer, accuracy);
     }
 
-    static List<Ring> buildRingList(VectList closedRing, Tolerance tolerance){
+    static Area buildAreaFromRing(VectList closedRing, Tolerance tolerance){
         
         ArrayList<Ring> ret = new ArrayList<>();
         
@@ -580,7 +579,7 @@ public class Ring implements Geom {
             closedRing = rotate(closedRing, minIndex);
         }
         if(closedRing.size() < 4){
-            return ret; // less than 4 points means there cannot possibly be any rings here!
+            return null; // less than 4 points means there cannot possibly be any rings here!
         }
         
         //build min ring from min point (THis is not actually the ring we will use, just an indication of the state of play
@@ -588,39 +587,25 @@ public class Ring implements Geom {
         //if ring is CCW, begin with include, otherwise exclude
         boolean include = getArea(ring) > 0;
         
-        //follow closedRing. at crossing points toggle between include and exclude (crossing points have more than 2 links), build result from this
-        ring.clear();
-        int index = 1;
-        if(include){ // first section is included
-            ring.add(closedRing, 0);
-        }else{ // move forward until we find an included section
-            while(network.numLinks(closedRing.getX(index), closedRing.getY(index)) == 2){
-                index++;
-            }
-        }
-        while(index < closedRing.size()){
-            double x = closedRing.getX(index);
-            double y = closedRing.getY(index);
+        //build a network based on inclusions - see does it make sense.
+        Network network2 = new Network();
+        double ax = closedRing.getX(0);
+        double ay = closedRing.getY(0);
+        for(int i = 1; i < closedRing.size(); i++){
+            double bx = closedRing.getX(i);
+            double by = closedRing.getY(i);
             if(include){
-                ring.add(closedRing, index);
-                if((x == ring.getX(0)) && (y == ring.getY(0))){
-                    //we have a ring!
-                    ret.add(new Ring(ring, null));
-                    ring = new VectList();
-                    ring.add(x, y);
-                }
-                if(network.numLinks(x, y) != 2){
-                    include = false;
-                }
-            }else{
-                if(network.numLinks(x, y) != 2){
-                    include = true;
-                    ring.add(closedRing, index);
-                }
+                network2.addLink(ax, ay, bx, by);
             }
-            index++;
+            if(network.numLinks(bx, by) != 2){
+                include = !include;
+            }
+            ax = bx;
+            ay = by;
         }
-        return ret;
+        
+        return Area.valueOf(tolerance, network2);
+        
     }
     
     static void filterDuplicates(VectList vects){
