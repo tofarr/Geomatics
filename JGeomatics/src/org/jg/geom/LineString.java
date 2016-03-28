@@ -376,62 +376,8 @@ public class LineString implements Geom {
             return this;
         }
         VectList buffer = bufferInternal(vects, amt, flatness, accuracy);
-        Network network = new Network();
-        network.addAllLinks(buffer);
-        network.explicitIntersections(accuracy);
-        network.snap(accuracy);
-        removeNearLines(network, vects, amt - (flatness.tolerance + accuracy.tolerance));
-        return Area.valueOfInternal(accuracy, network);
-    }
-
-    static void removeNearLines(Network network, VectList lines, double amt) {
-        final SpatialNode<Line> lineIndex = network.getLinks();
-        Tolerance tolerance = new Tolerance(amt);
-        int index = lines.size() - 1;
-        double bx = lines.getX(index);
-        double by = lines.getY(index);
-        while (index-- > 0) {
-            double ax = lines.getX(index);
-            double ay = lines.getY(index);
-            removeNearLines(lineIndex, network, ax, ay, bx, by, tolerance);
-            bx = ax;
-            by = ay;
-        }
-    }
-
-    static void removeNearLines(SpatialNode<Line> node, Network network,
-            double iax, double iay, double ibx, double iby, Tolerance amt) {
-        double minX = Math.min(iax, ibx);
-        double minY = Math.min(iay, iby);
-        double maxX = Math.max(iax, ibx);
-        double maxY = Math.max(iay, iby);
-        double amtSq = amt.tolerance * amt.tolerance;
-        ArrayDeque<SpatialNode<Line>> nodes = new ArrayDeque<>();
-        nodes.push(node);
-        while (!nodes.isEmpty()) {
-            node = nodes.pop();
-            if (node.isDisjoint(minX, minY, maxX, maxY, amt)) {
-                continue;
-            }
-            if (node.isBranch()) {
-                nodes.push(node.getA());
-                nodes.push(node.getB());
-                continue;
-            }
-            for (int i = node.size(); i-- > 0;) {
-                Rect bounds = node.getItemBounds(i);
-                if (!Rect.disjoint(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY,
-                        minX, minY, maxX, maxY, amt)) {
-                    Line line = node.getItemValue(i);
-                    double x = (line.ax + line.bx) / 2;
-                    double y = (line.ay + line.by) / 2;
-                    double distSq = Line.distSegVectSq(iax, iay, ibx, iby, x, y);
-                    if (distSq < amtSq) {
-                        network.removeLink(line);
-                    }
-                }
-            }
-        }
+        List<Ring> rings = Ring.buildRingList(buffer, accuracy);
+        return Area.valueOfInternal(rings);
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use

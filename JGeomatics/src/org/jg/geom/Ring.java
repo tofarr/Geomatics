@@ -4,7 +4,9 @@ import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -559,14 +561,179 @@ public class Ring implements Geom {
             return new Area(this, Area.NO_CHILDREN);
         }
         VectList buffer = getEdgeBuffer(amt, flatness, accuracy);
-        Network network = new Network();
-        network.addAllLinks(buffer);
-        network.explicitIntersections(accuracy);
-        double tol = amt - (flatness.tolerance + accuracy.tolerance);
-        LineString.removeNearLines(network, vects, tol);
-        return Area.valueOfInternal(accuracy, network);
+        List<Ring> rings = buildRingList(buffer, accuracy);
+        return Area.valueOfInternal(rings);
     }
 
+    static List<Ring> buildRingList(VectList closedRing, Tolerance tolerance){
+        
+        ArrayList<Ring> ret = new ArrayList<>();
+        
+        //Sanitize the ring using a network
+        Network network = new Network();
+        network.addAllLinks(closedRing);
+        network.explicitIntersections(tolerance);
+        network.snap(tolerance);
+        closedRing = parsePathFromNetwork(network, closedRing, tolerance);
+        int minIndex = minIndex(closedRing);
+        if(minIndex != 0){
+            closedRing = rotate(closedRing, minIndex);
+        }
+        if(closedRing.size() < 4){
+            return ret; // less than 4 points means there cannot possibly be any rings here!
+        }
+        
+        //build min ring from min point (THis is not actually the ring we will use, just an indication of the state of play
+        VectList ring = parseRingAt(network, closedRing.getX(0), closedRing.getY(0), closedRing.getX(1), closedRing.getY(1));
+        //if ring is CCW, begin with include, otherwise exclude
+        boolean include = getArea(ring) > 0;
+        
+        //follow closedRing. at crossing points toggle between include and exclude (crossing points have more than 2 links), build result from this
+        ring.clear();
+        int index = 1;
+        if(include){ // first section is included
+            ring.add(closedRing, 0);
+        }else{ // move forward until we find an included section
+            while(network.numLinks(closedRing.getX(index), closedRing.getY(index)) == 2){
+                index++;
+            }
+        }
+        while(index < closedRing.size()){
+            double x = closedRing.getX(index);
+            double y = closedRing.getY(index);
+            if(include){
+                ring.add(closedRing, index);
+                if((x == ring.getX(0)) && (y == ring.getY(0))){
+                    //we have a ring!
+                    ret.add(new Ring(ring, null));
+                    ring = new VectList();
+                    ring.add(x, y);
+                }
+                if(network.numLinks(x, y) != 2){
+                    include = false;
+                }
+            }else{
+                if(network.numLinks(x, y) != 2){
+                    include = true;
+                    ring.add(closedRing, index);
+                }
+            }
+            index++;
+        }
+        return ret;
+    }
+    
+    static void filterDuplicates(VectList vects){
+        int index = vects.size() - 1;
+        double bx = vects.getX(index);
+        double by = vects.getY(index);
+        while(index-- > 0){
+            double ax = vects.getX(index);
+            double ay = vects.getY(index);
+            if((ax == bx) && (ay == by)){
+                vects.remove(index+1);
+            }
+            ax = bx;
+            ay = by;
+        }
+    }
+    
+    static VectList parsePathFromNetwork(Network network, VectList template, Tolerance tolerance){
+        VectList ret = new VectList();
+        VectBuilder a = new VectBuilder();
+        VectBuilder b = new VectBuilder();
+        VectBuilder c = new VectBuilder();
+        template.getVect(0, a);
+        if(!network.hasVect(a.getX(), a.getY())){ // a was snapped out - get closest point on a
+            b.set(a.getX() + tolerance.tolerance * 10, a.getY() + tolerance.tolerance * 10);
+            snapToNearest(network.getLinks(), a, tolerance, b);
+            VectBuilder tmp = a;
+            a = b;
+            b = tmp;
+        }
+        ret.add(a);
+        VectList links = new VectList();
+        double tolSq = tolerance.tolerance * tolerance.tolerance;
+        for(int i = 1; i < template.size(); i++){
+            template.getVect(i, b);
+            if(!network.hasVect(b.getX(), b.getY())){ // a was snapped out - get closest point on a
+                c.set(b.getX() + tolerance.tolerance * 10, b.getY() + tolerance.tolerance * 10);
+                snapToNearest(network.getLinks(), b, tolerance, c);
+                VectBuilder tmp = b;
+                b = c;
+                c = tmp;
+            }
+            while(!network.hasLink(a.getX(), a.getY(), b.getX(), b.getY())){
+                network.getLinks(a.getX(), a.getY(), links);
+                double distA = Vect.distSq(a.getX(), a.getY(), b.getX(), b.getY());
+                for(int j = links.size(); j-- > 0;){
+                    links.getVect(j, c);
+                    //IF C is ON LINE AB, and C is closer to B than A, add C to ret and set C to A and break
+                    if(Line.vectLineDistSq(a.getX(), a.getY(), b.getX(), b.getY(), c.getX(), c.getY()) <= tolSq){
+                        double distC = Vect.distSq(c.getX(), c.getY(), b.getX(), b.getY());
+                        if(distC < distA){
+                            ret.add(c);
+                            VectBuilder tmp = c;
+                            c = a;
+                            a = tmp;
+                            break;
+                        }
+                    }
+                }
+            }
+            ret.add(b);
+            VectBuilder tmp = a;
+            a = b;
+            b = tmp;
+        }
+        return ret;
+    }
+    
+    static void snapToNearest(SpatialNode<Line> node, VectBuilder vect, Tolerance tolerance, VectBuilder result){
+        double x = vect.getX();
+        double y = vect.getY();
+        if(node.isDisjoint(x, y, x, y, tolerance)){
+            return;
+        }
+        if(node.isBranch()){
+            snapToNearest(node.getA(), vect, tolerance, result);
+            snapToNearest(node.getB(), vect, tolerance, result);
+            return;
+        }
+        double dist = Vect.distSq(x, y, result.getX(), result.getY());
+        for(int i = node.size(); i-- > 0;){
+            Line line = node.getItemValue(i);
+            double distA = Vect.distSq(x, y, line.ax, line.ay);
+            if(distA < dist){
+                line.getA(result);
+                dist = distA;
+            }
+            double distB = Vect.distSq(x, y, line.bx, line.by);
+            if(distB < dist){
+                line.getB(result);
+                dist = distB;
+            }
+        }
+    }
+    
+    static VectList parseRingAt(Network network, double ax, double ay, double bx, double by){
+        double sx = ax;
+        double sy = ay;
+        VectBuilder workingVect = new VectBuilder();
+        VectList ret = new VectList().add(ax, ay).add(bx, by);
+        while(true){
+            network.nextCW(bx, by, ax, ay, workingVect);
+            ax = bx;
+            ay = by;
+            bx = workingVect.getX();
+            by = workingVect.getY();
+            ret.add(workingVect);
+            if((bx == sx) && (by == sy)){
+                return ret;
+            }
+        }
+    }
+    
     /**
      * Get an edge buffer from this ring
      *

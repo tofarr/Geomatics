@@ -59,6 +59,10 @@ public class Area implements Geom {
     
     static Area valueOfInternal(Tolerance accuracy, Network network) {
         List<Ring> rings = Ring.parseAllInternal(network, accuracy);
+        return valueOfInternal(rings);
+    }
+    
+    static Area valueOfInternal(List<Ring> rings){
         switch (rings.size()) {
             case 0:
                 return null;

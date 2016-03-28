@@ -304,34 +304,27 @@ public class RingTest {
         assertEquals(vects, target);
     }
 
-    /**
-     * Test of addTo method, of class Ring.
-     */
     @Test
     public void testAddTo_Network() {
-        System.out.println("addTo");
-        Network network = null;
-        Ring instance = null;
-        instance.addTo(network);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        VectList vects = new VectList(0,0, 6,8, 6,14, 0,10, 0,0);
+        Ring ring = Ring.valueOf(TOL, vects);
+        Network network = new Network();
+        network.addLink(0,0,1,1);
+        ring.addTo(network);
+        assertEquals("[[0,0, 0,10, 6,14, 6,8, 0,0],[0,0, 1,1]]", network.toString());
     }
 
-    /**
-     * Test of buffer method, of class Ring.
-     */
     @Test
     public void testBuffer() {
-        System.out.println("buffer");
-        double amt = 0.0;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        Area expResult = null;
-        Area result = instance.buffer(amt, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertSame(ring, ring.buffer(0, Tolerance.FLATNESS, TOL).shell);
+        assertEquals(new Area(ring), ring.buffer(0, Tolerance.FLATNESS, TOL));
+        
+        Area a = ring.buffer(-1, Tolerance.FLATNESS, TOL);
+        
+        
+        Area b = ring.buffer(10, Tolerance.FLATNESS, TOL);
+        
     }
 
     /**

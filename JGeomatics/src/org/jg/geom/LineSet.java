@@ -234,17 +234,12 @@ public class LineSet implements Geom {
             return this;
         }
         Network network = new Network();
+        Geom ret = null;
         for (LineString lineString : lineStrings) {
-            VectList buffer = LineString.bufferInternal(lineString.vects, amt, flatness, accuracy);
-            network.addAllLinks(buffer);
+            Geom buffer = lineString.buffer(amt, flatness, accuracy);
+            ret = (ret == null) ? buffer : ret.union(buffer, flatness, accuracy);
         }
-        network.explicitIntersections(accuracy);
-        network.snap(accuracy);
-        double tol = amt - (flatness.tolerance + accuracy.tolerance);
-        for (LineString lineString : lineStrings) {
-            LineString.removeNearLines(network, lineString.vects, tol);
-        }
-        return Area.valueOfInternal(accuracy, network);
+        return ret;
     }
 
     @Override
