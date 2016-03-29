@@ -113,7 +113,7 @@ public class RingTest {
     @Test
     public void testNumLines() {
         Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
-        assertEquals(4, ring.numVects());
+        assertEquals(4, ring.numLines());
     }
 
     @Test

@@ -417,12 +417,8 @@ public class LineStringTest {
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
         Area r = (Area) s.buffer(4, flatness, Tolerance.DEFAULT);
-        double area = (10 * 10 * 2)
-                + (10 * 30 * 2)
-                + (5 * 5 * 3 * 4)
-                + (5 * 5 * Math.PI);
-        assertEquals(area, r.getArea(), 1);
-        assertEquals(Rect.valueOf(0,0,30,50), r.getBounds());
+        assertEquals(996, r.getArea(), 1);
+        assertEquals(Rect.valueOf(6,1,74,27), r.getBounds());
         assertNotNull(r.shell);
         assertEquals(2, r.numRings());
         assertEquals(2, r.getDepth());

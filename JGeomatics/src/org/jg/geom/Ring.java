@@ -3,16 +3,14 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 import org.jg.util.VectMap;
+import org.jg.util.VectMap.VectMapProcessor;
 
 /**
  * Immutable 2D Linear Ring. Checks are in place to insure that:
@@ -565,85 +563,68 @@ public class Ring implements Geom {
         return buildAreaFromRing(buffer, accuracy);
     }
 
-    static Area buildAreaFromRing(VectList closedRing, Tolerance tolerance){
+    static Area buildAreaFromRing(VectList closedRing, Tolerance accuracy){
         
-        ArrayList<Ring> ret = new ArrayList<>();
+        Area union = null;
+        Area less = null;
         
         //Sanitize the ring using a network
         Network network = new Network();
         network.addAllLinks(closedRing);
-        network.explicitIntersections(tolerance);
-        network.snap(tolerance);
-        closedRing = parsePathFromNetwork(network, closedRing, tolerance);
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        closedRing = parsePathFromNetwork(network, closedRing, accuracy);
+        //int minIndex = minIndex(closedRing);
+        //if(minIndex != 0){
+            //rotate(closedRing, minIndex);
+        //}
 
-        VectMap<Integer> indices = new VectMap<Integer>();
-        indices.put(closedRing.getX(0), closedRing.getY(0), 0);
+        VectMap<Integer> indices = new VectMap<>();
         for(int i = 0; i < closedRing.size(); i++){
             double x = closedRing.getX(i);
             double y = closedRing.getY(i);
-            Integer index = indices.get(x, y);
+            final Integer index = indices.get(x, y);
             if(index != null){
-                build path from index to current index
+                final int numVects = i - index;
+                VectList ring = new VectList(numVects + 1);
+                ring.addAll(closedRing, index, numVects + 1);
+                closedRing.removeAll(index, i - index);
+                final VectMap<Integer> newIndices = new VectMap<>();
+                indices.forEach(new VectMapProcessor<Integer>() {
+                    @Override
+                    public boolean process(double x, double y, Integer value) {
+                        if(value <= index){
+                            newIndices.put(x, y, value);
+                        }
+                        return true;
+                    }
+                });
+                indices = newIndices;
+                i = index;
+                int minIndx = minIndex(ring);
+                if(minIndx != 0){
+                    rotate(ring, minIndx);
+                }
+                double a = getArea(ring);
+                if(a > 0){
+                    Area area = new Ring(ring, a).toArea();
+                    union = (union == null) ? area : union.union(area, accuracy);
+                }else{
+                    ring.reverse();
+                    Area area = new Ring(ring, a).toArea();
+                    less = (less == null) ? area : less.union(area, accuracy);
+                }
             }
             VectList links = network.map.get(x, y);
-            if(links.size() != 2){
+            if((i == 0) || (links.size() != 2)){
                 indices.put(x, y, i);
             }
         }
-        
-//Follow ring finding closed rings. Create 2 lists - plus and minus. Add CW to minus, add CCW to plus.
-        
-
-        //Union all plus.
-        //Less all minus.
-        
-        
-        
-        
-        
-        
-        int minIndex = minIndex(closedRing);
-        if(minIndex != 0){
-            closedRing = rotate(closedRing, minIndex);
+        Area ret = union;
+        if((union != null) && (less != null)){
+            ret = union.less(less, accuracy);
         }
-        if(closedRing.size() < 4){
-            return null; // less than 4 points means there cannot possibly be any rings here!
-        }
-        
-        //build a network based on inclusions
-        Network network2 = new Network();
-        double ax = closedRing.getX(closedRing.size()-2);
-        double ay = closedRing.getY(closedRing.size()-2);
-        double bx = closedRing.getX(0);
-        double by = closedRing.getY(0);
-        boolean include = true;
-        for(int i = 1; i < closedRing.size(); i++){
-            double cx = closedRing.getX(i);
-            double cy = closedRing.getY(i);
-            VectList links = network.map.get(bx, by);
-            int numLinks = links.size();
-            if(numLinks != 2){ // 2 links - cannot be a crossing point
-                
-                //we swap include on a crossing point - where at least one other line crosses this one
-                
-                int indexA = links.indexOf(ax, ay, 0);
-                int indexC = links.indexOf(cx, cy, 0);
-                if(((Math.abs(indexC - indexA) % numLinks) != 1)
-                        && ((Math.abs(indexA - indexC) % numLinks) != 1)){ //there is a long to the right
-                    include = !include;
-                }
-            }
-            if(include){
-                network2.addLinkInternal(bx, by, cx, cy);
-            }
-            ax = bx;
-            ay = by;
-            bx = cx;
-            by = cy;
-        }
- 
-        return Area.valueOf(tolerance, network2);
-        
+        return ret;
     }
         
     static VectList parsePathFromNetwork(Network network, VectList template, Tolerance tolerance){
