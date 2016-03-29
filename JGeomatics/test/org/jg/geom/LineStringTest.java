@@ -408,6 +408,25 @@ public class LineStringTest {
         assertEquals(1, r.numRings());
         assertEquals(1, r.getDepth());
     }
+    
+    @Test
+    public void testBuffer_Irregular() {
+        Tolerance flatness = new Tolerance(0.5);
+        LineString s = LineString.valueOf(Tolerance.DEFAULT, 10,5, 70,5, 70,23, 56,23, 56,13, 44,13, 44,9, 32,9);
+        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+
+        Area r = (Area) s.buffer(4, flatness, Tolerance.DEFAULT);
+        double area = (10 * 10 * 2)
+                + (10 * 30 * 2)
+                + (5 * 5 * 3 * 4)
+                + (5 * 5 * Math.PI);
+        assertEquals(area, r.getArea(), 1);
+        assertEquals(Rect.valueOf(0,0,30,50), r.getBounds());
+        assertNotNull(r.shell);
+        assertEquals(2, r.numRings());
+        assertEquals(2, r.getDepth());
+    }
 
     @Test
     public void testProjectOutward() {

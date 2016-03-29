@@ -182,27 +182,21 @@ public final class PointSet implements Geom {
         double sy = amt;
         Vect.linearizeArcInternal(0, 0, angleSize, 0, sy, 0, sy, amt, flatness.getTolerance(), point);
 
-        Network network = new Network();
-        int s = point.size() - 1;
+        Area result = null;
+        int s = point.size();
         for (int v = vects.size(); v-- > 0;) {
+            VectList ringVects = new VectList();
             double x = vects.getX(v);
             double y = vects.getY(v);
-            double bx = point.getX(s) + x;
-            double by = point.getY(s) + y;
-            for (int i = s; i-- > 0;) {
+            for(int i = 0; i < s; i++){
                 double ax = point.getX(i) + x;
                 double ay = point.getY(i) + y;
-                network.addLinkInternal(ax, ay, bx, by);
-                bx = ax;
-                by = ay;
+                ringVects.add(ax, ay);
             }
+            Ring ring = new Ring(ringVects, null);
+            result = (result == null) ? ring.toArea() : result.union(ring, accuracy);
         }
-
-        //remove any line which is too close to a point
-        network.explicitIntersections(accuracy);
-        removeWithinBuffer(vects, network, amt, flatness, accuracy);
-
-        return Area.valueOfInternal(accuracy, network);
+        return result;
     }
 
     //remove any link from network with a mid point closer than the amt to one of the lines in this

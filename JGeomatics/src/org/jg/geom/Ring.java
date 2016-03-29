@@ -3,6 +3,7 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -574,6 +575,33 @@ public class Ring implements Geom {
         network.explicitIntersections(tolerance);
         network.snap(tolerance);
         closedRing = parsePathFromNetwork(network, closedRing, tolerance);
+
+        VectMap<Integer> indices = new VectMap<Integer>();
+        indices.put(closedRing.getX(0), closedRing.getY(0), 0);
+        for(int i = 0; i < closedRing.size(); i++){
+            double x = closedRing.getX(i);
+            double y = closedRing.getY(i);
+            Integer index = indices.get(x, y);
+            if(index != null){
+                build path from index to current index
+            }
+            VectList links = network.map.get(x, y);
+            if(links.size() != 2){
+                indices.put(x, y, i);
+            }
+        }
+        
+//Follow ring finding closed rings. Create 2 lists - plus and minus. Add CW to minus, add CCW to plus.
+        
+
+        //Union all plus.
+        //Less all minus.
+        
+        
+        
+        
+        
+        
         int minIndex = minIndex(closedRing);
         if(minIndex != 0){
             closedRing = rotate(closedRing, minIndex);
@@ -582,47 +610,42 @@ public class Ring implements Geom {
             return null; // less than 4 points means there cannot possibly be any rings here!
         }
         
-        //build min ring from min point (THis is not actually the ring we will use, just an indication of the state of play
-        VectList ring = parseRingAt(network, closedRing.getX(0), closedRing.getY(0), closedRing.getX(1), closedRing.getY(1));
-        //if ring is CCW, begin with include, otherwise exclude
-        boolean include = getArea(ring) > 0;
-        
-        //build a network based on inclusions - see does it make sense.
+        //build a network based on inclusions
         Network network2 = new Network();
-        double ax = closedRing.getX(0);
-        double ay = closedRing.getY(0);
+        double ax = closedRing.getX(closedRing.size()-2);
+        double ay = closedRing.getY(closedRing.size()-2);
+        double bx = closedRing.getX(0);
+        double by = closedRing.getY(0);
+        boolean include = true;
         for(int i = 1; i < closedRing.size(); i++){
-            double bx = closedRing.getX(i);
-            double by = closedRing.getY(i);
-            if(include){
-                network2.addLink(ax, ay, bx, by);
+            double cx = closedRing.getX(i);
+            double cy = closedRing.getY(i);
+            VectList links = network.map.get(bx, by);
+            int numLinks = links.size();
+            if(numLinks != 2){ // 2 links - cannot be a crossing point
+                
+                //we swap include on a crossing point - where at least one other line crosses this one
+                
+                int indexA = links.indexOf(ax, ay, 0);
+                int indexC = links.indexOf(cx, cy, 0);
+                if(((Math.abs(indexC - indexA) % numLinks) != 1)
+                        && ((Math.abs(indexA - indexC) % numLinks) != 1)){ //there is a long to the right
+                    include = !include;
+                }
             }
-            if(network.numLinks(bx, by) != 2){
-                include = !include;
+            if(include){
+                network2.addLinkInternal(bx, by, cx, cy);
             }
             ax = bx;
             ay = by;
+            bx = cx;
+            by = cy;
         }
-        
+ 
         return Area.valueOf(tolerance, network2);
         
     }
-    
-    static void filterDuplicates(VectList vects){
-        int index = vects.size() - 1;
-        double bx = vects.getX(index);
-        double by = vects.getY(index);
-        while(index-- > 0){
-            double ax = vects.getX(index);
-            double ay = vects.getY(index);
-            if((ax == bx) && (ay == by)){
-                vects.remove(index+1);
-            }
-            ax = bx;
-            ay = by;
-        }
-    }
-    
+        
     static VectList parsePathFromNetwork(Network network, VectList template, Tolerance tolerance){
         VectList ret = new VectList();
         VectBuilder a = new VectBuilder();

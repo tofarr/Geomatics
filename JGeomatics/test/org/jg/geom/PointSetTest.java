@@ -200,15 +200,27 @@ public class PointSetTest {
         assertNull(ps.buffer(-1, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(ps, ps.buffer(0, Tolerance.FLATNESS, Tolerance.DEFAULT));
         Area buffered = (Area) ps.buffer(4, Tolerance.FLATNESS, Tolerance.DEFAULT);
-        Network network = new Network();
-        buffered.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
         Rect bounds = buffered.getBounds();
         assertEquals(1, bounds.minX, 0.00001);
         assertEquals(1, bounds.minY, 0.00001);
         assertEquals(35, bounds.maxX, 0.00001);
         assertEquals(11, bounds.maxY, 0.00001);
         assertEquals(3, buffered.numRings());
-        assertEquals(276, buffered.getArea(), 1);
+        assertEquals(226, buffered.getArea(), 1);
+    }
+    
+    @Test
+    public void testBuffer2(){
+        VectList vects = new VectList(100, 100, 107.5, 100);
+        PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
+        Area buffered = (Area) ps.buffer(4, new Tolerance(1), Tolerance.DEFAULT);
+        assertEquals(1, buffered.numRings());
+        Rect bounds = buffered.getBounds();
+        assertEquals(96, bounds.minX, 0.00001);
+        assertEquals(96, bounds.minY, 0.00001);
+        assertEquals(111.5, bounds.maxX, 0.00001);
+        assertEquals(104, bounds.maxY, 0.00001);
+        assertEquals(98, buffered.getArea(), 1);
     }
 
     @Test
