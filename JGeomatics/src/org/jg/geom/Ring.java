@@ -773,7 +773,16 @@ public class Ring implements Geom {
         }
         VectList transformed = vects.clone();
         transformed.transform(transform);
-        Ring ring = new Ring(transformed, null);
+        int minIndex = minIndex(transformed);
+        if(minIndex != 0){
+            transformed = rotate(transformed, minIndex);
+        }
+        double area = getArea(transformed);
+        if(area < 0){
+            transformed.reverse();
+            area = -area;
+        }
+        Ring ring = new Ring(transformed, area);
         return ring;
     }
 
@@ -802,7 +811,7 @@ public class Ring implements Geom {
             @Override
             public int currentSegment(float[] coords) {
                 coords[0] = (float) vects.getX(index);
-                coords[0] = (float) vects.getY(index);
+                coords[1] = (float) vects.getY(index);
                 if (index == 0) {
                     return SEG_MOVETO;
                 } else if (index == max) {
@@ -815,7 +824,7 @@ public class Ring implements Geom {
             @Override
             public int currentSegment(double[] coords) {
                 coords[0] = vects.getX(index);
-                coords[0] = vects.getY(index);
+                coords[1] = vects.getY(index);
                 if (index == 0) {
                     return SEG_MOVETO;
                 } else if (index == max) {

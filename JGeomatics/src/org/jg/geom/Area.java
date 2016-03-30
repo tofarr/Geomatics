@@ -29,7 +29,7 @@ public class Area implements Geom {
     SpatialNode<Line> lineIndex;
     Double area;
 
-    Area(Ring shell, Area[] children) {
+    Area(Ring shell, Area... children) {
         this.shell = shell;
         this.children = children;
     }
@@ -59,24 +59,22 @@ public class Area implements Geom {
     
     static Area valueOfInternal(Tolerance accuracy, Network network) {
         List<Ring> rings = Ring.parseAllInternal(network, accuracy);
-        return valueOfInternal(rings);
-    }
-    
-    static Area valueOfInternal(List<Ring> rings){
-        switch (rings.size()) {
+        switch(rings.size()){
             case 0:
                 return null;
             case 1:
-                return new Area(rings.get(0), NO_CHILDREN);
+                return rings.get(0).toArea();
             default:
+                Ring[] ringArray = rings.toArray(new Ring[rings.size()]);
+                Arrays.sort(ringArray, COMPARATOR);
                 AreaBuilder builder = new AreaBuilder(null);
-                for (Ring ring : rings) {
+                for (Ring ring : ringArray) {
                     builder.add(ring);
                 }
                 return builder.build();
         }
     }
-
+    
     public double getArea() {
         if (shell == null) {
             double ret = 0;
@@ -379,11 +377,11 @@ public class Area implements Geom {
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Area) {
-            return union((Area) other, accuracy);
+            return union((Area) other, accuracy).simplify();
         } else if (other instanceof Ring) {
-            return union((Ring) other, accuracy);
+            return union((Ring) other, accuracy).simplify();
         }
-        return union(other.toGeoShape(flatness, accuracy), accuracy);
+        return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
     }
 
     public Area union(Area other, Tolerance accuracy) {
@@ -409,10 +407,10 @@ public class Area implements Geom {
         return union(other.toArea(), accuracy);
     }
 
-    public Geom union(GeoShape other, Tolerance accuracy) throws NullPointerException {
+    public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
         Area area = (other.area != null) ? union(other.area, accuracy) : this;
         if ((other.lines == null) && (other.points == null)) {
-            return area;
+            return area.toGeoShape();
         }
         if (other.getBounds().isDisjoint(getBounds(), accuracy)) {
             return new GeoShape(area, other.lines, other.points); // can skip mergint points and lines
@@ -424,9 +422,6 @@ public class Area implements Geom {
         PointSet points = other.points;
         if (points != null) {
             points = points.less(this, accuracy);
-        }
-        if ((lines == null) && (points == null)) {
-            return area;
         }
         return new GeoShape(area, lines, points);
     }

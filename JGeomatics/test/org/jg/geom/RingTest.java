@@ -1,6 +1,7 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
+import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -319,148 +321,156 @@ public class RingTest {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
         assertSame(ring, ring.buffer(0, Tolerance.FLATNESS, TOL).shell);
         assertEquals(new Area(ring), ring.buffer(0, Tolerance.FLATNESS, TOL));
-        
         Area a = ring.buffer(-1, Tolerance.FLATNESS, TOL);
-        
-        
+        assertEquals(1, a.numRings());
+        assertEquals(5, a.numVects());
+        Rect bounds = a.getBounds();
+        assertEquals(bounds.minX, 1, 0.01);
+        assertEquals(bounds.minY, 3, 0.01);
+        assertEquals(bounds.maxX, 5, 0.01);
+        assertEquals(bounds.maxY, 12.125, 0.01);
+        assertEquals(20.53, a.getArea(), 0.01);
         Area b = ring.buffer(10, Tolerance.FLATNESS, TOL);
-        
+        assertEquals(1, b.numRings());
+        bounds = b.getBounds();
+        assertEquals(bounds.minX, -10, 0.01);
+        assertEquals(bounds.minY, -10, 0.01);
+        assertEquals(bounds.maxX, 16, 0.01);
+        assertEquals(bounds.maxY, 24, 0.01);
+        assertEquals(694, b.getArea(), 1);
     }
 
-    /**
-     * Test of getEdgeBuffer method, of class Ring.
-     */
-    @Test
-    public void testGetEdgeBuffer() {
-        System.out.println("getEdgeBuffer");
-        double amt = 0.0;
-        Tolerance flatness = null;
-        Tolerance tolerance = null;
-        Ring instance = null;
-        VectList expResult = null;
-        VectList result = instance.getEdgeBuffer(amt, flatness, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of transform method, of class Ring.
-     */
     @Test
     public void testTransform() {
-        System.out.println("transform");
-        Transform transform = null;
-        Ring instance = null;
-        Ring expResult = null;
-        Ring result = instance.transform(transform);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertSame(ring, ring.transform(Transform.IDENTITY));
+        try{
+            ring.transform(null);
+            fail("Exception Expected");
+        }catch(NullPointerException ex){   
+        }
+        Transform transform = new TransformBuilder().flipXAround(7).build();
+        Ring transformed = ring.transform(transform);
+        Ring expected = Ring.valueOf(TOL, 8,8, 14,0, 14,10, 8,14, 8,8);
+        assertEquals(expected, transformed);
     }
 
-    /**
-     * Test of pathIterator method, of class Ring.
-     */
     @Test
     public void testPathIterator() {
-        System.out.println("pathIterator");
-        Ring instance = null;
-        PathIterator expResult = null;
-        PathIterator result = instance.pathIterator();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        PathIterator iter = ring.pathIterator();
+        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
+        assertFalse(iter.isDone());
+        double[] coords = new double[6];
+        float[] fcoords = new float[6];
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(fcoords));
+        assertEquals(0, coords[0], 0.00001);
+        assertEquals(0, coords[1], 0.00001);
+        assertEquals(0, fcoords[0], 0.00001);
+        assertEquals(0, fcoords[1], 0.00001);
+        iter.next();
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(6, coords[0], 0.00001);
+        assertEquals(8, coords[1], 0.00001);
+        assertEquals(6, fcoords[0], 0.00001);
+        assertEquals(8, fcoords[1], 0.00001);
+        iter.next();
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(6, coords[0], 0.00001);
+        assertEquals(14, coords[1], 0.00001);
+        assertEquals(6, fcoords[0], 0.00001);
+        assertEquals(14, fcoords[1], 0.00001);
+        iter.next();
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(0, coords[0], 0.00001);
+        assertEquals(10, coords[1], 0.00001);
+        assertEquals(0, fcoords[0], 0.00001);
+        assertEquals(10, fcoords[1], 0.00001);
+        iter.next();
+        assertFalse(iter.isDone());
+        assertEquals(PathIterator.SEG_CLOSE, iter.currentSegment(coords));
+        assertEquals(PathIterator.SEG_CLOSE, iter.currentSegment(fcoords));
+        assertEquals(0, coords[0], 0.00001);
+        assertEquals(0, coords[1], 0.00001);
+        assertEquals(0, fcoords[0], 0.00001);
+        assertEquals(0, fcoords[1], 0.00001);
+        iter.next();
+        assertTrue(iter.isDone());
+        iter.next();
     }
 
-    /**
-     * Test of clone method, of class Ring.
-     */
     @Test
     public void testClone() {
-        System.out.println("clone");
-        Ring instance = null;
-        Ring expResult = null;
-        Ring result = instance.clone();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertSame(ring, ring.clone());
     }
 
-    /**
-     * Test of toGeoShape method, of class Ring.
-     */
     @Test
-    public void testToGeoShape_Tolerance_Tolerance() {
-        System.out.println("toGeoShape");
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.toGeoShape(flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testToGeoShape() {
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(new GeoShape(new Area(ring), null, null), ring.toGeoShape(Tolerance.FLATNESS, TOL));
     }
 
-    /**
-     * Test of toGeoShape method, of class Ring.
-     */
-    @Test
-    public void testToGeoShape_0args() {
-        System.out.println("toGeoShape");
-        Ring instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.toGeoShape();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of addTo method, of class Ring.
-     */
     @Test
     public void testAddTo_3args() {
-        System.out.println("addTo");
-        Network network = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        instance.addTo(network, flatness, accuracy);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Network network = new Network();
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        ring.addTo(network, Tolerance.FLATNESS, TOL);
+        assertEquals("[[0,0, 6,8, 6,14, 0,10, 0,0]]", network.toString());
     }
 
-    /**
-     * Test of toArea method, of class Ring.
-     */
     @Test
     public void testToArea() {
-        System.out.println("toArea");
-        Ring instance = null;
-        Area expResult = null;
-        Area result = instance.toArea();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals(new Area(ring), ring.toArea());
     }
 
-    /**
-     * Test of union method, of class Ring.
-     */
     @Test
     public void testUnion() {
-        System.out.println("union");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        Geom expResult = null;
-        Geom result = instance.union(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring a = new Ring(new VectList(0,0, 10,0, 10,10, 0,10, 0,0), null);
+        Ring b = new Ring(new VectList(10,0, 20,0, 20,10, 10,10, 10,0), null);
+        Ring c = new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null);
+        Ring d = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
+        Ring e = new Ring(new VectList(0,0, 10,0, 20,0, 20,10, 10,10, 0,10, 0,0), null);
+        Line f = Line.valueOf(5,5, 15,5);
+        Area g = new Area(null, a.toArea(), c.toArea());
+        Ring h = new Ring(new VectList(0,0, 10,0, 10,5, 15,5, 15,15, 5,15, 5,10, 0,10, 0,0), null);
+        PointSet i = new PointSet(new VectList(5,0, 5,5, 10,0, 10,5, 12,5, 15,5, 20,5));
+        GeoShape j = new GeoShape(a.toArea(), Line.valueOf(10,5, 15,5).toLineString().toLineSet(), null);
+        GeoShape k = new GeoShape(a.toArea(), null, new PointSet(new VectList(12, 5, 15,5, 20,5)));
+        GeoShape l = new GeoShape(null, Line.valueOf(10,5, 15,5).toLineString().toLineSet(), new PointSet(new VectList(5,0, 5,5, 10,0, 20,5)));
+        GeoShape m = new GeoShape(a.toArea(), Line.valueOf(10,5, 15,5).toLineString().toLineSet(), new PointSet(new VectList(20,5)));
+        Ring n = new Ring(new VectList(10,10, 20,10, 20,20, 10,20, 10,10), null);
+        Area o = new Area(null, a.toArea(), n.toArea());
+        Ring p = new Ring(new VectList(10,5, 20,5, 20,20, 10,20, 10,5), null);
+        Ring q = new Ring(new VectList(0,0, 10,0, 10,5, 20,5, 20,20, 10,20, 10,10, 0,10, 0,0), null);
+        
+        assertEquals(a, a.union(a, Tolerance.FLATNESS, TOL));
+        assertEquals(e, a.union(b, Tolerance.FLATNESS, TOL));
+        assertEquals(g, a.union(c, Tolerance.FLATNESS, TOL));
+        assertEquals(g, c.union(a, Tolerance.FLATNESS, TOL));
+        assertEquals(h, a.union(d, Tolerance.FLATNESS, TOL));
+        
+        assertEquals(j, a.union(f, Tolerance.FLATNESS, TOL));
+        assertEquals(k, a.union(i, Tolerance.FLATNESS, TOL));
+        assertEquals(m, a.union(l, Tolerance.FLATNESS, TOL));
+        
+        assertEquals(e, e.union(a, Tolerance.FLATNESS, TOL));
+        assertEquals(e, e.union(f, Tolerance.FLATNESS, TOL));
+        
+        assertEquals(o, a.union(n, Tolerance.FLATNESS, TOL));
+        assertEquals(o, n.union(a, Tolerance.FLATNESS, TOL));
+        
+        assertEquals(q, a.union(p, Tolerance.FLATNESS, TOL));
+        assertEquals(q, p.union(a, Tolerance.FLATNESS, TOL));
+        
     }
 
     /**
@@ -497,75 +507,56 @@ public class RingTest {
         fail("The test case is a prototype.");
     }
 
-    /**
-     * Test of hashCode method, of class Ring.
-     */
     @Test
     public void testHashCode() {
-        System.out.println("hashCode");
-        Ring instance = null;
-        int expResult = 0;
-        int result = instance.hashCode();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Set<Integer> hashCodes = new HashSet<>();
+        for (int x = 0; x <= 10; x++) {
+            for (int y = 1; y < 10; y++) {
+                Ring ring = new Ring(new VectList(0, 0, 10, 0, x, y, 0, 0), null);
+                hashCodes.add(ring.hashCode());
+            }
+        }
+        assertEquals(99, hashCodes.size());
     }
 
-    /**
-     * Test of equals method, of class Ring.
-     */
     @Test
     public void testEquals() {
-        System.out.println("equals");
-        Object obj = null;
-        Ring instance = null;
-        boolean expResult = false;
-        boolean result = instance.equals(obj);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring a = new Ring(new VectList(0, 0, 100, 1, 100, 100, 0, 0), null);
+        Ring b = new Ring(new VectList(0, 0, 100, 0, 100, 100, 0, 0), null);
+        assertEquals(a, a);
+        assertNotEquals(a, b);
+        assertNotEquals(a, "");
     }
 
-    /**
-     * Test of toString method, of class Ring.
-     */
     @Test
     public void testToString_0args() {
-        System.out.println("toString");
-        Ring instance = null;
-        String expResult = "";
-        String result = instance.toString();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
+        Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
+        assertEquals("[\"RG\", 0,0, 6,8, 6,14, 0,10, 0,0]", ring.toString());
+        try {
+            ring.toString(null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+        try {
+            ring.toString(new Appendable() {
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
 
-    /**
-     * Test of toString method, of class Ring.
-     */
-    @Test
-    public void testToString_Appendable() {
-        System.out.println("toString");
-        Appendable appendable = null;
-        Ring instance = null;
-        instance.toString(appendable);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
 
-    /**
-     * Test of toString method, of class Ring.
-     */
-    @Test
-    public void testToString_boolean() {
-        System.out.println("toString");
-        boolean summarize = false;
-        Ring instance = null;
-        String expResult = "";
-        String result = instance.toString(summarize);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
 
+            });
+            fail("Exception expected");
+        } catch (GeomException ex) {
+        }
+    }
 }
