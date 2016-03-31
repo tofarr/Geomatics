@@ -13,6 +13,7 @@ import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
+import org.jg.util.VectSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -473,38 +474,70 @@ public class RingTest {
         
     }
 
-    /**
-     * Test of intersection method, of class Ring.
-     */
     @Test
     public void testIntersection() {
-        System.out.println("intersection");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        Geom expResult = null;
-        Geom result = instance.intersection(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring a = new Ring(new VectList(0,0, 10,0, 10,10, 0,10, 0,0), null);
+        Ring b = new Ring(new VectList(10,0, 20,0, 20,10, 10,10, 10,0), null);
+        Ring c = new Ring(new VectList(10,10, 20,10, 20,20, 10,20, 10,10), null);
+        Ring d = new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null);
+        Ring e = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
+        
+        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, TOL));
+        assertEquals(Line.valueOf(10, 0, 10, 10), a.intersection(b, Tolerance.FLATNESS, TOL));
+        assertEquals(Vect.valueOf(10, 10), a.intersection(c, Tolerance.FLATNESS, TOL));
+        assertNull(a.intersection(d, Tolerance.FLATNESS, TOL));
+        assertEquals(new Ring(new VectList(5,5, 10,5, 10,10, 5,10, 5,5), null), a.intersection(e, Tolerance.FLATNESS, TOL));
+        
+        LineString f = LineString.valueOf(TOL, 10,5, 25,5, 25,0, 40,0);
+        LineString g = LineString.valueOf(TOL, 20,5, 25,5, 25,0, 30,0);
+        assertEquals(g, d.intersection(f, Tolerance.FLATNESS, TOL));
+        
+        PointSet h = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10).add(35, 5));
+        PointSet i = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10));
+        assertEquals(i, d.intersection(h, Tolerance.FLATNESS, TOL));
+        
+        GeoShape j = new GeoShape(null, f.toLineSet(), h);
+        GeoShape k = new GeoShape(null, g.toLineSet(), i);
+        assertEquals(k, d.intersection(j, Tolerance.FLATNESS, TOL));
+        
+        Ring l = new Ring(new VectList(0,0, 30,0, 30,10, 10,10, 10,20, 30,20, 30,30, 0,30, 0,0), null);
+        Ring m = new Ring(new VectList(0,0, 10,0, 10,20, 20,20, 20,0, 30,0, 30,30, 0,30, 0,0), null);
+        Area n = new Area(null, new Ring(new VectList(0,0, 10,0, 10,10, 10,20, 20,20, 30,20, 30,30, 0,30, 0,0), null).toArea(),
+                new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null).toArea());
+        assertEquals(n, l.intersection(m, Tolerance.FLATNESS, TOL));
     }
 
-    /**
-     * Test of less method, of class Ring.
-     */
     @Test
     public void testLess() {
-        System.out.println("less");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Ring instance = null;
-        Geom expResult = null;
-        Geom result = instance.less(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Ring a = new Ring(new VectList(0,0, 10,0, 10,10, 0,10, 0,0), null);
+        Ring b = new Ring(new VectList(10,0, 20,0, 20,10, 10,10, 10,0), null);
+        Ring c = new Ring(new VectList(10,10, 20,10, 20,20, 10,20, 10,10), null);
+        Ring d = new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null);
+        Ring e = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
+        
+        assertNull(a.less(a, Tolerance.FLATNESS, TOL));
+        assertEquals(a, a.less(b, Tolerance.FLATNESS, TOL));
+        assertEquals(a, a.less(c, Tolerance.FLATNESS, TOL));
+        assertEquals(a, a.less(d, Tolerance.FLATNESS, TOL));
+        assertEquals(new Ring(new VectList(0,0, 10,0, 10,5, 5,5, 5,10, 0,10, 0,0), null), a.less(e, Tolerance.FLATNESS, TOL));
+        
+        LineString f = LineString.valueOf(TOL, 10,5, 25,5, 25,0, 40,0);
+        LineString g = LineString.valueOf(TOL, 20,5, 25,5, 25,0, 30,0);
+        assertEquals(g, d.less(f, Tolerance.FLATNESS, TOL));
+        
+        PointSet h = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10).add(35, 5));
+        PointSet i = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10));
+        assertEquals(i, d.less(h, Tolerance.FLATNESS, TOL));
+        
+        GeoShape j = new GeoShape(null, f.toLineSet(), h);
+        GeoShape k = new GeoShape(null, g.toLineSet(), i);
+        assertEquals(k, d.less(j, Tolerance.FLATNESS, TOL));
+        
+        Ring l = new Ring(new VectList(0,0, 30,0, 30,10, 10,10, 10,20, 30,20, 30,30, 0,30, 0,0), null);
+        Ring m = new Ring(new VectList(0,0, 10,0, 10,20, 20,20, 20,0, 30,0, 30,30, 0,30, 0,0), null);
+        Area n = new Area(null, new Ring(new VectList(0,0, 10,0, 10,10, 10,20, 20,20, 30,20, 30,30, 0,30, 0,0), null).toArea(),
+                new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null).toArea());
+        assertEquals(n, l.less(m, Tolerance.FLATNESS, TOL));
     }
 
     @Test

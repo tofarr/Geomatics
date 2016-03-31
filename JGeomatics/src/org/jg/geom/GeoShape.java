@@ -65,13 +65,18 @@ public class GeoShape implements Geom {
             linePaths.clear();
             lineNetwork.extractHangLines(linePaths);
         }
-        PointSet points = pointVects.isEmpty() ? null : new PointSet(pointVects);
+        PointSet points = null;
+        if(!pointVects.isEmpty()){
+            pointVects.sort();
+            points = new PointSet(pointVects);
+        }
         LineSet lines = null;
         if (!linePaths.isEmpty()) {
             LineString[] lineStrings = new LineString[linePaths.size()];
             for (int i = lineStrings.length; i-- > 0;) {
                 lineStrings[i] = new LineString(linePaths.get(i));
             }
+            lines = new LineSet(lineStrings);
         }
         return new GeoShape(area, lines, points);
     }

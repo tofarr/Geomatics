@@ -427,7 +427,7 @@ public class Area implements Geom {
     }
 
     @Override
-    public GeoShape intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
             return null;
         }
@@ -438,7 +438,8 @@ public class Area implements Geom {
         VectBuilder workingVect = new VectBuilder();
         network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
-        return GeoShape.valueOfInternal(network, accuracy);
+        GeoShape ret = GeoShape.valueOfInternal(network, accuracy);
+        return ret.simplify();
     }
 
     public GeoShape intersection(Area other, Tolerance accuracy) throws NullPointerException {

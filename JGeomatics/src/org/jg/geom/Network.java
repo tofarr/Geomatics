@@ -742,7 +742,14 @@ public final class Network implements Serializable, Cloneable {
                 if (value.size() == 1) {
                     VectList hangLine = new VectList();
                     followLine(x, y, value.getX(0), value.getY(0), hangLine);
-                    results.add(hangLine);
+                    if(hangLine.isOrdered()){
+                        results.add(hangLine);
+                        return true;
+                    }
+                    int max = hangLine.size()-1;
+                    if(map.get(hangLine.getX(max), hangLine.getY(max)).size() != 1){
+                        results.add(hangLine);
+                    }
                 }
                 return true;
             }
@@ -1000,6 +1007,11 @@ public final class Network implements Serializable, Cloneable {
             @Override
             public boolean process(double x, double y, VectList links) {
                 workingVect.set(x, y);
+                
+                remove any vertex where all links are touching? 
+                NO THIS WONT WORK.
+                TOO TIRED TO SORT NOW!
+                
                 if (geom.relate(workingVect, accuracy) == Relate.TOUCH) { // if the vect is touching, we may have more work to do
                     //Remove any touching links
                     for (int i = links.size(); i-- > 0;) {
