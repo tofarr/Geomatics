@@ -655,7 +655,9 @@ public class Ring implements Geom {
             while(!network.hasLink(a.getX(), a.getY(), b.getX(), b.getY())){
                 network.getLinks(a.getX(), a.getY(), links);
                 double distA = Vect.distSq(a.getX(), a.getY(), b.getX(), b.getY());
-                for(int j = links.size(); j-- > 0;){
+                int j = links.size();
+                while(true){
+                    j--;
                     links.getVect(j, c);
                     //IF C is ON LINE AB, and C is closer to B than A, add C to ret and set C to A and break
                     if(Line.vectLineDistSq(a.getX(), a.getY(), b.getX(), b.getY(), c.getX(), c.getY()) <= tolSq){
@@ -701,24 +703,6 @@ public class Ring implements Geom {
             if(distB < dist){
                 line.getB(result);
                 dist = distB;
-            }
-        }
-    }
-    
-    static VectList parseRingAt(Network network, double ax, double ay, double bx, double by){
-        double sx = ax;
-        double sy = ay;
-        VectBuilder workingVect = new VectBuilder();
-        VectList ret = new VectList().add(ax, ay).add(bx, by);
-        while(true){
-            network.nextCW(bx, by, ax, ay, workingVect);
-            ax = bx;
-            ay = by;
-            bx = workingVect.getX();
-            by = workingVect.getY();
-            ret.add(workingVect);
-            if((bx == sx) && (by == sy)){
-                return ret;
             }
         }
     }
@@ -929,15 +913,5 @@ public class Ring implements Geom {
         } catch (IOException ex) {
             throw new GeomException("Error writing LineStirng", ex);
         }
-    }
-
-    /**
-     * Convert this ring to a string
-     *
-     * @param summarize true if shortened format may be used, false otherwise
-     * @return string representation of this ring
-     */
-    public String toString(boolean summarize) {
-        return vects.toString(summarize);
     }
 }

@@ -199,21 +199,6 @@ public final class PointSet implements Geom {
         return result;
     }
 
-    //remove any link from network with a mid point closer than the amt to one of the lines in this
-    static void removeWithinBuffer(VectList vects, Network network, double amt, Tolerance flatness, Tolerance tolerance) {
-        final SpatialNode<Line> lines = network.getLinks();
-        double threshold = amt - flatness.tolerance;
-        final NearLinkRemover remover = new NearLinkRemover(threshold, network);
-        RectBuilder bounds = new RectBuilder();
-        for (int i = vects.size(); i-- > 0;) {
-            double x = vects.getX(i);
-            double y = vects.getY(i);
-            bounds.reset().add(x, y).buffer(threshold);
-            remover.reset(x, y);
-            lines.forOverlapping(bounds.build(), remover);
-        }
-    }
-
     @Override
     public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.x, vect.y, tolerance);
@@ -430,33 +415,5 @@ public final class PointSet implements Geom {
             return this.vects.equals(other.vects);
         }
         return false;
-    }
-
-    static class NearLinkRemover implements SpatialNode.NodeProcessor<Line> {
-
-        final double thresholdSq;
-        final Network network;
-        double x;
-        double y;
-
-        public NearLinkRemover(double threshold, Network network) {
-            this.thresholdSq = threshold * threshold;
-            this.network = network;
-        }
-
-        void reset(double x, double y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        @Override
-        public boolean process(Rect bounds, Line j) {
-            double jx = (j.ax + j.bx) / 2;
-            double jy = (j.ay + j.by) / 2;
-            if (Vect.distSq(x, y, jx, jy) < thresholdSq) {
-                network.removeLink(j);
-            }
-            return true;
-        }
     }
 }

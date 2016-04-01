@@ -94,6 +94,24 @@ public class RingTest {
     }
 
     @Test
+    public void testParseAll_B() {
+        Network network = new Network();
+        assertEquals(0, Ring.parseAll(TOL, network).length);
+        
+        network.addAllLinks(new VectList(0,0, 100,0, 100,100, 60,100, 20,60, 20,100, 50,70, 0,20, 0,0));
+        Ring[] rings = Ring.parseAll(TOL, network);
+        
+        List<Ring> expected = new ArrayList<>();
+        expected.add(Ring.valueOf(TOL, 20,60, 40,80, 20,100, 20,60));
+        expected.add(Ring.valueOf(TOL, 0,0, 100,0, 100,100, 60,100, 40,80, 50,70, 0,20, 0,0));
+        
+        for(Ring ring : rings){
+            assertTrue(expected.remove(ring));
+        }
+        assertTrue(expected.isEmpty());
+    }
+
+    @Test
     public void testGetArea_0args() {
         Ring ring = Ring.valueOf(TOL, 0,0, 100,0, 120,100, 20,100, 0,0);
         assertEquals(10000, ring.getArea(), 0.0001);
@@ -354,6 +372,11 @@ public class RingTest {
         Ring transformed = ring.transform(transform);
         Ring expected = Ring.valueOf(TOL, 8,8, 14,0, 14,10, 8,14, 8,8);
         assertEquals(expected, transformed);
+        
+        transform = new TransformBuilder().translate(100, 200).build();
+        transformed = ring.transform(transform);
+        expected = Ring.valueOf(TOL, 100,200, 106,208, 106,214, 100,210, 100,200);
+        assertEquals(expected, transformed);
     }
 
     @Test
@@ -521,6 +544,8 @@ public class RingTest {
         assertEquals(a, a.less(c, Tolerance.FLATNESS, TOL));
         assertEquals(new Ring(new VectList(0,0, 10,0, 10,5, 5,5, 5,10, 0,10, 0,0), null), a.less(e, Tolerance.FLATNESS, TOL));
         
+        assertEquals(a, a.less(d, Tolerance.FLATNESS, TOL));
+        
         LineString f = LineString.valueOf(TOL, 10,5, 25,5, 25,0, 40,0);
         assertEquals(d, d.less(f, Tolerance.FLATNESS, TOL));
         
@@ -587,5 +612,25 @@ public class RingTest {
             fail("Exception expected");
         } catch (GeomException ex) {
         }
+    }
+    
+    @Test
+    public void testBuildAreaFromRing(){
+        assertEquals(Area.valueOf(TOL, 0,0, 10,0, 0,10, 0,0), Ring.buildAreaFromRing(new VectList(0,0, 10,0, 0,10, 0,0), TOL));
+        assertNull(Ring.buildAreaFromRing(new VectList(0,0, 0,10, 10,0 ,0,0), TOL));
+    }
+    
+    @Test
+    public void testGetEdgeBuffer(){
+        Ring ring = Ring.valueOf(TOL, 0,0, 10,0, 0,10, 0,0);
+        assertEquals(new VectList(0,0, 10,0, 0,10, 0,0), ring.getEdgeBuffer(0, Tolerance.FLATNESS, TOL));
+    }
+    
+    @Test
+    public void testParsePathFromNetwork(){
+        Network network = new Network().addAllLinks(new VectList(0,0, 10,0, 0,10, 0,0));
+        VectList template = new VectList(0.01,0.01, 10.01,0.01, 0.01,10.01, 0.01,0.01);
+        VectList result = Ring.parsePathFromNetwork(network, template, new Tolerance(0.05));
+        assertEquals(new VectList(0,0, 10,0, 0,10, 0,0), result);
     }
 }
