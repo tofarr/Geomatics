@@ -888,7 +888,8 @@ public class Ring implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
             return this;
         }
-        return toArea().less(other, flatness, accuracy);
+        Area area = toArea().less(other, flatness, accuracy);
+        return (area == null) ? null : area.simplify();
     }
 
     @Override

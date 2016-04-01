@@ -438,6 +438,9 @@ public class Area implements Geom {
         VectBuilder workingVect = new VectBuilder();
         network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
         network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
+        if(network.numVects() == 0){
+            return null;
+        }
         GeoShape ret = GeoShape.valueOfInternal(network, accuracy);
         return ret.simplify();
     }
@@ -461,55 +464,84 @@ public class Area implements Geom {
             return this;
         }
         
-        //remove inside other
-        //remove outside this
-        //still have case where an external ring needs to be chopped
-        
-        //traverse polygons CCW always taking next CW link
-        //disgard if not CCW
-        
-        //if ccw mark processed
-        //only add if at least one line does not touch both?
-        //DOES NOT WORK. (Inner ring which already exists)
-        
-        //Why not build intersection using inside and outside
-        //build union
-        //any link which touches both and is in union must die.
-        
         final VectBuilder workingVect = new VectBuilder();
         
-        final Network network = new Network();
+        Network network = new Network();
         addTo(network);
         other.addTo(network);
         network.explicitIntersections(accuracy);
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
+        network.snap(accuracy);
         
-        final Network union = network.clone();
-        union.removeInsideOrOutsideInternal(this, accuracy, Relate.INSIDE, workingVect);
-        
-        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
-        
+        //Add all links to ret where inside this or outside other...
+        final Network ret = new Network();
         network.map.forEach(new VectMapProcessor<VectList>(){
             @Override
-            public boolean process(double x, double y, VectList links) {
+            public boolean process(double ax, double ay, VectList links) {
                 //remove any link which touches both and is in the union
                 for(int i = links.size(); i-- > 0;){
                     double bx = links.getX(i);
                     double by = links.getY(i);
-                    if(Vect.compare(x, y, bx, by) < 0){
-                        workingVect.set((x + bx) / 2, (y + by) / 2);
-                        if(union.hasLink(x, y, bx, by) && (relate(workingVect, accuracy) == Relate.TOUCH)
-                                 && (other.relate(workingVect, accuracy) == Relate.TOUCH)){
-                            network.removeLinkInternal(x, y, bx, by);
+                    if(Vect.compare(ax, ay, bx, by) < 0){
+                        workingVect.set((ax + bx) / 2, (ay + by) / 2);
+                        if((relate(workingVect, accuracy) == Relate.INSIDE)
+                                || (other.relate(workingVect, accuracy) == Relate.OUTSIDE)){
+                            ret.addLinkInternal(ax, ay, bx, by);
                         }
                     }
                 }
                 return true;
             }
-        
         });
         
-        return Area.valueOfInternal(accuracy, network);
+        if(ret.numVects() == 0){
+            return null; // nothing outside
+        }
+        
+        //Check for hanglines. At each hangline, follow the path touching both
+        VectList vects = new VectList(ret.numVects());
+        ret.map.keyList(vects);
+        VectList path = null;
+        for(int v = vects.size(); v-- > 0;){
+            double ax = vects.getX(v);
+            double ay = vects.getY(v);
+            VectList links = ret.map.get(ax, ay);
+            if(links.size() == 1){ // We have a hangline. Follow path joining both
+               if(path == null){
+                    path = new VectList();
+               }else{
+                    path.clear();
+               }
+               links = network.map.get(ax, ay); // get path from original
+               for(int i = links.size(); i-- > 0;){
+                   double bx = links.getX(i);
+                   double by = links.getY(i);
+                   workingVect.set((ax + bx) / 2, (ay + by) / 2);
+                   if((relate(workingVect, accuracy) == Relate.TOUCH)
+                                && (other.relate(workingVect, accuracy) == Relate.TOUCH)){
+                       while(true){
+                            ret.addLink(ax, ay, bx, by);
+                            links = ret.map.get(bx, by);
+                            if(links.size() == 2){
+                                break;
+                            }
+                            double cx = links.getX(0);
+                            double cy = links.getY(0);
+                            if(cx == ax && cy == ay){
+                                cx = links.getX(1);
+                                cy = links.getY(1);
+                            }
+                            ax = bx;
+                            ay = by;
+                            bx = cx;
+                            by = cy;
+                       }
+                       break;
+                   }  
+               }
+            }
+        }
+        
+        return Area.valueOfInternal(accuracy, ret);
     }
     
     @Override
@@ -517,18 +549,16 @@ public class Area implements Geom {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
             return this;
         }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network, flatness, accuracy);
-        network.explicitIntersections(accuracy);
-        
-        VectBuilder workingVect = new VectBuilder();
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
-        network.removeTouchingInternal(other, accuracy, workingVect);
-        
-        return Area.valueOfInternal(accuracy, network);
-    }
-
+        if(other instanceof Ring){
+            return less(((Ring)other).toArea(), accuracy);
+        }else if(other instanceof Area){
+            return less((Area)other, accuracy);
+        }else{
+            GeoShape geoShape = other.toGeoShape(flatness, accuracy);
+            return (geoShape.area == null) ? this : less(geoShape.area, accuracy);
+        }
+    }  
+    
     @Override
     public int hashCode() {
         int hash = 3;

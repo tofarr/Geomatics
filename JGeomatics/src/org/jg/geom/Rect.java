@@ -598,7 +598,8 @@ public class Rect implements Geom {
         } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
             return other;
         } else {
-            return toArea().union(other.toGeoShape(flatness, tolerance), tolerance);
+            GeoShape ret = toArea().union(other.toGeoShape(flatness, tolerance), tolerance);
+            return ret.simplify();
         }
     }
 

@@ -1008,9 +1008,9 @@ public final class Network implements Serializable, Cloneable {
             public boolean process(double x, double y, VectList links) {
                 workingVect.set(x, y);
                 
-                remove any vertex where all links are touching? 
-                NO THIS WONT WORK.
-                TOO TIRED TO SORT NOW!
+                //remove any vertex where all links are touching? 
+                //NO THIS WONT WORK.
+                //TOO TIRED TO SORT NOW!
                 
                 if (geom.relate(workingVect, accuracy) == Relate.TOUCH) { // if the vect is touching, we may have more work to do
                     //Remove any touching links

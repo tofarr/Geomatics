@@ -692,7 +692,7 @@ public class RectTest {
         assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals("[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
-        Area expected = Area.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20);
+        Ring expected = Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20);
         assertEquals(expected, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(expected, a.union(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
@@ -709,8 +709,8 @@ public class RectTest {
         assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
         GeoShape result = new GeoShape(Area.valueOf(Tolerance.DEFAULT, 15,25, 30,25, 30,40, 15,40, 15,25),null,null);
-        assertEquals(result, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(result, a.intersection(d.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(result.area.shell, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(result.area.shell, a.intersection(d.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT), Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 
     @Test

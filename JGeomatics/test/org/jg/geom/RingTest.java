@@ -515,28 +515,24 @@ public class RingTest {
         Ring d = new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null);
         Ring e = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
         
+        
         assertNull(a.less(a, Tolerance.FLATNESS, TOL));
         assertEquals(a, a.less(b, Tolerance.FLATNESS, TOL));
         assertEquals(a, a.less(c, Tolerance.FLATNESS, TOL));
-        assertEquals(a, a.less(d, Tolerance.FLATNESS, TOL));
         assertEquals(new Ring(new VectList(0,0, 10,0, 10,5, 5,5, 5,10, 0,10, 0,0), null), a.less(e, Tolerance.FLATNESS, TOL));
         
         LineString f = LineString.valueOf(TOL, 10,5, 25,5, 25,0, 40,0);
-        LineString g = LineString.valueOf(TOL, 20,5, 25,5, 25,0, 30,0);
-        assertEquals(g, d.less(f, Tolerance.FLATNESS, TOL));
+        assertEquals(d, d.less(f, Tolerance.FLATNESS, TOL));
         
         PointSet h = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10).add(35, 5));
-        PointSet i = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10));
-        assertEquals(i, d.less(h, Tolerance.FLATNESS, TOL));
+        assertEquals(d, d.less(h, Tolerance.FLATNESS, TOL));
         
         GeoShape j = new GeoShape(null, f.toLineSet(), h);
-        GeoShape k = new GeoShape(null, g.toLineSet(), i);
-        assertEquals(k, d.less(j, Tolerance.FLATNESS, TOL));
+        assertEquals(d, d.less(j, Tolerance.FLATNESS, TOL));
         
         Ring l = new Ring(new VectList(0,0, 30,0, 30,10, 10,10, 10,20, 30,20, 30,30, 0,30, 0,0), null);
         Ring m = new Ring(new VectList(0,0, 10,0, 10,20, 20,20, 20,0, 30,0, 30,30, 0,30, 0,0), null);
-        Area n = new Area(null, new Ring(new VectList(0,0, 10,0, 10,10, 10,20, 20,20, 30,20, 30,30, 0,30, 0,0), null).toArea(),
-                new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null).toArea());
+        Ring n = new Ring(new VectList(10,0, 20,0, 20,10, 10,10, 10,0), null);
         assertEquals(n, l.less(m, Tolerance.FLATNESS, TOL));
     }
 
