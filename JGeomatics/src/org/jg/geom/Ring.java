@@ -146,6 +146,12 @@ public class Ring implements Geom {
                         vects.put(x, y, p);
                     }else{
                         int numRingVects = p + 1 - index;
+                        if(numRingVects < 4){
+                            numRingVects--;
+                            path.removeAll(index, numRingVects);
+                            p -= numRingVects;
+                            continue;
+                        }
                         VectList ringPath = new VectList(numRingVects);
                         ringPath.addAll(path, index, numRingVects);
                         network.removeAllLinks(ringPath); // remove these links from the network - effectively marking them as processed

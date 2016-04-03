@@ -48,12 +48,15 @@ public class Area implements Geom {
     public static Area valueOf(Tolerance accuracy, VectList vects) throws NullPointerException,IllegalArgumentException{
         Network network = new Network();
         network.addAllLinks(vects);
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         return valueOfInternal(accuracy, network);
     }
 
     public static Area valueOf(Tolerance accuracy, Network network) {
         network = network.clone();
         network.explicitIntersections(accuracy);
+        network.snap(accuracy);
         return valueOfInternal(accuracy, network);
     }
     
@@ -109,6 +112,9 @@ public class Area implements Geom {
 
     @Override
     public Area transform(Transform transform) throws NullPointerException {
+        if(transform.mode == Transform.NO_OP){
+            return this;
+        }
         Ring transformedShell = (shell == null) ? null : shell.transform(transform);
         Area[] transformedChildren = (children.length == 0) ? NO_CHILDREN : new Area[children.length];
         for (int c = 0; c < transformedChildren.length; c++) {
@@ -146,9 +152,13 @@ public class Area implements Geom {
             public void next() {
                 if (vectIndex == last) {
                     ringIndex++;
-                    vects = rings.get(ringIndex).vects;
-                    vectIndex = 0;
-                    last = vects.size() - 1;
+                    if(ringIndex < rings.size()){
+                        vects = rings.get(ringIndex).vects;
+                        vectIndex = 0;
+                       last = vects.size() - 1;
+                    }else{
+                        vects = null;
+                    }
                 } else {
                     vectIndex++;
                 }
