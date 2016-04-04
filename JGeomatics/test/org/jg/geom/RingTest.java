@@ -365,7 +365,10 @@ public class RingTest {
         assertNull(a.buffer(-6, Tolerance.FLATNESS, TOL));
         Geom b = a.buffer(-5, Tolerance.FLATNESS, TOL);
         System.out.println(b);
-        SHOULD BUFFERING LIKE THIS PRODUCE A LINE?
+        fail("Fails when buffered down to line - does not produce line!");
+        //SHOULD BUFFERING LIKE THIS PRODUCE A LINE?
+        //Any line which is not in union or less is a non area included!
+        
     }
 
     @Test
