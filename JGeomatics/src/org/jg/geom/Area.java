@@ -338,6 +338,9 @@ public class Area implements Geom {
 
     @Override
     public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
+        if(amt == 0){
+            return this;
+        }
         Network network = new Network();
         buffer(amt, flatness, accuracy, network);
         network.explicitIntersections(accuracy);
@@ -592,7 +595,9 @@ public class Area implements Geom {
         for(Area child : children){
             ret = Math.max(ret, child.getDepth());
         }
-        ret++;
+        if(shell != null){
+            ret++;
+        }
         return ret;
     }
     

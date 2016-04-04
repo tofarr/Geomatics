@@ -358,6 +358,15 @@ public class RingTest {
         assertEquals(bounds.maxY, 24, 0.01);
         assertEquals(694, b.getArea(), 1);
     }
+    
+    @Test
+    public void testBuffer_B(){
+        Ring a = Ring.valueOf(TOL, 30,40, 40,40, 40,70, 30,70, 30,40);
+        assertNull(a.buffer(-6, Tolerance.FLATNESS, TOL));
+        Geom b = a.buffer(-5, Tolerance.FLATNESS, TOL);
+        System.out.println(b);
+        SHOULD BUFFERING LIKE THIS PRODUCE A LINE?
+    }
 
     @Test
     public void testTransform() {

@@ -1,9 +1,15 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
-import java.util.Collection;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
+import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
@@ -194,6 +200,14 @@ public class AreaTest {
         assertEquals(23, area.numLines());
         assertEquals(2, area.numChildren());
         assertEquals(29, area.numVects());
+        assertEquals(5, area.getDepth());
+        assertEquals(Ring.valueOf(TOL, -80,-70, 80,-70, 80,70, -80,70, -80,-70), area.getChild(0).shell);
+        assertEquals(Ring.valueOf(TOL, 90,0, 100,0, 100,10, 90,0), area.getChild(1).shell);
+        try{
+            area.getChild(2);
+            fail("Exception Expected");
+        }catch(IndexOutOfBoundsException ex){  
+        }
     }
 
     @Test
@@ -204,168 +218,214 @@ public class AreaTest {
         network.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
         Area area = Area.valueOf(TOL, network);
         SpatialNode<Line> lineIndex = area.getLineIndex();
-        TEST WITH DOUBLE DONUT, GET TWICE
-        System.out.println("getLineIndex");
-        Area instance = null;
-        SpatialNode<Line> expResult = null;
-        SpatialNode<Line> result = instance.getLineIndex();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(Rect.valueOf(0,0,140,150), lineIndex.getBounds());
+        assertTrue(lineIndex.getDepth() < 3);
+
+        final Set<Line> expected = new HashSet<>();
+        expected.add(Line.valueOf(0,0, 40,0));
+        expected.add(Line.valueOf(40,0, 40,50));
+        expected.add(Line.valueOf(40,50, 0,50));
+        expected.add(Line.valueOf(0,50, 0,0));
+        
+        expected.add(Line.valueOf(10,10, 30,10));
+        expected.add(Line.valueOf(30,10, 30,40));
+        expected.add(Line.valueOf(30,40, 10,40));
+        expected.add(Line.valueOf(10,40, 10,10));
+        
+        expected.add(Line.valueOf(100,100, 140,100));
+        expected.add(Line.valueOf(140,100, 140,150));
+        expected.add(Line.valueOf(140,150, 100,150));
+        expected.add(Line.valueOf(100,150, 100,100));
+        
+        lineIndex.forEach(new NodeProcessor<Line>() {
+            @Override
+            public boolean process(Rect bounds, Line value) {
+                assertTrue(expected.remove(value));
+                return true;
+            }
+        });
+        assertTrue(expected.isEmpty());
     }
 
     @Test
-    public void testGetRings_0args() {
-        System.out.println("getRings");
-        Area instance = null;
-        List<Ring> expResult = null;
-        List<Ring> result = instance.getRings();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testGetRings_Collection() {
-        System.out.println("getRings");
-        Collection<Ring> result_2 = null;
-        Area instance = null;
-        instance.getRings(result_2);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testGetRings() {
+        Network network = new Network();
+        Ring r1 = Ring.valueOf(TOL, 0,0, 40,0, 40,50, 0,50, 0,0);
+        Ring r2 = Ring.valueOf(TOL, 10,10, 30,10, 30,40, 10,40, 10,10);
+        Ring r3 = Ring.valueOf(TOL, 100,100, 140,100, 140,150, 100,150, 100,100);
+        r1.addTo(network);
+        r2.addTo(network);
+        r3.addTo(network);
+        Area area = Area.valueOf(TOL, network);
+        List<Ring> a = area.getRings();
+        try{
+            area.getRings(null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        List<Ring> expected = Arrays.asList(r1, r2, r3);
+        assertEquals(expected, a);
+        List<Ring> b = new ArrayList<>();
+        area.getRings(b);
+        assertEquals(expected, b);
     }
 
     @Test
     public void testGetVects() {
-        System.out.println("getVects");
-        VectSet result_2 = null;
-        Area instance = null;
-        VectSet expResult = null;
-        VectSet result = instance.getVects(result_2);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Network network = new Network();
+        Ring r1 = Ring.valueOf(TOL, 0,0, 40,0, 40,50, 0,50, 0,0);
+        Ring r2 = Ring.valueOf(TOL, 10,10, 30,10, 30,40, 10,40, 10,10);
+        Ring r3 = Ring.valueOf(TOL, 100,100, 140,100, 140,150, 100,150, 100,100);
+        r1.addTo(network);
+        r2.addTo(network);
+        r3.addTo(network);
+        Area area = Area.valueOf(TOL, network);
+        VectSet expected = new VectSet();
+        expected.addAll(r1.vects);
+        expected.addAll(r2.vects);
+        expected.addAll(r3.vects);
+        assertEquals(expected, area.getVects(new VectSet()));
     }
 
     @Test
-    public void testToString_0args() {
-        System.out.println("toString");
-        Area instance = null;
-        String expResult = "";
-        String result = instance.toString();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
+    public void testToString() {
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 40,0, 40,50, 0,50, 0,0));
+        network.addAllLinks(new VectList(10,10, 30,10, 30,40, 10,40, 10,10));
+        network.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
+        Area area = Area.valueOf(TOL, network);
+        assertEquals("[\"AR\",[[0,0, 40,0, 40,50, 0,50, 0,0],[[10,10, 30,10, 30,40, 10,40, 10,10]]],[[100,100, 140,100, 140,150, 100,150, 100,100]]]", area.toString());
+        try {
+            area.toString(null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+        try {
+            area.toString(new Appendable() {
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
 
-    @Test
-    public void testToString_Appendable() {
-        System.out.println("toString");
-        Appendable appendable = null;
-        Area instance = null;
-        instance.toString(appendable);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
+
+            });
+            fail("Exception expected");
+        } catch (GeomException ex) {
+        }
     }
 
     @Test
     public void testAddTo_Network() {
-        System.out.println("addTo");
-        Network network = null;
-        Area instance = null;
-        instance.addTo(network);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Network a = new Network();
+        a.addAllLinks(new VectList(0,0, 40,0, 40,50, 0,50, 0,0));
+        a.addAllLinks(new VectList(10,10, 30,10, 30,40, 10,40, 10,10));
+        a.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
+        Area area = Area.valueOf(TOL, a);
+        Network b = new Network();
+        area.addTo(b, Tolerance.FLATNESS, TOL);
+        assertEquals(a, b);
     }
 
     @Test
-    public void testAddTo_3args() {
-        System.out.println("addTo");
-        Network network = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        instance.addTo(network, flatness, accuracy);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testToGeoShape() {
+        Network a = new Network();
+        a.addAllLinks(new VectList(0,0, 40,0, 40,50, 0,50, 0,0));
+        a.addAllLinks(new VectList(10,10, 30,10, 30,40, 10,40, 10,10));
+        a.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
+        Area area = Area.valueOf(TOL, a);
+        GeoShape expected = new GeoShape(area, null, null);
+        assertEquals(expected, area.toGeoShape(Tolerance.FLATNESS, TOL));
     }
 
     @Test
-    public void testToGeoShape_Tolerance_Tolerance() {
-        System.out.println("toGeoShape");
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.toGeoShape(flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testRelate() {
+        Network network = new Network();
+        for(int i = 0; i < 50; i += 10){
+            int x = 40 + i;
+            int y = 30 + i;
+            network.addLink(-x, -y, x, -y);
+            network.addLink(x, -y, x, y);
+            network.addLink(x, y, -x, y);
+            network.addLink(-x, y, -x, -y);
+        }
+        network.addAllLinks(new VectList(90,0, 100,0, 100,10, 90,0));
+        final Area area = Area.valueOf(TOL, network);
+        network.forEachVertex(new VertexProcessor(){
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                assertEquals(Relate.TOUCH, area.relate(x, y, TOL));
+                return true;
+            }
+        });
+        network.forEachLink(new NodeProcessor<Line>(){
+            @Override
+            public boolean process(Rect bounds, Line value) {
+                assertEquals(Relate.TOUCH, area.relate(value.getMid(), TOL));
+                assertEquals(Relate.TOUCH, area.relate(value.getMid(new VectBuilder()), TOL));
+                return true;
+            }
+        });
+        assertEquals(Relate.OUTSIDE, area.relate(90, 20, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(120, 20, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(60, 90, TOL));
+        
+        assertEquals(Relate.INSIDE, area.relate(-75, 10, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(-65, 10, TOL));
+        assertEquals(Relate.INSIDE, area.relate(-55, 10, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(-45, 10, TOL));
+        assertEquals(Relate.INSIDE, area.relate(0, 10, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(45, 10, TOL));
+        assertEquals(Relate.INSIDE, area.relate(55, 10, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(65, 10, TOL));
+        assertEquals(Relate.INSIDE, area.relate(75, 10, TOL));
+        
+        assertEquals(Relate.INSIDE, area.relate(-75, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(-65, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(-55, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(-45, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(0, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(45, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(55, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(65, 65, TOL));
+        assertEquals(Relate.INSIDE, area.relate(75, 65, TOL));
+        
+        assertEquals(Relate.OUTSIDE, area.relate(-65, 55, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(-55, 55, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(-45, 55, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(0, 55, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(45, 55, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(55, 55, TOL));
+        assertEquals(Relate.OUTSIDE, area.relate(65, 55, TOL));
     }
-
-    @Test
-    public void testToGeoShape_0args() {
-        System.out.println("toGeoShape");
-        Area instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.toGeoShape();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
+    
     @Test
     public void testBuffer() {
-        System.out.println("buffer");
-        double amt = 0.0;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Geom expResult = null;
-        Geom result = instance.buffer(amt, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testRelate_Vect_Tolerance() {
-        System.out.println("relate");
-        Vect vect = null;
-        Tolerance tolerance = null;
-        Area instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(vect, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testRelate_VectBuilder_Tolerance() {
-        System.out.println("relate");
-        VectBuilder vect = null;
-        Tolerance tolerance = null;
-        Area instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(vect, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testRelate_3args() {
-        System.out.println("relate");
-        double x = 0.0;
-        double y = 0.0;
-        Tolerance tolerance = null;
-        Area instance = null;
-        Relate expResult = null;
-        Relate result = instance.relate(x, y, tolerance);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Network network = new Network();
+        for(int i = 0; i < 50; i += 10){
+            int x = 40 + i;
+            int y = 30 + i;
+            network.addLink(-x, -y, x, -y);
+            network.addLink(x, -y, x, y);
+            network.addLink(x, y, -x, y);
+            network.addLink(-x, y, -x, -y);
+        }
+        network.addAllLinks(new VectList(90,0, 100,0, 100,10, 90,0));
+        final Area area = Area.valueOf(TOL, network);
+        assertSame(area, area.buffer(0, Tolerance.FLATNESS, TOL));
+        Geom geom = area.buffer(5, Tolerance.FLATNESS, TOL);
+        String wkt = geom.toGeoShape(Tolerance.FLATNESS, TOL).toWkt();
+        System.out.println(wkt);
+        fail("No assertions!");
+        
     }
 
     @Test
@@ -493,28 +553,6 @@ public class AreaTest {
         Area instance = null;
         boolean expResult = false;
         boolean result = instance.equals(obj);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testGetDepth() {
-        System.out.println("getDepth");
-        Area instance = null;
-        int expResult = 0;
-        int result = instance.getDepth();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testNumChildren() {
-        System.out.println("numChildren");
-        Area instance = null;
-        int expResult = 0;
-        int result = instance.numChildren();
         assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
