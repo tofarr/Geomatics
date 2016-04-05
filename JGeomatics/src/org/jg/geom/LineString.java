@@ -376,7 +376,7 @@ public class LineString implements Geom {
             return this;
         }
         VectList buffer = bufferInternal(vects, amt, flatness, accuracy);
-        return Ring.buildAreaFromRing(buffer, accuracy);
+        return Ring.buildGeomFromRing(buffer, accuracy);
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use

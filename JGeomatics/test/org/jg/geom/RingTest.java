@@ -338,10 +338,8 @@ public class RingTest {
     @Test
     public void testBuffer() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        assertSame(ring, ring.buffer(0, Tolerance.FLATNESS, TOL).shell);
-        assertEquals(new Area(ring), ring.buffer(0, Tolerance.FLATNESS, TOL));
-        Area a = ring.buffer(-1, Tolerance.FLATNESS, TOL);
-        assertEquals(1, a.numRings());
+        assertSame(ring, ring.buffer(0, Tolerance.FLATNESS, TOL));
+        Ring a = (Ring)ring.buffer(-1, Tolerance.FLATNESS, TOL);
         assertEquals(5, a.numVects());
         Rect bounds = a.getBounds();
         assertEquals(bounds.minX, 1, 0.01);
@@ -349,8 +347,7 @@ public class RingTest {
         assertEquals(bounds.maxX, 5, 0.01);
         assertEquals(bounds.maxY, 12.125, 0.01);
         assertEquals(20.53, a.getArea(), 0.01);
-        Area b = ring.buffer(10, Tolerance.FLATNESS, TOL);
-        assertEquals(1, b.numRings());
+        Ring b = (Ring)ring.buffer(10, Tolerance.FLATNESS, TOL);
         bounds = b.getBounds();
         assertEquals(bounds.minX, -10, 0.01);
         assertEquals(bounds.minY, -10, 0.01);
@@ -360,15 +357,15 @@ public class RingTest {
     }
     
     @Test
-    public void testBuffer_B(){
+    public void testBuffer_toLine(){
         Ring a = Ring.valueOf(TOL, 30,40, 40,40, 40,70, 30,70, 30,40);
         assertNull(a.buffer(-6, Tolerance.FLATNESS, TOL));
         Geom b = a.buffer(-5, Tolerance.FLATNESS, TOL);
-        System.out.println(b);
-        fail("Fails when buffered down to line - does not produce line!");
-        //SHOULD BUFFERING LIKE THIS PRODUCE A LINE?
-        //Any line which is not in union or less is a non area included!
-        
+        assertEquals(Line.valueOf(35,45, 35,65), b);   
+        Ring ring = Ring.valueOf(TOL, 0,0, 50,0, 50,25, 30,25, 30,10, 10,10, 10,30, 25,30, 25,50, 0,50, 0,0);
+        b = ring.buffer(-5, Tolerance.FLATNESS, TOL);
+        String wkt = b.toGeoShape(Tolerance.FLATNESS, TOL).toWkt();
+        System.out.println(wkt);
     }
 
     @Test
@@ -627,9 +624,9 @@ public class RingTest {
     }
     
     @Test
-    public void testBuildAreaFromRing(){
-        assertEquals(Area.valueOf(TOL, 0,0, 10,0, 0,10, 0,0), Ring.buildAreaFromRing(new VectList(0,0, 10,0, 0,10, 0,0), TOL));
-        assertNull(Ring.buildAreaFromRing(new VectList(0,0, 0,10, 10,0 ,0,0), TOL));
+    public void testBuildGeomFromRing(){
+        assertEquals(Ring.valueOf(TOL, 0,0, 10,0, 0,10, 0,0), Ring.buildGeomFromRing(new VectList(0,0, 10,0, 0,10, 0,0), TOL));
+        assertNull(Ring.buildGeomFromRing(new VectList(0,0, 0,10, 10,0 ,0,0), TOL));
     }
     
     @Test

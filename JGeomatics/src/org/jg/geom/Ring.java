@@ -561,18 +561,19 @@ public class Ring implements Geom {
     }
 
     @Override
-    public Area buffer(double amt, Tolerance flatness, Tolerance accuracy) {
+    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) {
         if (amt == 0) {
-            return new Area(this, Area.NO_CHILDREN);
+            return this;
         }
         VectList buffer = getEdgeBuffer(amt, flatness, accuracy);
-        return buildAreaFromRing(buffer, accuracy);
+        return buildGeomFromRing(buffer, accuracy);
     }
 
-    static Area buildAreaFromRing(VectList closedRing, Tolerance accuracy){
+    static Geom buildGeomFromRing(VectList closedRing, Tolerance accuracy){
         
         Area union = null;
         Area less = null;
+        Network touching = null;
         
         //Sanitize the ring using a network
         Network network = new Network();
@@ -580,10 +581,6 @@ public class Ring implements Geom {
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
         closedRing = parsePathFromNetwork(network, closedRing, accuracy);
-        //int minIndex = minIndex(closedRing);
-        //if(minIndex != 0){
-            //rotate(closedRing, minIndex);
-        //}
 
         VectMap<Integer> indices = new VectMap<>();
         for(int i = 0; i < closedRing.size(); i++){
@@ -592,33 +589,41 @@ public class Ring implements Geom {
             final Integer index = indices.get(x, y);
             if(index != null){
                 final int numVects = i - index;
-                VectList ring = new VectList(numVects + 1);
-                ring.addAll(closedRing, index, numVects + 1);
-                closedRing.removeAll(index, i - index);
-                final VectMap<Integer> newIndices = new VectMap<>();
-                indices.forEach(new VectMapProcessor<Integer>() {
-                    @Override
-                    public boolean process(double x, double y, Integer value) {
-                        if(value <= index){
-                            newIndices.put(x, y, value);
-                        }
-                        return true;
+                if(numVects == 2){
+                    if(touching == null){
+                        touching = new Network();
                     }
-                });
-                indices = newIndices;
-                i = index;
-                int minIndx = minIndex(ring);
-                if(minIndx != 0){
-                    rotate(ring, minIndx);
-                }
-                double a = getArea(ring);
-                if(a > 0){
-                    Area area = new Ring(ring, a).toArea();
-                    union = (union == null) ? area : union.union(area, accuracy);
+                    touching.addLink(x, y, closedRing.getX(i-1), closedRing.getY(i-1));
+                    closedRing.removeAll(index, 2);
                 }else{
-                    ring.reverse();
-                    Area area = new Ring(ring, a).toArea();
-                    less = (less == null) ? area : less.union(area, accuracy);
+                    VectList ring = new VectList(numVects + 1);
+                    ring.addAll(closedRing, index, numVects + 1);
+                    closedRing.removeAll(index, i - index);
+                    final VectMap<Integer> newIndices = new VectMap<>();
+                    indices.forEach(new VectMapProcessor<Integer>() {
+                        @Override
+                        public boolean process(double x, double y, Integer value) {
+                            if(value <= index){
+                                newIndices.put(x, y, value);
+                            }
+                            return true;
+                        }
+                    });
+                    indices = newIndices;
+                    i = index;
+                    int minIndx = minIndex(ring);
+                    if(minIndx != 0){
+                        rotate(ring, minIndx);
+                    }
+                    double a = getArea(ring);
+                    if(a > 0){
+                        Area area = new Ring(ring, a).toArea();
+                        union = (union == null) ? area : union.union(area, accuracy);
+                    }else{
+                        ring.reverse();
+                        Area area = new Ring(ring, a).toArea();
+                        less = (less == null) ? area : less.union(area, accuracy);
+                    }
                 }
             }
             VectList links = network.map.get(x, y);
@@ -626,11 +631,17 @@ public class Ring implements Geom {
                 indices.put(x, y, i);
             }
         }
-        Area ret = union;
-        if((union != null) && (less != null)){
-            ret = union.less(less, accuracy);
+        GeoShape ret = null;
+        if(touching != null){
+            ret = LineSet.valueOfInternal(touching).toGeoShape();
         }
-        return ret;
+        if(union != null){
+            ret = (ret == null) ? union.toGeoShape() : union.union(ret, accuracy);
+        }
+        if((ret != null) && (less != null)){
+            ret = ret.less(less.toGeoShape(), accuracy);
+        }
+        return (ret == null) ? null : ret.simplify();
     }
         
     static VectList parsePathFromNetwork(Network network, VectList template, Tolerance tolerance){
