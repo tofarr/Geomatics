@@ -548,7 +548,18 @@ public class GeoShape implements Geom {
         appendable.append("GEOMETRYCOLLECTION(");
         boolean comma = false;
         if (area != null) {
-            toPolygonWkt(area, appendable);
+            if(area.shell == null){
+                for(int i = 0; i < area.numChildren(); i++){
+                    if (comma) {
+                        appendable.append(',');
+                    } else {
+                        comma = true;
+                    }
+                    toPolygonWkt(area.getChild(i), appendable);
+                }
+            }else{
+                toPolygonWkt(area, appendable);
+            }
             comma = true;
         }
         if (lines != null) {
