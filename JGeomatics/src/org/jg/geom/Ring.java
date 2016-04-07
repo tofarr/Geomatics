@@ -595,6 +595,7 @@ public class Ring implements Geom {
                     }
                     touching.addLink(x, y, closedRing.getX(i-1), closedRing.getY(i-1));
                     closedRing.removeAll(index, 2);
+                    i -= 2;
                 }else{
                     VectList ring = new VectList(numVects + 1);
                     ring.addAll(closedRing, index, numVects + 1);
