@@ -363,7 +363,7 @@ public class LineStringTest {
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
-        Area r = (Area) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Ring r = (Ring) s.buffer(5, flatness, Tolerance.DEFAULT);
         double area = (35 * 10)
                 + (55 * 10)
                 + (25 * Math.PI)
@@ -400,13 +400,10 @@ public class LineStringTest {
         assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
 
-        Area r = (Area) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Ring r = (Ring) s.buffer(5, flatness, Tolerance.DEFAULT);
         
-        assertEquals(1, r.numRings());
         assertEquals(Rect.valueOf(14, -5, 25, 35), r.getBounds());
         assertEquals(382, r.getArea(), 1);
-        assertEquals(1, r.numRings());
-        assertEquals(1, r.getDepth());
     }
     
     @Test
@@ -444,6 +441,20 @@ public class LineStringTest {
         assertEquals(5.097096621545399, result.getY(0), 0.0001);
         assertEquals(15, result.getX(1), 0.0001);
         assertEquals(10, result.getY(1), 0.0001);
+
+        result.clear();
+        LineString.projectOutward(10,50, 10,10, 50,10, -5, flatness, Tolerance.DEFAULT, work, result);
+        assertEquals(2, result.size());
+        assertEquals(15, result.getX(0), 0.0001);
+        assertEquals(10, result.getY(0), 0.0001);
+        assertEquals(10, result.getX(1), 0.0001);
+        assertEquals(15, result.getY(1), 0.0001);
+        
+        result.clear();
+        LineString.projectOutward(50,10, 10,10, 10,50, -5, flatness, Tolerance.DEFAULT, work, result);
+        assertTrue(2 < result.size());
+        assertTrue(20 > result.size());
+        assertEquals(Rect.valueOf(5, 5, 10, 10), result.getBounds());
     }
 
     @Test

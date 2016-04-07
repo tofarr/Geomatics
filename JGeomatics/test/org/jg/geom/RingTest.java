@@ -354,18 +354,55 @@ public class RingTest {
         assertEquals(bounds.maxX, 16, 0.01);
         assertEquals(bounds.maxY, 24, 0.01);
         assertEquals(694, b.getArea(), 1);
+    } 
+    
+    @Test
+    public void testBuffer_L(){
+        Ring a = Ring.valueOf(TOL, 0,0, 50,0, 50,10, 10,10, 10,50, 0,50, 0,0);
+        
+        GeoShape result = (GeoShape)a.buffer(-5, Tolerance.FLATNESS, TOL);
+        assertEquals(5.49, result.area.getArea(), 0.01);
+        assertEquals(result.area.numRings(), 1);
+        assertEquals(Rect.valueOf(5,5,10,10), result.area.getBounds());
+        Network network = new Network();
+        network.addLink(10, 5, 45, 5);
+        network.addLink(5, 10, 5, 45);
+        assertEquals(LineSet.valueOf(TOL, network), result.lines);
+        assertNull(result.points);
+
+        assertNull(a.buffer(-8, Tolerance.FLATNESS, TOL)); // leaves nothing
+        assertNull(a.buffer(-20, Tolerance.FLATNESS, TOL)); // leaves nothing
+        
+        Ring ring = (Ring) a.buffer(10, Tolerance.FLATNESS, TOL);
+        assertEquals(3192, ring.getArea(), 1);
+        assertEquals(Rect.valueOf(-10, -10, 60, 60), ring.getBounds());
     }
+
     
     @Test
     public void testBuffer_toLine(){
         Ring a = Ring.valueOf(TOL, 30,40, 40,40, 40,70, 30,70, 30,40);
         assertNull(a.buffer(-6, Tolerance.FLATNESS, TOL));
         Geom b = a.buffer(-5, Tolerance.FLATNESS, TOL);
-        assertEquals(Line.valueOf(35,45, 35,65), b);   
+        assertEquals(Line.valueOf(35,45, 35,65), b);
+    }
+    
+    @Test
+    public void testBuffer_connectedBlobs(){
         Ring ring = Ring.valueOf(TOL, 0,0, 50,0, 50,25, 30,25, 30,10, 10,10, 10,30, 25,30, 25,50, 0,50, 0,0);
-        b = ring.buffer(-5, Tolerance.FLATNESS, TOL);
-        String wkt = b.toGeoShape(Tolerance.FLATNESS, TOL).toWkt();
-        System.out.println(wkt);
+        GeoShape result = (GeoShape)ring.buffer(-5, Tolerance.FLATNESS, TOL);
+        assertEquals(Rect.valueOf(5,5,45,45), result.getBounds());
+        
+        Network network = new Network();
+        network.addLink(10, 5, 30, 5);
+        network.addLink(5, 10, 5, 30);
+        assertEquals(LineSet.valueOf(TOL, network), result.lines);
+        
+        assertNull(result.area.shell);
+        assertEquals(3, result.area.numChildren());
+        assertEquals(3, result.area.numRings());
+        assertEquals(316.5, result.area.getArea(), 1);
+        
     }
 
     @Test
