@@ -404,6 +404,16 @@ public class RingTest {
         assertEquals(316.5, result.area.getArea(), 1);
         
     }
+    
+    @Test
+    public void testBuffer_toDeath(){
+        Ring ring = Ring.valueOf(TOL, -40,-30, 40,-30, 40,30, -40,30, -40,-30);
+        assertNull(ring.buffer(-40, Tolerance.FLATNESS, TOL));
+        ring = Ring.valueOf(TOL, 90,0, 100,0, 100,10, 90,0);
+        assertNull(ring.buffer(-40, Tolerance.FLATNESS, TOL));
+        ring = Ring.valueOf(TOL, 0,0, 200,0, 200,10, 191,1, 9,1, 0,10, 0,0);
+        assertNull(ring.buffer(-40, Tolerance.FLATNESS, TOL));
+    }
 
     @Test
     public void testTransform() {

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.TreeSet;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -30,6 +29,25 @@ public final class Network implements Serializable, Cloneable {
 
     public Network() {
         map = new VectMap<>();
+    }
+    
+    public static Network valueOf(Tolerance accuracy, Tolerance flatness, Geom a, Geom b){
+        Network network = new Network();
+        a.addTo(network, flatness, accuracy);
+        b.addTo(network, flatness, accuracy);
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        return network;
+    }
+    
+    public static Network valueOf(Tolerance accuracy, Tolerance flatness, Geom... geoms){
+        Network network = new Network();
+        for(Geom geom : geoms){
+            geom.addTo(network, flatness, accuracy);
+        }
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        return network;
     }
 
     public int numVects() {
@@ -962,6 +980,41 @@ public final class Network implements Serializable, Cloneable {
                 return true;
             }
 
+        });
+    }
+    
+    public boolean hasHangLines(){
+        return !map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                return (links.size() != 1);
+            }
+        
+        });
+    }
+    
+    
+    void addLinesWithRelationInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final Network result){
+        map.forEach(new VectMapProcessor<VectList>(){
+            
+            VectBuilder workingVect = new VectBuilder();
+            
+            @Override
+            public boolean process(double ax, double ay, VectList links) {
+                for(int i = links.size(); i-- > 0;){
+                    double bx = links.getX(i);
+                    double by = links.getY(i);
+                    if(Vect.compare(ax, ay, bx, by) < 0){
+                        double mx = (ax + bx) / 2;
+                        double my = (ay + by) / 2;
+                        workingVect.set(mx, my);
+                        if(geom.relate(workingVect, accuracy) == relate){
+                            result.addLinkInternal(ax, ay, bx, by);
+                        }
+                    }
+                }
+                return true;
+            }
         });
     }
 

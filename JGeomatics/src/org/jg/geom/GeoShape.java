@@ -420,7 +420,7 @@ public class GeoShape implements Geom {
         if(points != null){
             _points = points.less(other, accuracy);
         }
-        return (_area != null) || (lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
+        return (_area != null) || (_lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
     }
     
     void addWithRelation(Network src, final Area toTest, final Relate relate, final Tolerance accuracy, final Network result){

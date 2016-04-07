@@ -235,6 +235,7 @@ public class Area implements Geom {
             addLines(bounds, lines, 0);
             RTree<Line> tree = new RTree<>(bounds, lines);
             ret = tree.getRoot();
+            lineIndex = ret;
         }
         return ret;
     }
@@ -341,22 +342,31 @@ public class Area implements Geom {
         if(amt == 0){
             return this;
         }
-        Network network = new Network();
-        buffer(amt, flatness, accuracy, network);
-        network.explicitIntersections(accuracy);
-        return GeoShape.valueOf(network, accuracy);
-    }
-
-    void buffer(double amt, Tolerance flatness, Tolerance accuracy, Network result) {
-        if (shell != null) {
-            Geom geom = shell.buffer(amt, flatness, accuracy);
-            if (geom != null) {
-                geom.addTo(result, flatness, accuracy);
+        if(shell == null){
+            Geom result = null;
+            for(Area child : children){
+                Geom childResult = child.buffer(amt, flatness, accuracy);
+                if(childResult != null){
+                    result = (result == null) ? childResult : result.union(childResult, flatness, accuracy);
+                }
+            }
+            return result;
+        }else{
+            Geom result = shell.buffer(amt, flatness, accuracy);
+            if(result == null){
+                return null; // buffered out of existence!
             }
             amt = -amt;
-        }
-        for (Area child : children) {
-            child.buffer(amt, flatness, accuracy, result);
+            for(Area child : children){
+                Geom childResult = child.buffer(amt, flatness, accuracy);
+                if(childResult != null){ // child may have been buffered out of existance!
+                    result = result.less(childResult, flatness, accuracy);
+                    if(result == null){ // buffered out of existence!
+                        return null;
+                    }
+                }
+            }
+            return result;
         }
     }
 
@@ -386,7 +396,7 @@ public class Area implements Geom {
             results.add(area);
         }
     }
-
+    
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Area) {
@@ -438,7 +448,7 @@ public class Area implements Geom {
         }
         return new GeoShape(area, lines, points);
     }
-
+    
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut

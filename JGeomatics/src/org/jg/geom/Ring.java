@@ -4,6 +4,7 @@ import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
@@ -564,6 +565,11 @@ public class Ring implements Geom {
     public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) {
         if (amt == 0) {
             return this;
+        }else if(amt < 0){
+            Rect bounds = getBounds();
+            if(Math.abs(amt) > Math.max(bounds.getWidth(), bounds.getHeight())){
+                return null;
+            }
         }
         VectList buffer = getEdgeBuffer(amt, flatness, accuracy);
         return buildGeomFromRing(buffer, accuracy);
@@ -871,10 +877,48 @@ public class Ring implements Geom {
     public Area toArea() {
         return new Area(this);
     }
+    
+    public Relate relate(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException{
+        Network network = Network.valueOf(accuracy, flatness, this, other);
+        
+    }
 
+
+    public Geom union(Ring other, Tolerance accuracy){
+        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+            Area[] children = new Area[]{this.toArea(), other.toArea()};
+            Arrays.sort(children, COMPARATOR);
+            return new Area(null, children);
+        }
+        Network network = Network.valueOf(accuracy, accuracy, this, other);
+        
+        //build a network with only external lines from both sources
+        Network union = new Network();
+        network.addLinesWithRelationInternal(this, accuracy, Relate.OUTSIDE, union);
+        network.addLinesWithRelationInternal(other, accuracy, Relate.OUTSIDE, union);
+        
+        //Find lines where both touch.
+        //find mode
+        
+        
+        //If the union contains hanglines, then these need to be fixed
+        if(network.hasHangLines()){
+            VectList linesCCW = parsePathFromNetwork(network, vects, accuracy);
+            
+            
+            linesCC
+        }
+        
+        return Area.valueOf(accuracy, network);
+    }
+    
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return toArea().union(other, flatness, accuracy);
+        if(other instanceof Ring){
+            
+        }else{
+            return toArea().union(other, flatness, accuracy);
+        }
     }
 
     @Override
@@ -931,5 +975,15 @@ public class Ring implements Geom {
         } catch (IOException ex) {
             throw new GeomException("Error writing LineStirng", ex);
         }
+    }
+    
+    
+    
+    static class CombineProcessor implements NodeProcessor<Line>{
+        
+        
+        int left;
+        int ring;
+        
     }
 }

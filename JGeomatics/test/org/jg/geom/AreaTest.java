@@ -120,10 +120,16 @@ public class AreaTest {
         }catch(NullPointerException ex){
         }
         Area b = a.transform(new TransformBuilder().flipYAround(80).flipXAround(60).build());
-        assertEquals(new Area(
+        Area c = new Area(
                 new Ring(new VectList(70,90, 120,90, 120,160, 70,160, 70,90), null),
                 new Area(new Ring(new VectList(80,100, 110,100, 110,150, 80,150, 80,100), null))
-        ), b);
+        );
+        assertEquals(c, b);
+        
+        network.addAllLinks(new VectList(60,0, 70,0, 60,10, 60,0));
+        Area d = Area.valueOf(TOL, network);
+        Area e = d.transform(new TransformBuilder().flipYAround(80).flipXAround(60).build());
+        assertEquals(new Area(null, new Area(Ring.valueOf(TOL, 50,160, 60,150, 60,160, 50,160)), c), e);
     }
 
     @Test
@@ -245,6 +251,7 @@ public class AreaTest {
             }
         });
         assertTrue(expected.isEmpty());
+        assertSame(lineIndex, area.getLineIndex());
     }
 
     @Test
@@ -421,11 +428,82 @@ public class AreaTest {
         network.addAllLinks(new VectList(90,0, 100,0, 100,10, 90,0));
         final Area area = Area.valueOf(TOL, network);
         assertSame(area, area.buffer(0, Tolerance.FLATNESS, TOL));
-        Geom geom = area.buffer(5, Tolerance.FLATNESS, TOL);
-        String wkt = geom.toGeoShape(Tolerance.FLATNESS, TOL).toWkt();
-        System.out.println(wkt);
-        fail("No assertions!");
         
+        Area resultA = (Area)area.buffer(4, Tolerance.FLATNESS, TOL); // leave channels
+        assertNull(resultA.shell);
+        assertEquals(2, resultA.numChildren());
+        assertEquals(6, resultA.numRings());
+        assertEquals(5, resultA.getDepth());
+        assertEquals(Rect.valueOf(-84, -74, 104, 74), resultA.getBounds());
+        assertEquals(23458, resultA.getArea(), 1);
+        
+        Area resultB = (Area)area.buffer(5, Tolerance.FLATNESS, TOL); // clear channels except at corners
+        assertNull(resultB.shell);
+        assertEquals(2, resultB.numChildren());
+        assertEquals(10, resultB.numRings());
+        assertEquals(2, resultB.getDepth());
+        assertEquals(Rect.valueOf(-85, -75, 105, 75), resultB.getBounds());
+        assertEquals(25733, resultB.getArea(), 1);
+        
+        Ring resultC = (Ring)area.buffer(8, Tolerance.FLATNESS, TOL);
+        assertEquals(Rect.valueOf(-88, -78, 108, 78), resultC.getBounds());
+        assertEquals(27854, resultC.getArea(), 1);
+        
+        Ring resultD = (Ring)area.buffer(-40, Tolerance.FLATNESS, TOL);
+        assertNull(resultD);
+        
+    }
+    
+    @Test
+    public void testHashCode() {
+        Set<Integer> hashCodes = new HashSet<>();
+        for (int x = 0; x <= 10; x++) {
+            for (int y = 1; y < 10; y++) {
+                Area area = Area.valueOf(TOL, 0,0, 50,50, 100,0, 150,50, 200,0, 250+x,50+y, 300,0, 0,0);
+                hashCodes.add(area.hashCode());
+            }
+        }
+        assertEquals(99, hashCodes.size());
+    }
+
+    @Test
+    public void testEquals() {
+        Area a = Area.valueOf(TOL, 0,0, 50,50, 100,0, 150,50, 200,0, 250,50, 300,0, 0,0);
+        Area b = Area.valueOf(TOL, 0,0, 50,50, 100,0, 150,50, 200,0, 250,51, 300,0, 0,0);
+        Area c = Area.valueOf(TOL, 0,0, 50,50, 100,0, 150,50, 200,0, 250,50, 300,0, 0,0);
+        assertEquals(a, a);
+        assertNotEquals(a, b);
+        assertEquals(a, c);
+        assertNotEquals(a, "");
+        assertFalse(a.equals(null));
+    }
+    
+    @Test
+    public void testUnion(){
+        Network n1 = new Network();
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                int x = 40 * i;
+                int y = 30 * j;
+                n1.addAllLinks(new VectList(x,y, x+30,y, x+30,y+20, x,y+20, x,y));
+            }
+        }
+        Area a1 = Area.valueOf(TOL, n1);
+        
+        Network n2 = new Network();
+        for(int i = 0; i < 50; i += 10){
+            int x = 40 + i;
+            int y = 30 + i;
+            n2.addLink(-x, -y, x, -y);
+            n2.addLink(x, -y, x, y);
+            n2.addLink(x, y, -x, y);
+            n2.addLink(-x, y, -x, -y);
+        }
+        Area a2 = Area.valueOf(TOL, n2);
+        
+        Area a3 = a1.union(a2, TOL);
+        String wkt = a3.toGeoShape().toWkt();
+        System.out.println(wkt);
     }
 
     @Test
@@ -530,41 +608,6 @@ public class AreaTest {
         Area instance = null;
         Area expResult = null;
         Area result = instance.less(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testHashCode() {
-        System.out.println("hashCode");
-        Area instance = null;
-        int expResult = 0;
-        int result = instance.hashCode();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testEquals() {
-        System.out.println("equals");
-        Object obj = null;
-        Area instance = null;
-        boolean expResult = false;
-        boolean result = instance.equals(obj);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testGetChild() {
-        System.out.println("getChild");
-        int index = 0;
-        Area instance = null;
-        Area expResult = null;
-        Area result = instance.getChild(index);
         assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
