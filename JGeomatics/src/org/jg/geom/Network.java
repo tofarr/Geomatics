@@ -491,7 +491,7 @@ public final class Network implements Serializable, Cloneable {
     }
 
     boolean pointTouchesLineInternal(double x, double y, SpatialNode<Line> node, Tolerance tolerance) {
-        if (Rect.disjoint(node.getMinX(), node.getMinY(), node.getMaxX(), node.getMaxY(), x, y, tolerance)) {
+        if(Relation.isDisjoint(node.relate(x, y, tolerance))){
             return false;
         }
         if (node.isBranch()) {
@@ -624,7 +624,7 @@ public final class Network implements Serializable, Cloneable {
     }
     
     void calculateSnapsForPoint(double x, double y, SpatialNode<Line> node, Tolerance accuracy, VectBuilder workingVect, Collection<Snap> result){
-        if(node.isDisjoint(x, y, x, y, accuracy)){
+        if(Relation.isDisjoint(node.relate(x, y, accuracy))){
             return;
         }
         if(node.isBranch()){
@@ -993,97 +993,97 @@ public final class Network implements Serializable, Cloneable {
         });
     }
     
-    
-    void addLinesWithRelationInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final Network result){
-        map.forEach(new VectMapProcessor<VectList>(){
-            
-            VectBuilder workingVect = new VectBuilder();
-            
-            @Override
-            public boolean process(double ax, double ay, VectList links) {
-                for(int i = links.size(); i-- > 0;){
-                    double bx = links.getX(i);
-                    double by = links.getY(i);
-                    if(Vect.compare(ax, ay, bx, by) < 0){
-                        double mx = (ax + bx) / 2;
-                        double my = (ay + by) / 2;
-                        workingVect.set(mx, my);
-                        if(geom.relate(workingVect, accuracy) == relate){
-                            result.addLinkInternal(ax, ay, bx, by);
-                        }
-                    }
-                }
-                return true;
-            }
-        });
-    }
-
-    public Network removeWithRelation(Geom geom, Tolerance flatness, Tolerance accuracy, Relate relate) {
-        Network other = new Network();
-        geom.addTo(other, accuracy, accuracy);
-        explicitIntersectionsWith(other, accuracy);
-        if (relate == Relate.TOUCH) {
-            return removeTouchingInternal(geom, accuracy, new VectBuilder());
-        } else {
-            return removeInsideOrOutsideInternal(geom, accuracy, relate, new VectBuilder());
-        }
-    }
-
-    Network removeInsideOrOutsideInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final VectBuilder workingVect) {
-        map.forEach(new VectMapProcessor<VectList>() {
-            @Override
-            public boolean process(double x, double y, VectList links) {
-                workingVect.set(x, y);
-                Relate result = geom.relate(workingVect, accuracy);
-                if (result == relate) {
-                    removeVertexInternal(x, y);
-                } else if (result == Relate.TOUCH) {
-                    for (int i = links.size(); i-- > 0;) {
-                        double bx = links.getX(i);
-                        double by = links.getY(i);
-                        if (Vect.compare(x, y, bx, by) < 0) { // filter here avoids checking twice
-                            workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
-                            if (geom.relate(workingVect, accuracy) == relate) {
-                                removeLinkInternal(x, y, bx, by);
-                            }
-                        }
-                    }
-                }
-                return true;
-            }
-        });
-        return this;
-    }
-
-    Network removeTouchingInternal(final Geom geom, final Tolerance accuracy, final VectBuilder workingVect) {
-        map.forEach(new VectMapProcessor<VectList>() {
-            @Override
-            public boolean process(double x, double y, VectList links) {
-                workingVect.set(x, y);
-                
-                //remove any vertex where all links are touching? 
-                //NO THIS WONT WORK.
-                //TOO TIRED TO SORT NOW!
-                
-                if (geom.relate(workingVect, accuracy) == Relate.TOUCH) { // if the vect is touching, we may have more work to do
-                    //Remove any touching links
-                    for (int i = links.size(); i-- > 0;) {
-                        double bx = links.getX(i);
-                        double by = links.getY(i);
-                        workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
-                        if (geom.relate(workingVect, accuracy) == Relate.TOUCH) {
-                            removeLinkInternal(x, y, bx, by);
-                        }
-                    }
-                    if (links.isEmpty()) { // if point is unlinked remove it
-                        removeVertexInternal(x, y);
-                    }
-                }
-                return true;
-            }
-        });
-        return this;
-    }
+//    
+//    void addLinesWithRelationInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final Network result){
+//        map.forEach(new VectMapProcessor<VectList>(){
+//            
+//            VectBuilder workingVect = new VectBuilder();
+//            
+//            @Override
+//            public boolean process(double ax, double ay, VectList links) {
+//                for(int i = links.size(); i-- > 0;){
+//                    double bx = links.getX(i);
+//                    double by = links.getY(i);
+//                    if(Vect.compare(ax, ay, bx, by) < 0){
+//                        double mx = (ax + bx) / 2;
+//                        double my = (ay + by) / 2;
+//                        workingVect.set(mx, my);
+//                        if(geom.relate(workingVect, accuracy) == relate){
+//                            result.addLinkInternal(ax, ay, bx, by);
+//                        }
+//                    }
+//                }
+//                return true;
+//            }
+//        });
+//    }
+//
+//    public Network removeWithRelation(Geom geom, Tolerance flatness, Tolerance accuracy, Relate relate) {
+//        Network other = new Network();
+//        geom.addTo(other, accuracy, accuracy);
+//        explicitIntersectionsWith(other, accuracy);
+//        if (relate == Relate.TOUCH) {
+//            return removeTouchingInternal(geom, accuracy, new VectBuilder());
+//        } else {
+//            return removeInsideOrOutsideInternal(geom, accuracy, relate, new VectBuilder());
+//        }
+//    }
+//
+//    Network removeInsideOrOutsideInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final VectBuilder workingVect) {
+//        map.forEach(new VectMapProcessor<VectList>() {
+//            @Override
+//            public boolean process(double x, double y, VectList links) {
+//                workingVect.set(x, y);
+//                Relate result = geom.relate(workingVect, accuracy);
+//                if (result == relate) {
+//                    removeVertexInternal(x, y);
+//                } else if (result == Relate.TOUCH) {
+//                    for (int i = links.size(); i-- > 0;) {
+//                        double bx = links.getX(i);
+//                        double by = links.getY(i);
+//                        if (Vect.compare(x, y, bx, by) < 0) { // filter here avoids checking twice
+//                            workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
+//                            if (geom.relate(workingVect, accuracy) == relate) {
+//                                removeLinkInternal(x, y, bx, by);
+//                            }
+//                        }
+//                    }
+//                }
+//                return true;
+//            }
+//        });
+//        return this;
+//    }
+//
+//    Network removeTouchingInternal(final Geom geom, final Tolerance accuracy, final VectBuilder workingVect) {
+//        map.forEach(new VectMapProcessor<VectList>() {
+//            @Override
+//            public boolean process(double x, double y, VectList links) {
+//                workingVect.set(x, y);
+//                
+//                //remove any vertex where all links are touching? 
+//                //NO THIS WONT WORK.
+//                //TOO TIRED TO SORT NOW!
+//                
+//                if (geom.relate(workingVect, accuracy) == Relate.TOUCH) { // if the vect is touching, we may have more work to do
+//                    //Remove any touching links
+//                    for (int i = links.size(); i-- > 0;) {
+//                        double bx = links.getX(i);
+//                        double by = links.getY(i);
+//                        workingVect.set((x + bx) / 2, (y + by) / 2); // set to mid point on link
+//                        if (geom.relate(workingVect, accuracy) == Relate.TOUCH) {
+//                            removeLinkInternal(x, y, bx, by);
+//                        }
+//                    }
+//                    if (links.isEmpty()) { // if point is unlinked remove it
+//                        removeVertexInternal(x, y);
+//                    }
+//                }
+//                return true;
+//            }
+//        });
+//        return this;
+//    }
 
     void mergeInternal(Network other) {
         other.map.forEach(new VectMapProcessor<VectList>() {

@@ -7,30 +7,28 @@ import org.jg.util.Tolerance;
  *
  * @author tofarrell
  */
-class RelationProcessor implements NodeProcessor<Line> {
+class VectRelationProcessor implements NodeProcessor<Line> {
 
     private final double tol;
     private double x;
     private double y;
-    private Relate relate;
+    private int relation;
     private boolean touchesLess; // there is a line which touches the ray but does not cross it and has a lower y value
     private boolean touchesGreater; // there is a line which touches the ray but does not cross it and has a greater y value
 
-    RelationProcessor(Tolerance tolerance) {
+    VectRelationProcessor(Tolerance tolerance) {
         this.tol = tolerance.tolerance;
     }
 
-    RelationProcessor(Tolerance tolerance, double x, double y) {
+    VectRelationProcessor(Tolerance tolerance, double x, double y) {
         this(tolerance);
-        this.x = x;
-        this.y = y;
-        relate = Relate.OUTSIDE;
+        reset(x, y);
     }
 
     public void reset(double x, double y) {
         this.x = x;
         this.y = y;
-        relate = Relate.OUTSIDE;
+        relation = Relation.OUTSIDE;
         touchesLess = touchesGreater = false;
     }
 
@@ -42,8 +40,8 @@ class RelationProcessor implements NodeProcessor<Line> {
         return y;
     }
 
-    Relate getRelate() {
-        return relate;
+    int getRelation() {
+        return relation;
     }
 
     @Override
@@ -65,7 +63,7 @@ class RelationProcessor implements NodeProcessor<Line> {
         if (ay == by) { // line has same slope as ray
             if (Math.abs(ay - y) <= tol) { // ray is within the tolerance of line on the y axis - do they overlap on x?
                 if (((ax - tol) <= x) && ((bx + tol) >= x)) {
-                    relate = Relate.TOUCH;
+                    relation = Relation.TOUCH;
                     return false; // no further processing is required - we have a touch
                 }
             }
@@ -73,7 +71,7 @@ class RelationProcessor implements NodeProcessor<Line> {
             double slope = (by - ay) / (bx - ax);
             double lx = ((y - ay) / slope) + ax;  //find the x on line which crosses the ray
             if (Math.abs(lx - x) <= tol) { // if the point where line crosses ray is within the tolerated 
-                relate = Relate.TOUCH;     // distance of the point, we call this a touch
+                relation = Relation.TOUCH;     // distance of the point, we call this a touch
                 return false;
             } else if ((lx + tol) < x) { // Go from one side only...
                 return true;
@@ -111,7 +109,7 @@ class RelationProcessor implements NodeProcessor<Line> {
     }
 
     private void flipRelation() {
-        relate = (relate == Relate.OUTSIDE) ? Relate.INSIDE : Relate.OUTSIDE;
+        relation = (relation == Relation.OUTSIDE) ? Relation.INSIDE : Relation.OUTSIDE;
     }
 
 }

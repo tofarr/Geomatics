@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
+import org.jg.util.VectMap.VectMapProcessor;
 
 /**
  * Immutable set of 2D lines. Checks are in place to insure that no ordinates are NaN or Infinite,
@@ -243,36 +244,53 @@ public class LineSet implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException {
+    public int relate(Vect vect, Tolerance accuracy) throws NullPointerException {
         return relateInternal(vect.x, vect.y, accuracy);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
         return relateInternal(vect.getX(), vect.getY(), accuracy);
+    }  
+    
+    @Override
+    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
     }
 
-    Relate relateInternal(double x, double y, Tolerance accuracy) {
-        if (getBounds().relateInternal(x, y, accuracy) == Relate.OUTSIDE) {
-            return Relate.OUTSIDE;
+    int relateInternal(double x, double y, Tolerance accuracy) {
+        if (Relation.isDisjoint(getBounds().relateInternal(x, y, accuracy))) {
+            return Relation.DISJOINT;
         }
         for (LineString lineString : lineStrings) {
-            if (lineString.relateInternal(x, y, accuracy) == Relate.TOUCH) {
-                return Relate.TOUCH;
+            if (Relation.isTouch(lineString.relateInternal(x, y, accuracy))) {
+                return Relation.TOUCH;
             }
         }
-        return Relate.OUTSIDE;
+        return Relation.DISJOINT;
     }
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
-            return ((LineString) other).unionLineSet(this, accuracy).simplify();
+            return union((LineString)other, accuracy).simplify();
         } else if (other instanceof LineSet) {
             return union((LineSet) other, accuracy).simplify();
         } else {
-            return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
+            return toGeoShape().union(other, flatness, accuracy);
         }
+    }
+    
+    /**
+     * Get the union of this line string and that given
+     *
+     * @param other
+     * @param accuracy
+     * @return a line set
+     * @throws NullPointerException if other or accuracy was null
+     */
+    public LineSet union(LineString other, Tolerance accuracy){
+        return union(other.toLineSet(), accuracy);
     }
 
     /**
@@ -284,7 +302,7 @@ public class LineSet implements Geom {
      * @throws NullPointerException if other or accuracy was null
      */
     public LineSet union(LineSet other, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds())) {
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             LineString[] lines = new LineString[numLineStrings() + other.numLineStrings()];
             System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
             System.arraycopy(other.lineStrings, 0, lines, lineStrings.length, other.lineStrings.length);
@@ -299,122 +317,83 @@ public class LineSet implements Geom {
         return new LineSet(ret);
     }
 
-    /**
-     * Get the union of this line set and the GeoShape given
-     *
-     * @param other
-     * @param accuracy
-     * @return a GeoShape
-     * @throws NullPointerException if other or accuracy was null
-     */
-    public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            LineSet _lines;
-            if (other.lines == null) {
-                _lines = this;
-            } else {
-                LineString[] lines = new LineString[numLineStrings() + other.lines.numLineStrings()];
-                System.arraycopy(lineStrings, 0, lines, 0, lineStrings.length);
-                System.arraycopy(other.lines.lineStrings, 0, lines, lineStrings.length, other.lines.numLineStrings());
-                Arrays.sort(lines, COMPARATOR);
-                _lines = new LineSet(lines);
+    @Override
+    public Geom intersection(final Geom other, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
+        if (Relation.isDisjoint(other.getBounds().relate(getBounds(), accuracy))) { // quick way - disjoint
+            return null;
+        }
+        final Network network = Network.valueOf(accuracy, flatness, other, other);
+        final Network intersection = new Network();
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            final VectBuilder workingVect = new VectBuilder();
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                workingVect.set(x, y);
+                if(Relation.isOutside(LineSet.this.relate(workingVect, accuracy))
+                    || Relation.isOutside(other.relate(workingVect, accuracy))){
+                    return true;
+                }
+                intersection.addVertex(workingVect);
+
+                //Process links
+                for(int i = links.size(); i-- > 0;){
+                    double bx = links.getX(i);
+                    double by = links.getY(i);
+                    if(Vect.compare(x, y, bx, by) < 0){ // prevent processing twice
+                        workingVect.set((x + bx) / 2, (y + by) / 2);
+                        if(!(Relation.isOutside(LineSet.this.relate(workingVect, accuracy))
+                            || Relation.isOutside(other.relate(workingVect, accuracy)))){
+                            intersection.addLinkInternal(x, y, bx, by);
+                        }
+                    }
+                }
+
+                return true;
             }
-            return new GeoShape(other.area, _lines, other.points);
-        }
+        });
 
-        Network network = new Network();
-        addTo(network);
-        if (other.lines != null) {
-            other.lines.addTo(network);
-            network.explicitIntersections(accuracy);
+        LineSet lines = LineSet.valueOfInternal(intersection);
+        PointSet points = PointSet.valueOf(intersection, accuracy);
+        if((lines == null) && (points == null)){
+            return null;
         }
-        Area area = other.area;
-        if (area != null) {
-            network.explicitIntersectionsWith(area.getLineIndex(), accuracy);
-            VectBuilder workingVect = new VectBuilder();
-            network.removeInsideOrOutsideInternal(area, accuracy, Relate.INSIDE, workingVect);
-            network.removeTouchingInternal(area, accuracy, workingVect);
-        }
-        LineSet lines = LineSet.valueOfInternal(network);
-
-        PointSet points = other.points;
-        if (points != null) {
-            points = points.less(this, accuracy);
-        }
-        return new GeoShape(area, lines, points);
+        GeoShape geoShape = new GeoShape(null, lines, points);
+        return geoShape.simplify(); //Intersection may be null,Vect,PointSet,Line,LineString,LineSet,GeoShape
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            return null;
-        } else {
-            return intersection(other.toGeoShape(flatness, accuracy), accuracy).simplify();
-        }
-    }
-
-    /**
-     * Get the intersection of this LineSet and the GeoShape given
-     *
-     * @param other
-     * @param accuracy
-     * @return a GeoShape or null if there was no intersection
-     * @throws NullPointerException if other or accuracy was null
-     */
-    public GeoShape intersection(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            return null;
-        }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        network.snap(accuracy);
-        VectBuilder workingVect = new VectBuilder();
-        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
-        LineSet lines = valueOfInternal(network);
-        PointSet points = PointSet.valueOf(network, accuracy);
-        if ((lines == null) && (points == null)) {
-            return null; // no intersection
-        }
-        return new GeoShape(null, lines, points);
-    }
-
-    @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
-            return simplify();
-        }
-        LineSet ret = less(other.toGeoShape(flatness, accuracy), accuracy);
-        if ((ret != null) && (ret.numLineStrings() == 1)) {
-            return ret.getLineString(0);
-        }
-        return ret;
-    }
-
-    /**
-     * Get the lines in this LineSet which are not in the GeoShape given
-     *
-     * @param other
-     * @param accuracy
-     * @return a LineSet or null if other covered this
-     * @throws NullPointerException if other or accuracy was null
-     */
-    public LineSet less(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        if (other.getBounds().isDisjoint(getBounds(), accuracy)) { // quick way - disjoint
+    public LineSet less(final Geom other, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
+        if (Relation.isDisjoint(other.getBounds().relate(getBounds(), accuracy))) { // quick way - disjoint
             return this;
         }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        network.snap(accuracy);
-        VectBuilder workingVect = new VectBuilder();
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
-        network.removeTouchingInternal(other, accuracy, workingVect);
-        LineSet lines = valueOfInternal(network);
-        return lines;
+        final Network network = Network.valueOf(accuracy, flatness, other, other);
+        final Network less = new Network();
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            final VectBuilder workingVect = new VectBuilder();
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                workingVect.set(x, y);
+                if(Relation.isOutside(LineSet.this.relate(workingVect, accuracy))){
+                    return true; // Anything not in original should not be in new...
+                }
+
+                //Process links
+                for(int i = links.size(); i-- > 0;){
+                    double bx = links.getX(i);
+                    double by = links.getY(i);
+                    if(Vect.compare(x, y, bx, by) < 0){ // prevent processing twice
+                        workingVect.set((x + bx) / 2, (y + by) / 2);
+                        if(Relation.isOutside(other.relate(workingVect, accuracy))){ // any links not in original should be added
+                            less.addLinkInternal(x, y, bx, by);
+                        }
+                    }
+                }
+
+                return true;
+            }
+        });
+
+        return LineSet.valueOfInternal(less); //Intersection may be null,Line,LineString,LineSet
     }
 
     @Override

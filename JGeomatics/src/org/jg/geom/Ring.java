@@ -319,12 +319,12 @@ public class Ring implements Geom {
      * @throws NullPointerException if vect or tolerance was null
      */
     @Override
-    public Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException {
+    public int relate(Vect vect, Tolerance accuracy) throws NullPointerException {
         return relateInternal(vect.x, vect.y, accuracy);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
         return relateInternal(vect.getX(), vect.getY(), accuracy);
     }
 
@@ -338,24 +338,24 @@ public class Ring implements Geom {
      * @throws IllegalArgumentException if x or y was infinite or NaN
      * @throws NullPointerException if tolerance was null
      */
-    public Relate relate(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public int relate(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         Vect.check(x, y);
         return relateInternal(x, y, tolerance);
     }
 
-    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
+    int relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
         return relateInternal(x, y, getLineIndex(), tolerance);
     }
 
-    static Relate relateInternal(double x, double y, SpatialNode<Line> lineIndex, Tolerance tolerance) throws NullPointerException {
+    static int relateInternal(double x, double y, SpatialNode<Line> lineIndex, Tolerance tolerance) throws NullPointerException {
         Rect bounds = lineIndex.getBounds();
-        if (bounds.relateInternal(x, y, tolerance) == Relate.OUTSIDE) { // If outside bounds, then cant be inside
-            return Relate.OUTSIDE;
+        if (bounds.relateInternal(x, y, tolerance) == Relation.DISJOINT) { // If outside bounds, then cant be inside
+            return Relation.DISJOINT;
         }
         Rect selection = Rect.valueOf(x, y, bounds.maxX, y);
-        RelationProcessor processor = new RelationProcessor(tolerance, x, y);
+        VectRelationProcessor processor = new VectRelationProcessor(tolerance, x, y);
         lineIndex.forInteracting(selection, processor);
-        return processor.getRelate();
+        return processor.getRelation() | Relation.OUTSIDE_OTHER;
     }
 
     /**
@@ -707,7 +707,7 @@ public class Ring implements Geom {
     static void snapToNearest(SpatialNode<Line> node, VectBuilder vect, Tolerance tolerance, VectBuilder result){
         double x = vect.getX();
         double y = vect.getY();
-        if(node.isDisjoint(x, y, x, y, tolerance)){
+        if(Relation.isDisjoint(node.relate(x, y, tolerance))){
             return;
         }
         if(node.isBranch()){
@@ -878,52 +878,19 @@ public class Ring implements Geom {
         return new Area(this);
     }
     
-    public Relate relate(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException{
-        Network network = Network.valueOf(accuracy, flatness, this, other);
-        
-    }
-
-
-    public Geom union(Ring other, Tolerance accuracy){
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
-            Area[] children = new Area[]{this.toArea(), other.toArea()};
-            Arrays.sort(children, COMPARATOR);
-            return new Area(null, children);
-        }
-        Network network = Network.valueOf(accuracy, accuracy, this, other);
-        
-        //build a network with only external lines from both sources
-        Network union = new Network();
-        network.addLinesWithRelationInternal(this, accuracy, Relate.OUTSIDE, union);
-        network.addLinesWithRelationInternal(other, accuracy, Relate.OUTSIDE, union);
-        
-        //Find lines where both touch.
-        //find mode
-        
-        
-        //If the union contains hanglines, then these need to be fixed
-        if(network.hasHangLines()){
-            VectList linesCCW = parsePathFromNetwork(network, vects, accuracy);
-            
-            
-            linesCC
-        }
-        
-        return Area.valueOf(accuracy, network);
+    @Override
+    public int relate(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException{
+        return GeomRelationProcessor.relate(this, other, flatness, accuracy);
     }
     
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other instanceof Ring){
-            
-        }else{
-            return toArea().union(other, flatness, accuracy);
-        }
+        return toArea().union(other, flatness, accuracy);
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return null;
         }
         return toArea().intersection(other, flatness, accuracy);
@@ -931,7 +898,7 @@ public class Ring implements Geom {
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return this;
         }
         Area area = toArea().less(other, flatness, accuracy);
@@ -975,15 +942,5 @@ public class Ring implements Geom {
         } catch (IOException ex) {
             throw new GeomException("Error writing LineStirng", ex);
         }
-    }
-    
-    
-    
-    static class CombineProcessor implements NodeProcessor<Line>{
-        
-        
-        int left;
-        int ring;
-        
     }
 }

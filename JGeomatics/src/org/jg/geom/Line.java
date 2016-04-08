@@ -868,16 +868,21 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        return (distSegVectSq(vect) <= (tolerance.tolerance * tolerance.tolerance)) ? Relate.TOUCH : Relate.OUTSIDE;
+    public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+        return (distSegVectSq(vect) <= (tolerance.tolerance * tolerance.tolerance)) ? (Relation.TOUCH | Relation.OUTSIDE_OTHER) : Relation.DISJOINT;
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return (distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY()) <= (tolerance.tolerance * tolerance.tolerance))
-                ? Relate.TOUCH : Relate.OUTSIDE;
+                ? (Relation.TOUCH | Relation.OUTSIDE_OTHER) : Relation.DISJOINT;
     }
 
+    @Override
+    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+    }
+    
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         return toLineString().union(other, flatness, accuracy);
@@ -885,7 +890,7 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
+        if (getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT) {
             return null;
         }
         return toLineString().intersection(other, flatness, accuracy);
@@ -893,7 +898,7 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds())) {
+        if (getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT) {
             return this;
         }
         return toLineString().less(other, flatness, accuracy);

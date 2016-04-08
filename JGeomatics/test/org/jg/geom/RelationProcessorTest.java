@@ -16,13 +16,13 @@ public class RelationProcessorTest {
 
     @Test
     public void testReset() {
-        RelationProcessor processor = new RelationProcessor(Tolerance.DEFAULT, 1, 2);
+        VectRelationProcessor processor = new VectRelationProcessor(Tolerance.DEFAULT, 1, 2);
         assertEquals(1, processor.getX(), 0.00001);
         assertEquals(2, processor.getY(), 0.00001);
         processor.reset(3, 4);
         assertEquals(3, processor.getX(), 0.00001);
         assertEquals(4, processor.getY(), 0.00001);
-        processor = new RelationProcessor(Tolerance.DEFAULT);
+        processor = new VectRelationProcessor(Tolerance.DEFAULT);
         assertEquals(0, processor.getX(), 0.00001);
         assertEquals(0, processor.getY(), 0.00001);
         processor.reset(5, 7);
@@ -32,7 +32,7 @@ public class RelationProcessorTest {
 
     @Test
     public void testHorizontal() {
-        RelationProcessor processor = new RelationProcessor(Tolerance.DEFAULT, 3, 7);
+        VectRelationProcessor processor = new VectRelationProcessor(Tolerance.DEFAULT, 3, 7);
         Line line = Line.valueOf(0, 5, 6, 5);
         assertTrue(processor.process(line.getBounds(), line));
         assertEquals(Relate.OUTSIDE, processor.getRelate());
@@ -59,7 +59,7 @@ public class RelationProcessorTest {
     
     @Test
     public void testProcess() {
-        RelationProcessor processor = new RelationProcessor(Tolerance.DEFAULT, 3, 7);
+        VectRelationProcessor processor = new VectRelationProcessor(Tolerance.DEFAULT, 3, 7);
         //Line line = Line.valueOf(5, 4, 8, 8);
         Line line = Line.valueOf(7, 4, 12, 6.9999);
         assertTrue(processor.process(line.getBounds(), line));
@@ -81,7 +81,7 @@ public class RelationProcessorTest {
         assertTrue(processor.process(line.getBounds(), line));
         assertEquals(Relate.INSIDE, processor.getRelate());
         
-        processor = new RelationProcessor(Tolerance.DEFAULT, 3, 7);
+        processor = new VectRelationProcessor(Tolerance.DEFAULT, 3, 7);
         assertTrue(processor.process(line.getBounds(), line));
         line = Line.valueOf(7, 4, 12, 7);
         assertTrue(processor.process(line.getBounds(), line));

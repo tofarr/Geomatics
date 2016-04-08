@@ -2,7 +2,6 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -472,20 +471,26 @@ public class LineString implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException {
+    public int relate(Vect vect, Tolerance accuracy) throws NullPointerException {
         return relateInternal(vect.x, vect.y, accuracy);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
         return relateInternal(vect.getX(), vect.getY(), accuracy);
     }
 
-    Relate relateInternal(double x, double y, Tolerance accuracy) {
+    int relateInternal(double x, double y, Tolerance accuracy) {
         RelateProcessor processor = new RelateProcessor(x, y, accuracy);
-        return getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor) ? Relate.OUTSIDE : Relate.TOUCH;
+        return Relation.OUTSIDE_OTHER | (getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor)
+                ? Relation.OUTSIDE : Relation.TOUCH);
     }
 
+    @Override
+    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+    }
+    
     /**
      * Create a LineSet based on this lineString
      *
@@ -497,89 +502,17 @@ public class LineString implements Geom {
 
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (other instanceof LineString) {
-            return unionLineString((LineString) other, accuracy).simplify();
-        } else if (other instanceof LineSet) {
-            return unionLineSet((LineSet) other, accuracy).simplify();
-        } else {
-            return unionGeoShape(other.toGeoShape(flatness, accuracy), accuracy).simplify();
-        }
-    }
-
-    /**
-     * Get the union of this LineString and that given
-     *
-     * @param other
-     * @param accuracy
-     * @return a LineSet
-     * @throws NullPointerException
-     */
-    public LineSet unionLineString(LineString other, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
-            LineString[] lines = new LineString[]{this, other};
-            Arrays.sort(lines, COMPARATOR);
-            return new LineSet(lines);
-        }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        LineString[] lineStrings = parseAllInternal(network);
-        return new LineSet(lineStrings);
-    }
-
-    /**
-     * Get the union of this LineString and the LineSet given
-     *
-     * @param other
-     * @param accuracy
-     * @return a LineSet
-     * @throws NullPointerException
-     */
-    public LineSet unionLineSet(LineSet other, Tolerance accuracy) throws NullPointerException {
-
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
-            LineString[] lines = new LineString[other.lineStrings.length + 1];
-            lines[0] = this;
-            System.arraycopy(other.lineStrings, 0, lines, 1, other.lineStrings.length);
-            Arrays.sort(lines, COMPARATOR);
-            return new LineSet(lines);
-        }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        return new LineSet(parseAllInternal(network));
-    }
-
-    /**
-     * Get the union of this shape and that given
-     *
-     * @param other
-     * @param accuracy
-     * @return a GeoShape
-     * @throws NullPointerException
-     */
-    public GeoShape unionGeoShape(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        return toLineSet().union(other, accuracy);
+        return toLineSet().union(other, flatness, accuracy);
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
-            return null;
-        }
-        GeoShape ret = toLineSet().intersection(other.toGeoShape(flatness, accuracy), accuracy);
-        return (ret == null) ? null : ret.simplify();
+        return toLineSet().intersection(other, flatness, accuracy);
     }
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) {
-            return this;
-        }
-        LineSet ret = toLineSet().less(other.toGeoShape(flatness, accuracy), accuracy);
-        return (ret == null) ? null : ret.simplify();
+        return toLineSet().less(other, flatness, accuracy);
     }
 
     /**

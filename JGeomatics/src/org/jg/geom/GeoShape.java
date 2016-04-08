@@ -231,7 +231,7 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         if ((points != null) && (points.relate(vect, tolerance) == Relate.TOUCH)) {
             return Relate.TOUCH;
         }
@@ -245,7 +245,7 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         if ((points != null) && (points.relate(vect, tolerance) == Relate.TOUCH)) {
             return Relate.TOUCH;
         }

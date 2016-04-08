@@ -7,7 +7,9 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
+import org.jg.geom.Relation;
 import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 
 /**
  * Node for use in spatial trees and indexes. A node may be a branch with 2 child nodes, or a leaf
@@ -127,32 +129,75 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Determine if this node is disjoint from the bounds given
+     * Get the relation between the bounds of this node and the bounds given
+     *
+     * @param rect
+     * @param accuracy
+     * @return
+     */
+    public int relate(Rect rect, Tolerance accuracy){
+        return relate(rect.minX, rect.minY, rect.maxX, rect.maxY, accuracy);
+    }
+         
+    /**
+     * Get the relation between the bounds of this node and the bounds given
+     *
+     * @param rect
+     * @param accuracy
+     * @return
+     */
+    public int relate(RectBuilder rect, Tolerance accuracy){
+        return relate(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY(), accuracy);
+    }
+     
+    /**
+     * Get the relation between the bounds of this node and the bounds given
      *
      * @param minX
      * @param minY
      * @param maxX
+     * @param accuracy
      * @param maxY
      * @return
      */
-    public boolean isDisjoint(double minX, double minY, double maxX, double maxY) {
-        return Rect.disjoint(minX, minY, maxX, maxY, bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY());
+    public int relate(double minX, double minY, double maxX, double maxY, Tolerance accuracy){
+        return Rect.relate(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
+                minX, minY, maxX, maxY, accuracy);
     }
 
     /**
-     * Determine if this node is disjoint from the bounds given and more than the tolerance distance
-     * given away
+     * Get the relation between the bounds of this node and the vector given
      *
-     * @param minX
-     * @param minY
-     * @param maxX
-     * @param maxY
-     * @param tolerance
+     * @param vect
+     * @param accuracy
      * @return
      */
-    public boolean isDisjoint(double minX, double minY, double maxX, double maxY, Tolerance tolerance) {
-        return Rect.disjoint(minX, minY, maxX, maxY,
-                bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(), tolerance);
+    public int relate(Vect vect, Tolerance accuracy){
+        return relate(vect.x, vect.y, accuracy);
+    }
+         
+    /**
+     * Get the relation between the bounds of this node and the vector given
+     *
+     * @param vect
+     * @param accuracy
+     * @return
+     */
+    public int relate(VectBuilder vect, Tolerance accuracy){
+        return relate(vect.getX(), vect.getY(), accuracy);
+    }
+    
+    /**
+     * Get the relation between the bounds of this node and the vector given
+     *
+     * @param x
+     * @param y
+     * @param accuracy
+     * @return
+     */
+    public int relate(double x, double y, Tolerance accuracy){
+        return Rect.relate(x, y, 
+                bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(), accuracy);
     }
 
     /**
@@ -172,16 +217,17 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect was null
      */
     public int sizeInteracting(Rect rect) throws NullPointerException {
-        if (rect.contains(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return size;
-        } else if (rect.isDisjoint(bounds)) {
+        } else if (Relation.isDisjoint(relate)) {
             return 0;
         } else if (isBranch()) {
             return a.sizeInteracting(rect) + b.sizeInteracting(rect);
         } else {
             int ret = 0;
             for (int i = 0; i < size; i++) {
-                if (!rect.isDisjoint(itemBounds[i])) {
+                if (!Relation.isDisjoint(rect.relate(itemBounds[i], Tolerance.ZERO))) {
                     ret++;
                 }
             }
@@ -197,16 +243,17 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect was null
      */
     public int sizeOverlapping(Rect rect) throws NullPointerException {
-        if (rect.contains(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return size;
-        } else if (rect.isDisjoint(bounds)) {
+        } else if (Relation.isDisjoint(relate)) {
             return 0;
         } else if (isBranch()) {
             return a.sizeOverlapping(rect) + b.sizeOverlapping(rect);
         } else {
             int ret = 0;
             for (int i = 0; i < size; i++) {
-                if (rect.isOverlapping(itemBounds[i])) {
+                if (Relation.isOverlapping(rect.relate(itemBounds[i], Tolerance.ZERO))) {
                     ret++;
                 }
             }
@@ -231,15 +278,16 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect was null
      */
     public boolean isEmpty(Rect rect) throws NullPointerException {
-        if (rect.contains(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return size == 0;
-        } else if (rect.isDisjoint(bounds)) {
+        } else if (Relation.isDisjoint(relate)) {
             return true;
         } else if (isBranch()) {
             return a.isEmpty(rect) && b.isEmpty(rect);
         } else {
             for (int i = 0; i < size; i++) {
-                if (rect.isOverlapping(itemBounds[i])) {
+                if (Relation.isOverlapping(rect.relate(itemBounds[i], Tolerance.ZERO))) {
                     return false;
                 }
             }
@@ -255,15 +303,16 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect was null
      */
     public boolean isDisjoint(Rect rect) throws NullPointerException {
-        if (rect.contains(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return size == 0;
-        } else if (rect.isDisjoint(bounds)) {
+        } else if (relate == Relation.DISJOINT) {
             return true;
         } else if (isBranch()) {
             return a.isDisjoint(rect) && b.isDisjoint(rect);
         } else {
             for (int i = 0; i < size; i++) {
-                if (!rect.isDisjoint(itemBounds[i])) {
+                if (rect.relate(itemBounds[i], Tolerance.ZERO) == Relation.DISJOINT) {
                     return false;
                 }
             }
@@ -300,15 +349,16 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect or processor was null
      */
     public boolean forInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
-        if (rect.contains(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return forEach(processor);
-        } else if (rect.isDisjoint(bounds)) {
+        } else if (relate == Relation.DISJOINT) {
             return true;
         } else if (isBranch()) {
             return a.forInteracting(rect, processor) && b.forInteracting(rect, processor);
         } else {
             for (int i = 0; i < size; i++) {
-                if (!rect.isDisjoint(itemBounds[i])) {
+                if (rect.relate(itemBounds[i], Tolerance.ZERO) != Relation.DISJOINT) {
                     if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }
@@ -327,15 +377,16 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect or processor was null
      */
     public boolean forOverlapping(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
-        if (rect.contains(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return forEach(processor);
-        } else if (rect.isDisjoint(bounds)) {
+        } else if (relate == Relation.DISJOINT) {
             return true;
         } else if (isBranch()) {
             return a.forOverlapping(rect, processor) && b.forOverlapping(rect, processor);
         } else {
             for (int i = 0; i < size; i++) {
-                if (rect.isOverlapping(itemBounds[i])) {
+                if (Relation.isInside(rect.relate(itemBounds[i], Tolerance.ZERO))) {
                     if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }
@@ -354,7 +405,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @throws NullPointerException if rect was null
      */
     public boolean contains(Rect rect, E value) throws NullPointerException {
-        if (!rect.isContainedBy(bounds)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             return false;
         } else if (isBranch()) {
             return a.contains(rect, value) || b.contains(rect, value);

@@ -42,12 +42,6 @@ public final class PointSet implements Geom {
     static PointSet valueOf(Network network, Tolerance tolerance) throws NullPointerException {
         VectList vects = new VectList();
         network.extractPoints(vects);
-        SpatialNode<Line> links = network.getLinks();
-        for (int v = vects.size(); v-- > 0;) {
-            if (network.pointTouchesLineInternal(vects.getX(v), vects.getY(v), links, tolerance)) {
-                vects.remove(v);
-            }
-        }
         vects.sort();
         return vects.isEmpty() ? null : new PointSet(vects);
     }
@@ -200,36 +194,97 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.x, vect.y, tolerance);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.getX(), vect.getY(), tolerance);
     }
 
-    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
-        if (vects.getBounds().relateInternal(x, y, tolerance) == Relate.OUTSIDE) {
-            return Relate.OUTSIDE;
+    int relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
+        if (vects.getBounds().relateInternal(x, y, tolerance) == Relation.DISJOINT) {
+            return Relation.DISJOINT;
         }
         for (int v = vects.size(); v-- > 0;) {
             if (tolerance.match(vects.getX(v), vects.getY(v), x, y)) {
-                return Relate.TOUCH;
+                int ret = Relation.TOUCH;
+                if(vects.size() > 1){
+                    ret |= Relation.OUTSIDE_OTHER;
+                }
+                return ret;
             }
         }
-        return Relate.OUTSIDE;
+        return Relation.DISJOINT;
+    }
+    
+    public int relate(PointSet other, Tolerance accuracy){
+        if(getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT){
+            return Relation.DISJOINT; // if bounds do not overlap, then content cannot possibly overlap
+        }
+        int matching = 0;
+        int i = numPoints()-1;
+        int j = other.numPoints()-1;
+        while((i >= 0) && (j >= 0)){
+            double ix = getX(i);
+            double iy = getY(i);
+            double jx = getX(j);
+            double jy = getY(j);
+            if(accuracy.match(ix, iy, jx, jy)){
+                matching++;
+                i++;
+                j++;
+            }else if(Vect.compare(ix, iy, jx, jy) < 0){
+                i++;
+            }else{
+                j++;
+            }
+        }
+        int ret = Relation.NULL;
+        if(matching > 0){
+            ret |= Relation.TOUCH;
+        }
+        if(matching < numPoints()){
+            ret |= Relation.OUTSIDE_OTHER;
+        }
+        if(matching < other.numPoints()){
+            ret |= Relation.OUTSIDE;
+        }
+        return ret;
     }
 
     @Override
+    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(geom instanceof Vect){
+            return relate((Vect)geom, accuracy);
+        }else if(geom instanceof PointSet){
+            return relate((PointSet)geom, accuracy);
+        }else{
+            return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        }
+    }
+    
+    @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Vect) {
-            return ((Vect) other).union(this, accuracy);
+            return union((Vect)other, accuracy).simplify();
         } else if (other instanceof PointSet) {
-            return union((PointSet) other, accuracy);
+            return union((PointSet) other, accuracy).simplify();
         } else {
-            return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
+            return toGeoShape().union(other, flatness, accuracy);
         }
+    }
+    
+    public PointSet union(Vect vect, Tolerance accuracy) throws NullPointerException{
+        if(Relation.isTouch(relate(vect, Tolerance.DEFAULT))){
+            return this;
+        }
+        VectList points = new VectList(numPoints() + 1);
+        points.addAll(vects);
+        points.add(vect);
+        points.sort();
+        return new PointSet(points);
     }
 
     /**
@@ -243,13 +298,13 @@ public final class PointSet implements Geom {
         VectList otherVects = other.vects;
         VectList newVects = new VectList(vects.size() + otherVects.size());
         newVects.addAll(vects);
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+        if(getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT){
             newVects.addAll(other.vects);
         }else{
             VectBuilder vect = new VectBuilder();
             for (int i = 0; i < otherVects.size(); i++) {
                 otherVects.getVect(i, vect);
-                if (relate(vect, accuracy) == Relate.OUTSIDE) {
+                if (relate(vect, accuracy) == Relation.DISJOINT) {
                     newVects.add(vect);
                 }
             }
@@ -261,30 +316,6 @@ public final class PointSet implements Geom {
         }
         newVects.sort();
         return new PointSet(newVects);
-    }
-    
-    /**
-     * Get the union of this point set and the geoshape given
-     * @param other
-     * @param accuracy
-     * @return a point set
-     * @throws NullPointerException if other or accuracy was null
-     */
-    public GeoShape union(GeoShape other, Tolerance accuracy) {
-        VectList newVects = new VectList();
-        if(other.points != null){
-            newVects.addAll(other.points.vects);
-        }
-        VectBuilder vect = new VectBuilder();
-        for (int i = 0; i < vects.size(); i++) {
-            vects.getVect(i, vect);
-            if (other.relate(vect, accuracy) == Relate.OUTSIDE) {
-                newVects.add(vect);
-            }
-        }
-        PointSet _points = newVects.isEmpty() ? null : new PointSet(newVects);
-        GeoShape ret = new GeoShape(other.area, other.lines, _points);
-        return ret;
     }
 
     @Override
@@ -304,14 +335,14 @@ public final class PointSet implements Geom {
      * @throws NullPointerException if other or accuracy was null
      */
     public PointSet intersection(Geom other, Tolerance accuracy) throws NullPointerException {
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+        if(getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT){
             return null;
         }
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, vect);
-            if (other.relate(vect, accuracy) != Relate.OUTSIDE) {
+            if (other.relate(vect, accuracy) != Relation.DISJOINT) {
                 ret.add(vect);
             }
         }
@@ -331,14 +362,14 @@ public final class PointSet implements Geom {
     }
 
     public PointSet less(Geom other, Tolerance accuracy) throws NullPointerException {
-        if(getBounds().isDisjoint(other.getBounds(), accuracy)){
+        if(getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT){
             return this;
         }
         VectList ret = new VectList(vects.size());
         VectBuilder vect = new VectBuilder();
         for (int i = 0; i < vects.size(); i++) {
             vects.getVect(i, vect);
-            if (other.relate(vect, accuracy) == Relate.OUTSIDE) {
+            if (other.relate(vect, accuracy) == Relation.DISJOINT) {
                 ret.add(vect);
             }
         }

@@ -164,213 +164,6 @@ public class Rect implements Geom {
     }
 
     /**
-     * Determine if this rect is disjoint from that given (does not touch or share any internal
-     * area). Invalid rects are considered disjoint.
-     *
-     * @param rect
-     * @return true if rects are disjoint or rect was null, false otherwise
-     * @throws NullPointerException if rect was null
-     */
-    public boolean isDisjoint(Rect rect) throws NullPointerException {
-        return disjoint(minX, minY, maxX, maxY, rect.minX, rect.minY, rect.maxX, rect.maxY);
-    }
-
-    /**
-     * Determine if this rect is disjoint from that given (does not touch or share any internal
-     * area). Invalid rects are considered disjoint.
-     *
-     * @param rect
-     * @return true if rects are disjoint or rect was null, false otherwise
-     * @throws NullPointerException if rect was null
-     */
-    public boolean isDisjoint(RectBuilder rect) throws NullPointerException {
-        return rect.isValid() ? disjoint(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()) : false;
-    }
-
-    /**
-     * Determine if this rect is disjoint from that given (does not touch or share any internal
-     * area). Invalid rects are considered disjoint.
-     *
-     * @param rect
-     * @param accuracy
-     * @return true if rects are disjoint or rect was null, false otherwise
-     * @throws NullPointerException if rect was null
-     */
-    public boolean isDisjoint(Rect rect, Tolerance accuracy) throws NullPointerException {
-        return disjoint(minX, minY, maxX, maxY, rect.minX, rect.minY, rect.maxX, rect.maxY, accuracy);
-    }
-
-    /**
-     * Determine if the rect and point given are disjoint and more than the tolerance distance given
-     * away from each other
-     *
-     * @param minX
-     * @param minY
-     * @param maxX
-     * @param maxY
-     * @param x
-     * @param y
-     * @param accuracy
-     * @return
-     * @throws NullPointerException
-     */
-    public static boolean disjoint(double minX, double minY, double maxX, double maxY, double x, double y, Tolerance accuracy) throws NullPointerException {
-        return disjoint(minX, minY, maxX, maxY, x, y, x, y, accuracy);
-    }
-
-    /**
-     * Determine if the rects given are disjoint and more than the tolerance distance given away
-     * from each other
-     *
-     * @param aMinX
-     * @param aMinY
-     * @param aMaxX
-     * @param aMaxY
-     * @param bMinX
-     * @param bMinY
-     * @param bMaxX
-     * @param bMaxY
-     * @param accuracy
-     * @return
-     * @throws NullPointerException
-     */
-    public static boolean disjoint(double aMinX, double aMinY, double aMaxX, double aMaxY,
-            double bMinX, double bMinY, double bMaxX, double bMaxY, Tolerance accuracy) throws NullPointerException {
-        double tolerance = accuracy.tolerance;
-        return ((aMinX - tolerance) > bMaxX)
-                || ((aMinY - tolerance) > bMaxY)
-                || ((aMaxX + tolerance) < bMinX)
-                || ((aMaxY + tolerance) < bMinY);
-    }
-
-    /**
-     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects
-     * are considered disjoint, and never overlap
-     *
-     * @param rect
-     * @return true if overlapping, false otherwise
-     */
-    public boolean isOverlapping(Rect rect) {
-        return overlaps(minX, minY, maxX, maxY, rect.minX, rect.minY, rect.maxX, rect.maxY);
-    }
-
-    /**
-     * Determine if this rect overlaps (Shares some internal area with) that given. Invalid rects
-     * are considered disjoint, and never overlap
-     *
-     * @param rect
-     * @return true if overlapping, false otherwise
-     */
-    public boolean isOverlapping(RectBuilder rect) {
-        return overlaps(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY());
-    }
-
-    /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this)
-     *
-     * @param rect
-     * @return true if contains rect, false otherwise
-     * @throws NullPointerException if rect was null
-     */
-    public boolean contains(Rect rect) throws NullPointerException {
-        return contains(minX, minY, maxX, maxY, rect.minX, rect.minY, rect.maxX, rect.maxY);
-    }
-
-    /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid
-     * rects cannot overlap, and so cannot contain other rects or be contained within other rects
-     *
-     * @param rect
-     * @return true if contains rect, false otherwise or if rect was invalid
-     * @throws NullPointerException if rect was null
-     */
-    public boolean contains(RectBuilder rect) throws NullPointerException {
-        return rect.isValid() ? contains(minX, minY, maxX, maxY, rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()) : false;
-    }
-
-    /**
-     * Determine if this rect covers the geom given. (ie: No part of geom is outside this)
-     *
-     * @param geom
-     * @return true if contains rect, false otherwise
-     * @throws NullPointerException if rect was null
-     */
-    public boolean contains(Geom geom) throws NullPointerException {
-        if (geom instanceof Vect) {
-            return contains((Vect) geom);
-        } else {
-            return contains(geom.getBounds());
-        }
-    }
-
-    static boolean contains(double aMinX, double aMinY, double aMaxX, double aMaxY,
-            double bMinX, double bMinY, double bMaxX, double bMaxY) {
-        return (aMinX <= bMinX) && (aMinY <= bMinY) && (aMaxX >= bMaxX) && (aMaxY >= bMaxY);
-    }
-
-    /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid
-     * rects cannot overlap, and so cannot contain other rects or be contained within other rects
-     *
-     * @param rect
-     * @return true if contains rect, false otherwise or if rect was invalid
-     * @throws NullPointerException if rect was null
-     */
-    public boolean isContainedBy(Rect rect) throws NullPointerException {
-        return contains(rect.minX, rect.minY, rect.maxX, rect.maxY, minX, minY, maxX, maxY);
-    }
-
-    /**
-     * Determine if this rect covers the rect given. (ie: No part of rect is outside this) Invalid
-     * rects cannot overlap, and so cannot contain other rects or be contained within other rects
-     *
-     * @param rect
-     * @return true if contains rect, false otherwise or if rect was invalid
-     * @throws NullPointerException if rect was null
-     */
-    public boolean isContainedBy(RectBuilder rect) throws NullPointerException {
-        return rect.isValid() ? contains(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY(), minX, minY, maxX, maxY) : false;
-    }
-
-    /**
-     * Determine if this rect covers the vect given. (inside or touching)
-     *
-     * @param vect
-     * @return true if contains vect, false otherwise
-     * @throws NullPointerException if vect was null
-     */
-    public boolean contains(Vect vect) throws NullPointerException {
-        return contains(minX, minY, maxX, maxY, vect.getX(), vect.getY());
-    }
-
-    /**
-     * Determine if this rect covers the vect given. (inside or touching)
-     *
-     * @param vect
-     * @return true if contains vect, false otherwise
-     * @throws NullPointerException if vect was null
-     */
-    public boolean contains(VectBuilder vect) throws NullPointerException {
-        return contains(minX, minY, maxX, maxY, vect.getX(), vect.getY());
-    }
-
-    /**
-     * Determine if the rect given contains the point given. (Is inside or touching)
-     *
-     * @param aMinX
-     * @param aMinY
-     * @param aMaxX
-     * @param aMaxY
-     * @param x
-     * @param y
-     * @return
-     */
-    public static boolean contains(double aMinX, double aMinY, double aMaxX, double aMaxY,
-            double x, double y) {
-        return (aMinX <= x) && (aMinY <= y) && (aMaxX >= x) && (aMaxY >= y);
-    }
-
-    /**
      * Get the relation between this rect and the vect given
      *
      * @param vect
@@ -410,28 +203,11 @@ public class Rect implements Geom {
      * @return result
      * @throws NullPointerException if rect was null
      */
-    public Rect intersection(Rect rect) throws NullPointerException {
-        if (isDisjoint(rect)) {
-            return null;
-        } else {
-            return valueOf(Math.max(minX, rect.minX),
-                    Math.max(minY, rect.minY),
-                    Math.min(maxX, rect.maxX),
-                    Math.min(maxY, rect.maxY));
-        }
-    }
-
-    /**
-     * Get the intersection between this and the rect given
-     *
-     * @param rect
-     * @return result
-     * @throws NullPointerException if rect was null
-     */
     public Rect union(Rect rect) throws NullPointerException {
-        if (contains(rect)) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if(!Relation.isOutside(relate)){ // no part of rect is outside this
             return this;
-        } else if (rect.contains(this)) {
+        }else if(!Relation.isOutsideOther(relate)){
             return rect;
         } else {
             return new Rect(Math.min(minX, rect.minX),
@@ -567,70 +343,153 @@ public class Rect implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.x, vect.y, tolerance);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.getX(), vect.getY(), tolerance);
     }
 
-    Relate relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
+    int relateInternal(double x, double y, Tolerance tolerance) throws NullPointerException {
         return relate(x, y, minX, minY, maxX, maxY, tolerance);
     }
 
-    static Relate relate(double x, double y, double minX, double minY, double maxX, double maxY, Tolerance tolerance) throws NullPointerException {
-        double t = tolerance.tolerance;
-        if ((x < (minX - t)) || (x > (maxX + t)) || (y < (minY - t)) || (y > (maxY + t))) {
-            return Relate.OUTSIDE;
-        } else if ((x > (minX + t)) && (x < (maxX - t)) && (y > (minY + t)) && (y < (maxY - t))) {
-            return Relate.INSIDE;
-        } else {
-            return Relate.TOUCH;
+    public static int relate(double x, double y, double minX, double minY, double maxX, double maxY, Tolerance tolerance) throws NullPointerException {
+        
+        int minXRel = tolerance.check(x - minX);
+        if(minXRel < 0){
+            return Relation.DISJOINT;
+        }
+        int minYRel = tolerance.check(y - minY);
+        if(minYRel < 0){
+            return Relation.DISJOINT;
+        }
+        int maxXRel = tolerance.check(x - maxX);
+        if(maxXRel < 0){
+            return Relation.DISJOINT;
+        }
+        int maxYRel = tolerance.check(y - maxY);
+        if(maxYRel < 0){
+            return Relation.DISJOINT;
+        }
+        
+        if((minXRel > 0) && (minYRel > 0) && (maxXRel < 0) && (maxYRel < 0)){
+            return Relation.INSIDE | Relation.OUTSIDE_OTHER;
+        }else if((minXRel == 0) && (minYRel == 0) && (maxXRel == 0) && (maxYRel == 0)){
+            return Relation.TOUCH;
+        }else{
+            return Relation.TOUCH | Relation.OUTSIDE_OTHER;
         }
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (contains(other.getBounds())) {
+    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(geom instanceof Rect){
+            return relate((Rect)geom, accuracy);
+        }
+        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+    }
+    
+    public int relate(Rect other, Tolerance accuracy){
+        return relate(minX, minY, maxX, maxY, other.minX, other.minY, other.maxX, other.maxY, accuracy);
+    }  
+    
+    public int relate(RectBuilder other, Tolerance accuracy){
+        return relate(minX, minY, maxX, maxY, other.minX, other.minY, other.maxX, other.maxY, accuracy);
+    }
+    
+    
+    public static int relate(double aMinX, double aMinY, double aMaxX, double aMaxY, double bMinX, double bMinY, double bMaxX, double bMaxY, Tolerance accuracy) {
+        
+        if( accuracy.check(aMinX - bMaxX) > 0){
+            return Relation.DISJOINT;
+        }
+        if(accuracy.check(aMinY - bMaxY) > 0){
+            return Relation.DISJOINT;
+        }
+        if(accuracy.check(bMinX - aMaxX) > 0){
+            return Relation.DISJOINT;
+        }
+        if(accuracy.check(bMinY - aMaxY) > 0){
+            return Relation.DISJOINT;
+        }
+
+        int minMinX = accuracy.check(aMinX - bMinX);
+        int minMinY = accuracy.check(aMinY - bMinY);
+        int maxMaxX = accuracy.check(aMaxX - bMaxX);
+        int maxMaxY = accuracy.check(aMaxY - bMaxY);
+        
+        int ret = Relation.NULL;
+        if((minMinX < 0) || (minMinY < 0) || (maxMaxX > 0) || (maxMaxY > 0)){
+            ret |= Relation.INSIDE | Relation.OUTSIDE_OTHER;
+        }
+        if((minMinX > 0) || (minMinY > 0) || (maxMaxX < 0) || (maxMaxY < 0)){
+            ret |= Relation.OUTSIDE | Relation.INSIDE_OTHER;
+        }
+        if((minMinX == 0) || (minMinY == 0) || (maxMaxX == 0) || (maxMaxY == 0)){
+            ret |= Relation.TOUCH;
+        }else if(((minMinX > 0) == (maxMaxX > 0)) || ((minMinY > 0) == (maxMaxY > 0))){
+            ret |= Relation.TOUCH;
+        }
+        return ret;
+    }
+    
+    @Override
+    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(other instanceof Rect){
+            return union((Rect)other);
+        }else if (!Relation.isOutside(relate(other.getBounds(), accuracy))) {
             return this;
-        } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
-            return other;
         } else {
-            GeoShape ret = toArea().union(other.toGeoShape(flatness, tolerance), tolerance);
+            GeoShape ret = toArea().union(other.toGeoShape(flatness, accuracy), accuracy);
             return ret.simplify();
         }
     }
 
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (contains(other)) {
-            return other;
-        } else if (isDisjoint(other.getBounds(), accuracy)) {
+        if(other instanceof Rect){
+            return intersection((Rect)other);
+        }
+        int boundsRelation = relate(other.getBounds(), accuracy);
+        if(boundsRelation == Relation.DISJOINT){
             return null;
-        } else if (other instanceof Rect) {
-            Rect otherRect = (Rect) other;
-            if (otherRect.contains(this)) {
-                return this;
-            } else {
-                return intersection(otherRect);
-            }
-        } else {
+        }else if(!Relation.isOutside(boundsRelation)){ // no part of other is outside this
+            return other;
+        }else{ // long way - find intersection by area
             return toArea().intersection(other, flatness, accuracy);
+        }
+    }
+    
+    /**
+     * Get the intersection between this and the rect given
+     *
+     * @param rect
+     * @return result
+     * @throws NullPointerException if rect was null
+     */
+    public Rect intersection(Rect rect) throws NullPointerException {
+        if (relate(rect, Tolerance.ZERO) == Relation.DISJOINT) {
+            return null;
+        } else {
+            return valueOf(Math.max(minX, rect.minX),
+                    Math.max(minY, rect.minY),
+                    Math.min(maxX, rect.maxX),
+                    Math.min(maxY, rect.maxY));
         }
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (!isOverlapping(other.getBounds())) {
+    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        int boundsRelation = relate(other.getBounds(), accuracy);
+        if(boundsRelation == Relation.DISJOINT){
             return this;
-        } else if ((other instanceof Rect) && ((Rect) other).contains(this)) {
-            return null;
+        } else if ((other instanceof Rect) && (!Relation.isOutsideOther(boundsRelation))) {
+            return null; // no part of this is outside the other.
         } else {
-            GeoShape gs = toGeoShape(flatness, tolerance);
-            GeoShape ret = gs.less(other, flatness, tolerance);
-            return ret;
+            return toArea().less(other, flatness, accuracy);
         }
     }
 
@@ -756,41 +615,4 @@ public class Rect implements Geom {
         Vect.check(maxX, "Invalid maxX : {0}");
         Vect.check(maxY, "Invalid maxY : {0}");
     }
-
-    /**
-     * Determine if the ordinates given represent disjoint rectangles (not overlapping or touching)
-     *
-     * @param aMinX
-     * @param aMinY
-     * @param aMaxX
-     * @param aMaxY
-     * @param bMinX
-     * @param bMinY
-     * @param bMaxX
-     * @param bMaxY
-     * @return
-     */
-    public static boolean disjoint(double aMinX, double aMinY, double aMaxX, double aMaxY,
-            double bMinX, double bMinY, double bMaxX, double bMaxY) {
-        return (aMinX > bMaxX) || (aMinY > bMaxY) || (aMaxX < bMinX) || (aMaxY < bMinY);
-    }
-
-    /**
-     * Determine if the ordinates given represent overlapping rectangles (sharing internal area)
-     *
-     * @param aMinX
-     * @param aMinY
-     * @param aMaxX
-     * @param aMaxY
-     * @param bMinX
-     * @param bMinY
-     * @param bMaxX
-     * @param bMaxY
-     * @return
-     */
-    public static boolean overlaps(double aMinX, double aMinY, double aMaxX, double aMaxY,
-            double bMinX, double bMinY, double bMaxX, double bMaxY) {
-        return (aMinX < bMaxX) && (aMinY < bMaxY) && (aMaxX > bMinX) && (aMaxY > bMinY);
-    }
-
 }

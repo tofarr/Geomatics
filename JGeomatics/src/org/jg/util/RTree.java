@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
+import org.jg.geom.Relation;
 import org.jg.util.SpatialNode.NodeProcessor;
 
 /**
@@ -241,7 +242,8 @@ public final class RTree<E> {
     }
 
     static <E> boolean remove(SpatialNode<E> node, Rect bounds, E itemValue) {
-        if (!bounds.isContainedBy(node.bounds)) {
+        int relate = bounds.relate(node.bounds, Tolerance.ZERO);
+        if (Relation.isOutside(relate)) {
             return false;
         } else if (node.isBranch()) {
             boolean ret = remove(node.a, bounds, itemValue)
@@ -279,7 +281,8 @@ public final class RTree<E> {
     }
 
     static <E> int removeOverlapping(SpatialNode<E> node, Rect bounds) {
-        if (bounds.contains(node.bounds)) {
+        int relate = bounds.relate(node.bounds, Tolerance.ZERO);
+        if (!Relation.isOutside(relate)) {
             if (node.isBranch()) {
                 node.a = node.b = null;
                 node.itemBounds = new Rect[INITIAL_CAPACITY];
@@ -289,7 +292,7 @@ public final class RTree<E> {
             node.bounds.reset();
             node.size = 0;
             return ret;
-        } else if (!bounds.isOverlapping(node.bounds)) {
+        } else if (!Relation.isInside(relate)) {
             return 0;
         } else if (node.isBranch()) {
             int ret = removeOverlapping(node.a, bounds) + removeOverlapping(node.b, bounds);
@@ -306,7 +309,7 @@ public final class RTree<E> {
             E[] newItemValues = (E[]) new Object[node.itemValues.length];
             int n = 0;
             for (int i = 0; i < node.size; i++) {
-                if(!bounds.isOverlapping(itemBounds[i])){
+                if(!Relation.isInside(bounds.relate(itemBounds[i], Tolerance.ZERO))){
                     newItemBounds[n] = itemBounds[i];
                     newItemValues[n++] = itemValues[i];
                 }
@@ -335,7 +338,7 @@ public final class RTree<E> {
     }
 
     static <E> int removeInteracting(SpatialNode<E> node, Rect bounds) {
-        if (bounds.contains(node.bounds)) {
+        if (!Relation.isOutside(bounds.relate(node.bounds, Tolerance.ZERO))) {
             if (node.isBranch()) {
                 node.a = node.b = null;
                 node.itemBounds = new Rect[INITIAL_CAPACITY];
@@ -345,7 +348,7 @@ public final class RTree<E> {
             node.bounds.reset();
             node.size = 0;
             return ret;
-        } else if (bounds.isDisjoint(node.bounds)) {
+        } else if (Relation.isDisjoint(bounds.relate(node.bounds, Tolerance.ZERO))) {
             return 0;
         } else if (node.isBranch()) {
             int ret = removeInteracting(node.a, bounds) + removeInteracting(node.b, bounds);
@@ -363,7 +366,7 @@ public final class RTree<E> {
             int n = 0;
             for (int i = 0; i < node.size; i++) {
                 Rect itemBound = itemBounds[i];
-                if(itemBound.isDisjoint(bounds)){
+                if (Relation.isDisjoint(itemBound.relate(bounds, Tolerance.ZERO))) {
                     newItemBounds[n] = itemBound;
                     newItemValues[n++] = itemValues[i];
                 }

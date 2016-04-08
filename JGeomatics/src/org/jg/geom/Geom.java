@@ -92,7 +92,7 @@ public interface Geom extends Cloneable, Serializable {
      * @return relation
      * @throws NullPointerException if vect or tolerance was null
      */
-    Relate relate(Vect vect, Tolerance accuracy) throws NullPointerException;
+    int relate(Vect vect, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the relation between this geometry and the vector given
@@ -102,8 +102,19 @@ public interface Geom extends Cloneable, Serializable {
      * @return relation
      * @throws NullPointerException if vect or tolerance was null
      */
-    Relate relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException;
+    int relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException;
 
+    /**
+     * Get the relation between this geometry and the geometry given
+     *
+     * @param geom geometry
+     * @param flatness
+     * @param accuracy tolerance for inaccuracy
+     * @return relation
+     * @throws NullPointerException if geom, flatness or accuracy was null
+     */
+    int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    
     /**
      * Get the union of this geometry and that given. Any point touching one of
      * the geometries should be touching the result, and any point inside either

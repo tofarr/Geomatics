@@ -204,15 +204,25 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        return match(vect, tolerance) ? Relate.TOUCH : Relate.OUTSIDE;
+    public int relate(Vect vect, Tolerance accuracy) throws NullPointerException {
+        return match(vect, accuracy) ? Relation.TOUCH : Relation.DISJOINT;
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
-        return tolerance.match(x, y, vect.getX(), vect.getY()) ? Relate.TOUCH : Relate.OUTSIDE;
+    public int relate(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+        return accuracy.match(x, y, vect.getX(), vect.getY()) ? Relation.TOUCH : Relation.DISJOINT;
     }
 
+    @Override
+    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if(geom instanceof Vect){
+            return relate((Vect)geom, accuracy);
+        }
+        int ret = geom.relate(this, accuracy);
+        ret = Relation.swap(ret);
+        return ret;
+    }
+    
     @Override
     public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         check(amt, "Invalid buffer amt {0}");
@@ -326,14 +336,11 @@ public final class Vect implements Geom, Comparable<Vect> {
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Vect) {
             return union((Vect) other, accuracy);
-        } else if (other instanceof PointSet) {
-            return union((PointSet) other, accuracy);
-        } else {
-            if (other.relate(this, accuracy) != Relate.OUTSIDE) {
-                return other;
-            }
-            return union(other.toGeoShape(flatness, accuracy), accuracy);
         }
+        if (other.relate(this, accuracy) != Relation.DISJOINT) {
+            return other;
+        }
+        return other.union(this, flatness, accuracy);
     }
 
     public Geom union(Vect other, Tolerance accuracy) {
@@ -347,28 +354,9 @@ public final class Vect implements Geom, Comparable<Vect> {
         return new PointSet(points);
     }
 
-    public PointSet union(PointSet other, Tolerance accuracy) {
-        if (other.relate(this, accuracy) != Relate.OUTSIDE) {
-            return other;
-        }
-        VectList points = new VectList(other.numPoints() + 1);
-        points.addAll(other.vects);
-        points.add(this);
-        points.sort();
-        return new PointSet(points);
-    }
-
-    public GeoShape union(GeoShape other, Tolerance accuracy) {
-        if (other.relate(this, accuracy) != Relate.OUTSIDE) {
-            return other;
-        }
-        PointSet points = (other.points == null) ? toPointSet() : this.union(other.points, accuracy);
-        return new GeoShape(other.area, other.lines, points);
-    }
-
     @Override
     public Vect intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (other.relate(this, tolerance) == Relate.OUTSIDE) {
+        if (other.relate(this, tolerance) == Relation.DISJOINT) {
             return null;
         }
         return this;
@@ -376,7 +364,7 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public Vect less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (other.relate(this, tolerance) == Relate.INSIDE) {
+        if (other.relate(this, tolerance) == Relation.INSIDE) {
             return null;
         }
         return this;
