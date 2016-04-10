@@ -464,15 +464,30 @@ public final class Network implements Serializable, Cloneable {
         return ret;
     }
 
-    public boolean forEachLink(NodeProcessor<Line> processor) throws NullPointerException {
-        return getLinks().forEach(processor);
+    public boolean forEachLink(final LinkProcessor processor) throws NullPointerException {
+        return map.forEach(new VectMapProcessor<VectList>() {
+            @Override
+            public boolean process(double ax, double ay, VectList links) {
+                for(int i = links.size(); i-- > 0;){
+                    double bx = links.getX(i);
+                    double by = links.getY(i);
+                    if(Vect.compare(ax, ay, bx, by) < 0){
+                        if(!processor.process(ax, ay, bx, by)){
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+        });
     }
 
     public boolean forEachVertex(final VertexProcessor processor) throws NullPointerException {
         return map.forEach(new VectMapProcessor<VectList>() {
             @Override
-            public boolean process(double x, double y, VectList value) {
-                return processor.process(x, y, value.size());
+            public boolean process(double x, double y, VectList links) {
+                return processor.process(x, y, links.size());
             }
 
         });
@@ -1199,6 +1214,11 @@ public final class Network implements Serializable, Cloneable {
     public interface VertexProcessor {
 
         public boolean process(double x, double y, int numLinks);
+    }
+    
+    public interface LinkProcessor{
+     
+        public boolean process(double ax, double ay, double bx, double by);
     }
 
     static class Snap implements Comparable<Snap> {

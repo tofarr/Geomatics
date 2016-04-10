@@ -309,10 +309,7 @@ public class LineSet implements Geom {
             Arrays.sort(lines, COMPARATOR);
             return new LineSet(lines);
         }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
+        Network network = Network.valueOf(accuracy, accuracy, this, other);
         LineString[] ret = LineString.parseAllInternal(network);
         return new LineSet(ret);
     }

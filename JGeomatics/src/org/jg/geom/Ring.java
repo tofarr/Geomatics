@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.jg.geom.Network.LinkProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -882,6 +883,44 @@ public class Ring implements Geom {
     public int relate(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException{
         return GeomRelationProcessor.relate(this, other, flatness, accuracy);
     }
+    
+    NEED METHOD FOR NERGING TOUCHING RINGS? NO. JUST ADD TO NETWORK, REMOVE TOUCHING BOTH, AND RE RINGIFY
+    public Area union(final Ring other, final Tolerance accuracy) throws NullPointerException {
+        if(Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))){
+            Area[] areas = new Area[]{new Area(this),new Area(other)};
+            Arrays.sort(areas, COMPARATOR);
+            return new Area(null, areas);
+        }
+        final Network network = Network.valueOf(accuracy, accuracy, this, other);
+        network.forEachLink(new LinkProcessor(){
+            final VectBuilder workingVect = new VectBuilder();
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                workingVect.set((ax + bx) / 2, (ay + by) / 2);
+                int relate = relate(workingVect, accuracy);
+                if(Relation.isInside(relate)){
+                    network.removeLinkInternal(ax, ay, bx, by);
+                    return true;
+                }
+                int otherRelate = relate(workingVect, accuracy);
+                if(Relation.isInside(otherRelate)){
+                    network.removeLinkInternal(ax, ay, bx, by);
+                }
+                return true;
+            }
+        
+        });
+    }
+    
+    
+    
+    Area addNonOverlapping(final Ring other, final Tolerance accuracy) throws NullPointerException {
+        Network network = new Network();
+        
+    }
+    
+    
+    
     
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {

@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import org.jg.geom.Network.LinkProcessor;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
@@ -371,21 +372,21 @@ public class Area implements Geom {
     }
 
     @Override
-    public Relate relate(Vect vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.x, vect.y, tolerance);
     }
 
     @Override
-    public Relate relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
+    public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return relateInternal(vect.getX(), vect.getY(), tolerance);
     }
 
-    public Relate relate(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public int relate(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         Vect.check(x, y);
         return relateInternal(x, y, tolerance);
     }
 
-    Relate relateInternal(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    int relateInternal(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         return Ring.relateInternal(x, y, getLineIndex(), tolerance);
     }
 
@@ -407,8 +408,21 @@ public class Area implements Geom {
         return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
     }
 
-    public Area union(Area other, Tolerance accuracy) {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
+    public Area union(Area other, final Tolerance accuracy) {
+        
+        ADD TO NETWORK.
+                
+        REMOVE INSIDE
+                
+        RINGIFY CCW WITH CW
+                
+        ADD TO NETWORK 
+                
+        REMOVE TOUCHING BOTH
+                
+        RINGIFY
+                
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
             addDisjoint(other, areas);
@@ -416,14 +430,51 @@ public class Area implements Geom {
             Arrays.sort(children, COMPARATOR);
             return new Area(null, children);
         }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        VectBuilder workingVect = new VectBuilder();
-        network.removeInsideOrOutsideInternal(this, accuracy, Relate.INSIDE, workingVect);
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.INSIDE, workingVect);
-        return Area.valueOfInternal(accuracy, network);
+        Network network = Network.valueOf(accuracy, accuracy, this, other);
+        final Network union = new Network();
+        final Network touch = new Network();
+        final VectBuilder workingVect = new VectBuilder();
+        network.forEachLink(new LinkProcessor(){
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                workingVect.set((ax + bx) / 2, (ay + by) / 2);
+                int relate = relate(workingVect, accuracy);
+                if(Relation.isInside(relate)){
+                    return true;
+                }
+                int otherRelate = relate(workingVect, accuracy);
+                if(Relation.isInside(otherRelate)){
+                    return true;
+                }
+                if(Relation.isTouch(relate) && Relation.isTouch(otherRelate)){
+                    touch.addLinkInternal(ax, ay, bx, by);
+                }else{
+                    union.addLinkInternal(ax, ay, bx, by);
+                }
+                return true;
+            }
+        
+        });
+        
+        if(union.numLinks() == 0){
+            return this; // Full overlap
+        }
+        if(touch.numLinks() > 0){
+            VectList vects = union.map.keyList(new VectList());
+            for(int i = vects.size(); i-- > 0;){
+                vects.getVect(i, workingVect);
+                VectList unionLinks = union.map.get(workingVect);
+                while(unionLinks.size() == 1){
+                    VectList touchLinks = touch.map.get(workingVect);
+                    if(touchLinks.size() != 1){ // multiple possible touch links - this will be resolved from the other end of the hang line
+                        break
+                    }
+                }
+            }
+        }
+        
+        return Area.valueOf(accuracy, union);
+        
     }
 
     public Area union(Ring other, Tolerance accuracy) {

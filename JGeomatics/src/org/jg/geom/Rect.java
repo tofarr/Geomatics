@@ -164,39 +164,6 @@ public class Rect implements Geom {
     }
 
     /**
-     * Get the relation between this rect and the vect given
-     *
-     * @param vect
-     * @return relation
-     * @throws NullPointerException if vect was null
-     */
-    public Relate relate(Vect vect) throws NullPointerException {
-        return relate(minX, minY, maxX, maxY, vect.getX(), vect.getY());
-    }
-
-    /**
-     * Get the relation between this rect and the vect given
-     *
-     * @param vect
-     * @return relation
-     * @throws NullPointerException if vect was null
-     */
-    public Relate relate(VectBuilder vect) throws NullPointerException {
-        return relate(minX, minY, maxX, maxY, vect.getX(), vect.getY());
-    }
-
-    static Relate relate(double minX, double minY, double maxX, double maxY,
-            double x, double y) {
-        if ((x < minX) || (y < minY) || (x > maxX) || (y > maxY)) {
-            return Relate.OUTSIDE;
-        } else if ((x == minX) || (y == minY) || (x == maxX) || (y == maxY)) {
-            return Relate.TOUCH;
-        } else {
-            return Relate.INSIDE;
-        }
-    }
-
-    /**
      * Get the intersection between this and the rect given
      *
      * @param rect
@@ -397,7 +364,7 @@ public class Rect implements Geom {
     }  
     
     public int relate(RectBuilder other, Tolerance accuracy){
-        return relate(minX, minY, maxX, maxY, other.minX, other.minY, other.maxX, other.maxY, accuracy);
+        return relate(minX, minY, maxX, maxY, other.getMinX(), other.getMinY(), other.getMaxX(), other.getMaxY(), accuracy);
     }
     
     
