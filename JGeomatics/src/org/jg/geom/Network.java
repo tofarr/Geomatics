@@ -383,9 +383,27 @@ public final class Network implements Serializable, Cloneable {
         Vect.check(bx, by);
         return toggleLinkInternal(ax, ay, bx, by);
     }
+    
+
+    public Network toggleAllLinks(VectList links) {
+        if (links.size() <= 1) {
+            return this;
+        }
+        double ax = links.getX(0);
+        double ay = links.getY(0);
+        for (int i = 1; i < links.size(); i++) {
+            double bx = links.getX(i);
+            double by = links.getY(i);
+            toggleLinkInternal(ax, ay, bx, by);
+            ax = bx;
+            ay = by;
+        }
+        return this;
+    }
+
 
     //does nothing if points are the same
-    public boolean toggleLinkInternal(double ax, double ay, double bx, double by) {
+    boolean toggleLinkInternal(double ax, double ay, double bx, double by) {
         if (hasLink(ax, ay, bx, by)) {
             removeLinkInternal(ax, ay, bx, by);
             return true;

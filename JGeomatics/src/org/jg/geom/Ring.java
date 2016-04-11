@@ -4,15 +4,15 @@ import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import org.jg.geom.Network.LinkProcessor;
+import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 import org.jg.util.VectMap;
 import org.jg.util.VectMap.VectMapProcessor;
+import org.jg.util.VectSet;
 
 /**
  * Immutable 2D Linear Ring. Checks are in place to insure that:
@@ -80,7 +80,7 @@ public class Ring implements Geom {
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
-        List<Ring> rings = parseAllInternal(network, accuracy);
+        List<Ring> rings = parseAllInternal(network, accuracy, true);
         if (rings.size() != 1) {
             throw new IllegalArgumentException("Vectors did not form a single linear ring : " + vects);
         }
@@ -98,87 +98,80 @@ public class Ring implements Geom {
     public static Ring[] parseAll(Tolerance accuracy, Network network) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
-        List<Ring> rings = parseAllInternal(network, accuracy);
+        List<Ring> rings = parseAllInternal(network, accuracy, true);
         return rings.isEmpty() ? EMPTY : rings.toArray(new Ring[rings.size()]);
     }
 
-    static List<Ring> parseAllInternal(Network network, Tolerance accuracy) throws NullPointerException {
-
+    static List<Ring> parseAllInternal(final Network network, Tolerance accuracy, boolean removeHangLines) throws NullPointerException {
+        
         ArrayList<Ring> ret = new ArrayList<>();
-        int numVects = network.numVects();
-        if (numVects == 0) {
-            return ret; //no vectors so no rings
+        
+        //First remove all hang lines from the network - these cannot possibly be part of rings
+        if(removeHangLines){
+            network.forEachVertex(new VertexProcessor(){
+                @Override
+                public boolean process(double x, double y, int numLinks) {
+                    removeHangLines(network, x, y);
+                    return true;
+                }
+            });
         }
+        if(network.numVects() < 2){
+            return ret; // not enough links for a ring, so cannot be any rings!
+        }
+        
+        Network processed = new Network(); // this stores all processed links
 
         //get vectors in correct order - it is important that they are processed left to right
-        VectList allVects = network.getVects(new VectList(numVects));
-
-        // First we need to make sure there are no hang lines (lines ending in a vector linked to only one other vector)
-        // as the algorithm can't process these
+        VectList allVects = network.getVects(new VectList(network.numVects()));
         VectList path = new VectList();
-        for (int v = allVects.size(); v-- > 0;) {
-            removeHangLines(network, allVects.getX(v), allVects.getY(v));
-        }
-
-        //Process network
         VectBuilder workingVect = new VectBuilder();
-        VectMap<Integer> vects = new VectMap<>();
-
-        // For each link in ascending order
-        for (int a = 0; a < allVects.size(); a++) {
+        VectSet workingSet = new VectSet();
+        for(int a = 0; processed.numLinks() < network.numLinks(); a++){
             double ax = allVects.getX(a);
             double ay = allVects.getY(a);
             VectList links = network.map.get(ax, ay);
-            if (links == null) {
-                continue;
-            }
+            
             for (int b = 0; b < links.size(); b++) {
                 double bx = links.getX(b);
                 double by = links.getY(b);
+                if(processed.hasLink(ax, ay, bx, by)){
+                    continue; // link was already processed
+                }
 
-                followRing(ax, ay, bx, by, network, path, workingVect);
-
-                //split path on points of self intersection
-                vects.clear();
-                for (int p = 0; p < path.size(); p++) {
-                    double x = path.getX(p);
-                    double y = path.getY(p);
-                    Integer index = vects.get(x, y);
-                    if (index == null) {
-                        vects.put(x, y, p);
-                    }else{
-                        int numRingVects = p + 1 - index;
-                        if(numRingVects < 4){
-                            numRingVects--;
-                            path.removeAll(index, numRingVects);
-                            p -= numRingVects;
-                            continue;
-                        }
-                        VectList ringPath = new VectList(numRingVects);
-                        ringPath.addAll(path, index, numRingVects);
-                        network.removeAllLinks(ringPath); // remove these links from the network - effectively marking them as processed
-                        numRingVects--;
-                        path.removeAll(index, numRingVects);
-                        p -= numRingVects;
-                        
-                        //Any hanglines produced by removing the ring from the network need to be dealt with
-                        for (int n = numRingVects; n-- > 0;) {
-                            double nx = ringPath.getX(n);
-                            double ny = ringPath.getY(n);
-                            removeHangLines(network, nx, ny);
-                        }
-                        
-                        int minIndex = minIndex(ringPath);
-                        if(minIndex != 0){
-                            ringPath = rotate(ringPath, minIndex);
-                        }
-
-                        ret.add(new Ring(ringPath, null));
-                    }
+                if(!followRing(ax, ay, bx, by, network, path, workingVect, workingSet)){
+                    continue; // has at least 4 points and does not self intersect
+                }
+                
+                double area = getArea(path);
+                if(area > 0){ // if the area is correct, the path is CCW. Otherwise it is invalid
+                    Ring ring = new Ring(path.clone(), area);
+                    ret.add(ring);
+                    processed.addAllLinks(path);
                 }
             }
         }
         return ret;
+    }
+    
+    //follow a ring around the edge of a network
+    static boolean followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectBuilder workingVect, VectSet workingSet) {
+        double ox = ax;
+        double oy = ay;
+        path.clear().add(ax, ay).add(bx, by);
+        workingSet.clear().add(ax, ay).add(bx, by);
+        while (true) {
+            network.nextCW(bx, by, ax, ay, workingVect);
+            path.add(workingVect);
+            if(workingSet.contains(workingVect)){
+                return Vect.compare(ox, oy, workingVect.getX(), workingVect.getY()) == 0;
+            }
+            workingSet.add(workingVect);
+            ax = bx;
+            ay = by;
+            bx = workingVect.getX();
+            by = workingVect.getY();
+        }
     }
 
     static void removeHangLines(Network network, double nx, double ny) {
@@ -197,24 +190,6 @@ public class Ring implements Geom {
             nx = mx;
             ny = my;
             //network.removeLinkInternal(nx, ny, mx, my);
-        }
-    }
-
-    //follow a ring around the edge of a network
-    static void followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectBuilder vect) {
-        double ox = ax;
-        double oy = ay;
-        path.clear().add(ax, ay).add(bx, by);
-        while (true) {
-            network.nextCCW(bx, by, ax, ay, vect);
-            path.add(vect);
-            if (Vect.compare(ox, oy, vect.getX(), vect.getY()) == 0) {
-                return;
-            }
-            ax = bx;
-            ay = by;
-            bx = vect.getX();
-            by = vect.getY();
         }
     }
 
@@ -883,44 +858,6 @@ public class Ring implements Geom {
     public int relate(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException{
         return GeomRelationProcessor.relate(this, other, flatness, accuracy);
     }
-    
-    NEED METHOD FOR NERGING TOUCHING RINGS? NO. JUST ADD TO NETWORK, REMOVE TOUCHING BOTH, AND RE RINGIFY
-    public Area union(final Ring other, final Tolerance accuracy) throws NullPointerException {
-        if(Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))){
-            Area[] areas = new Area[]{new Area(this),new Area(other)};
-            Arrays.sort(areas, COMPARATOR);
-            return new Area(null, areas);
-        }
-        final Network network = Network.valueOf(accuracy, accuracy, this, other);
-        network.forEachLink(new LinkProcessor(){
-            final VectBuilder workingVect = new VectBuilder();
-            @Override
-            public boolean process(double ax, double ay, double bx, double by) {
-                workingVect.set((ax + bx) / 2, (ay + by) / 2);
-                int relate = relate(workingVect, accuracy);
-                if(Relation.isInside(relate)){
-                    network.removeLinkInternal(ax, ay, bx, by);
-                    return true;
-                }
-                int otherRelate = relate(workingVect, accuracy);
-                if(Relation.isInside(otherRelate)){
-                    network.removeLinkInternal(ax, ay, bx, by);
-                }
-                return true;
-            }
-        
-        });
-    }
-    
-    
-    
-    Area addNonOverlapping(final Ring other, final Tolerance accuracy) throws NullPointerException {
-        Network network = new Network();
-        
-    }
-    
-    
-    
     
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
