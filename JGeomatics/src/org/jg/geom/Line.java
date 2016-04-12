@@ -869,13 +869,13 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        return (distSegVectSq(vect) <= (tolerance.tolerance * tolerance.tolerance)) ? (Relation.TOUCH | Relation.OUTSIDE_OTHER) : Relation.DISJOINT;
+        return (distSegVectSq(vect) <= (tolerance.tolerance * tolerance.tolerance)) ? (Relation.TOUCH | Relation.A_OUTSIDE_B) : Relation.DISJOINT;
     }
 
     @Override
     public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
         return (distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY()) <= (tolerance.tolerance * tolerance.tolerance))
-                ? (Relation.TOUCH | Relation.OUTSIDE_OTHER) : Relation.DISJOINT;
+                ? (Relation.TOUCH | Relation.A_OUTSIDE_B) : Relation.DISJOINT;
     }
 
     @Override

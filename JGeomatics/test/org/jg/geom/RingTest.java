@@ -165,9 +165,9 @@ public class RingTest {
         assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 12), TOL));
         assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 14), TOL));
         assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(3, 12), TOL));
-        assertEquals(Relation.OUTSIDE, ring.relate(Vect.valueOf(3, 1), TOL));
-        assertEquals(Relation.OUTSIDE, ring.relate(Vect.valueOf(7, 12), TOL));
-        assertEquals(Relation.INSIDE, ring.relate(Vect.valueOf(2, 3), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ring.relate(Vect.valueOf(3, 1), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ring.relate(Vect.valueOf(7, 12), TOL));
+        assertEquals(Relation.B_INSIDE_A, ring.relate(Vect.valueOf(2, 3), TOL));
     }
 
     @Test

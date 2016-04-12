@@ -743,14 +743,32 @@ public class LineTest {
     }
     
     @Test
-    public void testRelate(){
+    public void testRelate_Vect(){
         Line a = Line.valueOf(0, 0, 100, 100);
-        assertEquals(Relation.TOUCH, a.relate(Vect.valueOf(50,50), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, a.relate(Vect.valueOf(51,50), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, a.relate(Vect.valueOf(50,49), Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH, a.relate(Vect.valueOf(51,50), new Tolerance(1)));
-        assertEquals(Relation.TOUCH, a.relate(new VectBuilder(50,49), new Tolerance(1)));
-        assertEquals(Relation.OUTSIDE, a.relate(new VectBuilder(101,101), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(Vect.valueOf(50,50), Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(Vect.valueOf(51,50), Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(Vect.valueOf(50,49), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(Vect.valueOf(51,50), new Tolerance(1)));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(new VectBuilder(50,49), new Tolerance(1)));
+        assertEquals(Relation.DISJOINT, a.relate(new VectBuilder(101,101), Tolerance.DEFAULT));
+    }
+    
+    @Test
+    public void testRelate_Geom(){
+        Line a = Line.valueOf(0, 0, 100, 100);
+        Line b = Line.valueOf(0, 100, 100, 0);
+        Rect c = Rect.valueOf(0, 0, 100, 100);
+        Rect d = Rect.valueOf(200, 0, 300, 100);
+        Rect e = Rect.valueOf(40, 40, 60, 60);
+        Rect f = Rect.valueOf(-10, -10, 110, 110);
+        
+        assertEquals(Relation.TOUCH, a.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
     }
     
     @Test

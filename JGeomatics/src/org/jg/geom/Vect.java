@@ -215,14 +215,14 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(geom instanceof Vect){
-            return relate((Vect)geom, accuracy);
+        if (geom instanceof Vect) {
+            return relate((Vect) geom, accuracy);
         }
         int ret = geom.relate(this, accuracy);
         ret = Relation.swap(ret);
         return ret;
     }
-    
+
     @Override
     public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         check(amt, "Invalid buffer amt {0}");
@@ -343,6 +343,13 @@ public final class Vect implements Geom, Comparable<Vect> {
         return other.union(this, flatness, accuracy);
     }
 
+    /**
+     * Get the union of this vect and the other vect given
+     *
+     * @param other
+     * @param accuracy
+     * @return
+     */
     public Geom union(Vect other, Tolerance accuracy) {
         if (accuracy.match(x, y, other.x, other.y)) {
             return this;
@@ -364,10 +371,10 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public Vect less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
-        if (other.relate(this, tolerance) == Relation.INSIDE) {
-            return null;
+        if (other.relate(this, tolerance) == Relation.DISJOINT) {
+            return this;
         }
-        return this;
+        return null;
     }
 
     /**

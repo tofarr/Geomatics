@@ -28,7 +28,7 @@ class VectRelationProcessor implements NodeProcessor<Line> {
     public void reset(double x, double y) {
         this.x = x;
         this.y = y;
-        relation = Relation.OUTSIDE;
+        relation = Relation.B_OUTSIDE_A;
         touchesLess = touchesGreater = false;
     }
 
@@ -109,7 +109,7 @@ class VectRelationProcessor implements NodeProcessor<Line> {
     }
 
     private void flipRelation() {
-        relation = (relation == Relation.OUTSIDE) ? Relation.INSIDE : Relation.OUTSIDE;
+        relation = (relation == Relation.B_OUTSIDE_A) ? Relation.B_INSIDE_A : Relation.B_OUTSIDE_A;
     }
 
 }

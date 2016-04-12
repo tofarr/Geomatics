@@ -79,8 +79,8 @@ public final class GeomRelationProcessor implements VectMapProcessor<VectList> {
     }
     
     void process(){
-        int relateA = a.relate(workingVect, accuracy);
-        int relateB = Relation.swap(b.relate(workingVect, accuracy));
+        int relateA = a.relate(workingVect, accuracy) & (Relation.TOUCH | Relation.B_INSIDE_A | Relation.B_OUTSIDE_A);
+        int relateB = Relation.swap(b.relate(workingVect, accuracy) & (Relation.TOUCH | Relation.B_INSIDE_A | Relation.B_OUTSIDE_A));
         
         //Considered a touch only if touching both
         boolean touchA = Relation.isTouch(relateA);

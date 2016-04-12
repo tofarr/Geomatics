@@ -35,7 +35,7 @@ public class RelationProcessorTest {
         VectRelationProcessor processor = new VectRelationProcessor(Tolerance.DEFAULT, 3, 7);
         Line line = Line.valueOf(0, 5, 6, 5);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.OUTSIDE, processor.getRelation());
+        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
         
         line = Line.valueOf(0, 7, 2, 7);
         assertTrue(processor.process(line.getBounds(), line));
@@ -63,28 +63,28 @@ public class RelationProcessorTest {
         //Line line = Line.valueOf(5, 4, 8, 8);
         Line line = Line.valueOf(7, 4, 12, 6.9999);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.OUTSIDE, processor.getRelation());
+        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
         
         line = Line.valueOf(-1, 4, -6, 7.0001);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.OUTSIDE, processor.getRelation());
+        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
         
         line = Line.valueOf(7, 4, 12, 7);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.OUTSIDE, processor.getRelation());
+        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.OUTSIDE, processor.getRelation());
+        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
         
         assertTrue(processor.process(line.getBounds(), line));
         
         line = Line.valueOf(7, 10, 12, 7);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.INSIDE, processor.getRelation());
+        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
         
         processor = new VectRelationProcessor(Tolerance.DEFAULT, 3, 7);
         assertTrue(processor.process(line.getBounds(), line));
         line = Line.valueOf(7, 4, 12, 7);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.INSIDE, processor.getRelation());
+        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
     }
 }

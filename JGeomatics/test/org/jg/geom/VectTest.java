@@ -175,7 +175,7 @@ public class VectTest {
 
 
     @Test
-    public void testRelate() {
+    public void testRelate_Vect() {
         Tolerance tolerance = new Tolerance(0.15);
         assertEquals(Relation.TOUCH, Vect.valueOf(2, 3).relate(Vect.valueOf(2, 3), tolerance));
         assertEquals(Relation.TOUCH, Vect.valueOf(2, 3).relate(Vect.valueOf(2.1, 3), tolerance));
@@ -186,6 +186,16 @@ public class VectTest {
         assertEquals(Relation.DISJOINT, Vect.valueOf(2, 3).relate(new VectBuilder(2.2, 3.2), tolerance));
         assertEquals(Relation.DISJOINT, Vect.valueOf(2, 3).relate(new VectBuilder(-2, 3), tolerance));
         assertEquals(Relation.DISJOINT, Vect.valueOf(2, 3).relate(Vect.valueOf(2, -3), tolerance));
+    }
+
+    @Test
+    public void testRelate_Geom() {
+        Tolerance tolerance = new Tolerance(0.15);
+        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 20), tolerance, tolerance));
+        assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), tolerance, tolerance));
+        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), tolerance, new Tolerance(1)));
+        assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), tolerance, tolerance));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), tolerance, new Tolerance(1)));
     }
 
     @Test
@@ -480,10 +490,10 @@ public class VectTest {
         assertSame(gs, b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
-        assertEquals("[\"GS\",[\"PS\", 10,20, 10,25, 10,30]]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        assertEquals("[\"PS\", 10,20, 10,25, 10,30]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
         
         gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
-        assertEquals("[\"GS\",[\"PS\", 10,20, 10,25]]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        assertEquals("[\"PS\", 10,20, 10,25]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
         
         PointSet mp = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25));
         assertSame(mp, b.union(mp, Tolerance.FLATNESS, Tolerance.DEFAULT));
@@ -507,9 +517,9 @@ public class VectTest {
     public void testLess(){
         Rect rect = Rect.valueOf(10, 20, 30, 40);
         Vect a = Vect.valueOf(20, 20);
-        assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         a = Vect.valueOf(10, 30);
-        assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull( a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         a = Vect.valueOf(20, 30);
         assertNull(a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
         

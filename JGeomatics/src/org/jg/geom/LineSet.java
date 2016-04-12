@@ -319,7 +319,7 @@ public class LineSet implements Geom {
         if (Relation.isDisjoint(other.getBounds().relate(getBounds(), accuracy))) { // quick way - disjoint
             return null;
         }
-        final Network network = Network.valueOf(accuracy, flatness, other, other);
+        final Network network = Network.valueOf(accuracy, flatness, this, other);
         final Network intersection = new Network();
         network.map.forEach(new VectMapProcessor<VectList>(){
             final VectBuilder workingVect = new VectBuilder();
@@ -363,7 +363,7 @@ public class LineSet implements Geom {
         if (Relation.isDisjoint(other.getBounds().relate(getBounds(), accuracy))) { // quick way - disjoint
             return this;
         }
-        final Network network = Network.valueOf(accuracy, flatness, other, other);
+        final Network network = Network.valueOf(accuracy, flatness, this, other);
         final Network less = new Network();
         network.map.forEach(new VectMapProcessor<VectList>(){
             final VectBuilder workingVect = new VectBuilder();

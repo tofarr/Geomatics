@@ -237,34 +237,34 @@ public class LineSetTest {
         assertEquals(105, bounds.maxY, 0.1);
         assertEquals(4604, area.getArea(), 1);
 
-        assertEquals(Relation.OUTSIDE, area.relate(-10, 50, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(-10, 50, TOL));
         assertEquals(Relation.TOUCH, area.relate(Vect.valueOf(-5, 50), TOL));
-        assertEquals(Relation.INSIDE, area.relate(new VectBuilder(0, 50), TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(new VectBuilder(0, 50), TOL));
         assertEquals(Relation.TOUCH, area.relate(5, 50, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(25, 50, TOL));
-        assertEquals(Relation.INSIDE, area.relate(50, 50, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(75, 50, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(25, 50, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(50, 50, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(75, 50, TOL));
         assertEquals(Relation.TOUCH, area.relate(95, 50, TOL));
-        assertEquals(Relation.INSIDE, area.relate(100, 50, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(100, 50, TOL));
         assertEquals(Relation.TOUCH, area.relate(105, 50, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(110, 50, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(110, 50, TOL));
     }
 
     @Test
     public void testRelate_Vect_Tolerance() {
         LineSet ls = LineSet.valueOf(TOL, 0,0, 100,100, 200,0, 200,100, 100,0, 0,100);
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(0, 0), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(-10, 0), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(-10, 0), TOL));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(50, 50), TOL));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(100, 100), TOL));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(150, 50), TOL));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(200, 0), TOL));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(200, 50), TOL));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(200, 100), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(210, 50), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(200, 110), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(175, 50), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(25, 50), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(210, 50), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(200, 110), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(175, 50), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(25, 50), TOL));
         try{
             ls.relate((Vect)null, TOL);
             fail("Exception expected");
@@ -281,17 +281,17 @@ public class LineSetTest {
     public void testRelate_VectBuilder_Tolerance() {
         LineSet ls = LineSet.valueOf(TOL, 0,0, 100,100, 200,0, 200,100, 100,0, 0,100);
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(0, 0), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(-10, 0), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(new VectBuilder(-10, 0), TOL));
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(50, 50), TOL));
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(100, 100), TOL));
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(150, 50), TOL));
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(200, 0), TOL));
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(200, 50), TOL));
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(200, 100), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(210, 50), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(200, 110), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(175, 50), TOL));
-        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(25, 50), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(new VectBuilder(210, 50), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(new VectBuilder(200, 110), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(new VectBuilder(175, 50), TOL));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(new VectBuilder(25, 50), TOL));
         try{
             ls.relate((VectBuilder)null, TOL);
             fail("Exception expected");

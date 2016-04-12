@@ -211,7 +211,7 @@ public final class PointSet implements Geom {
             if (tolerance.match(vects.getX(v), vects.getY(v), x, y)) {
                 int ret = Relation.TOUCH;
                 if(vects.size() > 1){
-                    ret |= Relation.OUTSIDE_OTHER;
+                    ret |= Relation.A_OUTSIDE_B;
                 }
                 return ret;
             }
@@ -246,10 +246,10 @@ public final class PointSet implements Geom {
             ret |= Relation.TOUCH;
         }
         if(matching < numPoints()){
-            ret |= Relation.OUTSIDE_OTHER;
+            ret |= Relation.A_OUTSIDE_B;
         }
         if(matching < other.numPoints()){
-            ret |= Relation.OUTSIDE;
+            ret |= Relation.B_OUTSIDE_A;
         }
         return ret;
     }

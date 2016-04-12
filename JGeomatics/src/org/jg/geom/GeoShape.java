@@ -267,7 +267,7 @@ public class GeoShape implements Geom {
         if (area != null) {
             return area.relateInternal(x, y, tolerance);
         }
-        return Relation.OUTSIDE;
+        return Relation.DISJOINT;
     }
 
     @Override

@@ -563,13 +563,13 @@ public class LineStringTest {
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(100, 50), Tolerance.DEFAULT));
         assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(100, 100), Tolerance.DEFAULT));
         
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(1, 50), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(24, 25), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(50, -1), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(75, 1), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(99, 1), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(99, 50), Tolerance.DEFAULT));
-        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(101, 100), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(1, 50), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(new VectBuilder(24, 25), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(50, -1), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(75, 1), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(99, 1), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(99, 50), Tolerance.DEFAULT));
+        assertEquals(Relation.B_OUTSIDE_A, ls.relate(Vect.valueOf(101, 100), Tolerance.DEFAULT));
         
         assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(24, 25), new Tolerance(1)));
     }

@@ -383,37 +383,37 @@ public class AreaTest {
                 return true;
             }
         });
-        assertEquals(Relation.OUTSIDE, area.relate(90, 20, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(120, 20, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(60, 90, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(90, 20, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(120, 20, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(60, 90, TOL));
         
-        assertEquals(Relation.INSIDE, area.relate(-75, 10, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(-65, 10, TOL));
-        assertEquals(Relation.INSIDE, area.relate(-55, 10, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(-45, 10, TOL));
-        assertEquals(Relation.INSIDE, area.relate(0, 10, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(45, 10, TOL));
-        assertEquals(Relation.INSIDE, area.relate(55, 10, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(65, 10, TOL));
-        assertEquals(Relation.INSIDE, area.relate(75, 10, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(-75, 10, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(-65, 10, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(-55, 10, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(-45, 10, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(0, 10, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(45, 10, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(55, 10, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(65, 10, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(75, 10, TOL));
         
-        assertEquals(Relation.INSIDE, area.relate(-75, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(-65, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(-55, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(-45, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(0, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(45, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(55, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(65, 65, TOL));
-        assertEquals(Relation.INSIDE, area.relate(75, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(-75, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(-65, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(-55, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(-45, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(0, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(45, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(55, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(65, 65, TOL));
+        assertEquals(Relation.B_INSIDE_A, area.relate(75, 65, TOL));
         
-        assertEquals(Relation.OUTSIDE, area.relate(-65, 55, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(-55, 55, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(-45, 55, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(0, 55, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(45, 55, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(55, 55, TOL));
-        assertEquals(Relation.OUTSIDE, area.relate(65, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(-65, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(-55, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(-45, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(0, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(45, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(55, 55, TOL));
+        assertEquals(Relation.B_OUTSIDE_A, area.relate(65, 55, TOL));
     }
     
     @Test

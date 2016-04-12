@@ -482,8 +482,8 @@ public class LineString implements Geom {
 
     int relateInternal(double x, double y, Tolerance accuracy) {
         RelateProcessor processor = new RelateProcessor(x, y, accuracy);
-        return Relation.OUTSIDE_OTHER | (getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor)
-                ? Relation.OUTSIDE : Relation.TOUCH);
+        return Relation.A_OUTSIDE_B | (getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor)
+                ? Relation.B_OUTSIDE_A : Relation.TOUCH);
     }
 
     @Override
@@ -512,7 +512,8 @@ public class LineString implements Geom {
 
     @Override
     public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return toLineSet().less(other, flatness, accuracy);
+        LineSet ret = toLineSet().less(other, flatness, accuracy);
+        return (ret == null) ? null : ret.simplify();
     }
 
     /**

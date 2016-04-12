@@ -334,20 +334,20 @@ public class Rect implements Geom {
             return Relation.DISJOINT;
         }
         int maxXRel = tolerance.check(x - maxX);
-        if(maxXRel < 0){
+        if(maxXRel > 0){
             return Relation.DISJOINT;
         }
         int maxYRel = tolerance.check(y - maxY);
-        if(maxYRel < 0){
+        if(maxYRel > 0){
             return Relation.DISJOINT;
         }
         
         if((minXRel > 0) && (minYRel > 0) && (maxXRel < 0) && (maxYRel < 0)){
-            return Relation.INSIDE | Relation.OUTSIDE_OTHER;
+            return Relation.B_INSIDE_A | Relation.A_OUTSIDE_B;
         }else if((minXRel == 0) && (minYRel == 0) && (maxXRel == 0) && (maxYRel == 0)){
             return Relation.TOUCH;
         }else{
-            return Relation.TOUCH | Relation.OUTSIDE_OTHER;
+            return Relation.TOUCH | Relation.A_OUTSIDE_B;
         }
     }
 
@@ -390,10 +390,10 @@ public class Rect implements Geom {
         
         int ret = Relation.NULL;
         if((minMinX < 0) || (minMinY < 0) || (maxMaxX > 0) || (maxMaxY > 0)){
-            ret |= Relation.INSIDE | Relation.OUTSIDE_OTHER;
+            ret |= Relation.B_INSIDE_A | Relation.A_OUTSIDE_B;
         }
         if((minMinX > 0) || (minMinY > 0) || (maxMaxX < 0) || (maxMaxY < 0)){
-            ret |= Relation.OUTSIDE | Relation.INSIDE_OTHER;
+            ret |= Relation.B_OUTSIDE_A | Relation.A_INSIDE_B;
         }
         if((minMinX == 0) || (minMinY == 0) || (maxMaxX == 0) || (maxMaxY == 0)){
             ret |= Relation.TOUCH;
