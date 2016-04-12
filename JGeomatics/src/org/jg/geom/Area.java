@@ -8,12 +8,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import org.jg.geom.Network.LinkProcessor;
+import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
-import org.jg.util.VectMap.VectMapProcessor;
 import org.jg.util.VectSet;
 
 /**
@@ -104,14 +104,14 @@ public class Area implements Geom {
         if (children.length == 0) {
             return shell.getBounds();
         } else {
-            RectBuilder bounds = new RectBuilder();
+            RectBuilder allBounds = new RectBuilder();
             if (shell != null) {
-                shell.addBoundsTo(bounds);
+                shell.addBoundsTo(allBounds);
             }
             for (Area ringSet : children) {
-                bounds.add(ringSet.getBounds());
+                allBounds.add(ringSet.getBounds());
             }
-            return bounds.build();
+            return allBounds.build();
         }
     }
 
@@ -235,10 +235,10 @@ public class Area implements Geom {
     public SpatialNode<Line> getLineIndex() {
         SpatialNode<Line> ret = lineIndex;
         if (ret == null) {
-            Rect[] bounds = new Rect[numLines()];
-            Line[] lines = new Line[bounds.length];
-            addLines(bounds, lines, 0);
-            RTree<Line> tree = new RTree<>(bounds, lines);
+            Rect[] allBounds = new Rect[numLines()];
+            Line[] allLines = new Line[allBounds.length];
+            addLines(allBounds, allLines, 0);
+            RTree<Line> tree = new RTree<>(allBounds, allLines);
             ret = tree.getRoot();
             lineIndex = ret;
         }
@@ -394,6 +394,11 @@ public class Area implements Geom {
         return Ring.relateInternal(x, y, getLineIndex(), tolerance);
     }
 
+    @Override
+    public int relate(final Geom geom, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
+        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+    }
+
     private static void addDisjoint(Area area, List<Area> results) {
         if (area.shell == null) {
             results.addAll(Arrays.asList(area.children));
@@ -409,24 +414,10 @@ public class Area implements Geom {
         } else if (other instanceof Ring) {
             return union((Ring) other, accuracy).simplify();
         }
-        return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
+        return toGeoShape().union(other, flatness, accuracy);
     }
 
     public Area union(Area other, final Tolerance accuracy) {
-        
-        /*
-        ADD TO NETWORK.
-                
-        REMOVE INSIDE
-                
-        RINGIFY CCW WITH CW
-                
-        ADD TO NETWORK 
-                
-        REMOVE TOUCHING BOTH
-                
-        RINGIFY
-        */        
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
@@ -462,7 +453,7 @@ public class Area implements Geom {
         
         List<Ring> rings = Ring.parseAllInternal(network, accuracy, false);
         
-        if(!touching[0]){ // there were no touching lines - we are done!
+        if(!touching[0]){ // there were no touching allLines - we are done!
             return valueOfInternal(rings);
         }
         
@@ -479,138 +470,57 @@ public class Area implements Geom {
         return union(other.toArea(), accuracy);
     }
 
-    //Kill me!
-    public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
-        Area _area = (other.area == null) ? this : union(other.area, accuracy);
-        if(Relation.isDisjoint(other.getBounds().relate(other.getBounds(), accuracy))){
-            return new GeoShape(_area, other.lines, other.points);
-        }
-        LineSet _lines = (other.lines == null) ? null : other.lines.less(_area, accuracy, accuracy);
-        PointSet _points = (other.points == null) ? null : other.points.less(_area, accuracy);
-        return new GeoShape(_area, _lines, _points);
-    }
-    
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        if (other instanceof Area) {
+            GeoShape ret = intersection((Area) other, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        } else if (other instanceof Ring) {
+            GeoShape ret = intersection((Ring) other, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        }
+        return toGeoShape().intersection(other, flatness, accuracy);
+    }
+    
+    public GeoShape intersection(Ring other, Tolerance accuracy) throws NullPointerException{
+        return intersection(other.toArea(), accuracy);
+    }
+
+    public GeoShape intersection(final Area other, final Tolerance accuracy) throws NullPointerException {       
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return null;
         }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network, flatness, accuracy);
-        network.explicitIntersections(accuracy);
-        VectBuilder workingVect = new VectBuilder();
-        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
-        if(network.numVects() == 0){
-            return null;
-        }
-        GeoShape ret = GeoShape.valueOfInternal(network, accuracy);
-        return ret.simplify();
-    }
-
-    public GeoShape intersection(Area other, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
-            return null;
-        }
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        VectBuilder workingVect = new VectBuilder();
-        network.removeInsideOrOutsideInternal(this, accuracy, Relate.OUTSIDE, workingVect);
-        network.removeInsideOrOutsideInternal(other, accuracy, Relate.OUTSIDE, workingVect);
-        return GeoShape.valueOfInternal(network, accuracy);
-    }
-    
-    public Area less(final Area other, final Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
-            return this;
-        }
-        
-        final VectBuilder workingVect = new VectBuilder();
-        
-        Network network = new Network();
-        addTo(network);
-        other.addTo(network);
-        network.explicitIntersections(accuracy);
-        network.snap(accuracy);
-        
-        //Add all links to ret where inside this or outside other...
-        final Network ret = new Network();
-        network.map.forEach(new VectMapProcessor<VectList>(){
+        final Network network = Network.valueOf(accuracy, accuracy, this, other);
+        network.forEachVertex(new VertexProcessor(){
             @Override
-            public boolean process(double ax, double ay, VectList links) {
-                //remove any link which touches both and is in the union
-                for(int i = links.size(); i-- > 0;){
-                    double bx = links.getX(i);
-                    double by = links.getY(i);
-                    if(Vect.compare(ax, ay, bx, by) < 0){
-                        workingVect.set((ax + bx) / 2, (ay + by) / 2);
-                        if((relate(workingVect, accuracy) == Relate.INSIDE)
-                                || (other.relate(workingVect, accuracy) == Relate.OUTSIDE)){
-                            ret.addLinkInternal(ax, ay, bx, by);
-                        }
-                    }
+            public boolean process(double x, double y, int numLinks) {
+                if(Relation.isDisjoint(relateInternal(x, y, accuracy))
+                    || Relation.isDisjoint(other.relateInternal(x, y, accuracy))){
+                    network.removeVertexInternal(x, y);
                 }
                 return true;
             }
         });
-        
-        if(ret.numVects() == 0){
-            return null; // nothing outside
-        }
-        
-        //Check for hanglines. At each hangline, follow the path touching both
-        VectList vects = new VectList(ret.numVects());
-        ret.map.keyList(vects);
-        VectList path = null;
-        for(int v = vects.size(); v-- > 0;){
-            double ax = vects.getX(v);
-            double ay = vects.getY(v);
-            VectList links = ret.map.get(ax, ay);
-            if(links.size() == 1){ // We have a hangline. Follow path joining both
-               if(path == null){
-                    path = new VectList();
-               }else{
-                    path.clear();
-               }
-               links = network.map.get(ax, ay); // get path from original
-               for(int i = links.size(); i-- > 0;){
-                   double bx = links.getX(i);
-                   double by = links.getY(i);
-                   workingVect.set((ax + bx) / 2, (ay + by) / 2);
-                   if((relate(workingVect, accuracy) == Relate.TOUCH)
-                                && (other.relate(workingVect, accuracy) == Relate.TOUCH)){
-                       while(true){
-                            ret.addLink(ax, ay, bx, by);
-                            links = ret.map.get(bx, by);
-                            if(links.size() == 2){
-                                break;
-                            }
-                            double cx = links.getX(0);
-                            double cy = links.getY(0);
-                            if(cx == ax && cy == ay){
-                                cx = links.getX(1);
-                                cy = links.getY(1);
-                            }
-                            ax = bx;
-                            ay = by;
-                            bx = cx;
-                            by = cy;
-                       }
-                       break;
-                   }  
-               }
+        network.forEachLink(new LinkProcessor(){
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                double x = (ax + bx) / 2;
+                double y = (ay + by) / 2;
+                if(Relation.isDisjoint(relateInternal(x, y, accuracy))
+                    || Relation.isDisjoint(other.relateInternal(x, y, accuracy))){
+                    network.removeLinkInternal(ax, ay, bx, by);
+                }
+                return true;
             }
-        }
         
-        return Area.valueOfInternal(accuracy, ret);
+        });
+        GeoShape ret = GeoShape.valueOfInternal(network, accuracy);
+        return ret;
     }
     
     @Override
     public Area less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if (getBounds().isDisjoint(other.getBounds(), accuracy)) { // Skip networking polygonization - shortcut
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return this;
         }
         if(other instanceof Ring){
@@ -618,10 +528,69 @@ public class Area implements Geom {
         }else if(other instanceof Area){
             return less((Area)other, accuracy);
         }else{
-            GeoShape geoShape = other.toGeoShape(flatness, accuracy);
-            return (geoShape.area == null) ? this : less(geoShape.area, accuracy);
+            Area otherArea = other.toGeoShape(flatness, accuracy).area;
+            if(otherArea == null){
+                return this;
+            }
+            return less(otherArea, accuracy);
         }
-    }  
+    }
+
+    public Area less(final Ring other, final Tolerance accuracy) throws NullPointerException {
+        return less(other.toArea(), accuracy);
+    }
+    
+    public Area less(final Area other, final Tolerance accuracy) throws NullPointerException {
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
+            return this;
+        }
+        final Network network = Network.valueOf(accuracy, accuracy, this, other);
+        network.forEachVertex(new VertexProcessor(){
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                if(Relation.isDisjoint(relateInternal(x, y, accuracy))
+                        || Relation.isInside(other.relateInternal(x, y, accuracy))){
+                    network.removeVertexInternal(x, y);
+                }
+                return true;
+            }
+        });
+        final Network touching = new Network();
+        network.forEachLink(new LinkProcessor(){
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                double x = (ax + bx) / 2;
+                double y = (ay + by) / 2;
+                int relate = relateInternal(x, y, accuracy);
+                int otherRelate = other.relateInternal(x, y, accuracy);
+                if(Relation.isDisjoint(relate)
+                    || Relation.isInside(otherRelate)){
+                    network.removeLinkInternal(ax, ay, bx, by);
+                }
+                if(Relation.isTouch(relate) && Relation.isTouch(otherRelate)){
+                    touching.addLinkInternal(ax, ay, bx, by);
+                }
+                return true;
+            }
+        });
+        
+        if(touching.numLinks() == 0){ // No common allLines, so make area and be done
+            return Area.valueOfInternal(accuracy, network);
+        }
+        
+        List<Ring> rings = Ring.parseAllInternal(network, accuracy, true);
+        for(int i = rings.size(); i-- > 0;){
+            Ring ring = rings.get(i);
+            int numLinksBefore = touching.numLinks();
+            ring.addTo(touching);
+            int numLinksAfter = touching.numLinks();
+            if(numLinksBefore != numLinksAfter){
+                rings.remove(i);
+            }
+        }
+
+        return Area.valueOfInternal(rings);
+    }
     
     @Override
     public int hashCode() {
@@ -704,12 +673,11 @@ public class Area implements Geom {
             }
             int i = 0;
             while (true) {
-                Relate relate = shell.relate(ring.vects.getX(i), ring.vects.getY(i), Tolerance.ZERO);
-                switch (relate) {
-                    case INSIDE:
-                        return true;
-                    case OUTSIDE:
-                        return false;
+                int relate = shell.relate(ring.vects.getX(i), ring.vects.getY(i), Tolerance.ZERO);
+                if(Relation.isInside(relate)){
+                    return true;
+                }else if(Relation.isOutside(relate)){
+                    return false;
                 }
                 i++;
             }

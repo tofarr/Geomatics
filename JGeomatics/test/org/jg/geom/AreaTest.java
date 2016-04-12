@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jg.geom.Network.LinkProcessor;
 import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -369,49 +370,50 @@ public class AreaTest {
         network.forEachVertex(new VertexProcessor(){
             @Override
             public boolean process(double x, double y, int numLinks) {
-                assertEquals(Relate.TOUCH, area.relate(x, y, TOL));
+                assertEquals(Relation.TOUCH, area.relate(x, y, TOL));
                 return true;
             }
         });
-        network.forEachLink(new NodeProcessor<Line>(){
+        network.forEachLink(new LinkProcessor(){
             @Override
-            public boolean process(Rect bounds, Line value) {
-                assertEquals(Relate.TOUCH, area.relate(value.getMid(), TOL));
-                assertEquals(Relate.TOUCH, area.relate(value.getMid(new VectBuilder()), TOL));
+            public boolean process(double ax, double ay, double bx, double by) {
+                VectBuilder mid = new VectBuilder(ax, ay).add(bx, by).div(2);
+                assertEquals(Relation.TOUCH, area.relate(mid, TOL));
+                assertEquals(Relation.TOUCH, area.relate(mid.build(), TOL));
                 return true;
             }
         });
-        assertEquals(Relate.OUTSIDE, area.relate(90, 20, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(120, 20, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(60, 90, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(90, 20, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(120, 20, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(60, 90, TOL));
         
-        assertEquals(Relate.INSIDE, area.relate(-75, 10, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(-65, 10, TOL));
-        assertEquals(Relate.INSIDE, area.relate(-55, 10, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(-45, 10, TOL));
-        assertEquals(Relate.INSIDE, area.relate(0, 10, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(45, 10, TOL));
-        assertEquals(Relate.INSIDE, area.relate(55, 10, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(65, 10, TOL));
-        assertEquals(Relate.INSIDE, area.relate(75, 10, TOL));
+        assertEquals(Relation.INSIDE, area.relate(-75, 10, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(-65, 10, TOL));
+        assertEquals(Relation.INSIDE, area.relate(-55, 10, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(-45, 10, TOL));
+        assertEquals(Relation.INSIDE, area.relate(0, 10, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(45, 10, TOL));
+        assertEquals(Relation.INSIDE, area.relate(55, 10, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(65, 10, TOL));
+        assertEquals(Relation.INSIDE, area.relate(75, 10, TOL));
         
-        assertEquals(Relate.INSIDE, area.relate(-75, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(-65, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(-55, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(-45, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(0, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(45, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(55, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(65, 65, TOL));
-        assertEquals(Relate.INSIDE, area.relate(75, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(-75, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(-65, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(-55, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(-45, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(0, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(45, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(55, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(65, 65, TOL));
+        assertEquals(Relation.INSIDE, area.relate(75, 65, TOL));
         
-        assertEquals(Relate.OUTSIDE, area.relate(-65, 55, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(-55, 55, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(-45, 55, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(0, 55, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(45, 55, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(55, 55, TOL));
-        assertEquals(Relate.OUTSIDE, area.relate(65, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(-65, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(-55, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(-45, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(0, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(45, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(55, 55, TOL));
+        assertEquals(Relation.OUTSIDE, area.relate(65, 55, TOL));
     }
     
     @Test
@@ -553,7 +555,7 @@ public class AreaTest {
         Tolerance accuracy = null;
         Area instance = null;
         GeoShape expResult = null;
-        GeoShape result = instance.union(other, accuracy);
+        Geom result = instance.union(other, Tolerance.FLATNESS, accuracy);
         assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");

@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
+import org.jg.geom.Relation;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -152,8 +153,8 @@ public class RTreeTest {
             checkIntegrity(node.a);
             checkIntegrity(node.b);
             assertEquals(node.size, node.a.size + node.b.size);
-            assertTrue(node.bounds.build().contains(node.a.bounds));
-            assertTrue(node.bounds.build().contains(node.b.bounds));
+            assertFalse(Relation.isOutside(node.bounds.build().relate(node.a.bounds, Tolerance.ZERO)));
+            assertFalse(Relation.isOutside(node.bounds.build().relate(node.b.bounds, Tolerance.ZERO)));
         }
     }
 

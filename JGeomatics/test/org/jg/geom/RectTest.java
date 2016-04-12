@@ -90,236 +90,244 @@ public class RectTest {
 
     @Test
     public void testIsDisjoint() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        RectBuilder b = new RectBuilder();
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                for (int x2 = x1; x2 < 30; x2 += 5) {
-                    for (int y2 = y1; y2 < 30; y2 += 5) {
-                        b.set(x1, y1, x2, y2);
-                        Rect c = Rect.valueOf(x1, y1, x2, y2);
-                        boolean disjoint = (c.minX > a.maxX) || (c.minY > a.maxY) || (c.maxX < a.minX) || (c.maxY < a.minY);
-                        assertEquals(disjoint, a.isDisjoint(b));
-                        assertEquals(disjoint, a.isDisjoint(c));
-                        assertEquals(disjoint, c.isDisjoint(a));
-                    }
-                }
-            }
-        }
-        assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2)));
-        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4)));
-        assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2).build()));
-        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4).build()));
-        try {
-            a.isDisjoint((Rect) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        try {
-            a.isDisjoint((RectBuilder) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(new RectBuilder()));
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        RectBuilder b = new RectBuilder();
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                for (int x2 = x1; x2 < 30; x2 += 5) {
+//                    for (int y2 = y1; y2 < 30; y2 += 5) {
+//                        b.set(x1, y1, x2, y2);
+//                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+//                        boolean disjoint = (c.minX > a.maxX) || (c.minY > a.maxY) || (c.maxX < a.minX) || (c.maxY < a.minY);
+//                        assertEquals(disjoint, a.isDisjoint(b));
+//                        assertEquals(disjoint, a.isDisjoint(c));
+//                        assertEquals(disjoint, c.isDisjoint(a));
+//                    }
+//                }
+//            }
+//        }
+//        assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2)));
+//        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4)));
+//        assertFalse(Rect.valueOf(1, 2, 3, 4).isDisjoint(b.set(1, 4, 3, 2).build()));
+//        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(b.set(1, 2, 3, 4).build()));
+//        try {
+//            a.isDisjoint((Rect) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        try {
+//            a.isDisjoint((RectBuilder) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        assertFalse(Rect.valueOf(3, 2, 1, 4).isDisjoint(new RectBuilder()));
     }
     
     @Test
     public void testIsDisjoint_Tolerance() {
-        Tolerance tolerance = new Tolerance(1);
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        RectBuilder b = new RectBuilder();
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                for (int x2 = x1; x2 < 30; x2 += 5) {
-                    for (int y2 = y1; y2 < 30; y2 += 5) {
-                        b.set(x1, y1, x2, y2);
-                        Rect c = Rect.valueOf(x1, y1, x2, y2);
-                        boolean disjoint = (c.minX > a.maxX) || (c.minY > a.maxY) || (c.maxX < a.minX) || (c.maxY < a.minY);
-                        assertEquals(disjoint, a.isDisjoint(c, tolerance));
-                        assertEquals(disjoint, c.isDisjoint(a, tolerance));
-                    }
-                }
-            }
-        }
-        
-        assertFalse(a.isDisjoint(Rect.valueOf(0, 10, 9, 20), tolerance));
-        assertFalse(a.isDisjoint(Rect.valueOf(21, 10, 30, 20), tolerance));
-        assertFalse(a.isDisjoint(Rect.valueOf(10, 0, 20, 9), tolerance));
-        assertFalse(a.isDisjoint(Rect.valueOf(10, 21, 20, 30), tolerance));
-        
-        try {
-            a.isDisjoint((Rect) null, tolerance);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        try {
-            a.isDisjoint(a, null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
+        fail("No assertions");
+//        Tolerance tolerance = new Tolerance(1);
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        RectBuilder b = new RectBuilder();
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                for (int x2 = x1; x2 < 30; x2 += 5) {
+//                    for (int y2 = y1; y2 < 30; y2 += 5) {
+//                        b.set(x1, y1, x2, y2);
+//                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+//                        boolean disjoint = (c.minX > a.maxX) || (c.minY > a.maxY) || (c.maxX < a.minX) || (c.maxY < a.minY);
+//                        assertEquals(disjoint, a.isDisjoint(c, tolerance));
+//                        assertEquals(disjoint, c.isDisjoint(a, tolerance));
+//                    }
+//                }
+//            }
+//        }
+//        
+//        assertFalse(a.isDisjoint(Rect.valueOf(0, 10, 9, 20), tolerance));
+//        assertFalse(a.isDisjoint(Rect.valueOf(21, 10, 30, 20), tolerance));
+//        assertFalse(a.isDisjoint(Rect.valueOf(10, 0, 20, 9), tolerance));
+//        assertFalse(a.isDisjoint(Rect.valueOf(10, 21, 20, 30), tolerance));
+//        
+//        try {
+//            a.isDisjoint((Rect) null, tolerance);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        try {
+//            a.isDisjoint(a, null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
     }
 
     @Test
     public void testIsOverlapping() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        RectBuilder b = new RectBuilder();
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                for (int x2 = x1; x2 < 30; x2 += 5) {
-                    for (int y2 = y1; y2 < 30; y2 += 5) {
-                        boolean overlapping = (x1 < a.maxX) && (y1 < a.maxY) && (x2 > a.minX) && (y2 > a.minY);
-                        b.set(x1, y1, x2, y2);
-                        Rect c = Rect.valueOf(x1, y1, x2, y2);
-                        assertEquals(overlapping, a.isOverlapping(b));
-                        assertEquals(overlapping, a.isOverlapping(c));
-                        assertEquals(overlapping, c.isOverlapping(a));
-                    }
-                }
-            }
-        }
-        assertTrue(Rect.valueOf(1, 2, 3, 4).isOverlapping(b.set(1, 4, 3, 2)));
-        assertTrue(Rect.valueOf(3, 2, 1, 4).isOverlapping(b.set(1, 2, 3, 4)));
-        try {
-            a.isOverlapping((Rect) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        try {
-            a.isOverlapping((RectBuilder) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        assertFalse(Rect.valueOf(1, 2, 3, 4).isOverlapping(new RectBuilder()));
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        RectBuilder b = new RectBuilder();
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                for (int x2 = x1; x2 < 30; x2 += 5) {
+//                    for (int y2 = y1; y2 < 30; y2 += 5) {
+//                        boolean overlapping = (x1 < a.maxX) && (y1 < a.maxY) && (x2 > a.minX) && (y2 > a.minY);
+//                        b.set(x1, y1, x2, y2);
+//                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+//                        assertEquals(overlapping, a.isOverlapping(b));
+//                        assertEquals(overlapping, a.isOverlapping(c));
+//                        assertEquals(overlapping, c.isOverlapping(a));
+//                    }
+//                }
+//            }
+//        }
+//        assertTrue(Rect.valueOf(1, 2, 3, 4).isOverlapping(b.set(1, 4, 3, 2)));
+//        assertTrue(Rect.valueOf(3, 2, 1, 4).isOverlapping(b.set(1, 2, 3, 4)));
+//        try {
+//            a.isOverlapping((Rect) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        try {
+//            a.isOverlapping((RectBuilder) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        assertFalse(Rect.valueOf(1, 2, 3, 4).isOverlapping(new RectBuilder()));
     }
 
     @Test
     public void testContains_Rect() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        RectBuilder b = new RectBuilder();
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                for (int x2 = x1; x2 < 30; x2 += 5) {
-                    for (int y2 = y1; y2 < 30; y2 += 5) {
-                        boolean contains = (x1 >= a.minX) && (y1 >= a.minY) && (x2 <= a.maxX) && (y2 <= a.maxY);
-                        b.set(x1, y1, x2, y2);
-                        Rect c = Rect.valueOf(x1, y1, x2, y2);
-                        assertEquals(contains, a.contains(b));
-                        assertEquals(contains, a.contains(c));
-                    }
-                }
-            }
-        }
-        assertTrue(Rect.valueOf(1, 2, 3, 4).contains(b.set(1, 4, 3, 2)));
-        assertTrue(Rect.valueOf(3, 2, 1, 4).contains(b.set(1, 2, 3, 4)));
-        try {
-            a.contains((Rect) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        assertFalse(Rect.valueOf(1, 2, 3, 4).contains(new RectBuilder()));
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        RectBuilder b = new RectBuilder();
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                for (int x2 = x1; x2 < 30; x2 += 5) {
+//                    for (int y2 = y1; y2 < 30; y2 += 5) {
+//                        boolean contains = (x1 >= a.minX) && (y1 >= a.minY) && (x2 <= a.maxX) && (y2 <= a.maxY);
+//                        b.set(x1, y1, x2, y2);
+//                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+//                        assertEquals(contains, a.contains(b));
+//                        assertEquals(contains, a.contains(c));
+//                    }
+//                }
+//            }
+//        }
+//        assertTrue(Rect.valueOf(1, 2, 3, 4).contains(b.set(1, 4, 3, 2)));
+//        assertTrue(Rect.valueOf(3, 2, 1, 4).contains(b.set(1, 2, 3, 4)));
+//        try {
+//            a.contains((Rect) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        assertFalse(Rect.valueOf(1, 2, 3, 4).contains(new RectBuilder()));
     }
 
     @Test
     public void testIsContainedBy() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        RectBuilder b = new RectBuilder();
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                for (int x2 = x1; x2 < 30; x2 += 5) {
-                    for (int y2 = y1; y2 < 30; y2 += 5) {
-                        boolean containedBy = (x1 <= a.minX) && (y1 <= a.minY) && (x2 >= a.maxX) && (y2 >= a.maxY);
-                        b.set(x1, y1, x2, y2);
-                        Rect c = Rect.valueOf(x1, y1, x2, y2);
-                        assertEquals(containedBy, a.isContainedBy(b));
-                        assertEquals(containedBy, a.isContainedBy(c));
-                    }
-                }
-            }
-        }
-        assertTrue(Rect.valueOf(1, 2, 3, 4).isContainedBy(b.set(1, 4, 3, 2)));
-        assertTrue(Rect.valueOf(3, 2, 1, 4).isContainedBy(b.set(1, 2, 3, 4)));
-        assertFalse(Rect.valueOf(1, 2, 3, 4).isContainedBy(new RectBuilder()));
-        try {
-            a.isContainedBy((Rect) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        try {
-            a.isContainedBy((RectBuilder) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        RectBuilder b = new RectBuilder();
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                for (int x2 = x1; x2 < 30; x2 += 5) {
+//                    for (int y2 = y1; y2 < 30; y2 += 5) {
+//                        boolean containedBy = (x1 <= a.minX) && (y1 <= a.minY) && (x2 >= a.maxX) && (y2 >= a.maxY);
+//                        b.set(x1, y1, x2, y2);
+//                        Rect c = Rect.valueOf(x1, y1, x2, y2);
+//                        assertEquals(containedBy, a.isContainedBy(b));
+//                        assertEquals(containedBy, a.isContainedBy(c));
+//                    }
+//                }
+//            }
+//        }
+//        assertTrue(Rect.valueOf(1, 2, 3, 4).isContainedBy(b.set(1, 4, 3, 2)));
+//        assertTrue(Rect.valueOf(3, 2, 1, 4).isContainedBy(b.set(1, 2, 3, 4)));
+//        assertFalse(Rect.valueOf(1, 2, 3, 4).isContainedBy(new RectBuilder()));
+//        try {
+//            a.isContainedBy((Rect) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        try {
+//            a.isContainedBy((RectBuilder) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
     }
 
     @Test
     public void testContains_Vect() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        VectBuilder b = new VectBuilder();
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                boolean contains = (x1 >= a.minX) && (y1 >= a.minY) && (x1 <= a.maxX) && (y1 <= a.maxY);
-                b.set(x1, y1);
-                assertEquals(contains, a.contains(b));
-                assertEquals(contains, a.contains(b.build()));
-            }
-        }
-        assertTrue(Rect.valueOf(3, 4, 1, 2).contains(Vect.valueOf(1, 2)));
-        try {
-            a.contains((Vect) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }try {
-            a.contains((VectBuilder) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        VectBuilder b = new VectBuilder();
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                boolean contains = (x1 >= a.minX) && (y1 >= a.minY) && (x1 <= a.maxX) && (y1 <= a.maxY);
+//                b.set(x1, y1);
+//                assertEquals(contains, a.contains(b));
+//                assertEquals(contains, a.contains(b.build()));
+//            }
+//        }
+//        assertTrue(Rect.valueOf(3, 4, 1, 2).contains(Vect.valueOf(1, 2)));
+//        try {
+//            a.contains((Vect) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }try {
+//            a.contains((VectBuilder) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
     }
 
     @Test
     public void testContains_Geom() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        Rect b = Rect.valueOf(11, 11, 19, 19);
-        assertTrue(a.contains((Geom)b));
-        assertFalse(b.contains((Geom)a));
-        assertTrue(a.contains((Geom)Vect.valueOf(15, 15)));
-        assertFalse(a.contains((Geom)Vect.valueOf(25, 25)));
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        Rect b = Rect.valueOf(11, 11, 19, 19);
+//        assertTrue(a.contains((Geom)b));
+//        assertFalse(b.contains((Geom)a));
+//        assertTrue(a.contains((Geom)Vect.valueOf(15, 15)));
+//        assertFalse(a.contains((Geom)Vect.valueOf(25, 25)));
     }
     
     @Test
     public void testRelate() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                Vect b = Vect.valueOf(x1, y1);
-                Relate relate = a.relate(b);
-                if ((x1 > a.minX) && (y1 > a.minY) && (x1 < a.maxX) && (y1 < a.maxY)) {
-                    assertEquals(Relate.INSIDE, relate);
-                } else if ((((x1 == a.minX) || (x1 == a.maxX)) && (y1 >= a.minY) && (y1 <= a.maxY))
-                        || (((y1 == a.minY) || (y1 == a.maxY)) && (x1 >= a.minX) && (x1 <= a.maxX))) {
-                    assertEquals(Relate.TOUCH, relate);
-                } else {
-                    assertEquals(Relate.OUTSIDE, relate);
-                }
-            }
-        }
-        assertEquals(Relate.INSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15)));
-        try {
-            a.relate((Vect) null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                Vect b = Vect.valueOf(x1, y1);
+//                Relate relate = a.relate(b);
+//                if ((x1 > a.minX) && (y1 > a.minY) && (x1 < a.maxX) && (y1 < a.maxY)) {
+//                    assertEquals(Relate.INSIDE, relate);
+//                } else if ((((x1 == a.minX) || (x1 == a.maxX)) && (y1 >= a.minY) && (y1 <= a.maxY))
+//                        || (((y1 == a.minY) || (y1 == a.maxY)) && (x1 >= a.minX) && (x1 <= a.maxX))) {
+//                    assertEquals(Relate.TOUCH, relate);
+//                } else {
+//                    assertEquals(Relate.OUTSIDE, relate);
+//                }
+//            }
+//        }
+//        assertEquals(Relate.INSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15)));
+//        try {
+//            a.relate((Vect) null);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
     }
 
     @Test
@@ -646,40 +654,41 @@ public class RectTest {
 
     @Test
     public void testRelate_Tolerance() {
-        Rect a = Rect.valueOf(10, 10, 20, 20);
-        for (int x1 = 0; x1 < 30; x1 += 5) {
-            for (int y1 = 0; y1 < 30; y1 += 5) {
-                Vect b = Vect.valueOf(x1, y1);
-                Relate relate = a.relate(b, Tolerance.DEFAULT);
-                if ((x1 > a.minX) && (y1 > a.minY) && (x1 < a.maxX) && (y1 < a.maxY)) {
-                    assertEquals(Relate.INSIDE, relate);
-                } else if ((((x1 == a.minX) || (x1 == a.maxX)) && (y1 >= a.minY) && (y1 <= a.maxY))
-                        || (((y1 == a.minY) || (y1 == a.maxY)) && (x1 >= a.minX) && (x1 <= a.maxX))) {
-                    assertEquals(Relate.TOUCH, relate);
-                } else {
-                    assertEquals(Relate.OUTSIDE, relate);
-                }
-            }
-        }
-        assertEquals(Relate.INSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15), Tolerance.DEFAULT));
-        try {
-            a.relate((Vect) null, Tolerance.DEFAULT);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        try {
-            a.relate((VectBuilder) null, Tolerance.DEFAULT);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
-        try {
-            a.relate((Vect) null, Tolerance.DEFAULT);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-            //expected
-        }
+        fail("No assertions");
+//        Rect a = Rect.valueOf(10, 10, 20, 20);
+//        for (int x1 = 0; x1 < 30; x1 += 5) {
+//            for (int y1 = 0; y1 < 30; y1 += 5) {
+//                Vect b = Vect.valueOf(x1, y1);
+//                Relate relate = a.relate(b, Tolerance.DEFAULT);
+//                if ((x1 > a.minX) && (y1 > a.minY) && (x1 < a.maxX) && (y1 < a.maxY)) {
+//                    assertEquals(Relate.INSIDE, relate);
+//                } else if ((((x1 == a.minX) || (x1 == a.maxX)) && (y1 >= a.minY) && (y1 <= a.maxY))
+//                        || (((y1 == a.minY) || (y1 == a.maxY)) && (x1 >= a.minX) && (x1 <= a.maxX))) {
+//                    assertEquals(Relate.TOUCH, relate);
+//                } else {
+//                    assertEquals(Relate.OUTSIDE, relate);
+//                }
+//            }
+//        }
+//        assertEquals(Relate.INSIDE, Rect.valueOf(20, 20, 10, 10).relate(new VectBuilder(15, 15), Tolerance.DEFAULT));
+//        try {
+//            a.relate((Vect) null, Tolerance.DEFAULT);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        try {
+//            a.relate((VectBuilder) null, Tolerance.DEFAULT);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
+//        try {
+//            a.relate((Vect) null, Tolerance.DEFAULT);
+//            fail("Exception expected");
+//        } catch (NullPointerException ex) {
+//            //expected
+//        }
     }
 
     @Test

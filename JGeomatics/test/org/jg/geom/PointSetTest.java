@@ -227,14 +227,14 @@ public class PointSetTest {
     public void testRelate() {
         VectList vects = new VectList(5, 5, 5, 7, 7, 5, 14, 5, 22, 5, 31, 5);
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
-        assertEquals(ps.relate(Vect.ZERO, Tolerance.DEFAULT), Relate.OUTSIDE);
-        assertEquals(ps.relate(Vect.valueOf(5, 5), Tolerance.DEFAULT), Relate.TOUCH);
-        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), Tolerance.DEFAULT), Relate.OUTSIDE);
-        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), new Tolerance(0.2)), Relate.TOUCH);
-        assertEquals(ps.relate(new VectBuilder(), Tolerance.DEFAULT), Relate.OUTSIDE);
-        assertEquals(ps.relate(new VectBuilder(5, 5), Tolerance.DEFAULT), Relate.TOUCH);
-        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), Tolerance.DEFAULT), Relate.OUTSIDE);
-        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), new Tolerance(0.2)), Relate.TOUCH);
+        assertEquals(ps.relate(Vect.ZERO, Tolerance.DEFAULT), Relation.OUTSIDE);
+        assertEquals(ps.relate(Vect.valueOf(5, 5), Tolerance.DEFAULT), Relation.TOUCH);
+        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), Tolerance.DEFAULT), Relation.OUTSIDE);
+        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), new Tolerance(0.2)), Relation.TOUCH);
+        assertEquals(ps.relate(new VectBuilder(), Tolerance.DEFAULT), Relation.OUTSIDE);
+        assertEquals(ps.relate(new VectBuilder(5, 5), Tolerance.DEFAULT), Relation.TOUCH);
+        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), Tolerance.DEFAULT), Relation.OUTSIDE);
+        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), new Tolerance(0.2)), Relation.TOUCH);
         try {
             ps.relate((Vect) null, Tolerance.DEFAULT);
             fail("Exception expected");

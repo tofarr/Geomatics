@@ -745,12 +745,12 @@ public class LineTest {
     @Test
     public void testRelate(){
         Line a = Line.valueOf(0, 0, 100, 100);
-        assertEquals(Relate.TOUCH, a.relate(Vect.valueOf(50,50), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, a.relate(Vect.valueOf(51,50), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, a.relate(Vect.valueOf(50,49), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, a.relate(Vect.valueOf(51,50), new Tolerance(1)));
-        assertEquals(Relate.TOUCH, a.relate(new VectBuilder(50,49), new Tolerance(1)));
-        assertEquals(Relate.OUTSIDE, a.relate(new VectBuilder(101,101), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, a.relate(Vect.valueOf(50,50), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, a.relate(Vect.valueOf(51,50), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, a.relate(Vect.valueOf(50,49), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, a.relate(Vect.valueOf(51,50), new Tolerance(1)));
+        assertEquals(Relation.TOUCH, a.relate(new VectBuilder(50,49), new Tolerance(1)));
+        assertEquals(Relation.OUTSIDE, a.relate(new VectBuilder(101,101), Tolerance.DEFAULT));
     }
     
     @Test

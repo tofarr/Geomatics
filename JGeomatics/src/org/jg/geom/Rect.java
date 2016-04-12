@@ -410,8 +410,7 @@ public class Rect implements Geom {
         }else if (!Relation.isOutside(relate(other.getBounds(), accuracy))) {
             return this;
         } else {
-            GeoShape ret = toArea().union(other.toGeoShape(flatness, accuracy), accuracy);
-            return ret.simplify();
+            return toArea().union(other, flatness, accuracy);
         }
     }
 

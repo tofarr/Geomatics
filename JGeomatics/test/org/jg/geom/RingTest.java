@@ -156,18 +156,18 @@ public class RingTest {
     @Test
     public void testRelate() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        assertEquals(Relate.TOUCH, ring.relate(Vect.ZERO, TOL));
-        assertEquals(Relate.TOUCH, ring.relate(new VectBuilder(), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(0, 5), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(0, 10), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(3, 4), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(6, 8), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(6, 12), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(6, 14), TOL));
-        assertEquals(Relate.TOUCH, ring.relate(Vect.valueOf(3, 12), TOL));
-        assertEquals(Relate.OUTSIDE, ring.relate(Vect.valueOf(3, 1), TOL));
-        assertEquals(Relate.OUTSIDE, ring.relate(Vect.valueOf(7, 12), TOL));
-        assertEquals(Relate.INSIDE, ring.relate(Vect.valueOf(2, 3), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.ZERO, TOL));
+        assertEquals(Relation.TOUCH, ring.relate(new VectBuilder(), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(0, 5), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(0, 10), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(3, 4), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 8), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 12), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 14), TOL));
+        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(3, 12), TOL));
+        assertEquals(Relation.OUTSIDE, ring.relate(Vect.valueOf(3, 1), TOL));
+        assertEquals(Relation.OUTSIDE, ring.relate(Vect.valueOf(7, 12), TOL));
+        assertEquals(Relation.INSIDE, ring.relate(Vect.valueOf(2, 3), TOL));
     }
 
     @Test

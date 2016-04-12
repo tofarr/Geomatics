@@ -619,7 +619,7 @@ public class Ring implements Geom {
             ret = LineSet.valueOfInternal(touching).toGeoShape();
         }
         if(union != null){
-            ret = (ret == null) ? union.toGeoShape() : union.union(ret, accuracy);
+            ret = (ret == null) ? union.toGeoShape() : union.toGeoShape().union(ret, accuracy);
         }
         if((ret != null) && (less != null)){
             ret = ret.less(less.toGeoShape(), accuracy);

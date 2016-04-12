@@ -555,23 +555,23 @@ public class LineStringTest {
     @Test
     public void testRelate(){
         LineString ls = new LineString(new VectList(0, 50, 50, 0, 100, 0, 100, 100));
-        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(0, 50), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(25, 25), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(50, 0), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(75, 0), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 0), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 50), Tolerance.DEFAULT));
-        assertEquals(Relate.TOUCH, ls.relate(Vect.valueOf(100, 100), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(0, 50), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(25, 25), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(50, 0), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(75, 0), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(100, 0), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(100, 50), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, ls.relate(Vect.valueOf(100, 100), Tolerance.DEFAULT));
         
-        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(1, 50), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, ls.relate(new VectBuilder(24, 25), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(50, -1), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(75, 1), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(99, 1), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(99, 50), Tolerance.DEFAULT));
-        assertEquals(Relate.OUTSIDE, ls.relate(Vect.valueOf(101, 100), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(1, 50), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(new VectBuilder(24, 25), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(50, -1), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(75, 1), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(99, 1), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(99, 50), Tolerance.DEFAULT));
+        assertEquals(Relation.OUTSIDE, ls.relate(Vect.valueOf(101, 100), Tolerance.DEFAULT));
         
-        assertEquals(Relate.TOUCH, ls.relate(new VectBuilder(24, 25), new Tolerance(1)));
+        assertEquals(Relation.TOUCH, ls.relate(new VectBuilder(24, 25), new Tolerance(1)));
     }
     
     @Test
@@ -593,7 +593,7 @@ public class LineStringTest {
         );
         assertEquals(e, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
         assertEquals(e, a.union(c.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(e, a.unionLineSet(c.toLineSet(), Tolerance.DEFAULT));
+        assertEquals(e, a.union(c.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         LineSet f = new LineSet(
             new LineString(new VectList(0,100, 100,100, 100,40)),
@@ -612,7 +612,7 @@ public class LineStringTest {
         
         LineString g = new LineString(new VectList(0, 100, 100,100, 100, 200)); //touch on point
         assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
-        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.unionLineSet(g.toLineSet(), Tolerance.DEFAULT).toGeoShape().toWkt());
+        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT).toWkt());
     }
 
     @Test
