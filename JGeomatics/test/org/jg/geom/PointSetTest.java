@@ -46,11 +46,6 @@ public class PointSetTest {
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
-        try {
-            ps = PointSet.valueOf(network, null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-        }
         assertEquals(2, ps.numPoints());
         assertEquals(Vect.valueOf(1, 2), ps.getPoint(0));
         assertEquals(new VectBuilder(100, 100), ps.getPoint(1, new VectBuilder()));
@@ -224,17 +219,17 @@ public class PointSetTest {
     }
 
     @Test
-    public void testRelate() {
+    public void testRelate_Vect() {
         VectList vects = new VectList(5, 5, 5, 7, 7, 5, 14, 5, 22, 5, 31, 5);
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
-        assertEquals(ps.relate(Vect.ZERO, Tolerance.DEFAULT), Relation.B_OUTSIDE_A);
-        assertEquals(ps.relate(Vect.valueOf(5, 5), Tolerance.DEFAULT), Relation.TOUCH);
-        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), Tolerance.DEFAULT), Relation.B_OUTSIDE_A);
-        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), new Tolerance(0.2)), Relation.TOUCH);
-        assertEquals(ps.relate(new VectBuilder(), Tolerance.DEFAULT), Relation.B_OUTSIDE_A);
-        assertEquals(ps.relate(new VectBuilder(5, 5), Tolerance.DEFAULT), Relation.TOUCH);
-        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), Tolerance.DEFAULT), Relation.B_OUTSIDE_A);
-        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), new Tolerance(0.2)), Relation.TOUCH);
+        assertEquals(ps.relate(Vect.ZERO, Tolerance.DEFAULT), Relation.DISJOINT);
+        assertEquals(ps.relate(Vect.valueOf(5, 5), Tolerance.DEFAULT), Relation.TOUCH | Relation.A_OUTSIDE_B);
+        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), Tolerance.DEFAULT), Relation.DISJOINT);
+        assertEquals(ps.relate(Vect.valueOf(14.1, 5.1), new Tolerance(0.2)), Relation.TOUCH | Relation.A_OUTSIDE_B);
+        assertEquals(ps.relate(new VectBuilder(), Tolerance.DEFAULT), Relation.DISJOINT);
+        assertEquals(ps.relate(new VectBuilder(5, 5), Tolerance.DEFAULT), Relation.TOUCH | Relation.A_OUTSIDE_B);
+        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), Tolerance.DEFAULT), Relation.DISJOINT);
+        assertEquals(ps.relate(new VectBuilder(14.1, 5.1), new Tolerance(0.2)), Relation.TOUCH | Relation.A_OUTSIDE_B);
         try {
             ps.relate((Vect) null, Tolerance.DEFAULT);
             fail("Exception expected");
@@ -256,6 +251,53 @@ public class PointSetTest {
         } catch (NullPointerException ex) {
         }
     }
+
+    @Test
+    public void testRelate_PointSet() {
+        PointSet a = PointSet.valueOf(1,2, 3,4, 5,6, 7,8);
+        PointSet b = PointSet.valueOf(5,6, 7,8, 9,10, 11,12);
+        PointSet c = PointSet.valueOf(9,10, 11,12, 13,14, 15,16);
+        PointSet d = PointSet.valueOf(13,14, 15,16, 17,18, 19,20);
+        PointSet e = PointSet.valueOf(5.1,6, 7,8.2);
+        
+        assertEquals(Relation.TOUCH, a.relate(a, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, b.relate(a, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(c, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(d, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(e, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, e.relate(a, Tolerance.DEFAULT));
+        
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(e, new Tolerance(0.11)));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, e.relate(a, new Tolerance(0.11)));
+        
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH, a.relate(e, new Tolerance(0.22)));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, e.relate(a, new Tolerance(0.22)));
+    }
+    
+    @Test
+    public void testRelate_Geom() {
+        PointSet a = PointSet.valueOf(1,2, 3,4, 5,6, 7,8);
+        PointSet b = PointSet.valueOf(5,6, 7,8, 9,10, 11,12);
+        Rect c = Rect.valueOf(9,10,11,12);
+        Rect d = Rect.valueOf(1,2,7,8);
+        Rect e = Rect.valueOf(0,1,8,9);
+        Rect f = Rect.valueOf(3,4,5,6);
+        
+        assertEquals(Relation.TOUCH, a.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, b.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(Vect.valueOf(3, 4), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        
+        PointSet g = PointSet.valueOf(1,2, 3,4, 7,8, 9,10);
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(g, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }
+
 
     @Test
     public void testUnion_Vect() {

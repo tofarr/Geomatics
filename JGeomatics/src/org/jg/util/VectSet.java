@@ -64,10 +64,11 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
     }
 
     /**
-     *
+     * Create a new vect set based on that given
      * @param other
+     * @throws NullPointerException if other was null
      */
-    public VectSet(VectSet other) {
+    public VectSet(VectSet other) throws NullPointerException {
         this.maxJumps = other.maxJumps;
         this.ords = other.ords;
         this.copyOnEdit = true;
@@ -75,6 +76,23 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
         this.size = other.size;
     }
 
+    /**
+     *
+     * @param ords ordinates (may contain duplicates
+     * @throws NullPointerException if ords was null
+     * @throws IllegalArgumentException if ord was infinite or NaN, or number of ords was not even
+     */
+    public VectSet(double... ords) throws NullPointerException, IllegalArgumentException{
+        this((ords.length > INITIAL_CAPACITY) ? ords.length : INITIAL_CAPACITY);
+        if ((ords.length & 1) == 1) {
+            throw new IllegalArgumentException("Number of ordinates must be even : " + ords.length);
+        }
+        int index = 0;
+        while(index < ords.length){
+            add(ords[index++], ords[index++]);
+        }
+    }
+    
     /**
      * Get the number of vectors
      *

@@ -2,7 +2,6 @@ package org.jg.geom;
 
 import java.awt.geom.PathIterator;
 import java.io.IOException;
-import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -38,8 +37,33 @@ public final class PointSet implements Geom {
         vects.sort();
         return new PointSet(vects);
     }
+    
+    /**
+     * Get a pointset based on the oridnates given
+     * 
+     * @param ords
+     * @return 
+     */
+    public static PointSet valueOf(double ... ords) throws NullPointerException, IllegalArgumentException{
+        VectSet vects = new VectSet(ords);
+        return PointSet.valueOf(vects);
+    }
 
-    static PointSet valueOf(Network network, Tolerance tolerance) throws NullPointerException {
+    /**
+     * Extract points from the network given
+     * @param network
+     * @param accuracy
+     * @return
+     * @throws NullPointerException
+     */
+    public static PointSet valueOf(Network network, Tolerance accuracy) throws NullPointerException {
+        network = network.clone();
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        return valueOfInternal(network);
+    }
+    
+    static PointSet valueOfInternal(Network network) throws NullPointerException {
         VectList vects = new VectList();
         network.extractPoints(vects);
         vects.sort();
@@ -223,32 +247,29 @@ public final class PointSet implements Geom {
         if(getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT){
             return Relation.DISJOINT; // if bounds do not overlap, then content cannot possibly overlap
         }
-        int matching = 0;
+        int ret = Relation.NULL;
         int i = numPoints()-1;
         int j = other.numPoints()-1;
-        while((i >= 0) && (j >= 0)){
+        while((i >= 0) && (j >= 0) && (ret != (Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A))){
             double ix = getX(i);
             double iy = getY(i);
-            double jx = getX(j);
-            double jy = getY(j);
+            double jx = other.getX(j);
+            double jy = other.getY(j);
             if(accuracy.match(ix, iy, jx, jy)){
-                matching++;
-                i++;
-                j++;
+                i--;
+                j--;
+                ret |= Relation.TOUCH;
             }else if(Vect.compare(ix, iy, jx, jy) < 0){
-                i++;
+                j--;
+                ret |= Relation.B_OUTSIDE_A;
             }else{
-                j++;
+                i--;
+                ret |= Relation.A_OUTSIDE_B;
             }
         }
-        int ret = Relation.NULL;
-        if(matching > 0){
-            ret |= Relation.TOUCH;
-        }
-        if(matching < numPoints()){
+        if(i > 0){
             ret |= Relation.A_OUTSIDE_B;
-        }
-        if(matching < other.numPoints()){
+        }else if(j > 0){
             ret |= Relation.B_OUTSIDE_A;
         }
         return ret;

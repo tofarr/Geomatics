@@ -417,7 +417,7 @@ public class Area implements Geom {
         return toGeoShape().union(other, flatness, accuracy);
     }
 
-    public Area union(Area other, final Tolerance accuracy) {
+    public Area union(final Area other, final Tolerance accuracy) {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
@@ -438,7 +438,7 @@ public class Area implements Geom {
                 if(Relation.isInside(relate)){
                     return true;
                 }
-                int otherRelate = relate(workingVect, accuracy);
+                int otherRelate = other.relate(workingVect, accuracy);
                 if(Relation.isInside(otherRelate)){
                     return true;
                 }
@@ -451,7 +451,7 @@ public class Area implements Geom {
         
         });
         
-        List<Ring> rings = Ring.parseAllInternal(network, accuracy, false);
+        List<Ring> rings = Ring.parseAllInternal(union, accuracy, false);
         
         if(!touching[0]){ // there were no touching allLines - we are done!
             return valueOfInternal(rings);

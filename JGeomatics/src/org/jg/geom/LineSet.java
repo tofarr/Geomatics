@@ -350,7 +350,7 @@ public class LineSet implements Geom {
         });
 
         LineSet lines = LineSet.valueOfInternal(intersection);
-        PointSet points = PointSet.valueOf(intersection, accuracy);
+        PointSet points = PointSet.valueOfInternal(intersection);
         if((lines == null) && (points == null)){
             return null;
         }
