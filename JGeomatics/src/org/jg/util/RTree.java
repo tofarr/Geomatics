@@ -243,7 +243,7 @@ public final class RTree<E> {
 
     static <E> boolean remove(SpatialNode<E> node, Rect bounds, E itemValue) {
         int relate = bounds.relate(node.bounds, Tolerance.ZERO);
-        if (Relation.isOutside(relate)) {
+        if (Relation.isBOutsideA(relate)) {
             return false;
         } else if (node.isBranch()) {
             boolean ret = remove(node.a, bounds, itemValue)
@@ -282,7 +282,7 @@ public final class RTree<E> {
 
     static <E> int removeOverlapping(SpatialNode<E> node, Rect bounds) {
         int relate = bounds.relate(node.bounds, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isBOutsideA(relate)) {
             if (node.isBranch()) {
                 node.a = node.b = null;
                 node.itemBounds = new Rect[INITIAL_CAPACITY];
@@ -292,7 +292,7 @@ public final class RTree<E> {
             node.bounds.reset();
             node.size = 0;
             return ret;
-        } else if (!Relation.isInside(relate)) {
+        } else if (!Relation.isBInsideA(relate)) {
             return 0;
         } else if (node.isBranch()) {
             int ret = removeOverlapping(node.a, bounds) + removeOverlapping(node.b, bounds);
@@ -309,7 +309,7 @@ public final class RTree<E> {
             E[] newItemValues = (E[]) new Object[node.itemValues.length];
             int n = 0;
             for (int i = 0; i < node.size; i++) {
-                if(!Relation.isInside(bounds.relate(itemBounds[i], Tolerance.ZERO))){
+                if(!Relation.isBInsideA(bounds.relate(itemBounds[i], Tolerance.ZERO))){
                     newItemBounds[n] = itemBounds[i];
                     newItemValues[n++] = itemValues[i];
                 }
@@ -338,7 +338,7 @@ public final class RTree<E> {
     }
 
     static <E> int removeInteracting(SpatialNode<E> node, Rect bounds) {
-        if (!Relation.isOutside(bounds.relate(node.bounds, Tolerance.ZERO))) {
+        if (!Relation.isBOutsideA(bounds.relate(node.bounds, Tolerance.ZERO))) {
             if (node.isBranch()) {
                 node.a = node.b = null;
                 node.itemBounds = new Rect[INITIAL_CAPACITY];
@@ -511,18 +511,6 @@ public final class RTree<E> {
      */
     public boolean isEmpty(Rect bounds) throws NullPointerException {
         return root.isEmpty(bounds);
-    }
-
-    /**
-     * Determines if the bounds given is disjoint from (is outside of and does
-     * not touch) all entries in this tree
-     *
-     * @param bounds
-     * @return
-     * @throws NullPointerException if bounds was null
-     */
-    public boolean isDisjoint(Rect bounds) throws NullPointerException {
-        return root.isDisjoint(bounds);
     }
 
     /**

@@ -25,11 +25,11 @@ public class Relation {
     public static final int OVERLAPPING = B_INSIDE_A | A_INSIDE_B;
     public static final int ALL = B_INSIDE_A | B_OUTSIDE_A | TOUCH | A_INSIDE_B | A_OUTSIDE_B;
     
-    public static boolean isInside(int relation){
+    public static boolean isBInsideA(int relation){
         return (relation & B_INSIDE_A) != 0;
     }
     
-    public static boolean isOutside(int relation){
+    public static boolean isBOutsideA(int relation){
         return (relation & B_OUTSIDE_A) != 0;
     }
     
@@ -37,11 +37,11 @@ public class Relation {
         return (relation & TOUCH) != 0;
     }
     
-    public static boolean isInsideOther(int relation){
+    public static boolean isAInsideB(int relation){
         return (relation & A_INSIDE_B) != 0;
     }
     
-    public static boolean isOutsideOther(int relation){
+    public static boolean isAOutsideB(int relation){
         return (relation & A_OUTSIDE_B) != 0;
     }
     
@@ -56,16 +56,16 @@ public class Relation {
     //swap this and other
     public static int swap(int relation){
         int ret = relation & TOUCH;
-        if(isInside(relation)){
+        if(isBInsideA(relation)){
             ret |= A_INSIDE_B;
         }
-        if(isOutside(relation)){
+        if(isBOutsideA(relation)){
             ret |= A_OUTSIDE_B;
         }
-        if(isInsideOther(relation)){
+        if(isAInsideB(relation)){
             ret |= B_INSIDE_A;
         }
-        if(isOutsideOther(relation)){
+        if(isAOutsideB(relation)){
             ret |= B_OUTSIDE_A;
         }
         return ret;

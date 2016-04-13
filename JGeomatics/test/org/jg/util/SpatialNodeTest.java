@@ -169,35 +169,6 @@ public class SpatialNodeTest {
     }
 
     @Test
-    public void testIsDisjoint() {
-        SpatialNode<String> c = createABC();
-        assertFalse(c.isDisjoint(Rect.valueOf(0, 0, 60, 80)));
-        assertFalse(c.isDisjoint(Rect.valueOf(-10, -20, 70, 90)));
-        assertFalse(c.isDisjoint(Rect.valueOf(20, 30, 40, 50)));
-        assertFalse(c.isDisjoint(Rect.valueOf(0, 0, 60, 10)));
-        assertFalse(c.isDisjoint(Rect.valueOf(0, 0, 10, 80)));
-        assertFalse(c.isDisjoint(Rect.valueOf(0, 0, 60, 0)));
-        assertFalse(c.isDisjoint(Rect.valueOf(0, 0, 0, 80)));
-        assertFalse(c.isDisjoint(Rect.valueOf(60, 80, 70, 90)));
-        assertTrue(c.isDisjoint(Rect.valueOf(61, 80, 70, 90)));
-
-        assertFalse(c.isDisjoint(Rect.valueOf(0, 0, 29, 80)));
-        assertFalse(c.isDisjoint(Rect.valueOf(31, 0, 60, 80)));
-
-        SpatialNode<String> a = new SpatialNode<>();
-        a.bounds.set(10, 20, 30, 40);
-        assertTrue(a.isDisjoint(Rect.valueOf(0, 0, 50, 60)));
-
-        a = new SpatialNode<>(new Rect[]{Rect.valueOf(0, 0, 20, 20), Rect.valueOf(40, 40, 60, 60)}, new String[]{"A", "B"});
-        SpatialNode<String> b = new SpatialNode<>(new Rect[]{Rect.valueOf(60, 60, 80, 80), Rect.valueOf(80, 80, 100, 100)}, new String[]{"C", "D"});
-        c = new SpatialNode(a, b);
-        assertTrue(c.isDisjoint(Rect.valueOf(1, 21, 2, 22)));
-        assertFalse(c.isDisjoint(Rect.valueOf(1, 19, 2, 22)));
-        assertTrue(c.isDisjoint(Rect.valueOf(58, 38, 59, 39)));
-        assertFalse(c.isDisjoint(Rect.valueOf(58, 38, 59, 41)));
-    }
-
-    @Test
     public void testForEach() {
         SpatialNode<String> c = createABC();
         final Map<Rect, String> map = new HashMap();

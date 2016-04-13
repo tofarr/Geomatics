@@ -326,8 +326,8 @@ public class LineSet implements Geom {
             @Override
             public boolean process(double x, double y, VectList links) {
                 workingVect.set(x, y);
-                if(Relation.isOutside(LineSet.this.relate(workingVect, accuracy))
-                    || Relation.isOutside(other.relate(workingVect, accuracy))){
+                if(Relation.isBOutsideA(LineSet.this.relate(workingVect, accuracy))
+                    || Relation.isBOutsideA(other.relate(workingVect, accuracy))){
                     return true;
                 }
                 intersection.addVertex(workingVect);
@@ -338,8 +338,8 @@ public class LineSet implements Geom {
                     double by = links.getY(i);
                     if(Vect.compare(x, y, bx, by) < 0){ // prevent processing twice
                         workingVect.set((x + bx) / 2, (y + by) / 2);
-                        if(!(Relation.isOutside(LineSet.this.relate(workingVect, accuracy))
-                            || Relation.isOutside(other.relate(workingVect, accuracy)))){
+                        if(!(Relation.isBOutsideA(LineSet.this.relate(workingVect, accuracy))
+                            || Relation.isBOutsideA(other.relate(workingVect, accuracy)))){
                             intersection.addLinkInternal(x, y, bx, by);
                         }
                     }
@@ -370,7 +370,7 @@ public class LineSet implements Geom {
             @Override
             public boolean process(double x, double y, VectList links) {
                 workingVect.set(x, y);
-                if(Relation.isOutside(LineSet.this.relate(workingVect, accuracy))){
+                if(Relation.isBOutsideA(LineSet.this.relate(workingVect, accuracy))){
                     return true; // Anything not in original should not be in new...
                 }
 
@@ -380,7 +380,7 @@ public class LineSet implements Geom {
                     double by = links.getY(i);
                     if(Vect.compare(x, y, bx, by) < 0){ // prevent processing twice
                         workingVect.set((x + bx) / 2, (y + by) / 2);
-                        if(Relation.isOutside(other.relate(workingVect, accuracy))){ // any links not in original should be added
+                        if(Relation.isBOutsideA(other.relate(workingVect, accuracy))){ // any links not in original should be added
                             less.addLinkInternal(x, y, bx, by);
                         }
                     }

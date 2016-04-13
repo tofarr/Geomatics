@@ -218,7 +218,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public int sizeInteracting(Rect rect) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isAOutsideB(relate)) {
             return size;
         } else if (Relation.isDisjoint(relate)) {
             return 0;
@@ -244,7 +244,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public int sizeOverlapping(Rect rect) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isAOutsideB(relate)) {
             return size;
         } else if (Relation.isDisjoint(relate)) {
             return 0;
@@ -279,7 +279,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean isEmpty(Rect rect) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isBOutsideA(relate)) {
             return size == 0;
         } else if (Relation.isDisjoint(relate)) {
             return true;
@@ -288,31 +288,6 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
         } else {
             for (int i = 0; i < size; i++) {
                 if (Relation.isOverlapping(rect.relate(itemBounds[i], Tolerance.ZERO))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-
-    /**
-     * Determine if the region given is disjoint all entries in this tree
-     *
-     * @param rect
-     * @return
-     * @throws NullPointerException if rect was null
-     */
-    public boolean isDisjoint(Rect rect) throws NullPointerException {
-        int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
-            return size == 0;
-        } else if (relate == Relation.DISJOINT) {
-            return true;
-        } else if (isBranch()) {
-            return a.isDisjoint(rect) && b.isDisjoint(rect);
-        } else {
-            for (int i = 0; i < size; i++) {
-                if (rect.relate(itemBounds[i], Tolerance.ZERO) == Relation.DISJOINT) {
                     return false;
                 }
             }
@@ -350,7 +325,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean forInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isBOutsideA(relate)) {
             return forEach(processor);
         } else if (relate == Relation.DISJOINT) {
             return true;
@@ -378,7 +353,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean forOverlapping(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isBOutsideA(relate)) {
             return forEach(processor);
         } else if (relate == Relation.DISJOINT) {
             return true;
@@ -386,7 +361,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             return a.forOverlapping(rect, processor) && b.forOverlapping(rect, processor);
         } else {
             for (int i = 0; i < size; i++) {
-                if (Relation.isInside(rect.relate(itemBounds[i], Tolerance.ZERO))) {
+                if (Relation.isBInsideA(rect.relate(itemBounds[i], Tolerance.ZERO))) {
                     if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }
@@ -406,7 +381,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean contains(Rect rect, E value) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isOutside(relate)) {
+        if (!Relation.isBOutsideA(relate)) {
             return false;
         } else if (isBranch()) {
             return a.contains(rect, value) || b.contains(rect, value);

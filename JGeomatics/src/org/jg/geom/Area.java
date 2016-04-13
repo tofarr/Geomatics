@@ -435,11 +435,11 @@ public class Area implements Geom {
             public boolean process(double ax, double ay, double bx, double by) {
                 workingVect.set((ax + bx) / 2, (ay + by) / 2);
                 int relate = relate(workingVect, accuracy);
-                if(Relation.isInside(relate)){
+                if(Relation.isBInsideA(relate)){
                     return true;
                 }
                 int otherRelate = other.relate(workingVect, accuracy);
-                if(Relation.isInside(otherRelate)){
+                if(Relation.isBInsideA(otherRelate)){
                     return true;
                 }
                 if(Relation.isTouch(relate) && Relation.isTouch(otherRelate)){
@@ -549,7 +549,7 @@ public class Area implements Geom {
             @Override
             public boolean process(double x, double y, int numLinks) {
                 if(Relation.isDisjoint(relateInternal(x, y, accuracy))
-                        || Relation.isInside(other.relateInternal(x, y, accuracy))){
+                        || Relation.isBInsideA(other.relateInternal(x, y, accuracy))){
                     network.removeVertexInternal(x, y);
                 }
                 return true;
@@ -564,7 +564,7 @@ public class Area implements Geom {
                 int relate = relateInternal(x, y, accuracy);
                 int otherRelate = other.relateInternal(x, y, accuracy);
                 if(Relation.isDisjoint(relate)
-                    || Relation.isInside(otherRelate)){
+                    || Relation.isBInsideA(otherRelate)){
                     network.removeLinkInternal(ax, ay, bx, by);
                 }
                 if(Relation.isTouch(relate) && Relation.isTouch(otherRelate)){
@@ -674,9 +674,9 @@ public class Area implements Geom {
             int i = 0;
             while (true) {
                 int relate = shell.relate(ring.vects.getX(i), ring.vects.getY(i), Tolerance.ZERO);
-                if(Relation.isInside(relate)){
+                if(Relation.isBInsideA(relate)){
                     return true;
-                }else if(Relation.isOutside(relate)){
+                }else if(Relation.isBOutsideA(relate)){
                     return false;
                 }
                 i++;

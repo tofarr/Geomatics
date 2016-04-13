@@ -172,9 +172,9 @@ public class Rect implements Geom {
      */
     public Rect union(Rect rect) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if(!Relation.isOutside(relate)){ // no part of rect is outside this
+        if(!Relation.isBOutsideA(relate)){ // no part of rect is outside this
             return this;
-        }else if(!Relation.isOutsideOther(relate)){
+        }else if(!Relation.isAOutsideB(relate)){
             return rect;
         } else {
             return new Rect(Math.min(minX, rect.minX),
@@ -370,36 +370,49 @@ public class Rect implements Geom {
     
     public static int relate(double aMinX, double aMinY, double aMaxX, double aMaxY, double bMinX, double bMinY, double bMaxX, double bMaxY, Tolerance accuracy) {
         
-        if( accuracy.check(aMinX - bMaxX) > 0){
+        int minMaxX = accuracy.check(aMinX - bMaxX);
+        if(minMaxX > 0){
             return Relation.DISJOINT;
         }
-        if(accuracy.check(aMinY - bMaxY) > 0){
+        int minMaxY = accuracy.check(aMinY - bMaxY);
+        if(minMaxY > 0){
             return Relation.DISJOINT;
         }
-        if(accuracy.check(bMinX - aMaxX) > 0){
+        int maxMinX = accuracy.check(aMaxX - bMinX);
+        if(maxMinX < 0){
             return Relation.DISJOINT;
         }
-        if(accuracy.check(bMinY - aMaxY) > 0){
+        int maxMinY = accuracy.check(aMaxY - bMinY);
+        if(maxMinY < 0){
             return Relation.DISJOINT;
         }
-
+        
         int minMinX = accuracy.check(aMinX - bMinX);
         int minMinY = accuracy.check(aMinY - bMinY);
         int maxMaxX = accuracy.check(aMaxX - bMaxX);
         int maxMaxY = accuracy.check(aMaxY - bMaxY);
         
         int ret = Relation.NULL;
-        if((minMinX < 0) || (minMinY < 0) || (maxMaxX > 0) || (maxMaxY > 0)){
-            ret |= Relation.B_INSIDE_A | Relation.A_OUTSIDE_B;
+                
+        if((minMinX < 0) || (maxMaxX > 0) || (minMinY < 0) || (maxMaxY > 0)){
+            ret |= Relation.A_OUTSIDE_B;
         }
-        if((minMinX > 0) || (minMinY > 0) || (maxMaxX < 0) || (maxMaxY < 0)){
-            ret |= Relation.B_OUTSIDE_A | Relation.A_INSIDE_B;
+        if((minMaxX < 0) && (maxMinX > 0) && (minMaxY < 0) && (maxMinY > 0)){
+            ret |= Relation.B_INSIDE_A;
         }
+        if((minMinX > 0) || (maxMaxX < 0) || (minMinY > 0) || (maxMaxY < 0)){
+            ret |= Relation.B_OUTSIDE_A;
+        }
+        if((maxMinX > 0) && (minMaxX < 0) && (maxMinY > 0) && (minMaxY < 0)){
+            ret |= Relation.A_INSIDE_B;
+        }
+        
         if((minMinX == 0) || (minMinY == 0) || (maxMaxX == 0) || (maxMaxY == 0)){
             ret |= Relation.TOUCH;
         }else if(((minMinX > 0) == (maxMaxX > 0)) || ((minMinY > 0) == (maxMaxY > 0))){
             ret |= Relation.TOUCH;
-        }
+        } 
+
         return ret;
     }
     
@@ -407,7 +420,7 @@ public class Rect implements Geom {
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if(other instanceof Rect){
             return union((Rect)other);
-        }else if (!Relation.isOutside(relate(other.getBounds(), accuracy))) {
+        }else if (!Relation.isBOutsideA(relate(other.getBounds(), accuracy))) {
             return this;
         } else {
             return toArea().union(other, flatness, accuracy);
@@ -422,7 +435,7 @@ public class Rect implements Geom {
         int boundsRelation = relate(other.getBounds(), accuracy);
         if(boundsRelation == Relation.DISJOINT){
             return null;
-        }else if(!Relation.isOutside(boundsRelation)){ // no part of other is outside this
+        }else if(!Relation.isBOutsideA(boundsRelation)){ // no part of other is outside this
             return other;
         }else{ // long way - find intersection by area
             return toArea().intersection(other, flatness, accuracy);
@@ -452,7 +465,7 @@ public class Rect implements Geom {
         int boundsRelation = relate(other.getBounds(), accuracy);
         if(boundsRelation == Relation.DISJOINT){
             return this;
-        } else if ((other instanceof Rect) && (!Relation.isOutsideOther(boundsRelation))) {
+        } else if ((other instanceof Rect) && (!Relation.isAOutsideB(boundsRelation))) {
             return null; // no part of this is outside the other.
         } else {
             return toArea().less(other, flatness, accuracy);

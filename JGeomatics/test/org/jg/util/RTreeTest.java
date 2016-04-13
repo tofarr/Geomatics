@@ -9,10 +9,6 @@ import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
 import org.jg.geom.Relation;
 import org.jg.util.SpatialNode.NodeProcessor;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -153,8 +149,8 @@ public class RTreeTest {
             checkIntegrity(node.a);
             checkIntegrity(node.b);
             assertEquals(node.size, node.a.size + node.b.size);
-            assertFalse(Relation.isOutside(node.bounds.build().relate(node.a.bounds, Tolerance.ZERO)));
-            assertFalse(Relation.isOutside(node.bounds.build().relate(node.b.bounds, Tolerance.ZERO)));
+            assertFalse(Relation.isBOutsideA(node.bounds.build().relate(node.a.bounds, Tolerance.ZERO)));
+            assertFalse(Relation.isBOutsideA(node.bounds.build().relate(node.b.bounds, Tolerance.ZERO)));
         }
     }
 
@@ -385,18 +381,6 @@ public class RTreeTest {
         assertFalse(staticTree.isEmpty(Rect.valueOf(23, 29, 24, 30)));
         assertFalse(staticTree.isEmpty(Rect.valueOf(23, 29, 25, 31)));
         assertFalse(staticTree.isEmpty(Rect.valueOf(23.1, 29.1, 23.9, 29.9)));
-    }
-
-    @Test
-    public void testIsDisjoint() {
-        assertFalse(staticTree.isDisjoint(Rect.valueOf(0, 0, 50, 50)));
-        assertTrue(staticTree.isDisjoint(Rect.valueOf(0, 51, 1, 52)));
-        assertFalse(staticTree.isDisjoint(Rect.valueOf(0, 50, 1, 51)));
-        assertTrue(staticTree.isDisjoint(Rect.valueOf(51, 0, 52, 1)));
-        assertFalse(staticTree.isDisjoint(Rect.valueOf(50, 0, 51, 1)));
-        assertFalse(staticTree.isDisjoint(Rect.valueOf(23, 29, 24, 30)));
-        assertFalse(staticTree.isDisjoint(Rect.valueOf(23, 29, 25, 31)));
-        assertFalse(staticTree.isDisjoint(Rect.valueOf(23.1, 29.1, 23.9, 29.9)));
     }
 
     @Test
