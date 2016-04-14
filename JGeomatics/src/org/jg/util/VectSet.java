@@ -83,7 +83,7 @@ public final class VectSet implements Serializable, Cloneable, Iterable<Vect> {
      * @throws IllegalArgumentException if ord was infinite or NaN, or number of ords was not even
      */
     public VectSet(double... ords) throws NullPointerException, IllegalArgumentException{
-        this((ords.length > INITIAL_CAPACITY) ? ords.length : INITIAL_CAPACITY);
+        this(((ords.length >> 1) > INITIAL_CAPACITY) ? (ords.length >> 1) : INITIAL_CAPACITY);
         if ((ords.length & 1) == 1) {
             throw new IllegalArgumentException("Number of ordinates must be even : " + ords.length);
         }

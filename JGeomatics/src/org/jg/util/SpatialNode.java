@@ -93,42 +93,6 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     /**
-     * Get the bounds minX for this node
-     *
-     * @return
-     */
-    public double getMinX() {
-        return bounds.getMinX();
-    }
-
-    /**
-     * Get the bounds minY for this node
-     *
-     * @return
-     */
-    public double getMinY() {
-        return bounds.getMinY();
-    }
-
-    /**
-     * Get the bounds maxX for this node
-     *
-     * @return
-     */
-    public double getMaxX() {
-        return bounds.getMaxX();
-    }
-
-    /**
-     * Get the bounds maxY for this node
-     *
-     * @return
-     */
-    public double getMaxY() {
-        return bounds.getMaxY();
-    }
-
-    /**
      * Get the relation between the bounds of this node and the bounds given
      *
      * @param rect
@@ -279,8 +243,8 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean isEmpty(Rect rect) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isBOutsideA(relate)) {
-            return size == 0;
+        if (!Relation.isAOutsideB(relate)) {
+            return false;
         } else if (Relation.isDisjoint(relate)) {
             return true;
         } else if (isBranch()) {
@@ -353,7 +317,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean forOverlapping(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isBOutsideA(relate)) {
+        if (!Relation.isAOutsideB(relate)) {
             return forEach(processor);
         } else if (relate == Relation.DISJOINT) {
             return true;
@@ -381,7 +345,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean contains(Rect rect, E value) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isBOutsideA(relate)) {
+        if (Relation.isBOutsideA(relate)) {
             return false;
         } else if (isBranch()) {
             return a.contains(rect, value) || b.contains(rect, value);

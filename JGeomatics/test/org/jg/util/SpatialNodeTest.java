@@ -8,6 +8,10 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import org.jg.geom.Rect;
+import org.jg.geom.RectBuilder;
+import org.jg.geom.Relation;
+import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 import org.jg.util.SpatialNode.NodeProcessor;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -595,4 +599,14 @@ public class SpatialNodeTest {
         SpatialNode<String> b = a.clone();
         assertNotSame(a, b);
         assertEquals(a, b);
-    }}
+    }
+
+    @Test
+    public void testRelate(){
+        SpatialNode<String> a = createABC();
+        assertEquals(Relation.A_INSIDE_B | Relation.TOUCH | Relation.B_INSIDE_A, a.relate(Rect.valueOf(0, 0, 60, 80), Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.TOUCH | Relation.B_INSIDE_A, a.relate(new RectBuilder(0, 0, 60, 80), Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, a.relate(Vect.valueOf(15, 20), Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, a.relate(new VectBuilder(15,20), Tolerance.DEFAULT));
+    }
+}

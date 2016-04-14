@@ -243,7 +243,7 @@ public final class RTree<E> {
 
     static <E> boolean remove(SpatialNode<E> node, Rect bounds, E itemValue) {
         int relate = bounds.relate(node.bounds, Tolerance.ZERO);
-        if (Relation.isBOutsideA(relate)) {
+        if (Relation.isAOutsideB(relate)) {
             return false;
         } else if (node.isBranch()) {
             boolean ret = remove(node.a, bounds, itemValue)

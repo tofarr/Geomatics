@@ -12,10 +12,6 @@ import java.io.OutputStream;
 import org.jg.geom.GeomException;
 import org.jg.geom.Rect;
 import org.jg.geom.Vect;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -303,9 +299,12 @@ public class ViewTest {
         
         try{
             a.write(new DataOutputStream(new OutputStream(){
+                int count = 0;
                 @Override
                 public void write(int b) throws IOException {
-                    throw new IOException();
+                    if(++count > 32){
+                        throw new IOException();
+                    }
                 }
             }));
             fail("Exception expected");
@@ -314,9 +313,13 @@ public class ViewTest {
         
         try{
             Transform.read(new DataInputStream(new InputStream(){
+                int count = 0;
                 @Override
                 public int read() throws IOException {
-                    throw new IOException();
+                    if(++count > 32){
+                        throw new IOException();
+                    }
+                    return 0;
                 }
             }));
             fail("Exception expected");

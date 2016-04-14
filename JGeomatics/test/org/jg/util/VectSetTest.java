@@ -37,6 +37,24 @@ public class VectSetTest {
         assertEquals(32, vects.ords.length);
         assertEquals(0, vects.size());
         assertEquals(3, vects.maxJumps);
+        
+        vects = new VectSet(1,2, 3,4);
+        assertEquals(32, vects.ords.length);
+        assertEquals(2, vects.size());
+        assertTrue(vects.contains(1,2));
+        assertTrue(vects.contains(3,4));
+        assertFalse(vects.contains(1,3));
+        assertFalse(vects.contains(2,2));
+        
+        double[] ords = new double[(VectSet.INITIAL_CAPACITY << 1) + 2];
+        for(int i = 0; i < ords.length; i++){
+            ords[i] = i;
+        }
+        vects = new VectSet(ords);
+        for(int i = 0; i < ords.length;){
+            assertTrue(vects.contains(i++, i++));
+        }
+
         try {
             vects = new VectSet(0, 1);
             fail("Exception expected");
@@ -45,6 +63,12 @@ public class VectSetTest {
         }
         try {
             vects = new VectSet(5, 0);
+            fail("Exception expected");
+        } catch (IllegalArgumentException ex) {
+            //expection expected
+        }
+        try {
+            vects = new VectSet(5, 0, 1);
             fail("Exception expected");
         } catch (IllegalArgumentException ex) {
             //expection expected
