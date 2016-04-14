@@ -417,7 +417,7 @@ public class Area implements Geom {
         return toGeoShape().union(other, flatness, accuracy);
     }
 
-    public Area union(final Area other, final Tolerance accuracy) {
+    public Area union(Area other, Tolerance accuracy) {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
@@ -427,6 +427,26 @@ public class Area implements Geom {
             return new Area(null, children);
         }
         Network network = Network.valueOf(accuracy, accuracy, this, other);
+        return unionInternal(this, other, network, accuracy);
+    }
+
+    //Assumes this and other are normalized against each other - no unspecified points of intersection
+    Area unionNormalized(Area other, Tolerance accuracy) {
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
+            final List<Area> areas = new ArrayList<>();
+            addDisjoint(this, areas);
+            addDisjoint(other, areas);
+            Area[] children = areas.toArray(new Area[areas.size()]);
+            Arrays.sort(children, COMPARATOR);
+            return new Area(null, children);
+        }
+        Network network = new Network();
+        addTo(network);
+        other.addTo(network);
+        return unionInternal(this, other, network, accuracy);
+    }
+    
+    static Area unionInternal(final Area a, final Area b, final Network network, final Tolerance accuracy){
         final Network union = new Network();
         final VectBuilder workingVect = new VectBuilder();
         final boolean[] touching = new boolean[1];
@@ -434,15 +454,15 @@ public class Area implements Geom {
             @Override
             public boolean process(double ax, double ay, double bx, double by) {
                 workingVect.set((ax + bx) / 2, (ay + by) / 2);
-                int relate = relate(workingVect, accuracy);
-                if(Relation.isBInsideA(relate)){
+                int aRelate = a.relate(workingVect, accuracy);
+                if(Relation.isBInsideA(aRelate)){
                     return true;
                 }
-                int otherRelate = other.relate(workingVect, accuracy);
-                if(Relation.isBInsideA(otherRelate)){
+                int bRelate = b.relate(workingVect, accuracy);
+                if(Relation.isBInsideA(bRelate)){
                     return true;
                 }
-                if(Relation.isTouch(relate) && Relation.isTouch(otherRelate)){
+                if(Relation.isTouch(aRelate) && Relation.isTouch(bRelate)){
                     touching[0] = true;
                 }
                 union.addLinkInternal(ax, ay, bx, by);
@@ -453,7 +473,7 @@ public class Area implements Geom {
         
         List<Ring> rings = Ring.parseAllInternal(union, accuracy, false);
         
-        if(!touching[0]){ // there were no touching allLines - we are done!
+        if((!touching[0]) || (rings.size() == 1)){ // there were no touching allLines - we are done!
             return valueOfInternal(rings);
         }
         
@@ -462,14 +482,14 @@ public class Area implements Geom {
             union.toggleAllLinks(ring.vects);
         }
         
-        rings = Ring.parseAllInternal(network, accuracy, false);
+        rings = Ring.parseAllInternal(union, accuracy, false);
         return valueOfInternal(rings);
     }
 
     public Area union(Ring other, Tolerance accuracy) {
         return union(other.toArea(), accuracy);
     }
-
+    
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Area) {

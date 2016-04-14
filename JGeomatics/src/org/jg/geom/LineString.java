@@ -451,7 +451,7 @@ public class LineString implements Geom {
                 Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
                 Vect.linearizeArc(bx, by, ix, iy, work.getX(), work.getY(), Math.abs(amt), flatness.getTolerance(), result);
             }
-        }else if(amt < 0){
+        }else{
             if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
                 Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
                 double ix = work.getX();

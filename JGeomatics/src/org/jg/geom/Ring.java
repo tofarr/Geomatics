@@ -601,11 +601,11 @@ public class Ring implements Geom {
                     double a = getArea(ring);
                     if(a > 0){
                         Area area = new Ring(ring, a).toArea();
-                        union = (union == null) ? area : union.union(area, accuracy);
+                        union = (union == null) ? area : union.unionNormalized(area, accuracy);
                     }else{
                         ring.reverse();
                         Area area = new Ring(ring, a).toArea();
-                        less = (less == null) ? area : less.union(area, accuracy);
+                        less = (less == null) ? area : less.unionNormalized(area, accuracy);
                     }
                 }
             }

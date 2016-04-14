@@ -161,7 +161,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @return
      */
     public int relate(double minX, double minY, double maxX, double maxY, Tolerance accuracy){
-        return Rect.relate(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
+        return (size == 0) ? Relation.DISJOINT : Rect.relate(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
                 minX, minY, maxX, maxY, accuracy);
     }
 
@@ -196,7 +196,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * @return
      */
     public int relate(double x, double y, Tolerance accuracy){
-        return Rect.relate(x, y, 
+        return (size == 0) ? Relation.DISJOINT : Rect.relate(x, y, 
                 bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(), accuracy);
     }
 
@@ -325,15 +325,15 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      */
     public boolean forInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
-        if (!Relation.isBOutsideA(relate)) {
+        if (!Relation.isAOutsideB(relate)) {
             return forEach(processor);
-        } else if (relate == Relation.DISJOINT) {
+        } else if (Relation.isDisjoint(relate)) {
             return true;
         } else if (isBranch()) {
             return a.forInteracting(rect, processor) && b.forInteracting(rect, processor);
         } else {
             for (int i = 0; i < size; i++) {
-                if (rect.relate(itemBounds[i], Tolerance.ZERO) != Relation.DISJOINT) {
+                if (!Relation.isDisjoint(rect.relate(itemBounds[i], Tolerance.ZERO))) {
                     if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }
