@@ -875,5 +875,11 @@ public class LineTest {
         Geom geom = a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
         Geom expected = LineSet.valueOf(Tolerance.DEFAULT, 0,0, 50,50, 100,100).simplify();
         assertEquals(expected, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-    }    
+    }
+          
+    @Test
+    public void testGetArea(){
+        Line a = new Line(0,0, 100,100);
+        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+    }
 }

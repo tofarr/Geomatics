@@ -666,4 +666,10 @@ public class LineStringTest {
                 a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
         assertEquals("[\"LT\", [0,90, 80,90], [90,0, 90,80]]", a.less(e, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
     }
+          
+    @Test
+    public void testGetArea(){
+        LineString a = new LineString(new VectList(0, 90, 90,90, 90, 0)); //touch on point
+        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+    }
 }

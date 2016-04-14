@@ -402,6 +402,11 @@ public final class PointSet implements Geom {
             return new PointSet(ret);
         }
     }
+      
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy){
+        return 0;
+    }
 
     /**
      *

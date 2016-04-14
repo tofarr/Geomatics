@@ -32,13 +32,25 @@ public final class GeomRelationProcessor implements VectMapProcessor<VectList> {
             return Relation.DISJOINT; // Short cut - if disjoint, then cant possibly overlap
         }
         Network network = Network.valueOf(accuracy, flatness, a, b);
-        return relate(a, b, network, accuracy);
+        return relate(a, b, network, flatness, accuracy);
     }
 
-    static int relate(Geom a, Geom b, Network network, Tolerance accuracy) throws NullPointerException {
+    static int relate(Geom a, Geom b, Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         GeomRelationProcessor processor = new GeomRelationProcessor(accuracy, a, b);
         network.map.forEach(processor);
-        return processor.relation;
+        int ret = processor.relation;
+        if(ret == Relation.TOUCH){ // all lines / points touch...
+            if(a.getArea(flatness, accuracy) != 0){
+                if(b.getArea(flatness, accuracy) != 0){ // both have area
+                    ret |= Relation.A_INSIDE_B | Relation.B_INSIDE_A;
+                }else{
+                    ret |= Relation.A_OUTSIDE_B;
+                }
+            }else if(b.getArea(flatness, accuracy) != 0){
+                ret |= Relation.B_OUTSIDE_A;
+            }
+        }
+        return ret;
     }
 
     public void reset(Geom a, Geom b) {

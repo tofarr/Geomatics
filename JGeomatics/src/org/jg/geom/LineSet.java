@@ -392,6 +392,11 @@ public class LineSet implements Geom {
 
         return LineSet.valueOfInternal(less); //Intersection may be null,Line,LineString,LineSet
     }
+    
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy){
+        return 0;
+    }
 
     @Override
     public int hashCode() {

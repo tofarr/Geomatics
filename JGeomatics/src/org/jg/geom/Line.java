@@ -882,6 +882,11 @@ public class Line implements Geom, Comparable<Line> {
     public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
     }
+
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return 0;
+    }
     
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {

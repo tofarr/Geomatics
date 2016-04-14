@@ -116,6 +116,16 @@ public interface Geom extends Cloneable, Serializable {
     int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
     
     /**
+     * Get the area of this geometry.
+     * 
+     * @param flatness
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if accuracy was null
+     */
+    double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    
+    /**
      * Get the union of this geometry and that given. Any point touching one of
      * the geometries should be touching the result, and any point inside either
      * geometry should be inside the result

@@ -526,4 +526,9 @@ public class VectTest {
         a = Vect.valueOf(5, 30);
         assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
+    
+    @Test
+    public void testGetArea(){
+        assertEquals(0, Vect.valueOf(20, 30).getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+    }
 }

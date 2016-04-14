@@ -98,6 +98,11 @@ public class Area implements Geom {
             return ret;
         }
     }
+    
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return getArea();
+    }
 
     @Override
     public Rect getBounds() {
@@ -575,7 +580,8 @@ public class Area implements Geom {
                 return true;
             }
         });
-        final Network touching = new Network();
+        final Network otherNetwork = new Network();
+        final boolean[] touching = new boolean[1];
         network.forEachLink(new LinkProcessor(){
             @Override
             public boolean process(double ax, double ay, double bx, double by) {
@@ -587,24 +593,38 @@ public class Area implements Geom {
                     || Relation.isBInsideA(otherRelate)){
                     network.removeLinkInternal(ax, ay, bx, by);
                 }
-                if(Relation.isTouch(relate) && Relation.isTouch(otherRelate)){
-                    touching.addLinkInternal(ax, ay, bx, by);
+                if(Relation.isTouch(otherRelate)){
+                    otherNetwork.addLinkInternal(ax, ay, bx, by);
+                    if(Relation.isTouch(relate)){
+                        touching[0] = true;
+                    }
                 }
                 return true;
             }
         });
         
-        if(touching.numLinks() == 0){ // No common allLines, so make area and be done
+        if(!touching[0]){ // No common allLines, so make area and be done
             return Area.valueOfInternal(accuracy, network);
         }
         
         List<Ring> rings = Ring.parseAllInternal(network, accuracy, true);
         for(int i = rings.size(); i-- > 0;){
             Ring ring = rings.get(i);
-            int numLinksBefore = touching.numLinks();
-            ring.addTo(touching);
-            int numLinksAfter = touching.numLinks();
-            if(numLinksBefore != numLinksAfter){
+            int index = ring.numVects()-1;
+            double bx = ring.getX(index);
+            double by = ring.getY(index);
+            boolean discard = true;
+            while(index-- != 0){
+                double ax = ring.getX(index);
+                double ay = ring.getY(index);
+                if(!otherNetwork.hasLink(ax, ay, bx, by)){
+                    discard = false;
+                    break;
+                }
+                bx = ax;
+                by = ay;
+            }
+            if(discard){
                 rings.remove(i);
             }
         }

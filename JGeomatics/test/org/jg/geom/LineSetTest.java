@@ -383,4 +383,10 @@ public class LineSetTest {
         }
         assertEquals(100, hashCodes.size());
     }
+          
+    @Test
+    public void testGetArea(){
+        LineSet a = LineSet.valueOf(TOL, 0,0, 100,100, 100,0, 0,100, 0,0);
+        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+    }
 }

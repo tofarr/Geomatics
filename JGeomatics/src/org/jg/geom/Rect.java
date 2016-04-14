@@ -170,7 +170,7 @@ public class Rect implements Geom {
      * @return result
      * @throws NullPointerException if rect was null
      */
-    public Rect union(Rect rect) throws NullPointerException {
+    public Rect add(Rect rect) throws NullPointerException {
         int relate = relate(rect, Tolerance.ZERO);
         if(!Relation.isBOutsideA(relate)){ // no part of rect is outside this
             return this;
@@ -418,15 +418,16 @@ public class Rect implements Geom {
     
     @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        if(other instanceof Rect){
-            return union((Rect)other);
-        }else if (!Relation.isBOutsideA(relate(other.getBounds(), accuracy))) {
+        int boundsRelate = relate(other.getBounds(), accuracy);
+        if (!Relation.isBOutsideA(boundsRelate)) {
             return this;
-        } else {
+        } else if((other instanceof Rect) && (!Relation.isAOutsideB(boundsRelate))){
+            return other;
+        }else{
             return toArea().union(other, flatness, accuracy);
         }
     }
-
+    
     @Override
     public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         if(other instanceof Rect){
@@ -450,8 +451,13 @@ public class Rect implements Geom {
      * @throws NullPointerException if rect was null
      */
     public Rect intersection(Rect rect) throws NullPointerException {
-        if (relate(rect, Tolerance.ZERO) == Relation.DISJOINT) {
+        int relate = relate(rect, Tolerance.ZERO);
+        if(Relation.isDisjoint(relate)){
             return null;
+        }else if(!Relation.isAOutsideB(relate)){
+            return this;
+        }else if(!Relation.isBOutsideA(relate)){
+            return rect;
         } else {
             return valueOf(Math.max(minX, rect.minX),
                     Math.max(minY, rect.minY),
@@ -468,8 +474,14 @@ public class Rect implements Geom {
         } else if ((other instanceof Rect) && (!Relation.isAOutsideB(boundsRelation))) {
             return null; // no part of this is outside the other.
         } else {
-            return toArea().less(other, flatness, accuracy);
+            Area ret = toArea().less(other, flatness, accuracy);
+            return (ret == null) ? null : ret.simplify();
         }
+    }
+
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return getArea();
     }
 
     @Override

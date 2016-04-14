@@ -276,6 +276,11 @@ public class GeoShape implements Geom {
     }
 
     @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return (area == null) ? 0 : area.getArea();
+    }
+
+    @Override
     public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
         return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
     }
@@ -318,7 +323,7 @@ public class GeoShape implements Geom {
             _points = _points.less(_lines, accuracy);
         }
         
-        return new GeoShape(_area, _lines, _points, getBounds().union(other.getBounds()));
+        return new GeoShape(_area, _lines, _points, getBounds().add(other.getBounds()));
     }
 
     @Override

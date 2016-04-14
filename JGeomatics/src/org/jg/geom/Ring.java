@@ -207,6 +207,11 @@ public class Ring implements Geom {
         }
         return ret;
     }
+    
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+        return getArea();
+    }
 
     /**
      * Get the area of the vect list given, assuming that it is a valid closed linear ring.

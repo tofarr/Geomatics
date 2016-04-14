@@ -377,6 +377,11 @@ public final class Vect implements Geom, Comparable<Vect> {
         return null;
     }
 
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy){
+        return 0;
+    }
+    
     /**
      * Determine if this vect matches the vector given within the tolerance
      * given

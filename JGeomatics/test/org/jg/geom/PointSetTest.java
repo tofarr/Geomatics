@@ -489,4 +489,10 @@ public class PointSetTest {
         }
         assertEquals(100, hashCodes.size());
     }
+      
+    @Test
+    public void testGetArea(){
+        PointSet a = new PointSet(new VectList(0, 0, 100, 1, 100, 100));
+        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+    }
 }

@@ -515,7 +515,12 @@ public class LineString implements Geom {
         LineSet ret = toLineSet().less(other, flatness, accuracy);
         return (ret == null) ? null : ret.simplify();
     }
-
+    
+    @Override
+    public double getArea(Tolerance flatness, Tolerance accuracy){
+        return 0;
+    }
+    
     /**
      * Get the point at the index given
      *
