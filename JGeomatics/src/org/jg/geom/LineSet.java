@@ -264,7 +264,7 @@ public class LineSet implements Geom {
         }
         for (LineString lineString : lineStrings) {
             if (Relation.isTouch(lineString.relateInternal(x, y, accuracy))) {
-                return Relation.TOUCH;
+                return Relation.TOUCH | Relation.A_OUTSIDE_B;
             }
         }
         return Relation.DISJOINT;
