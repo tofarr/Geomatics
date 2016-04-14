@@ -1026,6 +1026,27 @@ public final class Network implements Serializable, Cloneable {
         });
     }
     
+    public void removeHangLines(){
+        map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                if (links.size() == 0) {
+                    map.remove(x, y);
+                }
+                while (links.size() == 1) {
+                    double mx = links.getX(0);
+                    double my = links.getY(0);
+                    removeVertexInternal(x, y);
+                    links = map.get(mx, my);
+                    x = mx;
+                    y = my;
+                }
+
+                return true;
+            }
+        });
+    }
+    
 //    
 //    void addLinesWithRelationInternal(final Geom geom, final Tolerance accuracy, final Relate relate, final Network result){
 //        map.forEach(new VectMapProcessor<VectList>(){

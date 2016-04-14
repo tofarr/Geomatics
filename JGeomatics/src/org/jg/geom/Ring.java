@@ -108,13 +108,7 @@ public class Ring implements Geom {
         
         //First remove all hang lines from the network - these cannot possibly be part of rings
         if(removeHangLines){
-            network.forEachVertex(new VertexProcessor(){
-                @Override
-                public boolean process(double x, double y, int numLinks) {
-                    removeHangLines(network, x, y);
-                    return true;
-                }
-            });
+            network.removeHangLines();
         }
         if(network.numVects() < 2){
             return ret; // not enough links for a ring, so cannot be any rings!
@@ -171,25 +165,6 @@ public class Ring implements Geom {
             ay = by;
             bx = workingVect.getX();
             by = workingVect.getY();
-        }
-    }
-
-    static void removeHangLines(Network network, double nx, double ny) {
-        VectList _links = network.map.get(nx, ny);
-        if (_links == null) {
-            return;
-        }
-        if (_links.size() == 0) {
-            network.map.remove(nx, ny);
-        }
-        while (_links.size() == 1) {
-            double mx = _links.getX(0);
-            double my = _links.getY(0);
-            network.removeVertexInternal(nx, ny);
-            _links = network.map.get(mx, my);
-            nx = mx;
-            ny = my;
-            //network.removeLinkInternal(nx, ny, mx, my);
         }
     }
 
@@ -606,11 +581,11 @@ public class Ring implements Geom {
                     double a = getArea(ring);
                     if(a > 0){
                         Area area = new Ring(ring, a).toArea();
-                        union = (union == null) ? area : union.unionNormalized(area, accuracy);
+                        union = (union == null) ? area : union.union(area, accuracy);
                     }else{
                         ring.reverse();
                         Area area = new Ring(ring, a).toArea();
-                        less = (less == null) ? area : less.unionNormalized(area, accuracy);
+                        less = (less == null) ? area : less.union(area, accuracy);
                     }
                 }
             }

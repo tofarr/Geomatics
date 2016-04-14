@@ -64,12 +64,12 @@ public class RingTest {
         } catch (NullPointerException ex) {
         }
         try {
-            LineString.valueOf(TOL, (double[]) null);
+            Ring.valueOf(TOL, (double[]) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
         try {
-            LineString.valueOf(TOL, (VectList) null);
+            Ring.valueOf(TOL, (VectList) null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
@@ -154,20 +154,20 @@ public class RingTest {
     }
 
     @Test
-    public void testRelate() {
+    public void testRelate_Vect() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        assertEquals(Relation.TOUCH, ring.relate(Vect.ZERO, TOL));
-        assertEquals(Relation.TOUCH, ring.relate(new VectBuilder(), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(0, 5), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(0, 10), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(3, 4), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 8), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 12), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(6, 14), TOL));
-        assertEquals(Relation.TOUCH, ring.relate(Vect.valueOf(3, 12), TOL));
-        assertEquals(Relation.B_OUTSIDE_A, ring.relate(Vect.valueOf(3, 1), TOL));
-        assertEquals(Relation.B_OUTSIDE_A, ring.relate(Vect.valueOf(7, 12), TOL));
-        assertEquals(Relation.B_INSIDE_A, ring.relate(Vect.valueOf(2, 3), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.ZERO, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(new VectBuilder(), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(0, 5), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(0, 10), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(3, 4), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(6, 8), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(6, 12), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(6, 14), TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, ring.relate(Vect.valueOf(3, 12), TOL));
+        assertEquals(Relation.DISJOINT, ring.relate(Vect.valueOf(3, 1), TOL));
+        assertEquals(Relation.DISJOINT, ring.relate(Vect.valueOf(7, 12), TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, ring.relate(Vect.valueOf(2, 3), TOL));
     }
 
     @Test
@@ -219,9 +219,13 @@ public class RingTest {
         //Star test!
         Network network = new Network();
         network.addAllLinks(new VectList(0,0, 6,4, -1,4, 5,0,  2.5,7, 0,0));
-        Ring[] rings = Ring.parseAll(TOL, network); 
-        assertFalse(rings[0].isConvex());
-        assertTrue(rings[1].isConvex());
+        Ring[] rings = Ring.parseAll(TOL, network);
+        assertEquals(5, rings.length);
+        for(Ring r : rings){
+            assertTrue(r.isConvex());
+        }
+        
+        assertFalse(Ring.valueOf(TOL, 0,0, 100,0, 10,10, 0,100, 0,0).isConvex());
     }
     
     @Test
@@ -354,6 +358,7 @@ public class RingTest {
         assertEquals(bounds.maxX, 16, 0.01);
         assertEquals(bounds.maxY, 24, 0.01);
         assertEquals(694, b.getArea(), 1);
+        assertNull(ring.buffer(-15, Tolerance.FLATNESS, TOL));
     } 
     
     @Test
@@ -689,4 +694,6 @@ public class RingTest {
         VectList result = Ring.parsePathFromNetwork(network, template, new Tolerance(0.05));
         assertEquals(new VectList(0,0, 10,0, 0,10, 0,0), result);
     }
+    
+    
 }

@@ -258,11 +258,21 @@ public class GeoShape implements Geom {
     }
 
     int relateInternal(double x, double y, Tolerance tolerance){
-        if ((points != null) && (points.relateInternal(x, y, tolerance) == Relation.TOUCH)) {
-            return Relation.TOUCH;
+        int relate = Relation.NULL;
+        if(points != null){
+            relate = points.relateInternal(x, y, tolerance);
+            if(Relation.isTouch(relate)){
+                if((lines != null) || (area != null)){ // in case single point
+                    relate |= Relation.A_OUTSIDE_B;
+                }
+                return relate;
+            }
         }
-        if ((lines != null) && (lines.relateInternal(x, y, tolerance) == Relation.TOUCH)) {
-            return Relation.TOUCH;
+        if(lines != null){
+            relate |= lines.relateInternal(x, y, tolerance);
+            if(Relation.isTouch(relate)){
+                return relate;
+            }
         }
         if (area != null) {
             return area.relateInternal(x, y, tolerance);
