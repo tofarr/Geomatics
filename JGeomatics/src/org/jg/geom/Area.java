@@ -476,7 +476,7 @@ public class Area implements Geom {
         
         });
         
-        List<Ring> rings = Ring.parseAllInternal(union, accuracy, false);
+        List<Ring> rings = Ring.parseAllInternal(union, accuracy, true);
         
         if((!touching[0]) || (rings.size() == 1)){ // there were no touching allLines - we are done!
             return valueOfInternal(rings);

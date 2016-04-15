@@ -72,13 +72,14 @@ public class AreaTest {
         network.addLink(10, 50, 10, 90);
         
         Area expected = new Area(null,
-                    new Area(new Ring(new VectList(0,10, 10,10, 100,10, 100,40, 40,40, 0,40, 0,10), null)),
-                    new Area(new Ring(new VectList(0,60, 10,60, 60,60, 100,60, 100,90, 90,90, 10,90, 0,90, 0,60), null)));
+                    new Area(new Ring(new VectList(0,10, 10,10, 40,40, 0,40, 0,10), null)),
+                    new Area(new Ring(new VectList(0,60, 10,60, 10,90, 0,90, 0,60), null)),
+                    new Area(new Ring(new VectList(10,10, 100,10, 100,40, 40,40, 10,10), null)),
+                    new Area(new Ring(new VectList(10,60, 60,60, 90,90, 10,90, 10,60), null)),
+                    new Area(new Ring(new VectList(60,60, 100,60, 100,90, 90,90, 60,60), null)));
+
         Area found = Area.valueOf(TOL, network);
-        String wkt = found.toGeoShape().toWkt();
-        System.out.println(wkt);
-        assertEquals(expected,
-                found);
+        assertEquals(expected,found);
         try{
             Area.valueOf(TOL, (Network)null);
             fail("Exception expected");
@@ -355,7 +356,7 @@ public class AreaTest {
     }
 
     @Test
-    public void testRelate() {
+    public void testRelate_Vect() {
         Network network = new Network();
         for(int i = 0; i < 50; i += 10){
             int x = 40 + i;
@@ -370,7 +371,7 @@ public class AreaTest {
         network.forEachVertex(new VertexProcessor(){
             @Override
             public boolean process(double x, double y, int numLinks) {
-                assertEquals(Relation.TOUCH, area.relate(x, y, TOL));
+                assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, area.relate(x, y, TOL));
                 return true;
             }
         });
@@ -378,42 +379,42 @@ public class AreaTest {
             @Override
             public boolean process(double ax, double ay, double bx, double by) {
                 VectBuilder mid = new VectBuilder(ax, ay).add(bx, by).div(2);
-                assertEquals(Relation.TOUCH, area.relate(mid, TOL));
-                assertEquals(Relation.TOUCH, area.relate(mid.build(), TOL));
+                assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, area.relate(mid, TOL));
+                assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, area.relate(mid.build(), TOL));
                 return true;
             }
         });
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(90, 20, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(120, 20, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(60, 90, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(90, 20, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(120, 20, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(60, 90, TOL));
         
-        assertEquals(Relation.B_INSIDE_A, area.relate(-75, 10, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(-65, 10, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(-55, 10, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(-45, 10, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(0, 10, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(45, 10, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(55, 10, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(65, 10, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(75, 10, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(-75, 10, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(-65, 10, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(-55, 10, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(-45, 10, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(0, 10, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(45, 10, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(55, 10, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(65, 10, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(75, 10, TOL));
         
-        assertEquals(Relation.B_INSIDE_A, area.relate(-75, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(-65, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(-55, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(-45, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(0, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(45, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(55, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(65, 65, TOL));
-        assertEquals(Relation.B_INSIDE_A, area.relate(75, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(-75, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(-65, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(-55, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(-45, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(0, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(45, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(55, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(65, 65, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, area.relate(75, 65, TOL));
         
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(-65, 55, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(-55, 55, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(-45, 55, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(0, 55, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(45, 55, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(55, 55, TOL));
-        assertEquals(Relation.B_OUTSIDE_A, area.relate(65, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(-65, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(-55, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(-45, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(0, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(45, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(55, 55, TOL));
+        assertEquals(Relation.DISJOINT, area.relate(65, 55, TOL));
     }
     
     @Test
@@ -442,10 +443,10 @@ public class AreaTest {
         Area resultB = (Area)area.buffer(5, Tolerance.FLATNESS, TOL); // clear channels except at corners
         assertNull(resultB.shell);
         assertEquals(2, resultB.numChildren());
-        assertEquals(10, resultB.numRings());
+        assertEquals(6, resultB.numRings());
         assertEquals(2, resultB.getDepth());
         assertEquals(Rect.valueOf(-85, -75, 105, 75), resultB.getBounds());
-        assertEquals(25733, resultB.getArea(), 1);
+        assertEquals(25755, resultB.getArea(), 1);
         
         Ring resultC = (Ring)area.buffer(8, Tolerance.FLATNESS, TOL);
         assertEquals(Rect.valueOf(-88, -78, 108, 78), resultC.getBounds());
@@ -504,22 +505,39 @@ public class AreaTest {
         Area a2 = Area.valueOf(TOL, n2);
         
         Area a3 = a1.union(a2, TOL);
-        String wkt = a3.toGeoShape().toWkt();
-        System.out.println(wkt);
+        
+        assertEquals(1, a3.numChildren());
+        assertEquals(49, a3.numLines());
+        assertEquals(3, a3.numRings());
+        assertEquals(52, a3.numVects());
+        assertEquals(Rect.valueOf(-80,-70,110,80), a3.getBounds());
+        assertEquals(15400, a3.getArea(), 0.0001);
+        assertEquals(3, a3.getDepth());
     }
 
     @Test
     public void testUnion_3args() {
-        System.out.println("union");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Geom expResult = null;
-        Geom result = instance.union(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Network n1 = new Network();
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                int x = 40 * i;
+                int y = 30 * j;
+                n1.addAllLinks(new VectList(x,y, x+30,y, x+30,y+20, x,y+20, x,y));
+            }
+        }
+        Area a1 = Area.valueOf(TOL, n1);
+        LineSet ls = LineSet.valueOf(TOL, -100,10, 15,10, 150,145);
+        
+        GeoShape geom = (GeoShape)a1.union(ls, Tolerance.FLATNESS, TOL);
+        assertEquals(a1, geom.area);
+        Network lines = new Network();
+        lines.addLink(-100,10, 0,10);
+        lines.addLink(25,20, 40,35);
+        lines.addLink(55,50, 65,60);
+        lines.addLink(70,65, 80,75);
+        lines.addLink(85,80, 150,145);
+        assertEquals(LineSet.valueOf(TOL, lines), geom.lines);
+        assertNull(geom.points);
     }
 
     @Test

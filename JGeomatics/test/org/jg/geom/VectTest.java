@@ -493,7 +493,7 @@ public class VectTest {
         assertEquals("[\"PS\", 10,20, 10,25, 10,30]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
         
         gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
-        assertEquals("[\"PS\", 10,20, 10,25]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        assertSame(gs, b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT));
         
         PointSet mp = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25));
         assertSame(mp, b.union(mp, Tolerance.FLATNESS, Tolerance.DEFAULT));

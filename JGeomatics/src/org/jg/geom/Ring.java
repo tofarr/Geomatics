@@ -4,6 +4,7 @@ import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
@@ -120,8 +121,8 @@ public class Ring implements Geom {
         VectList allVects = network.getVects(new VectList(network.numVects()));
         VectList path = new VectList();
         VectBuilder workingVect = new VectBuilder();
-        VectSet workingSet = new VectSet();
-        for(int a = 0; processed.numLinks() < network.numLinks(); a++){
+        VectMap indices = new VectMap();
+        for(int a = 0; (processed.numLinks() < network.numLinks()) && (a < allVects.size()); a++){
             double ax = allVects.getX(a);
             double ay = allVects.getY(a);
             VectList links = network.map.get(ax, ay);
@@ -133,23 +134,56 @@ public class Ring implements Geom {
                     continue; // link was already processed
                 }
 
-                if(!followRing(ax, ay, bx, by, network, path, workingVect, workingSet)){
-                    continue; // has at least 4 points and does not self intersect
-                }
-                
-                double area = getArea(path);
-                if(area > 0){ // if the area is correct, the path is CCW. Otherwise it is invalid
-                    Ring ring = new Ring(path.clone(), area);
-                    ret.add(ring);
-                    processed.addAllLinks(path);
-                }
+                processRings(ax, ay, bx, by, network, path, workingVect, indices, processed, ret);
             }
         }
         return ret;
     }
     
-    //follow a ring around the edge of a network
-    static boolean followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectBuilder workingVect, VectSet workingSet) {
+    static void processRings(double ax, double ay, double bx, double by, Network network, VectList path,
+            VectBuilder workingVect, VectMap<Integer> indices, Network processed, Collection<Ring> results){
+        path.clear().add(ax, ay).add(bx, by);
+        indices.clear();
+        indices.put(ax, ay, 0);
+        indices.put(bx, by, 1);
+        while (true) {
+            network.nextCW(bx, by, ax, ay, workingVect);
+            path.add(workingVect);
+            Integer index = indices.get(workingVect);
+            
+            ax = bx;
+            ay = by;
+            bx = workingVect.getX();
+            by = workingVect.getY();
+            
+            if(index == null){ // point is not already in path, add it and continue
+                indices.put(workingVect.getX(), workingVect.getY(), path.size()-1);
+                continue;
+            }
+            
+            //we potentially have a ring, pull parts out of path to see
+            int numVects = path.size() - index;
+            VectList ringPath = new VectList(numVects);
+            ringPath.addAll(path, index, numVects);
+            path.removeAll(index+1, numVects-1);
+            double area = getArea(ringPath);
+            if(area > 0){
+                int min = minIndex(ringPath);
+                if(min != 0){
+                    ringPath = rotate(ringPath, min);
+                }
+                processed.addAllLinks(ringPath);
+                results.add(new Ring(ringPath, area));
+            }
+
+            if(index == 0){
+                return; // all finished
+            }
+        }
+    }
+    
+    //follow a ring around the edge of a network 
+    static void followRing(double ax, double ay, double bx, double by, Network network, VectList path, VectBuilder workingVect, VectSet workingSet) {
         double ox = ax;
         double oy = ay;
         path.clear().add(ax, ay).add(bx, by);
@@ -158,7 +192,9 @@ public class Ring implements Geom {
             network.nextCW(bx, by, ax, ay, workingVect);
             path.add(workingVect);
             if(workingSet.contains(workingVect)){
-                return Vect.compare(ox, oy, workingVect.getX(), workingVect.getY()) == 0;
+                if(Vect.compare(ox, oy, workingVect.getX(), workingVect.getY()) == 0){
+                    
+                }
             }
             workingSet.add(workingVect);
             ax = bx;
