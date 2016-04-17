@@ -62,6 +62,28 @@ public class AreaTest {
         }catch(NullPointerException ex){
         }
     }
+    
+    @Test
+    public void testValueOf_VectList_B() {
+        VectList vects = new VectList();
+        for(int i = 10; i < 60; i+=10){
+            vects.add(i*2-10, i);
+            vects.add(-i*2, i);
+            vects.add(0, -i);
+        }
+        vects.add(10, -50);
+        vects.add(10, 10);
+        Area a = Area.valueOf(TOL, vects);
+        
+        //Technically, a solution with 3 rings and a depth of 1 would also be valid, but we test for 5.
+        assertEquals(1, a.numChildren());
+        assertEquals(5, a.numRings());
+        assertEquals(24, a.numLines());
+        assertEquals(29, a.numVects());
+        assertEquals(5, a.getDepth());
+        assertEquals(5600, a.getArea(), 0.001);
+        assertEquals(Rect.valueOf(-100,-50,90,50), a.getBounds());
+    }
 
     @Test
     public void testValueOf_Tolerance_Network() {
@@ -541,42 +563,12 @@ public class AreaTest {
     }
 
     @Test
-    public void testUnion_Area_Tolerance() {
-        System.out.println("union");
-        Area other = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Area expResult = null;
-        Area result = instance.union(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
     public void testUnion_Ring_Tolerance() {
-        System.out.println("union");
-        Ring other = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Area expResult = null;
-        Area result = instance.union(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
-    public void testUnion_GeoShape_Tolerance() {
-        System.out.println("union");
-        GeoShape other = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        GeoShape expResult = null;
-        Geom result = instance.union(other, Tolerance.FLATNESS, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        Ring r1 = Ring.valueOf(TOL, 50,50, 150,50, 150,150, 50,150, 50,50);
+        Ring r2 = (Ring)a.union(r1, Tolerance.FLATNESS, TOL);
+        Ring r3 = Ring.valueOf(TOL, 0,0, 100,0, 100,50, 150,50, 150,150, 50,150, 50,100, 0,100, 0,0);
+        assertEquals(r3, r2);
     }
 
     @Test
