@@ -572,57 +572,74 @@ public class AreaTest {
     }
 
     @Test
-    public void testIntersection_3args() {
-        System.out.println("intersection");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Geom expResult = null;
-        Geom result = instance.intersection(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    @Test
     public void testIntersection_Area_Tolerance() {
-        System.out.println("intersection");
-        Area other = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        GeoShape expResult = null;
-        GeoShape result = instance.intersection(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        Area b = Area.valueOf(TOL, 50,50, 150,50, 150,150, 50,150, 50,50);
+        Area c = Area.valueOf(TOL, 50,50, 100,50, 100,100, 50,100, 50,50);
+        Area d = Area.valueOf(TOL, 80,20, 140,20, 140,80, 80,80, 80,60, 120,60, 120,40, 80,40, 80,20);
+        Area e = Area.valueOfInternal(Arrays.asList(
+            Ring.valueOf(TOL, 80,20, 100,20, 100,40, 80,40, 80,20),
+            Ring.valueOf(TOL, 80,60, 100,60, 100,80, 80,80, 80,60)));
+        Area f = Area.valueOf(TOL, 100,0, 200,0, 200,100, 100,100, 100,0);
+        Area g = Area.valueOf(TOL, 100,100, 200,100, 200,200, 100,200, 100,100);
+        Ring h = Ring.valueOf(TOL, 300,0, 310,0, 310,10, 300,10, 300,0);
+        
+        assertEquals(c.toGeoShape(), a.intersection(b, TOL));
+        assertEquals(c.toGeoShape(), b.intersection(a, TOL));
+        assertEquals(c.toGeoShape(), a.intersection(c, TOL));
+        assertEquals(c.toGeoShape(), b.intersection(c, TOL));
+
+        assertEquals(c.toGeoShape(), a.intersection(b.shell, TOL));
+        assertEquals(c.toGeoShape(), b.intersection(a.shell, TOL));
+        assertEquals(c.toGeoShape(), a.intersection(c.shell, TOL));
+        assertEquals(c.toGeoShape(), b.intersection(c.shell, TOL));
+
+        assertEquals(e.toGeoShape(), a.intersection(d, TOL));
+        assertEquals(e.toGeoShape(), d.intersection(a, TOL));
+        
+        assertEquals(Line.valueOf(100, 0, 100, 100), a.intersection(f, TOL).simplify());
+        assertEquals(Vect.valueOf(100, 100), a.intersection(g, TOL).simplify());
+        
+        assertNull(a.intersection(h, TOL));
+    }
+    
+    @Test
+    public void testIntersection_3args() {
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        GeoShape b = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
+                LineSet.valueOf(TOL, 0,120, 120,0),
+                PointSet.valueOf(0,150, 75,75, 150,0));
+        GeoShape c = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
+                LineSet.valueOf(TOL, 20,100, 100,20),
+                PointSet.valueOf(75,75));
+        assertEquals(c, a.intersection(b, Tolerance.FLATNESS, TOL));
     }
 
     @Test
     public void testLess_Area_Tolerance() {
-        System.out.println("less");
-        Area other = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Area expResult = null;
-        Area result = instance.less(other, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        Area b = Area.valueOf(TOL, 50,50, 150,50, 150,150, 50,150, 50,50);
+        Area c = Area.valueOf(TOL, 0,0, 100,0, 100,50, 50,50, 50,100, 0,100, 0,0);
+        Area d = Area.valueOf(TOL, 50,50, 100,50, 100,100, 50,100, 50,50);
+        Area e = Area.valueOf(TOL, 20,20, 80,20, 80,80, 20,80, 20,20);
+        Area f = Area.valueOfInternal(Arrays.asList(Ring.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0),
+            Ring.valueOf(TOL, 20,20, 80,20, 80,80, 20,80, 20,20)));
+        Ring g = Ring.valueOf(TOL, 100,0, 200,0, 200,100, 100,100, 100,0);
+        
+        assertEquals(c, a.less(b, TOL));
+        assertEquals(c, a.less(d, TOL));
+        assertEquals(f, a.less(e, TOL));
+        assertEquals(a, a.less(g, TOL));
     }
 
     @Test
     public void testLess_3args() {
-        System.out.println("less");
-        Geom other = null;
-        Tolerance flatness = null;
-        Tolerance accuracy = null;
-        Area instance = null;
-        Area expResult = null;
-        Area result = instance.less(other, flatness, accuracy);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        GeoShape b = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
+                LineSet.valueOf(TOL, 0,120, 100,20, 100,40, 140,0),
+                PointSet.valueOf(0,150, 100,100, 150,0));
+        Area c = Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50);
+        assertEquals(c, a.less(b, Tolerance.FLATNESS, TOL));
     }
 
 }

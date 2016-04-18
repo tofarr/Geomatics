@@ -171,6 +171,22 @@ public class RingTest {
     }
 
     @Test
+    public void testRelate() {
+        Ring a = Ring.valueOf(TOL, 0,0, 100,0, 0,100, 0,0);
+        Ring b = Ring.valueOf(TOL, 0,100, 100,0, 100,100, 0,100);
+        Ring c = Ring.valueOf(TOL, 100,0, 200,0, 100,100, 100,0);
+        Ring d = Ring.valueOf(TOL, 5,5, 10,5, 5,10, 5,5);
+
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Tolerance.FLATNESS, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Tolerance.FLATNESS, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(d, Tolerance.FLATNESS, TOL));
+        
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(b, Tolerance.FLATNESS, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(b, Tolerance.FLATNESS, TOL));
+    }
+
+    @Test
     public void testGetLineIndex() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
         final Set<Line> expected = new HashSet<>(Arrays.asList(

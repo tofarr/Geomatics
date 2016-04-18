@@ -39,16 +39,45 @@ public final class GeomRelationProcessor implements VectMapProcessor<VectList> {
         GeomRelationProcessor processor = new GeomRelationProcessor(accuracy, a, b);
         network.map.forEach(processor);
         int ret = processor.relation;
+        double areaA = a.getArea(flatness, accuracy);
+        double areaB = b.getArea(flatness, accuracy);
+        
+        currently take 2 rings, A and B
+        if a inside b, then relation will be wrong
+        will have a inside b, b outside a, but NOT b inside a
+        How do we rectify this?
+        for areas, we could test a point from each shell?
+        take a proxy for each geom?
+                
+        convert areas to triangle strips and verify?
+        triangle strips may be more efficient for some operations
+        extract triangles from network?
+        
+        
+        //pole of inaccessibility...
+        //while concave vertices exist
+        //for each concave vertex, find the closest point on an unconnected line segment
+        //process the smallest
+
+        
+        
         if(ret == Relation.TOUCH){ // all lines / points touch...
-            if(a.getArea(flatness, accuracy) != 0){
-                if(b.getArea(flatness, accuracy) != 0){ // both have area
+            if(areaA != 0){
+                if(areaB != 0){ // both have area
                     ret |= Relation.A_INSIDE_B | Relation.B_INSIDE_A;
                 }else{
                     ret |= Relation.A_OUTSIDE_B;
                 }
-            }else if(b.getArea(flatness, accuracy) != 0){
+            }else if(areaB != 0){
                 ret |= Relation.B_OUTSIDE_A;
             }
+        }
+        
+        if(Relation.isAInsideB(ret) && Relation.is){
+            if(area)
+        }
+        if(Relation.isBInsideA(ret)){
+            
         }
         return ret;
     }
