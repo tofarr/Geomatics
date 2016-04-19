@@ -70,4 +70,22 @@ public class Relation {
         }
         return ret;
     }
+    
+    //swap this and other
+    public static int invert(int relation){
+        int ret = relation & TOUCH;
+        if(isBInsideA(relation)){
+            ret |= B_OUTSIDE_A;
+        }
+        if(isBOutsideA(relation)){
+            ret |= B_INSIDE_A;
+        }
+        if(isAInsideB(relation)){
+            ret |= A_OUTSIDE_B;
+        }
+        if(isAOutsideB(relation)){
+            ret |= A_INSIDE_B;
+        }
+        return ret;
+    }
 }

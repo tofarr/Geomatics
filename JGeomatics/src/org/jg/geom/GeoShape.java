@@ -282,7 +282,24 @@ public class GeoShape implements Geom {
 
     @Override
     public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        return relate(geom.toGeoShape(flatness, accuracy), accuracy);
+    }
+    
+    public int relate(GeoShape geom, Tolerance accuracy) throws NullPointerException{
+        int ret = Relation.NULL;
+        if(area != null){
+            if(geom.area != null){
+                ret = area.relate(geom.area, accuracy);    
+            }else{
+                ret |= Relation.A_OUTSIDE_B;
+            }
+        }else if(geom.area != null){
+            ret |= Relation.B_OUTSIDE_A;
+        }
+        if((lines != null) || (points != null) || (geom.lines != null) || (geom.points != null)){
+            ret |= NetworkRelationProcessor.relate(this, geom, accuracy, accuracy);
+        }
+        return ret;
     }
 
     @Override

@@ -282,7 +282,11 @@ public final class PointSet implements Geom {
         }else if(geom instanceof PointSet){
             return relate((PointSet)geom, accuracy);
         }else{
-            return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+            int ret = NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
+            if(!Relation.isBOutsideA(ret) && (geom.getArea(flatness, accuracy) != 0)){
+                ret |= Relation.B_OUTSIDE_A;
+            }
+            return ret;
         }
     }
     

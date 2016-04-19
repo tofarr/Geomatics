@@ -106,17 +106,14 @@ public class Area implements Geom {
 
     @Override
     public Rect getBounds() {
-        if (children.length == 0) {
-            return shell.getBounds();
-        } else {
+        if(shell == null){
             RectBuilder allBounds = new RectBuilder();
-            if (shell != null) {
-                shell.addBoundsTo(allBounds);
-            }
             for (Area ringSet : children) {
                 allBounds.add(ringSet.getBounds());
             }
             return allBounds.build();
+        }else{
+            return shell.getBounds();
         }
     }
 
@@ -401,7 +398,48 @@ public class Area implements Geom {
 
     @Override
     public int relate(final Geom geom, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
-        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        if(geom instanceof Ring){
+            return relate((Ring)geom, accuracy);
+        }else if(geom instanceof Area){
+            return relate((Area)geom, accuracy);
+        }else{
+            return toGeoShape().relate(geom, flatness, accuracy);
+        }
+    }
+    
+    public int relate(Area area, Tolerance accuracy){
+        if(area.shell == null){
+            int ret = Relation.NULL;
+            for(Area child : area.children){
+                ret |= child.relate(child, accuracy);
+            }
+            return ret;
+        }
+        int ret = relate(area.shell, accuracy);
+        int inverse = Relation.NULL;
+        for(Area child : area.children){
+            inverse |= child.relate(child, accuracy);
+        }
+        ret |= Relation.invert(inverse);
+        return ret;
+            
+    }
+    
+    public int relate(Ring ring, Tolerance accuracy){
+        if(ring == null){
+            int ret = Relation.NULL;
+            for(Area child : children){
+                ret |= child.relate(ring, accuracy);
+            }
+            return ret;
+        }
+        int ret = shell.relate(shell, accuracy);
+        int inverse = Relation.NULL;
+        for(Area child : children){
+            inverse |= child.relate(ring, accuracy);
+        }
+        ret |= Relation.invert(inverse);
+        return ret;
     }
 
     private static void addDisjoint(Area area, List<Area> results) {

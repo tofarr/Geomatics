@@ -356,7 +356,7 @@ public class Rect implements Geom {
         if(geom instanceof Rect){
             return relate((Rect)geom, accuracy);
         }
-        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        return toRing().relate(geom, flatness, accuracy);
     }
     
     public int relate(Rect other, Tolerance accuracy){

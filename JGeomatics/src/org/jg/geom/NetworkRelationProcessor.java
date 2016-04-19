@@ -5,11 +5,11 @@ import org.jg.util.VectList;
 import org.jg.util.VectMap.VectMapProcessor;
 
 /**
- * Processor for geometry relations
+ * Processor for geometry relations. This class does not properly find all inside relations, so extra processing is required
  *
  * @author tofarrell
  */
-public final class GeomRelationProcessor implements VectMapProcessor<VectList> {
+final class NetworkRelationProcessor implements VectMapProcessor<VectList> {
 
     private final Tolerance accuracy;
     private final VectBuilder workingVect;
@@ -17,12 +17,12 @@ public final class GeomRelationProcessor implements VectMapProcessor<VectList> {
     private Geom b;
     private int relation;
 
-    public GeomRelationProcessor(Tolerance accuracy) {
+    public NetworkRelationProcessor(Tolerance accuracy) {
         this.accuracy = accuracy;
         workingVect = new VectBuilder();
     }
 
-    public GeomRelationProcessor(Tolerance accuracy, Geom a, Geom b) {
+    public NetworkRelationProcessor(Tolerance accuracy, Geom a, Geom b) {
         this(accuracy);
         reset(a, b);
     }
@@ -36,49 +36,9 @@ public final class GeomRelationProcessor implements VectMapProcessor<VectList> {
     }
 
     static int relate(Geom a, Geom b, Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        GeomRelationProcessor processor = new GeomRelationProcessor(accuracy, a, b);
+        NetworkRelationProcessor processor = new NetworkRelationProcessor(accuracy, a, b);
         network.map.forEach(processor);
         int ret = processor.relation;
-        double areaA = a.getArea(flatness, accuracy);
-        double areaB = b.getArea(flatness, accuracy);
-        
-        currently take 2 rings, A and B
-        if a inside b, then relation will be wrong
-        will have a inside b, b outside a, but NOT b inside a
-        How do we rectify this?
-        for areas, we could test a point from each shell?
-        take a proxy for each geom?
-                
-        convert areas to triangle strips and verify?
-        triangle strips may be more efficient for some operations
-        extract triangles from network?
-        
-        
-        //pole of inaccessibility...
-        //while concave vertices exist
-        //for each concave vertex, find the closest point on an unconnected line segment
-        //process the smallest
-
-        
-        
-        if(ret == Relation.TOUCH){ // all lines / points touch...
-            if(areaA != 0){
-                if(areaB != 0){ // both have area
-                    ret |= Relation.A_INSIDE_B | Relation.B_INSIDE_A;
-                }else{
-                    ret |= Relation.A_OUTSIDE_B;
-                }
-            }else if(areaB != 0){
-                ret |= Relation.B_OUTSIDE_A;
-            }
-        }
-        
-        if(Relation.isAInsideB(ret) && Relation.is){
-            if(area)
-        }
-        if(Relation.isBInsideA(ret)){
-            
-        }
         return ret;
     }
 

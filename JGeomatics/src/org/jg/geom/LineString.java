@@ -488,7 +488,7 @@ public class LineString implements Geom {
 
     @Override
     public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        return NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
     }
     
     /**

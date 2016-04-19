@@ -255,7 +255,11 @@ public class LineSet implements Geom {
     
     @Override
     public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        int ret = NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
+        if(!Relation.isBOutsideA(ret) && (geom.getArea(flatness, accuracy) != 0)){
+            ret |= Relation.B_OUTSIDE_A;
+        }
+        return ret;
     }
 
     int relateInternal(double x, double y, Tolerance accuracy) {

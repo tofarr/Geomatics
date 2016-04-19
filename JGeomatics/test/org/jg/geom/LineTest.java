@@ -740,6 +740,7 @@ public class LineTest {
         assertEquals(-1, a.counterClockwise(new VectBuilder(0, 100)));
         assertEquals(0, a.counterClockwise(Vect.valueOf(50, 50)));
         assertEquals(1, a.counterClockwise(new VectBuilder(150, 150)));
+        assertEquals(1, a.counterClockwise(new VectBuilder(20, 0)));
     }
     
     @Test

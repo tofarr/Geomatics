@@ -880,7 +880,7 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return GeomRelationProcessor.relate(this, geom, flatness, accuracy);
+        return NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
     }
 
     @Override

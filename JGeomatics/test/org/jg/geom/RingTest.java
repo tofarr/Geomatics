@@ -182,8 +182,6 @@ public class RingTest {
         assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Tolerance.FLATNESS, TOL));
         assertEquals(Relation.A_OUTSIDE_B | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(d, Tolerance.FLATNESS, TOL));
         
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(b, Tolerance.FLATNESS, TOL));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(b, Tolerance.FLATNESS, TOL));
     }
 
     @Test
