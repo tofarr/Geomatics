@@ -711,5 +711,19 @@ public class RingTest {
         assertEquals(new VectList(0,0, 10,0, 0,10, 0,0), result);
     }
     
+    @Test
+    public void testConvexHull(){
+        Ring a = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,20, 80,20, 80,70, 40,70, 40,40, 60,40, 50,60, 70,60, 70,30, 30,30, 30,80, 90,80, 90,10, 20,10, 20,0);
+        Ring b = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,0);
+        assertEquals(b, a.convexHull());
+    }
     
+    @Test
+    public void testLargestConvexArea(){
+        Ring a = Ring.valueOf(TOL, 0,0, 60,0, 70,70, 80,70, 80,60, 90,60, 100,100, 0,100, 10,40, 0,0);
+        String wkt = a.toGeoShape().toWkt();
+        Ring b = a.largestConvexRing(TOL);
+        System.out.println(b);
+        fail("No assertions");
+    }
 }

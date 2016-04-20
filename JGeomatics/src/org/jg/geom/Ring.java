@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.jg.algorithm.ConvexHull;
 import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
@@ -654,7 +655,7 @@ public class Ring implements Geom {
                     j--;
                     links.getVect(j, c);
                     //IF C is ON LINE AB, and C is closer to B than A, add C to ret and set C to A and break
-                    if(Line.vectLineDistSq(a.getX(), a.getY(), b.getX(), b.getY(), c.getX(), c.getY()) <= tolSq){
+                    if(Line.distLineVectSq(a.getX(), a.getY(), b.getX(), b.getY(), c.getX(), c.getY()) <= tolSq){
                         double distC = Vect.distSq(c.getX(), c.getY(), b.getX(), b.getY());
                         if(distC < distA){
                             ret.add(c);
@@ -905,144 +906,21 @@ public class Ring implements Geom {
         if(isConvex()){
             return this;
         }
-        throw new UnsupportedOperationException("Not Yet implemented - should probably be done on network");
+        return new Ring(ConvexHull.getConvexHull(vects), null);
     }
     
-    
-//    public Ring largestConvexRing(){
-//        if(isConvex()){
-//            return this;
-//        }
-//        
-//        //Get convex hull
-//        
-//        //We are going to proceed by bisecting the convex hull
-//        
-//        //We can bisect along...
-//          //one of the internal lines
-//          //the line bisecting the convergence of 2 internal lines at an internal point
-//          //the inverse of the line bisecting the convergence of 2 internal lines at an internal point.
-//          
-//          //In each case, we are looking for the greatest inequality between bisected
-//        
-//        //For all points inside convex hull...
-//        
-//        //For all lines inside convex hull
-//        //bisecting line
-//        //inverse of bisecting line
-//        //component lines
-//        
-//        
-//        //Get convex hull of these points
-//        
-//        
-//        
-//        
-//        Network network = new Network(); //add to network
-//        addTo(network);
-//        
-//        //traverse. at each concave angle, project lines onto network.
-//        int numVects = vects.size();
-//        double ax = vects.getX(numVects-2);
-//        double ay = vects.getY(numVects-2);
-//        for(int b = 0; b < numVects; b++){
-//            double bx = vects.getX(b);
-//            double by = vects.getY(b);
-//            
-//            //Build a list of line intersections...
-//            double cx = vects.getX(numVects-2);
-//            double cy = vects.getY(numVects-2);
-//            for(int d = 0; d < numVects; d++){
-//                double dx = vects.getX(d);
-//                double dy = vects.getY(d);
-//            }
-//            
-//            //insert segment and intersections
-//        }
-//
-//        
-//        //project lines from network onto self.
-//        
-//        //ear clip until convex
-//        
-//        
-//        
-//        
-//        //can we get this for an area?
-//        
-//        //one way would be to iteratively try inverse buffering until what we are left with is convex.
-//        
-//        //try convex hull
-//        
-//        //get points inside convex hull
-//        
-//        //follow lines from these points 
-//        
-//        //get convex hull of these points - these should be removed
-//    }
-//    
-//    
-//    
-//    public Vect getPoleOfInaccessibility(){
-//        if(isConvex()){
-//            return getCentroid();
-//        }
-//        
-//        Network network = new Network();
-//        
-//        int numVects = vects.size();
-//        double ax = vects.getX(numVects-2);
-//        double ay = vects.getY(numVects-2);
-//        for(int b = 0; b < numVects; b++){
-//            double bx = vects.getX(b);
-//            double by = vects.getY(b);
-//            
-//            //Build a list of line intersections...
-//            double cx = vects.getX(numVects-2);
-//            double cy = vects.getY(numVects-2);
-//            for(int d = 0; d < numVects; d++){
-//                double dx = vects.getX(d);
-//                double dy = vects.getY(d);
-//            }
-//            
-//            //insert segment and intersections
-//        }
-//
-//        //create network
-//        //project lines onto line segments to densify network
-//        //find concave angles and ear clip.
-//        //when concave angles are all gone, then return the centroid
-//        
-//        int numVects = vects.size();
-//        double ax = vects.getX(numVects-2);
-//        double ay = vects.getY(numVects-2);
-//        double bx = vects.getX(0);
-//        double by = vects.getY(0);
-//        for(int i = 1; i < numVects; i++){
-//            double cx = vects.getX(i);
-//            double cy = vects.getY(i);
-//            if(Line.counterClockwise(ax, ay, cx, cy, bx, by) < 0){
-//                //find unconnected line which is closest to 
-//            }
-//        }
-//        
-//        Network network = new Network();
-//        addTo(network);
-//        network.map.forEach(new VectMapProcessor<VectList>(){
-//            @Override
-//            public boolean process(double x, double y, VectList value) {
-//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//            }
-//        
-//        });
-//                
-//        
-//        //pole of inaccessibility...
-//        //while concave vertices exist
-//        //for each concave vertex, find the closest point on an unconnected line segment
-//        //process the smallest
-//    }
-    
+    /**
+     * Get the largest convex ring within a ring. The pole of inaccessibility is the centroid of this ring.
+     * @param accuracy
+     * @return 
+     */
+    public Ring largestConvexRing(Tolerance accuracy){
+        if(isConvex()){
+            return this;
+        }
+        return toArea().largestConvexRing(accuracy);        
+    }
+
     static class ConcaveFinder implements VectMapProcessor<VectList>{
 
         @Override

@@ -7,13 +7,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import org.jg.algorithm.ConvexHull;
+import org.jg.algorithm.Generalizer;
 import org.jg.geom.Network.LinkProcessor;
 import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
+import org.jg.util.SpatialNode.NodeProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
+import org.jg.util.VectMap.VectMapProcessor;
 import org.jg.util.VectSet;
 
 /**
@@ -706,7 +710,216 @@ public class Area implements Geom {
     public Area getChild(int index){
         return children[index];
     }
+    
+    void getVects(VectList results){
+        if(shell != null){
+            results.addAll(shell.vects);
+        }
+        for(Area child : children){
+            getVects(results);
+        }
+    }
+    
+    public Ring getConvexHull(){
+        if((shell != null) && shell.isConvex()){
+            return shell;
+        }
+        VectList vects = new VectList(numVects());
+        getVects(vects);
+        VectList convexHull = ConvexHull.getConvexHull(vects);
+        return new Ring(convexHull, null);
+    }
 
+    public Ring largestConvexRing(Tolerance accuracy){
+        
+        Ring convexHull = getConvexHull();
+        if(convexHull == shell){
+            return convexHull;
+        }
+        
+        Network network = new Network();
+        addTo(network);
+ 
+        //find vertex in convex hull closest to centroid
+        final Vect centroid = convexHull.getCentroid();
+        final VectBuilder a = new VectBuilder();
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            double minDistSq = Double.MAX_VALUE;
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                double distSq = Vect.distSq(x, y, centroid.x, centroid.y);
+                if(distSq < minDistSq){
+                    minDistSq = distSq;
+                    a.set(x, y);
+                }
+                return true;
+            }
+            
+        });
+        
+        //we have possibilities for bisecting our area...
+            //we can bisect along a link line
+            //we can bisect along the bisecting line of 2 link lines
+            //we can bisect along the normal of the bisecting line of 2 link lines
+        //We must choose the one which results in the largest inequality in the remaining area.
+        
+        VectList links = network.map.get(a); // there was always be at least 2 links
+        VectBuilder b = new VectBuilder();
+        VectBuilder c = new VectBuilder();
+        VectBuilder d = new VectBuilder();
+        links.getVect(0, c);
+        Area largest = null;
+        for(int i = links.size(); i-- > 0;){
+            links.getVect(i, b);
+            Area area = bisectAndGetLargest(a.getX(), a.getY(), b.getX(), b.getY(), accuracy);
+            if((largest == null) || (area.getArea() > largest.getArea())){
+                largest = area;
+            }
+            
+            double dx = b.getX() - a.getX();
+            double dy = b.getY() - a.getY();
+            double dDst = Math.sqrt((dx * dx) + (dy * dy));
+            
+            double ex = c.getX() - a.getX();
+            double ey = c.getY() - a.getY();
+            double eDst = Math.sqrt((ex * ex) + (ey * ey));
+            
+            double fx = (dx / dDst) + (ex / eDst);
+            double fy = (dy / dDst) + (ey / eDst);
+            
+            if((fx != 0) || (fy != 0)){
+                //I could be wrong, but I cant think of any case where this would hold true
+                //d.set(fx + a.getX(), fy + a.getY());
+                //area = bisectAndGetLargest(a.getX(), a.getY(), d.getX(), d.getY(), accuracy);
+                //if((largest == null) || (area.getArea() > largest.getArea())){
+                //    largest = area;
+                //}
+
+                d.set(fy + a.getY(), fx - a.getX());
+                area = bisectAndGetLargest(a.getX(), a.getY(), d.getX(), d.getY(), accuracy);
+                if((largest == null) || (area.getArea() > largest.getArea())){
+                    largest = area;
+                }
+            }
+            
+            VectBuilder tmp = b;
+            b = c;
+            c = tmp;
+        }
+        
+        return largest.largestConvexRing(accuracy); // process may need to repeat
+    }
+    
+    Area bisectAndGetLargest(final double ax, final double ay, final double nx, final double ny, final Tolerance accuracy){
+        
+        final Network networkA = new Network();
+        final Network networkB = new Network();
+        final double bx = nx - ax;
+        final double by = ny - ay;
+        getLineIndex().forEach(new NodeProcessor<Line>(){ //process all lines...
+            final VectBuilder intersection = new VectBuilder();
+            @Override
+            public boolean process(Rect bounds, Line line) {
+                double cx = line.ax - ax;
+                double cy = line.ay - ay;
+                int c = accuracy.check(cx *  by - cy * bx);
+                
+                double dx = line.bx - ax;
+                double dy = line.by - ay;
+                int d = accuracy.check(dx *  by - dy * bx);
+                
+                if(c > 0){
+                    if(d >= 0){
+                        networkA.addLink(line); // if both parts of line are left of line, add to a
+                    }else{ // if both parts of line are on separate sides of line, split line between left and right
+                        Line.intersectionLineInternal(ax, ay, nx, ny, line.ax, line.ay, line.bx, line.by, accuracy, intersection);
+                        networkA.addLinkInternal(line.ax, line.ay, intersection.getX(), intersection.getY());
+                        networkB.addLinkInternal(line.bx, line.by, intersection.getX(), intersection.getY());
+                    }
+                }else if(c < 0){
+                    if(d <= 0){
+                        networkB.addLink(line); // if both parts of line are right of line, add to b
+                    }else{ // if both parts of line are on separate sides of line, split line between left and right
+                        Line.intersectionLineInternal(ax, ay, nx, ny, line.ax, line.ay, line.bx, line.by, accuracy, intersection);
+                        networkB.addLinkInternal(line.ax, line.ay, intersection.getX(), intersection.getY());
+                        networkA.addLinkInternal(line.bx, line.by, intersection.getX(), intersection.getY());
+                    }
+                }else if(d == 0){  // if both parts of line are on line, add to both
+                    networkA.addLink(line);
+                    networkB.addLink(line);
+                }else if(d > 0){
+                    networkA.addLink(line);
+                }else if(d < 0){
+                    networkB.addLink(line);
+                }
+                return true;
+            }
+        
+        });
+        
+        //Link hanglines
+        Network networkA2 = linkHangLines(networkA, accuracy);
+        Network networkB2 = linkHangLines(networkB, accuracy);
+        
+        Area areaA = Area.valueOfInternal(accuracy, networkA2); //convert both networks to areas
+        Area areaB = Area.valueOfInternal(accuracy, networkB2);
+        
+        return (areaA.getArea() > areaB.getArea()) ? areaA : areaB; // return largest area
+    }
+    
+    
+    Network linkHangLines(Network network, Tolerance accuracy){
+        
+        //find all points in a with a single link
+        final VectList hangPoints = new VectList();
+        network.forEachVertex(new VertexProcessor(){
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                if(numLinks == 1){
+                    hangPoints.add(x, y);
+                }
+                return true;
+            }
+        
+        });
+        
+        //sort by distance from bounds min min
+        Rect bounds = getBounds();
+        for (int i = hangPoints.size(); i-- > 1;) {
+            double ix = hangPoints.getX(i);
+            double iy = hangPoints.getY(i);
+            double disq = Vect.distSq(bounds.minX, bounds.minY, ix, iy);
+            for (int j = i; j-- > 0;) {
+                double jx = hangPoints.getX(j);
+                double jy = hangPoints.getY(j);
+                double djsq = Vect.distSq(bounds.minX, bounds.minY, jx, jy);
+                if (disq < djsq) {
+                    hangPoints.swap(i, j);
+                    ix = jx;
+                    iy = jy;
+                    disq = djsq;
+                }
+            }
+        }
+        
+        //add links between hang points
+        int index = hangPoints.size();
+        while(--index > 0){
+            double bx = hangPoints.getX(index);
+            double by = hangPoints.getY(index);
+            index--;
+            double ax = hangPoints.getX(index);
+            double ay = hangPoints.getY(index);
+            network.addLinkInternal(ax, ay, bx, by);
+        }
+        
+        network.explicitIntersections(accuracy);
+        network.snap(accuracy);
+        //douglas peucker here prevents infinite loop rounding error
+        Generalizer generalizer = new Generalizer(accuracy);
+        Network ret = generalizer.generalize(network);
+        return ret;
+    }
 
     static class AreaBuilder {
 

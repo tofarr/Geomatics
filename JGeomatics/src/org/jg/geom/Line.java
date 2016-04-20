@@ -411,10 +411,20 @@ public class Line implements Geom, Comparable<Line> {
      * @throws NullPointerException if vect was null
      */
     public double distLineVectSq(Vect vect) throws NullPointerException {
-        return vectLineDistSq(ax, ay, bx, by, vect.getX(), vect.getY());
+        return distLineVectSq(ax, ay, bx, by, vect.getX(), vect.getY());
     }
 
-    static double vectLineDistSq(double ax, double ay, double bx, double by, double x, double y) {
+    /**
+     * Get the square of the distance from the line given to the point given
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @param x
+     * @param y
+     * @return
+     */
+    public static double distLineVectSq(double ax, double ay, double bx, double by, double x, double y) {
         bx -= ax;
         by -= ay;
         x -= ax;
@@ -447,7 +457,17 @@ public class Line implements Geom, Comparable<Line> {
         return distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY());
     }
 
-    static double distSegVectSq(double ax, double ay, double bx, double by, double x, double y) {
+    /**
+     * Get the distance between a line segment and a vector
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @param x
+     * @param y
+     * @return
+     */
+    public static double distSegVectSq(double ax, double ay, double bx, double by, double x, double y) {
         bx -= ax;
         by -= ay;
         x -= ax;
@@ -827,7 +847,17 @@ public class Line implements Geom, Comparable<Line> {
         return counterClockwise(ax, ay, bx, by, vect.getX(), vect.getY());
     }
 
-    static int counterClockwise(double ax, double ay, double bx, double by, double x, double y) {
+    /**
+     * Determine if the point given lies to the left, right, or on the line given.
+     * @param ax
+     * @param ay
+     * @param bx
+     * @param by
+     * @param x
+     * @param y
+     * @return 1 if left of line, -1 if right of line, 0 if on line.
+     */
+    public static int counterClockwise(double ax, double ay, double bx, double by, double x, double y) {
         bx -= ax;
         by -= ay;
         x -= ax;
@@ -914,7 +944,19 @@ public class Line implements Geom, Comparable<Line> {
         return compare(ax, ay, bx, by, other.ax, other.ay, other.bx, other.by);
     }
 
-    static int compare(double iax, double iay, double ibx, double iby,
+    /**
+     * Compare the 2 lines given. Assumes that a and b in each lines have standard vector ordering.
+     * @param iax
+     * @param iay
+     * @param ibx
+     * @param iby
+     * @param jax
+     * @param jay
+     * @param jbx
+     * @param jby
+     * @return
+     */
+    public static int compare(double iax, double iay, double ibx, double iby,
             double jax, double jay, double jbx, double jby) {
         int ret = Vect.compare(iax, iay, jax, jay);
         if (ret == 0) {
