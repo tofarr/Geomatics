@@ -176,11 +176,13 @@ public class RingTest {
         Ring b = Ring.valueOf(TOL, 0,100, 100,0, 100,100, 0,100);
         Ring c = Ring.valueOf(TOL, 100,0, 200,0, 100,100, 100,0);
         Ring d = Ring.valueOf(TOL, 5,5, 10,5, 5,10, 5,5);
+        Ring e = Ring.valueOf(TOL, 0,0, 100,0, 100,100, 0,0);
 
         assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Tolerance.FLATNESS, TOL));
         assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, TOL));
         assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Tolerance.FLATNESS, TOL));
         assertEquals(Relation.A_OUTSIDE_B | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(d, Tolerance.FLATNESS, TOL));
+        assertEquals(Relation.ALL, a.relate(e, Tolerance.FLATNESS, TOL));
         
     }
 

@@ -283,9 +283,6 @@ public final class PointSet implements Geom {
             return relate((PointSet)geom, accuracy);
         }else{
             int ret = NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
-            if(!Relation.isBOutsideA(ret) && (geom.getArea(flatness, accuracy) != 0)){
-                ret |= Relation.B_OUTSIDE_A;
-            }
             return ret;
         }
     }

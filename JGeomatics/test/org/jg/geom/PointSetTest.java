@@ -298,7 +298,6 @@ public class PointSetTest {
         assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(g, Tolerance.FLATNESS, Tolerance.DEFAULT));
     }
 
-
     @Test
     public void testUnion_Vect() {
         VectList vects = new VectList(5, 5, 5, 7, 7, 5, 14, 5, 22, 5, 31, 5);

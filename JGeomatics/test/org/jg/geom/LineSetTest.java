@@ -316,6 +316,13 @@ public class LineSetTest {
         }catch(NullPointerException ex){
         }
     }
+    
+    @Test
+    public void testRelate_Geom_B() {
+        LineSet a = LineSet.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        Ring b = Ring.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100, 0,100, 0,0);
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+    }
 
     @Test
     public void testUnion() {
