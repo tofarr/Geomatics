@@ -1,5 +1,6 @@
 package org.jg.algorithm;
 
+import org.jg.geom.Network;
 import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -56,7 +57,12 @@ public class ConvexHullTest {
     @Test
     public void testGetConvexHull_G() {
         try {
-            ConvexHull.getConvexHull(null);
+            ConvexHull.getConvexHull((VectList)null);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+        try {
+            ConvexHull.getConvexHull((Network)null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }

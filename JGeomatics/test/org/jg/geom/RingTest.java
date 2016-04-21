@@ -751,6 +751,7 @@ public class RingTest {
         Ring a = Ring.valueOf(TOL, 0,0, 20,0, 20,20, 40,20, 40,0, 80,0, 80,60, 40,60, 40,40, 20,40, 20,60, 0,60, 0,0);
         Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
         Ring c = a.largestConvexRing(TOL);
+        Ring d = a.toArea().largestConvexRing2(TOL);
         assertEquals(b, c);
     }
 }

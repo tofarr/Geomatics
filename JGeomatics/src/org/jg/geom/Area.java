@@ -835,6 +835,156 @@ public class Area implements Geom {
     }
     
     
+    public Ring largestConvexRing2(final Tolerance accuracy) {
+        if((shell != null) && shell.isConvex()){
+            return shell;
+        }
+        
+        Network network = getDisected(accuracy);
+        
+        //start hunting for largest convex rings in result - this is a brute force search which may be slow.
+        final Network processed = new Network();
+        VectList allVects = network.getVects(new VectList()); // get all vectors in sorted order
+        VectList largest = new VectList();
+        VectList current = new VectList();
+        VectBuilder workingVect = new VectBuilder();
+        double largestArea = -1;
+        for(int a = 0; a < allVects.size(); a++){
+            double ax = allVects.getX(a);
+            double ay = allVects.getY(a);
+            VectList links = network.map.get(ax, ay);
+            for(int b = 0; b < links.size(); b++){
+                double bx = links.getX(a);
+                double by = links.getY(a);
+                if(!processed.hasLink(ax, ay, bx, by)){
+                    if(followConvexRing(ax, ay, bx, by, network, current, workingVect)){
+                        processed.addAllLinks(current);
+                        double currentArea = Ring.getArea(current);
+                        if(currentArea > largestArea){
+                            VectList tmp = current;
+                            current = largest;
+                            largest = tmp;
+                            largestArea = currentArea;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return new Ring(largest, largestArea);
+    }
+    
+    
+    
+    Network getDisected(final Tolerance accuracy){
+        final Ring convexHull = getConvexHull(); // get convex hull
+        final Network network = new Network(); // add to network
+        addTo(network);
+        final Network network2 = network.clone();
+        final Rect _bounds = getBounds();
+        network2.map.forEach(new VectMapProcessor<VectList>(){
+            final SpatialNode<Line> lineIndex = getLineIndex();
+            final IntersectionProcessor processor = new IntersectionProcessor(accuracy);
+            final VectList intersections = new VectList();
+            @Override
+            public boolean process(double ax, double ay, VectList links) {
+                if(Relation.isBInsideA(convexHull.relate(ax, ay, accuracy))){ //if point is inside convex ring...
+                    for(int b = links.size(); b-- > 0;){
+                        double bx = links.getX(b);
+                        double by = links.getY(b);
+                        Line link = new Line(ax, ay, bx, by);
+                        link = link.segCrossing(_bounds);
+                        network.addLink(link);
+                        if(b > 0){
+                            
+                            double dx = bx - ax;
+                            double dy = by - ay;
+                            double dDst = Math.sqrt((dx * dx) + (dy * dy));
+
+                            double ex = links.getX(b - 1) - ax;
+                            double ey = links.getY(b - 1) - ay;
+                            double eDst = Math.sqrt((ex * ex) + (ey * ey));
+
+                            double fx = (dx / dDst) + (ex / eDst);
+                            double fy = (dy / dDst) + (ey / eDst);
+
+                            if ((fx != 0) || (fy != 0)) {
+                                link = new Line(ax, ay, fy + ax, ay - fx);
+                                link = link.segCrossing(_bounds);
+                                network.addLink(link);
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+        });
+        network.explicitIntersections(accuracy); //explicitise and snap
+        network.snap(accuracy);
+        
+        //Remove any points outside this...
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList value) {
+                if(Relation.isBOutsideA(_bounds.relateInternal(x, y, Tolerance.ZERO))){
+                    network.removeVertexInternal(x, y);
+                }
+                return true;
+            }
+        });
+        
+        //Remove any points and lines outside this outside this
+        network2.clear();
+        network.forEachLink(new LinkProcessor(){
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                double x = (ax + bx) / 2;
+                double y = (ay + by) / 2;
+                if(!Relation.isBOutsideA(relateInternal(x, y, accuracy))){
+                    network2.addLinkInternal(ax,ay,bx,by);
+                }
+                return true;
+            }
+        });
+        
+        return network2;
+    }
+    
+    private boolean followConvexRing(double ax, double ay, double bx, double by, Network network, VectList current,
+            VectBuilder workingVect) {
+        double ox = ax;
+        double oy = ay;
+        current.clear();
+        //traverse ring adding points to current. Do not allow any right turns.
+        current.add(ax, ay);
+        current.add(bx, by);
+        while(true){
+            network.nextCW(bx, by, ax, ay, workingVect);
+            int ccw = Line.counterClockwise(ax, ay, bx, by, workingVect.getX(), workingVect.getY());
+            if(ccw >= 0){
+                ax = bx;
+                ay = by;
+                bx = workingVect.getX();
+                by = workingVect.getY();
+                current.add(bx, by);
+                if(Vect.compare(bx, by, ox, oy) == 0){
+                    return true;
+                }
+            }else{ // invalid turn, remove element from current
+                ax = bx;
+                ay = by;
+                int s = current.size() - 1;
+                if(s < 0){
+                    return false;
+                }
+                current.remove(current.size() - 1);
+                bx = current.getX(current.size() - 1);
+                by = current.getY(current.size() - 1);
+            }
+        }
+    }
+  
+    
     public Ring largestConvexRing(final Tolerance accuracy) {
         return largestConvexRing(this, accuracy);
     }
@@ -984,6 +1134,8 @@ public class Area implements Geom {
         });
         return ret[0];
     }
+
+
     
     
     
