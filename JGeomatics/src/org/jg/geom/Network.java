@@ -569,22 +569,7 @@ public final class Network implements Serializable, Cloneable {
                     removeLinkInternal(ax, ay, cx, cy);
 
                     //intersections.sort(); // since a < b, sorting always puts in correct order - ORDER IS NOT ALWAYS CORRECT DUE TO ROUNDING ERRORS!!!
-                    for (int i = intersections.size(); i-- > 1;) {
-                        double ix = intersections.getX(i);
-                        double iy = intersections.getY(i);
-                        double disq = Vect.distSq(ax, ay, ix, iy);
-                        for (int j = i; j-- > 0;) {
-                            double jx = intersections.getX(j);
-                            double jy = intersections.getY(j);
-                            double djsq = Vect.distSq(ax, ay, jx, jy);
-                            if (disq < djsq) {
-                                intersections.swap(i, j);
-                                ix = jx;
-                                iy = jy;
-                                disq = djsq;
-                            }
-                        }
-                    }
+                    intersections.sortByDist(ax, ay);
 
                     for (int i = intersections.size(); i-- > 0;) {
                         double bx = intersections.getX(i);
@@ -601,6 +586,39 @@ public final class Network implements Serializable, Cloneable {
         });
         return this;
     }
+    
+    public Network removeColinearPoints(final Tolerance tolerance){
+        final VectList toRemove = new VectList();
+        final double tolSq = tolerance.tolerance * tolerance.tolerance;
+        map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double x, double y, VectList links) {
+                if(links.size() == 2){
+                    double ax = links.getX(0);
+                    double ay = links.getY(0);
+                    double bx = links.getX(1);
+                    double by = links.getY(1);
+                    if(Line.distLineVectSq(ax, ay, bx, by, x, y) <= tolSq){
+                        toRemove.add(x, y);
+                    }
+                }
+                return true;
+            }
+        });
+        for(int n = toRemove.size(); n-- > 0;){
+            double x = toRemove.getX(n);
+            double y = toRemove.getY(n);
+            VectList links = map.get(x, y);
+            double ax = links.getX(0);
+            double ay = links.getY(0);
+            double bx = links.getX(1);
+            double by = links.getY(1);
+            removeVertexInternal(x, y);
+            addLinkInternal(ax, ay, bx, by);
+        }
+        return this;
+    }
+    
 
     public Network snap(final Tolerance tolerance) {
         final ArrayList<Snap> snapList = new ArrayList<>();

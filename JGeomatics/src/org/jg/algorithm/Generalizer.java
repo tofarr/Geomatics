@@ -42,7 +42,7 @@ public class Generalizer {
         Network output = new Network();
         VectList generalized = new VectList();
         for(VectList lines : allLines){
-            output.clear();
+            generalized.clear();
             generalize(lines, generalized);
             output.addAllLinks(generalized);
         }

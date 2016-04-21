@@ -1,6 +1,7 @@
 package org.jg.algorithm;
 
 import org.jg.geom.Line;
+import org.jg.geom.Network;
 import org.jg.util.VectList;
 
 /**
@@ -64,6 +65,25 @@ public class ConvexHull {
             divide(maxX, maxY, minX, minY, vects, results);
             return results;
         }
+    }
+    
+    public static VectList getConvexHull(Network network){
+        final VectList vects = new VectList(network.numVects());
+        network.forEachVertex(new Network.VertexProcessor() {
+            @Override
+            public boolean process(double x, double y, int numLinks) {
+                vects.add(x, y);
+                return true;
+            }
+        });
+        return getConvexHull(vects);
+    }
+    
+    public static Network getConvexHullNetwork(Network network){
+        Network ret = new Network();
+        VectList ring = getConvexHull(network);
+        ret.addAllLinks(ring);
+        return ret;
     }
     
     

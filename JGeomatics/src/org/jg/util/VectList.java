@@ -747,6 +747,30 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
             sort(vects, a + 1, max);
         }
     }
+     
+    /**
+     * Sort this list by distance from the point given
+     * @param x
+     * @param y
+     */
+    public void sortByDist(double x, double y){
+        for (int i = size; i-- > 1;) {
+            double ix = getX(i);
+            double iy = getY(i);
+            double disq = Vect.distSq(x, y, ix, iy);
+            for (int j = i; j-- > 0;) {
+                double jx = getX(j);
+                double jy = getY(j);
+                double djsq = Vect.distSq(x, y, jx, jy);
+                if (disq < djsq) {
+                    swap(i, j);
+                    ix = jx;
+                    iy = jy;
+                    disq = djsq;
+                }
+            }
+        }
+    }
 
     /**
      * Determine whether this list is ordered such that the start is less than

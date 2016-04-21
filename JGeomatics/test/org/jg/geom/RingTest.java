@@ -719,11 +719,38 @@ public class RingTest {
     }
     
     @Test
-    public void testLargestConvexArea(){
-        Ring a = Ring.valueOf(TOL, 0,0, 60,0, 70,70, 80,70, 80,60, 90,60, 100,100, 0,100, 10,40, 0,0);
-        String wkt = a.toGeoShape().toWkt();
-        Ring b = a.largestConvexRing(TOL);
-        System.out.println(b);
+    public void testLargestConvexArea_A(){
+        Ring a = Ring.valueOf(TOL, 0,0, 35,0, 70,70, 80,70, 80,60, 90,60, 100,100, 0,100, 10,20, 0,0);
+        Ring b = Ring.valueOf(TOL, 0,100, 12.5,0, 35,0, 85,100, 0,100);
+        //Ring c = a.largestConvexRing(TOL);
+        //assertEquals(b, c);
+        //assertSame(b, b.largestConvexRing(TOL));
         fail("No assertions");
+    }
+    
+    @Test
+    public void testLargestConvexArea_B(){
+        Ring a = Ring.valueOf(TOL, 0,0, 100,0, 200,100, 100,100, 10,10, 100,10, 180,90, 100,90, 25,15, 20,15, 100,95, 190,95, 100,5, 5,5, 0,0);
+        Ring b = Ring.valueOf(TOL, 20,10, 100,10, 180,90, 100,90, 20,10);
+        //Ring c = a.largestConvexRing(TOL);
+        //assertEquals(b, c);
+        fail("No assertions");
+    }
+    
+    @Test
+    public void testLargestConvexArea_C(){
+        Ring a = Ring.valueOf(TOL, 0,0, 50,100, 60,80, 70,100, 120,0, 0,0);
+        Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
+        //Ring c = a.largestConvexRing(TOL);
+        //assertEquals(b, c);
+        fail("No assertions");
+    }
+    
+    @Test
+    public void testLargestConvexArea_D(){
+        Ring a = Ring.valueOf(TOL, 0,0, 20,0, 20,20, 40,20, 40,0, 80,0, 80,60, 40,60, 40,40, 20,40, 20,60, 0,60, 0,0);
+        Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
+        Ring c = a.largestConvexRing(TOL);
+        assertEquals(b, c);
     }
 }

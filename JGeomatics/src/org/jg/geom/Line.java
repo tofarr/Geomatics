@@ -943,6 +943,33 @@ public class Line implements Geom, Comparable<Line> {
     public int compareTo(Line other) {
         return compare(ax, ay, bx, by, other.ax, other.ay, other.bx, other.by);
     }
+    
+    /**
+     * Get a line segment based on this line where both end points are guaranteed to be outside the
+     * bounds given, and the line will cross the bounds so long as they are not disjoint
+     * @param bounds
+     * @return
+     * @throws NullPointerException if bounds was null
+     */
+    Line segCrossing(Rect bounds) throws NullPointerException{
+        double dx = bx - ax;
+        double dy = by - ay;
+        double dydx = dy / dx;
+        double ix,iy,jx,jy;
+        if((dydx >= -1) && (dydx <= 1)){ // line is more horizontal - calculate y for x values
+            ix = bounds.minX - 1;
+            iy = dydx * (ix - ax) + ay;
+            jx = bounds.maxX + 1;
+            jy = dydx * (jx - ax) + ay;
+        }else{ // line is more vertical - calculate x for y values
+            double dxdy = dx / dy;
+            iy = bounds.minY - 1;
+            ix = dxdy * (iy - ay) + ax;
+            jy = bounds.maxY + 1;
+            jx = dxdy * (jy - ay) + ax;
+        }
+        return new Line(ix, iy, jx, jy);
+    }
 
     /**
      * Compare the 2 lines given. Assumes that a and b in each lines have standard vector ordering.
