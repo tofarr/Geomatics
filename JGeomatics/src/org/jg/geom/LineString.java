@@ -439,7 +439,7 @@ public class LineString implements Geom {
 
     static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance flatness, Tolerance tolerance, VectBuilder work, VectList result) {
         if(amt > 0){
-            if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
+            if (Line.counterClockwise(ax, ay, cx, cy, bx, by, tolerance) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
                 Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
                 result.add(work);
                 Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
@@ -452,7 +452,7 @@ public class LineString implements Geom {
                 Vect.linearizeArc(bx, by, ix, iy, work.getX(), work.getY(), Math.abs(amt), flatness.getTolerance(), result);
             }
         }else{
-            if (Line.counterClockwise(ax, ay, cx, cy, bx, by) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
+            if (Line.counterClockwise(ax, ay, cx, cy, bx, by, tolerance) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
                 Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
                 double ix = work.getX();
                 double iy = work.getY();

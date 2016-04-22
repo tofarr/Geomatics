@@ -715,56 +715,39 @@ public class RingTest {
     public void testConvexHull(){
         Ring a = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,20, 80,20, 80,70, 40,70, 40,40, 60,40, 50,60, 70,60, 70,30, 30,30, 30,80, 90,80, 90,10, 20,10, 20,0);
         Ring b = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,0);
-        assertEquals(b, a.convexHull());
+        assertEquals(b, a.convexHull(Tolerance.DEFAULT));
     }
     
-    @Test
-    public void testLargestConvexArea_A(){
-        Ring a = Ring.valueOf(TOL, 0,0, 35,0, 70,70, 80,70, 80,60, 90,60, 100,100, 0,100, 10,20, 0,0);
-        Ring b = Ring.valueOf(TOL, 0,100, 12.5,0, 35,0, 85,100, 0,100);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-        assertSame(b, b.largestConvexRing(TOL));
-    }
-    
-    @Test
-    public void testLargestConvexArea_B(){
-        Ring a = Ring.valueOf(TOL, 0,0, 100,0, 200,100, 100,100, 10,10, 100,10, 180,90, 100,90, 25,15, 20,15, 100,95, 190,95, 100,5, 5,5, 0,0);
-        Ring b = Ring.valueOf(TOL, 20,10, 100,10, 180,90, 100,90, 20,10);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-    }
-    
-    @Test
-    public void testLargestConvexArea_C(){
-        Ring a = Ring.valueOf(TOL, 0,0, 50,100, 60,80, 70,100, 120,0, 0,0);
-        Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-    }
-    
-    @Test
-    public void testLargestConvexArea_D(){
-        Ring a = Ring.valueOf(TOL, 0,0, 20,0, 20,20, 40,20, 40,0, 80,0, 80,60, 40,60, 40,40, 20,40, 20,60, 0,60, 0,0);
-        Ring b = Ring.valueOf(TOL, 40,0, 80,0, 80,60, 40,60, 40,0);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-    } 
-    
-    @Test
-    public void testLargestConvexArea_E(){
-        
-        //We need to figure out what to do about holes - they screw up the algorithm.
-        //Break up multi polyone into individual parts and bisect around holes
-
-        Network network = new Network();
-        network.addAllLinks(new VectList(40,40, 60,40, 60,60, 40,60, 40,40));
-        network.addAllLinks(new VectList(20,20, 80,20, 80,90, 20,90, 20,20));
-        Area a = Area.valueOf(TOL, network);
-        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-    }
-    
-    
+//    @Test
+//    public void testLargestConvexRing_A(){
+//        Ring a = Ring.valueOf(TOL, 0,0, 35,0, 70,70, 80,70, 80,60, 90,60, 100,100, 0,100, 10,20, 0,0);
+//        Ring b = Ring.valueOf(TOL, 0,100, 12.5,0, 35,0, 85,100, 0,100);
+//        Ring c = a.largestConvexRing(TOL);
+//        assertEquals(b, c);
+//        assertSame(b, b.largestConvexRing(TOL));
+//    }
+//    
+//    @Test
+//    public void testLargestConvexRing_B(){
+//        Ring a = Ring.valueOf(TOL, 0,0, 100,0, 200,100, 100,100, 10,10, 100,10, 180,90, 100,90, 25,15, 20,15, 100,95, 190,95, 100,5, 5,5, 0,0);
+//        Ring b = Ring.valueOf(TOL, 20,10, 100,10, 180,90, 100,90, 20,10);
+//        Ring c = a.largestConvexRing(TOL);
+//        assertEquals(b, c);
+//    }
+//    
+//    @Test
+//    public void testLargestConvexRing_C(){
+//        Ring a = Ring.valueOf(TOL, 0,0, 50,100, 60,80, 70,100, 120,0, 0,0);
+//        Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
+//        Ring c = a.largestConvexRing(TOL);
+//        assertEquals(b, c);
+//    }
+//    
+//    @Test
+//    public void testLargestConvexRing_D(){
+//        Ring a = Ring.valueOf(TOL, 0,0, 20,0, 20,20, 40,20, 40,0, 80,0, 80,60, 40,60, 40,40, 20,40, 20,60, 0,60, 0,0);
+//        Ring b = Ring.valueOf(TOL, 40,0, 80,0, 80,60, 40,60, 40,0);
+//        Ring c = a.largestConvexRing(TOL);
+//        assertEquals(b, c);
+//    } 
 }

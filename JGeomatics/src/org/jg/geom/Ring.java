@@ -423,7 +423,7 @@ public class Ring implements Geom {
     public boolean isConvex() {
         Boolean ret = convex;
         if (ret == null) {
-            ret = isConvex(vects);
+            ret = isConvex(vects, Tolerance.ZERO);
             convex = ret;
         }
         return ret;
@@ -434,10 +434,11 @@ public class Ring implements Geom {
      * Results are undefined if the edges are unclosed or self intersect
      *
      * @param vects
+     * @param accuracy
      * @return
      * @throws IndexOutOfBoundsException if the vect list does not have at least 4 elements
      */
-    public static boolean isConvex(VectList vects) throws IndexOutOfBoundsException {
+    public static boolean isConvex(VectList vects, Tolerance accuracy) throws IndexOutOfBoundsException {
         int s = vects.size();
         double ax = vects.getX(s - 2);
         double ay = vects.getY(s - 2);
@@ -446,7 +447,7 @@ public class Ring implements Geom {
         for (int i = 1; i < vects.size(); i++) {
             double cx = vects.getX(i);
             double cy = vects.getY(i);
-            if (Line.counterClockwise(ax, ay, cx, cy, bx, by) == -1) {
+            if (Line.counterClockwise(ax, ay, cx, cy, bx, by, accuracy) == -1) {
                 return false;
             }
             ax = bx;
@@ -756,12 +757,12 @@ public class Ring implements Geom {
         if(minIndex != 0){
             transformed = rotate(transformed, minIndex);
         }
-        double area = getArea(transformed);
-        if(area < 0){
+        double _area = getArea(transformed);
+        if(_area < 0){
             transformed.reverse();
-            area = -area;
+            _area = -_area;
         }
-        Ring ring = new Ring(transformed, area);
+        Ring ring = new Ring(transformed, _area);
         return ring;
     }
 
@@ -896,17 +897,21 @@ public class Ring implements Geom {
     
     /**
      * Get a point which is definitely inside this linear ring.
+     * @param accuracy
      * @return Vect
      */
     public Vect getInternalPoint(Tolerance accuracy){
         throw new UnsupportedOperationException("Not Yet implemented");
     }
     
-    public Ring convexHull(){
+    public Ring convexHull(Tolerance accuracy){
         if(isConvex()){
             return this;
         }
-        return new Ring(ConvexHull.getConvexHull(vects), null);
+        ConvexHull convexHull = new ConvexHull(accuracy);
+        VectList ret = convexHull.getConvexHull(vects);
+        Ring ring = new Ring(ret, null, null, null, null, Boolean.TRUE);
+        return ring;
     }
     
     /**
@@ -921,15 +926,29 @@ public class Ring implements Geom {
         return toArea().largestConvexRing(accuracy);        
     }
 
-    static class ConcaveFinder implements VectMapProcessor<VectList>{
-
-        @Override
-        public boolean process(double bx, double y, VectList value) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    //unsafe operation
+    //Assumes vects represents a closed ring
+    //Assumes vects is in counter clockwise order
+    //Assumes vects ring is convex
+    static int convexRelate(VectList vects, double x, double y, Tolerance accuracy){
+        int i = vects.size()-1;
+        double bx = vects.getX(i);
+        double by = vects.getY(i);
+        while(--i >= 0){
+            double ax = vects.getX(i);
+            double ay = vects.getY(i);
+            int ccw = Line.counterClockwise(ax, ay, bx, by, x, y, accuracy);
+            if(ccw > 0){
+                return Relation.DISJOINT;
+            }else if(ccw == 0){
+                return Relation.TOUCH | Relation.A_OUTSIDE_B;
+            }
+            bx = ax;
+            by = ay;
         }
-
+        return Relation.B_INSIDE_A | Relation.A_OUTSIDE_B;
     }
-
+    
     @Override
     public int hashCode() {
         int hash = 7;

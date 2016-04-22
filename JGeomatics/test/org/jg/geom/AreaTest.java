@@ -641,5 +641,46 @@ public class AreaTest {
         Area c = Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50);
         assertEquals(c, a.less(b, Tolerance.FLATNESS, TOL));
     }
+  
+    @Test
+    public void testLargestConvexArea_A(){
+        
+        //We need to figure out what to do about holes - they screw up the algorithm.
+        //Break up multi polyone into individual parts and bisect around holes
 
+        Network network = new Network();
+        network.addAllLinks(new VectList(40,40, 60,40, 60,60, 40,60, 40,40));
+        network.addAllLinks(new VectList(20,20, 80,20, 80,90, 20,90, 20,20));
+        Area a = Area.valueOf(TOL, network);
+        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
+        Ring c = a.largestConvexRing(TOL);
+        assertEquals(b, c);
+    }
+            
+    @Test
+    public void testLargestConvexArea_B(){
+        //Picture frame test
+        Network network = new Network();
+        network.addAllLinks(new VectList(40,40, 140,40, 140,100, 90,90, 40,100, 40,40));
+        network.addAllLinks(new VectList(30,30, 150,30, 150,110, 90,100, 30,110, 30,30));
+        network.addAllLinks(new VectList(20,20, 160,20, 160,120, 90,110, 20,120, 20,20));
+        Area a = Area.valueOf(TOL, network);
+        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
+        Ring c = a.largestConvexRing(TOL);
+        assertEquals(b, c);
+    } 
+    
+    
+    @Test
+    public void testLargestConvexArea_C(){
+        //Double hole test
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 20,10, 40,0, 60,10, 80,0, 100,10, 120,0, 120,90, 100,80, 20,80, 0,90, 0,0));
+        network.addAllLinks(new VectList(5,5, 20,25, 10,45, 20,65, 5,85, 5,5));
+        network.addAllLinks(new VectList(105,10, 115,25, 110,45, 115,65, 105,80, 105,10));
+        Area a = Area.valueOf(TOL, network);
+        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
+        Ring c = a.largestConvexRing(TOL);
+        assertEquals(b, c);
+    }
 }

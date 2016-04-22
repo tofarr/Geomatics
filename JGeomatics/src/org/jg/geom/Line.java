@@ -777,7 +777,6 @@ public class Line implements Geom, Comparable<Line> {
                 my *= mul;
                 intersections.add(dx - mx, dy - my);
                 intersections.add(dx + mx, dy + my);
-                return;
         }
     }
 
@@ -828,11 +827,12 @@ public class Line implements Geom, Comparable<Line> {
      * counterclockwise
      *
      * @param vect vector
+     * @param accuracy
      * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line
      * segment ab
      */
-    public int counterClockwise(Vect vect) throws NullPointerException {
-        return counterClockwise(ax, ay, bx, by, vect.x, vect.y);
+    public int counterClockwise(Vect vect, Tolerance accuracy) throws NullPointerException {
+        return counterClockwise(ax, ay, bx, by, vect.x, vect.y, accuracy);
     }
 
     /**
@@ -840,11 +840,12 @@ public class Line implements Geom, Comparable<Line> {
      * counterclockwise
      *
      * @param vect vector
+     * @param accuracy
      * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line
      * segment ab
      */
-    public int counterClockwise(VectBuilder vect) throws NullPointerException {
-        return counterClockwise(ax, ay, bx, by, vect.getX(), vect.getY());
+    public int counterClockwise(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
+        return counterClockwise(ax, ay, bx, by, vect.getX(), vect.getY(), accuracy);
     }
 
     /**
@@ -855,9 +856,10 @@ public class Line implements Geom, Comparable<Line> {
      * @param by
      * @param x
      * @param y
+     * @param accuracy
      * @return 1 if left of line, -1 if right of line, 0 if on line.
      */
-    public static int counterClockwise(double ax, double ay, double bx, double by, double x, double y) {
+    public static int counterClockwise(double ax, double ay, double bx, double by, double x, double y, Tolerance accuracy) {
         bx -= ax;
         by -= ay;
         x -= ax;
@@ -867,7 +869,7 @@ public class Line implements Geom, Comparable<Line> {
             ccw = ((x * x) + (y * y)) - ((bx * bx) + (by * by));
             ccw = Math.max(ccw, 0);
         }
-        return Double.compare(ccw, 0);
+        return accuracy.check(ccw);
     }
 
     @Override

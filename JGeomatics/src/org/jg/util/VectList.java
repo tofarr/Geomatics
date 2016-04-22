@@ -5,6 +5,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jg.geom.GeomException;
 import org.jg.geom.Line;
 import org.jg.geom.Rect;
@@ -949,8 +951,12 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @throws GeomException
      */
     public void toString(Appendable appendable) throws GeomException {
+        toString(appendable, '[', ']', ',');
+    }
+    
+    void toString(Appendable appendable, char start, char end, char split) throws GeomException {
         try {
-            appendable.append('[');
+            appendable.append(start);
             boolean comma = false;
             int endIndex = (size << 1);
             for (int i = 0; i < endIndex;) {
@@ -959,9 +965,24 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
                 } else {
                     comma = true;
                 }
-                appendable.append(Vect.ordToStr(ords[i++])).append(',').append(Vect.ordToStr(ords[i++]));
+                appendable.append(Vect.ordToStr(ords[i++])).append(split).append(Vect.ordToStr(ords[i++]));
             }
-            appendable.append(']');
+            appendable.append(end);
+        } catch (IOException ex) {
+            throw new GeomException("Error writing", ex);
+        }
+    }
+    
+    public String toWkt(){
+        StringBuilder str = new StringBuilder();
+        toWkt(str);
+        return str.toString();
+    }
+    
+    public void toWkt(Appendable appendable) throws GeomException{
+        try {
+            appendable.append("LINESTRING");
+            toString(appendable, '(', ')', ' ');
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
         }
