@@ -836,7 +836,7 @@ public class Area implements Geom {
     
     
     public Ring largestConvexRing(final Tolerance accuracy) {
-        if((shell != null) && shell.isConvex()){
+        if((shell != null) && shell.isConvex() && (children.length == 0)){
             return shell;
         }
         
@@ -858,7 +858,7 @@ public class Area implements Geom {
                 double bx = links.getX(b);
                 double by = links.getY(b);
                 if(!processed.hasLink(ax, ay, bx, by)){
-                    if(followConvexRing(ax, ay, bx, by, network, current, currentSet, workingVect)){
+                    if(followConvexRing(ax, ay, bx, by, network, current, currentSet, workingVect, accuracy)){
                         processed.addAllLinks(current);
                         double currentArea = Ring.getArea(current);
                         if(currentArea > largestArea){
@@ -871,7 +871,13 @@ public class Area implements Geom {
                 }
             }
         }
-        FILTER COLINEAR HERE!!!
+        
+        //Simplify here
+        int minIndex = Ring.minIndex(largest);
+        if(minIndex > 0){
+            largest = Ring.rotate(largest, minIndex);
+        }
+        largest = LineString.excludeColinear(largest, accuracy);
         
         return new Ring(largest, largestArea);
     }
@@ -953,7 +959,9 @@ public class Area implements Geom {
     }
     
     private boolean followConvexRing(double ax, double ay, double bx, double by, Network network, VectList current,
-            VectSet currentSet, VectBuilder workingVect) {
+            VectSet currentSet, VectBuilder workingVect, Tolerance accuracy) {
+        final double ox = ax;
+        final double oy = ay;
         current.clear();
         current.add(ax, ay);
         current.add(bx, by);
@@ -974,7 +982,7 @@ public class Area implements Geom {
                 }
                 
                 //Calculate number determining if point is left, right, or on line, stop only when not a right turn
-                double val = (workingVect.getX() - ax) * (by - ay) - (workingVect.getY() - ay) * (bx - ax);
+                int val = accuracy.check((workingVect.getX() - ax) * (by - ay) - (workingVect.getY() - ay) * (bx - ax));
                 if(val <= 0){
                     ax = bx;
                     ay = by;
@@ -987,12 +995,13 @@ public class Area implements Geom {
                 cy = workingVect.getY();
             }
             
+            int originRight = accuracy.check((ox - ax) * (by - ay) - (oy - ay) * (bx - ax));
             
-            if(currentSet.contains(bx, by)){
+            if((originRight > 0) || currentSet.contains(bx, by)){
                 if((current.getX(0) == bx) && (current.getY(0) == by)){
                     return true; // looped back to start
                 }
-                //Collided with self - take a step back and try again
+                //Collided with self or looped inwards - take a step back and try again
                 int index = current.size()-1;
                 cx = current.getX(index);
                 cy = current.getY(index);

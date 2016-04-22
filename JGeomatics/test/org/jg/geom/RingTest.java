@@ -746,8 +746,25 @@ public class RingTest {
     @Test
     public void testLargestConvexArea_D(){
         Ring a = Ring.valueOf(TOL, 0,0, 20,0, 20,20, 40,20, 40,0, 80,0, 80,60, 40,60, 40,40, 20,40, 20,60, 0,60, 0,0);
-        Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
+        Ring b = Ring.valueOf(TOL, 40,0, 80,0, 80,60, 40,60, 40,0);
+        Ring c = a.largestConvexRing(TOL);
+        assertEquals(b, c);
+    } 
+    
+    @Test
+    public void testLargestConvexArea_E(){
+        
+        //We need to figure out what to do about holes - they screw up the algorithm.
+        //Break up multi polyone into individual parts and bisect around holes
+
+        Network network = new Network();
+        network.addAllLinks(new VectList(40,40, 60,40, 60,60, 40,60, 40,40));
+        network.addAllLinks(new VectList(20,20, 80,20, 80,90, 20,90, 20,20));
+        Area a = Area.valueOf(TOL, network);
+        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
         Ring c = a.largestConvexRing(TOL);
         assertEquals(b, c);
     }
+    
+    
 }

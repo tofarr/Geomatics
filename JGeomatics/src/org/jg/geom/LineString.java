@@ -595,6 +595,45 @@ public class LineString implements Geom {
     public int numLines() {
         return Math.max(vects.size() - 1, 0);
     }
+    
+    /**
+     * Exclude any colinear vertices from this linestring
+     * @param accuracy
+     * @return
+     */
+    public LineString excludeColinear(Tolerance accuracy){
+        VectList out = excludeColinear(vects, accuracy);
+        if(out.size() == vects.size()){
+            return this; // no colinear vertices
+        }
+        return new LineString(out);
+    }
+    
+    public static VectList excludeColinear(VectList input, Tolerance accuracy){
+        if(input.size() < 3){
+            return input.clone();
+        }
+        final double tol = accuracy.tolerance * accuracy.tolerance;
+        VectList output = new VectList();
+        double ax = input.getX(0);
+        double ay = input.getY(0);
+        output.add(ax, ay);
+        double bx = input.getX(1);
+        double by = input.getY(1);
+        for(int i = 2; i < input.size(); i++){
+            double cx = input.getX(i);
+            double cy = input.getY(i);
+            if(Line.distSegVectSq(ax, ay, cx, cy, bx, by) > tol){
+                output.add(bx, by);
+                ax = bx;
+                ay = by;
+            }
+            bx = cx;
+            by = cy;
+        }
+        output.add(bx, by);
+        return output;
+    }
 
     static class RelateProcessor implements NodeProcessor<Line> {
 
