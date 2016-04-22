@@ -925,7 +925,10 @@ public class Ring implements Geom {
         }
         return toArea().largestConvexRing(accuracy);        
     }
-
+ 
+    MOVE LARGEST CONVEX RING OUT OF HERE - CAN GET POLE OF INACCESSIBILITY BY BUFFERING. (MUCH SIMPLER)
+    THEN CAN GET LARGEST CONVEX AREA FROM THIS
+         
     //unsafe operation
     //Assumes vects represents a closed ring
     //Assumes vects is in counter clockwise order
