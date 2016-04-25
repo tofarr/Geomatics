@@ -31,19 +31,19 @@ public final class Network implements Serializable, Cloneable {
         map = new VectMap<>();
     }
     
-    public static Network valueOf(Tolerance accuracy, Tolerance flatness, Geom a, Geom b){
+    public static Network valueOf(Tolerance accuracy, Linearizer linearizer, Geom a, Geom b){
         Network network = new Network();
-        a.addTo(network, flatness, accuracy);
-        b.addTo(network, flatness, accuracy);
+        a.addTo(network, linearizer, accuracy);
+        b.addTo(network, linearizer, accuracy);
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
         return network;
     }
     
-    public static Network valueOf(Tolerance accuracy, Tolerance flatness, Geom... geoms){
+    public static Network valueOf(Tolerance accuracy, Linearizer linearizer, Geom... geoms){
         Network network = new Network();
         for(Geom geom : geoms){
-            geom.addTo(network, flatness, accuracy);
+            geom.addTo(network, linearizer, accuracy);
         }
         network.explicitIntersections(accuracy);
         network.snap(accuracy);

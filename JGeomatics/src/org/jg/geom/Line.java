@@ -811,14 +811,14 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         LineSet lines = new LineSet(new LineString[]{toLineString()});
         GeoShape ret = new GeoShape(null, lines, null, null);
         return ret;
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         network.addLinkInternal(ax, ay, bx, by);
     }
 
@@ -873,7 +873,7 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         if (amt == 0) {
             return this;
         } else if (amt < 0) {
@@ -886,13 +886,13 @@ public class Line implements Geom, Comparable<Line> {
         double ix = vect.getX();
         double iy = vect.getY();
         projectOutward(0, amt, tolerance, vect);
-        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
+        linearizer.linearizeSegment(ax, ay, ix, iy, vect.getX(), vect.getY(), result);
 
         projectOutward(1, amt, tolerance, vect);
         double jx = vect.getX();
         double jy = vect.getY();
         projectOutward(1, -amt, tolerance, vect);
-        Vect.linearizeArc(bx, by, jx, jy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
+        linearizer.linearizeSegment(bx, by, jx, jy, vect.getX(), vect.getY(), result);
 
         result.add(ix, iy);
 
@@ -911,34 +911,34 @@ public class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return NetworkRelationProcessor.relate(this, geom, linearizer, accuracy);
     }
 
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return 0;
     }
     
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return toLineString().union(other, flatness, accuracy);
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toLineString().union(other, linearizer, accuracy);
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT) {
             return null;
         }
-        return toLineString().intersection(other, flatness, accuracy);
+        return toLineString().intersection(other, linearizer, accuracy);
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (getBounds().relate(other.getBounds(), accuracy) == Relation.DISJOINT) {
             return this;
         }
-        return toLineString().less(other, flatness, accuracy);
+        return toLineString().less(other, linearizer, accuracy);
     }
 
     @Override

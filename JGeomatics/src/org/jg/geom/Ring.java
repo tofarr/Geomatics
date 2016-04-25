@@ -7,14 +7,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.jg.algorithm.ConvexHull;
-import org.jg.geom.Network.VertexProcessor;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 import org.jg.util.VectMap;
 import org.jg.util.VectMap.VectMapProcessor;
-import org.jg.util.VectSet;
 
 /**
  * Immutable 2D Linear Ring. Checks are in place to insure that:
@@ -199,7 +197,7 @@ public class Ring implements Geom {
     }
     
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return getArea();
     }
 
@@ -534,7 +532,7 @@ public class Ring implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) {
         if (amt == 0) {
             return this;
         }else if(amt < 0){
@@ -543,7 +541,7 @@ public class Ring implements Geom {
                 return null;
             }
         }
-        VectList buffer = getEdgeBuffer(amt, flatness, accuracy);
+        VectList buffer = getEdgeBuffer(amt, linearizer, accuracy);
         return buildGeomFromRing(buffer, accuracy);
     }
 
@@ -711,16 +709,16 @@ public class Ring implements Geom {
      * @param tolerance
      * @return a VectList representing an edge buffer
      */
-    public VectList getEdgeBuffer(double amt, Tolerance flatness, Tolerance tolerance) {
+    public VectList getEdgeBuffer(double amt, Linearizer linearizer, Tolerance tolerance) {
         Vect.check(amt, "Invalid amt {0}");
         if (amt == 0) {
             return vects.clone();
         }
-        return getEdgeBuffer(vects, amt, flatness, tolerance);
+        return getEdgeBuffer(vects, amt, linearizer, tolerance);
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
-    static VectList getEdgeBuffer(VectList vects, double amt, Tolerance flatness, Tolerance tolerance) {
+    static VectList getEdgeBuffer(VectList vects, double amt, Linearizer linearizer, Tolerance tolerance) {
         VectList result = new VectList(vects.size() << 1);
         VectBuilder vect = new VectBuilder();
 
@@ -733,7 +731,7 @@ public class Ring implements Geom {
         while (++index < vects.size()) {
             double cx = vects.getX(index);
             double cy = vects.getY(index);
-            LineString.projectOutward(ax, ay, bx, by, cx, cy, amt, flatness, tolerance, vect, result);
+            LineString.projectOutward(ax, ay, bx, by, cx, cy, amt, linearizer, tolerance, vect, result);
             ax = bx;
             bx = cx;
             ay = by;
@@ -823,7 +821,7 @@ public class Ring implements Geom {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return toGeoShape();
     }
 
@@ -837,7 +835,7 @@ public class Ring implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         network.addAllLinks(vects);
     }
 
@@ -851,15 +849,15 @@ public class Ring implements Geom {
     }
     
     @Override
-    public int relate(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException{
+    public int relate(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException{
         if(other instanceof Ring){
             return relate((Ring)other, accuracy);
         }
-        return toArea().relate(other, flatness, accuracy);
+        return toArea().relate(other, linearizer, accuracy);
     }
     
     public int relate(Ring other, Tolerance accuracy) throws NullPointerException{
-        int ret = NetworkRelationProcessor.relate(this, other, accuracy, accuracy);
+        int ret = NetworkRelationProcessor.relate(this, other, Linearizer.DEFAULT, accuracy); // Lines per quadrant is not used as both shapes are linear
         if((ret & Relation.A_INSIDE_B) == Relation.A_INSIDE_B){
             ret |= Relation.B_INSIDE_A;
         }
@@ -874,24 +872,24 @@ public class Ring implements Geom {
     }
     
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return toArea().union(other, flatness, accuracy);
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toArea().union(other, linearizer, accuracy);
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return null;
         }
-        return toArea().intersection(other, flatness, accuracy);
+        return toArea().intersection(other, linearizer, accuracy);
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return this;
         }
-        Area area = toArea().less(other, flatness, accuracy);
+        Area area = toArea().less(other, linearizer, accuracy);
         return (area == null) ? null : area.simplify();
     }
     
@@ -913,21 +911,6 @@ public class Ring implements Geom {
         Ring ring = new Ring(ret, null, null, null, null, Boolean.TRUE);
         return ring;
     }
-    
-    /**
-     * Get the largest convex ring within a ring. The pole of inaccessibility is the centroid of this ring.
-     * @param accuracy
-     * @return 
-     */
-    public Ring largestConvexRing(Tolerance accuracy){
-        if(isConvex()){
-            return this;
-        }
-        return toArea().largestConvexRing(accuracy);        
-    }
- 
-    MOVE LARGEST CONVEX RING OUT OF HERE - CAN GET POLE OF INACCESSIBILITY BY BUFFERING. (MUCH SIMPLER)
-    THEN CAN GET LARGEST CONVEX AREA FROM THIS
          
     //unsafe operation
     //Assumes vects represents a closed ring

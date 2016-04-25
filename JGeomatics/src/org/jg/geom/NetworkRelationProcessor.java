@@ -27,15 +27,15 @@ final class NetworkRelationProcessor implements VectMapProcessor<VectList> {
         reset(a, b);
     }
 
-    public static int relate(Geom a, Geom b, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public static int relate(Geom a, Geom b, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if(a.getBounds().relate(b.getBounds(), accuracy) == Relation.DISJOINT){
             return Relation.DISJOINT; // Short cut - if disjoint, then cant possibly overlap
         }
-        Network network = Network.valueOf(accuracy, flatness, a, b);
-        return relate(a, b, network, flatness, accuracy);
+        Network network = Network.valueOf(accuracy, linearizer, a, b);
+        return relate(a, b, network, linearizer, accuracy);
     }
 
-    static int relate(Geom a, Geom b, Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    static int relate(Geom a, Geom b, Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         NetworkRelationProcessor processor = new NetworkRelationProcessor(accuracy, a, b);
         network.map.forEach(processor);
         int ret = processor.relation;

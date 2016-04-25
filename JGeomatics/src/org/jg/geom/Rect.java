@@ -244,7 +244,7 @@ public class Rect implements Geom {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         Area area = toArea();
         GeoShape ret = new GeoShape(area, null, null);
         ret.bounds = this;
@@ -252,7 +252,7 @@ public class Rect implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         network.addLink(minX, minY, minX, maxY);
         network.addLink(minX, minY, maxX, minY);
         network.addLink(minX, maxY, maxX, maxY);
@@ -286,7 +286,7 @@ public class Rect implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         if (amt == 0) {
             return this;
         } else if (amt < 0) {
@@ -300,10 +300,10 @@ public class Rect implements Geom {
         double _maxX = maxX + amt;
         double _maxY = maxY + amt;
 
-        Vect.linearizeArc(minX, minY, _minX, minY, minX, _minY, amt, flatness.getTolerance(), result);
-        Vect.linearizeArc(maxX, minY, maxX, _minY, _maxX, minY, amt, flatness.getTolerance(), result);
-        Vect.linearizeArc(maxX, maxY, _maxX, maxY, maxX, _maxY, amt, flatness.getTolerance(), result);
-        Vect.linearizeArc(minX, maxY, minX, _maxY, _minX, maxY, amt, flatness.getTolerance(), result);
+        linearizer.linearizeSegment(minX, minY, _minX, minY, minX, _minY, result);
+        linearizer.linearizeSegment(maxX, minY, maxX, _minY, _maxX, minY, result);
+        linearizer.linearizeSegment(maxX, maxY, _maxX, maxY, maxX, _maxY, result);
+        linearizer.linearizeSegment(minX, maxY, minX, _maxY, _minX, maxY, result);
         result.add(_minX, minY);
 
         return new Area(new Ring(result, null, null, null, getCentroid(), true));
@@ -352,11 +352,11 @@ public class Rect implements Geom {
     }
 
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if(geom instanceof Rect){
             return relate((Rect)geom, accuracy);
         }
-        return toRing().relate(geom, flatness, accuracy);
+        return toRing().relate(geom, linearizer, accuracy);
     }
     
     public int relate(Rect other, Tolerance accuracy){
@@ -417,19 +417,19 @@ public class Rect implements Geom {
     }
     
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         int boundsRelate = relate(other.getBounds(), accuracy);
         if (!Relation.isBOutsideA(boundsRelate)) {
             return this;
         } else if((other instanceof Rect) && (!Relation.isAOutsideB(boundsRelate))){
             return other;
         }else{
-            return toArea().union(other, flatness, accuracy);
+            return toArea().union(other, linearizer, accuracy);
         }
     }
     
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if(other instanceof Rect){
             return intersection((Rect)other);
         }
@@ -439,7 +439,7 @@ public class Rect implements Geom {
         }else if(!Relation.isBOutsideA(boundsRelation)){ // no part of other is outside this
             return other;
         }else{ // long way - find intersection by area
-            return toArea().intersection(other, flatness, accuracy);
+            return toArea().intersection(other, linearizer, accuracy);
         }
     }
     
@@ -467,20 +467,20 @@ public class Rect implements Geom {
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         int boundsRelation = relate(other.getBounds(), accuracy);
         if(boundsRelation == Relation.DISJOINT){
             return this;
         } else if ((other instanceof Rect) && (!Relation.isAOutsideB(boundsRelation))) {
             return null; // no part of this is outside the other.
         } else {
-            Area ret = toArea().less(other, flatness, accuracy);
+            Area ret = toArea().less(other, linearizer, accuracy);
             return (ret == null) ? null : ret.simplify();
         }
     }
 
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return getArea();
     }
 

@@ -362,7 +362,7 @@ public class AreaTest {
         a.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
         Area area = Area.valueOf(TOL, a);
         Network b = new Network();
-        area.addTo(b, Tolerance.FLATNESS, TOL);
+        area.addTo(b, Linearizer.DEFAULT, TOL);
         assertEquals(a, b);
     }
 
@@ -374,7 +374,7 @@ public class AreaTest {
         a.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
         Area area = Area.valueOf(TOL, a);
         GeoShape expected = new GeoShape(area, null, null);
-        assertEquals(expected, area.toGeoShape(Tolerance.FLATNESS, TOL));
+        assertEquals(expected, area.toGeoShape(Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -452,9 +452,9 @@ public class AreaTest {
         }
         network.addAllLinks(new VectList(90,0, 100,0, 100,10, 90,0));
         final Area area = Area.valueOf(TOL, network);
-        assertSame(area, area.buffer(0, Tolerance.FLATNESS, TOL));
+        assertSame(area, area.buffer(0, Linearizer.DEFAULT, TOL));
         
-        Area resultA = (Area)area.buffer(4, Tolerance.FLATNESS, TOL); // leave channels
+        Area resultA = (Area)area.buffer(4, Linearizer.DEFAULT, TOL); // leave channels
         assertNull(resultA.shell);
         assertEquals(2, resultA.numChildren());
         assertEquals(6, resultA.numRings());
@@ -462,7 +462,7 @@ public class AreaTest {
         assertEquals(Rect.valueOf(-84, -74, 104, 74), resultA.getBounds());
         assertEquals(23458, resultA.getArea(), 1);
         
-        Area resultB = (Area)area.buffer(5, Tolerance.FLATNESS, TOL); // clear channels except at corners
+        Area resultB = (Area)area.buffer(5, Linearizer.DEFAULT, TOL); // clear channels except at corners
         assertNull(resultB.shell);
         assertEquals(2, resultB.numChildren());
         assertEquals(6, resultB.numRings());
@@ -470,11 +470,11 @@ public class AreaTest {
         assertEquals(Rect.valueOf(-85, -75, 105, 75), resultB.getBounds());
         assertEquals(25755, resultB.getArea(), 1);
         
-        Ring resultC = (Ring)area.buffer(8, Tolerance.FLATNESS, TOL);
+        Ring resultC = (Ring)area.buffer(8, Linearizer.DEFAULT, TOL);
         assertEquals(Rect.valueOf(-88, -78, 108, 78), resultC.getBounds());
         assertEquals(27854, resultC.getArea(), 1);
         
-        Ring resultD = (Ring)area.buffer(-40, Tolerance.FLATNESS, TOL);
+        Ring resultD = (Ring)area.buffer(-40, Linearizer.DEFAULT, TOL);
         assertNull(resultD);
         
     }
@@ -550,7 +550,7 @@ public class AreaTest {
         Area a1 = Area.valueOf(TOL, n1);
         LineSet ls = LineSet.valueOf(TOL, -100,10, 15,10, 150,145);
         
-        GeoShape geom = (GeoShape)a1.union(ls, Tolerance.FLATNESS, TOL);
+        GeoShape geom = (GeoShape)a1.union(ls, Linearizer.DEFAULT, TOL);
         assertEquals(a1, geom.area);
         Network lines = new Network();
         lines.addLink(-100,10, 0,10);
@@ -566,7 +566,7 @@ public class AreaTest {
     public void testUnion_Ring_Tolerance() {
         Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
         Ring r1 = Ring.valueOf(TOL, 50,50, 150,50, 150,150, 50,150, 50,50);
-        Ring r2 = (Ring)a.union(r1, Tolerance.FLATNESS, TOL);
+        Ring r2 = (Ring)a.union(r1, Linearizer.DEFAULT, TOL);
         Ring r3 = Ring.valueOf(TOL, 0,0, 100,0, 100,50, 150,50, 150,150, 50,150, 50,100, 0,100, 0,0);
         assertEquals(r3, r2);
     }
@@ -612,7 +612,7 @@ public class AreaTest {
         GeoShape c = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
                 LineSet.valueOf(TOL, 20,100, 100,20),
                 PointSet.valueOf(75,75));
-        assertEquals(c, a.intersection(b, Tolerance.FLATNESS, TOL));
+        assertEquals(c, a.intersection(b, Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -639,48 +639,6 @@ public class AreaTest {
                 LineSet.valueOf(TOL, 0,120, 100,20, 100,40, 140,0),
                 PointSet.valueOf(0,150, 100,100, 150,0));
         Area c = Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50);
-        assertEquals(c, a.less(b, Tolerance.FLATNESS, TOL));
-    }
-  
-    @Test
-    public void testLargestConvexArea_A(){
-        
-        //We need to figure out what to do about holes - they screw up the algorithm.
-        //Break up multi polyone into individual parts and bisect around holes
-
-        Network network = new Network();
-        network.addAllLinks(new VectList(40,40, 60,40, 60,60, 40,60, 40,40));
-        network.addAllLinks(new VectList(20,20, 80,20, 80,90, 20,90, 20,20));
-        Area a = Area.valueOf(TOL, network);
-        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-    }
-            
-    @Test
-    public void testLargestConvexArea_B(){
-        //Picture frame test
-        Network network = new Network();
-        network.addAllLinks(new VectList(40,40, 140,40, 140,100, 90,90, 40,100, 40,40));
-        network.addAllLinks(new VectList(30,30, 150,30, 150,110, 90,100, 30,110, 30,30));
-        network.addAllLinks(new VectList(20,20, 160,20, 160,120, 90,110, 20,120, 20,20));
-        Area a = Area.valueOf(TOL, network);
-        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
-    } 
-    
-    
-    @Test
-    public void testLargestConvexArea_C(){
-        //Double hole test
-        Network network = new Network();
-        network.addAllLinks(new VectList(0,0, 20,10, 40,0, 60,10, 80,0, 100,10, 120,0, 120,90, 100,80, 20,80, 0,90, 0,0));
-        network.addAllLinks(new VectList(5,5, 20,25, 10,45, 20,65, 5,85, 5,5));
-        network.addAllLinks(new VectList(105,10, 115,25, 110,45, 115,65, 105,80, 105,10));
-        Area a = Area.valueOf(TOL, network);
-        Ring b = Ring.valueOf(TOL, 20,60, 80,60, 80,90, 20,90, 20,60);
-        Ring c = a.largestConvexRing(TOL);
-        assertEquals(b, c);
+        assertEquals(c, a.less(b, Linearizer.DEFAULT, TOL));
     }
 }

@@ -198,7 +198,7 @@ public class LineSet implements Geom {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return toGeoShape();
     }
 
@@ -212,7 +212,7 @@ public class LineSet implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         addTo(network);
     }
 
@@ -228,7 +228,7 @@ public class LineSet implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
         if (amt < 0) {
             return null;
         } else if (amt == 0) {
@@ -237,8 +237,8 @@ public class LineSet implements Geom {
         Network network = new Network();
         Geom ret = null;
         for (LineString lineString : lineStrings) {
-            Geom buffer = lineString.buffer(amt, flatness, accuracy);
-            ret = (ret == null) ? buffer : ret.union(buffer, flatness, accuracy);
+            Geom buffer = lineString.buffer(amt, linearizer, accuracy);
+            ret = (ret == null) ? buffer : ret.union(buffer, linearizer, accuracy);
         }
         return ret;
     }
@@ -254,9 +254,9 @@ public class LineSet implements Geom {
     }  
     
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        int ret = NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
-        if(!Relation.isBOutsideA(ret) && (geom.getArea(flatness, accuracy) != 0)){
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        int ret = NetworkRelationProcessor.relate(this, geom, linearizer, accuracy);
+        if(!Relation.isBOutsideA(ret) && (geom.getArea(linearizer, accuracy) != 0)){
             ret |= Relation.B_OUTSIDE_A;
         }
         return ret;
@@ -275,13 +275,13 @@ public class LineSet implements Geom {
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (other instanceof LineString) {
             return union((LineString)other, accuracy).simplify();
         } else if (other instanceof LineSet) {
             return union((LineSet) other, accuracy).simplify();
         } else {
-            return toGeoShape().union(other, flatness, accuracy);
+            return toGeoShape().union(other, linearizer, accuracy);
         }
     }
     
@@ -313,17 +313,17 @@ public class LineSet implements Geom {
             Arrays.sort(lines, COMPARATOR);
             return new LineSet(lines);
         }
-        Network network = Network.valueOf(accuracy, accuracy, this, other);
+        Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         LineString[] ret = LineString.parseAllInternal(network);
         return new LineSet(ret);
     }
 
     @Override
-    public Geom intersection(final Geom other, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(final Geom other, Linearizer linearizer, final Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(other.getBounds().relate(getBounds(), accuracy))) { // quick way - disjoint
             return null;
         }
-        final Network network = Network.valueOf(accuracy, flatness, this, other);
+        final Network network = Network.valueOf(accuracy, linearizer, this, other);
         final Network intersection = new Network();
         network.map.forEach(new VectMapProcessor<VectList>(){
             final VectBuilder workingVect = new VectBuilder();
@@ -363,11 +363,11 @@ public class LineSet implements Geom {
     }
 
     @Override
-    public LineSet less(final Geom other, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
+    public LineSet less(final Geom other, Linearizer linearizer, final Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(other.getBounds().relate(getBounds(), accuracy))) { // quick way - disjoint
             return this;
         }
-        final Network network = Network.valueOf(accuracy, flatness, this, other);
+        final Network network = Network.valueOf(accuracy, linearizer, this, other);
         final Network less = new Network();
         network.map.forEach(new VectMapProcessor<VectList>(){
             final VectBuilder workingVect = new VectBuilder();
@@ -398,7 +398,7 @@ public class LineSet implements Geom {
     }
     
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy){
+    public double getArea(Linearizer linearizer, Tolerance accuracy){
         return 0;
     }
 

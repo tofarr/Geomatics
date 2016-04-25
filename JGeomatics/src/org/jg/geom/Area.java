@@ -105,7 +105,7 @@ public class Area implements Geom {
     }
     
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return getArea();
     }
 
@@ -336,12 +336,12 @@ public class Area implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         addTo(network);
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return toGeoShape();
     }
     
@@ -350,29 +350,29 @@ public class Area implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
         if(amt == 0){
             return this;
         }
         if(shell == null){
             Geom result = null;
             for(Area child : children){
-                Geom childResult = child.buffer(amt, flatness, accuracy);
+                Geom childResult = child.buffer(amt, linearizer, accuracy);
                 if(childResult != null){
-                    result = (result == null) ? childResult : result.union(childResult, flatness, accuracy);
+                    result = (result == null) ? childResult : result.union(childResult, linearizer, accuracy);
                 }
             }
             return result;
         }else{
-            Geom result = shell.buffer(amt, flatness, accuracy);
+            Geom result = shell.buffer(amt, linearizer, accuracy);
             if(result == null){
                 return null; // buffered out of existence!
             }
             amt = -amt;
             for(Area child : children){
-                Geom childResult = child.buffer(amt, flatness, accuracy);
+                Geom childResult = child.buffer(amt, linearizer, accuracy);
                 if(childResult != null){ // child may have been buffered out of existance!
-                    result = result.less(childResult, flatness, accuracy);
+                    result = result.less(childResult, linearizer, accuracy);
                     if(result == null){ // buffered out of existence!
                         return null;
                     }
@@ -402,13 +402,13 @@ public class Area implements Geom {
     }
 
     @Override
-    public int relate(final Geom geom, Tolerance flatness, final Tolerance accuracy) throws NullPointerException {
+    public int relate(final Geom geom, Linearizer linearizer, final Tolerance accuracy) throws NullPointerException {
         if(geom instanceof Ring){
             return relate((Ring)geom, accuracy);
         }else if(geom instanceof Area){
             return relate((Area)geom, accuracy);
         }else{
-            return toGeoShape().relate(geom, flatness, accuracy);
+            return toGeoShape().relate(geom, linearizer, accuracy);
         }
     }
     
@@ -456,13 +456,13 @@ public class Area implements Geom {
     }
         
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Area) {
             return union((Area) other, accuracy).simplify();
         } else if (other instanceof Ring) {
             return union((Ring) other, accuracy).simplify();
         }
-        return toGeoShape().union(other, flatness, accuracy);
+        return toGeoShape().union(other, linearizer, accuracy);
     }
 
     public Area union(Area other, Tolerance accuracy) {
@@ -474,7 +474,7 @@ public class Area implements Geom {
             Arrays.sort(children, COMPARATOR);
             return new Area(null, children);
         }
-        Network network = Network.valueOf(accuracy, accuracy, this, other);
+        Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         return unionInternal(this, other, network, accuracy);
     }
 
@@ -539,7 +539,7 @@ public class Area implements Geom {
     }
     
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Area) {
             GeoShape ret = intersection((Area) other, accuracy);
             return (ret == null) ? null : ret.simplify();
@@ -547,7 +547,7 @@ public class Area implements Geom {
             GeoShape ret = intersection((Ring) other, accuracy);
             return (ret == null) ? null : ret.simplify();
         }
-        return toGeoShape().intersection(other, flatness, accuracy);
+        return toGeoShape().intersection(other, linearizer, accuracy);
     }
     
     public GeoShape intersection(Ring other, Tolerance accuracy) throws NullPointerException{
@@ -558,7 +558,7 @@ public class Area implements Geom {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return null;
         }
-        final Network network = Network.valueOf(accuracy, accuracy, this, other);
+        final Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         network.forEachVertex(new VertexProcessor(){
             @Override
             public boolean process(double x, double y, int numLinks) {
@@ -587,7 +587,7 @@ public class Area implements Geom {
     }
     
     @Override
-    public Area less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Area less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return this;
         }
@@ -596,7 +596,7 @@ public class Area implements Geom {
         }else if(other instanceof Area){
             return less((Area)other, accuracy);
         }else{
-            Area otherArea = other.toGeoShape(flatness, accuracy).area;
+            Area otherArea = other.toGeoShape(linearizer, accuracy).area;
             if(otherArea == null){
                 return this;
             }
@@ -612,7 +612,7 @@ public class Area implements Geom {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return this;
         }
-        final Network network = Network.valueOf(accuracy, accuracy, this, other);
+        final Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         network.forEachVertex(new VertexProcessor(){
             @Override
             public boolean process(double x, double y, int numLinks) {
@@ -836,281 +836,13 @@ public class Area implements Geom {
         return network;
     }
     
-    
-    public Ring largestConvexRing(final Tolerance accuracy) {
-        if((shell != null) && shell.isConvex() && (children.length == 0)){
-            return shell;
-        }
-        
-        Network network = new Network();
-        VectSet holeCentroidSet = new VectSet();
-        getDisected(accuracy, network, holeCentroidSet);
-        VectList holeCentroids = new VectList();
-        holeCentroidSet.toList(holeCentroids);
-                
-        //start hunting for largest convex rings in result - this is a brute force search which may be slow.
-        final Network processed = new Network();
-        VectList allVects = network.getVects(new VectList()); // get all vectors in sorted order
-        VectList largest = new VectList();
-        VectList current = new VectList();
-        VectSet currentSet = new VectSet();
-        VectBuilder workingVect = new VectBuilder();
-        double largestArea = -1;
-        for(int a = 0; a < allVects.size(); a++){
-            double ax = allVects.getX(a);
-            double ay = allVects.getY(a);
-            VectList links = network.map.get(ax, ay);
-            for(int b = 0; b < links.size(); b++){
-                double bx = links.getX(b);
-                double by = links.getY(b);
-                if(!processed.hasLink(ax, ay, bx, by)){
-                    if(followConvexRing(ax, ay, bx, by, network, current, currentSet, workingVect, holeCentroids, accuracy)){
-                        processed.addAllLinks(current);
-                        double currentArea = Ring.getArea(current);
-                        if(isAGreaterB(current, currentArea, largest, largestArea, accuracy)){
-                            VectList tmp = current;
-                            current = largest;
-                            largest = tmp;
-                            largestArea = currentArea;
-                        }
-                    }
-                }
-            }
-        }
-        
-        //Simplify here
-        int minIndex = Ring.minIndex(largest);
-        if(minIndex > 0){
-            largest = Ring.rotate(largest, minIndex);
-        }
-        largest = LineString.excludeColinear(largest, accuracy);
-        
-        return new Ring(largest, largestArea);
+    public boolean isConvexRing(){
+        return (children.length == 0) && shell.isConvex();
     }
     
-    private boolean isAGreaterB(VectList a, double areaA, VectList b, double areaB, Tolerance accuracy){
-        int c = accuracy.check(areaA - areaB);
-        if(c > 0){
-            return true;
-        }else if(c == 0){
-            return a.getBounds().getArea() < b.getBounds().getArea();
-        }else{
-            return false;
-        }
+    public Ring getShell(){
+        return shell;
     }
-    
-    void getDisected(final Tolerance accuracy, final Network networkOut, final VectSet holeCentroidsOut){
-        final Ring convexHull = getConvexHull(accuracy); // get convex hull
-        final Network network = new Network(); // add to network
-        addTo(network);
-        addTo(networkOut);
-        final Rect _bounds = getBounds();
-        networkOut.map.forEach(new VectMapProcessor<VectList>(){
-            final SpatialNode<Line> lineIndex = getLineIndex();
-            final IntersectionProcessor processor = new IntersectionProcessor(accuracy);
-            final VectList intersections = new VectList();
-            @Override
-            public boolean process(double ax, double ay, VectList links) {
-                if(Relation.isBInsideA(convexHull.relate(ax, ay, accuracy))){ //if point is inside convex ring...
-                    for(int b = links.size(); b-- > 0;){
-                        double bx = links.getX(b);
-                        double by = links.getY(b);
-                        Line link = new Line(ax, ay, bx, by);
-                        link = link.segCrossing(_bounds);
-                        network.addLink(link);
-                        if(b > 0){
-                            
-                            double dx = bx - ax;
-                            double dy = by - ay;
-                            double dDst = Math.sqrt((dx * dx) + (dy * dy));
-
-                            double ex = links.getX(b - 1) - ax;
-                            double ey = links.getY(b - 1) - ay;
-                            double eDst = Math.sqrt((ex * ex) + (ey * ey));
-
-                            double fx = (dx / dDst) + (ex / eDst);
-                            double fy = (dy / dDst) + (ey / eDst);
-
-                            if ((fx != 0) || (fy != 0)) {
-                                link = new Line(ax, ay, fy + ax, ay - fx);
-                                link = link.segCrossing(_bounds);
-                                network.addLink(link);
-                            }
-                        }
-                    }
-                }
-                return true;
-            }
-        });
-        network.explicitIntersections(accuracy); //explicitise and snap
-        network.snap(accuracy);
-        
-        network.removeHangLines(); // remove hang lines from network
-        
-        //this network contains a bunch of convex features. some of these may be holes - if holes are present these effect
-        //the convex region calculation and should be accounted for. We therefore need to identify which of these convex
-        //regions are holes.
-        populateHoleCentroids(network, holeCentroidsOut, accuracy);
-        
-        //Remove any points outside this...
-        network.map.forEach(new VectMapProcessor<VectList>(){
-            @Override
-            public boolean process(double x, double y, VectList value) {
-                if(Relation.isBOutsideA(_bounds.relateInternal(x, y, accuracy))){
-                    network.removeVertexInternal(x, y);
-                }
-                return true;
-            }
-        });
-        
-        //Remove any points and lines outside this outside this
-        networkOut.clear();
-        network.forEachLink(new LinkProcessor(){
-            @Override
-            public boolean process(double ax, double ay, double bx, double by) {
-                double x = (ax + bx) / 2;
-                double y = (ay + by) / 2;
-                if(!Relation.isBOutsideA(relateInternal(x, y, accuracy))){
-                    networkOut.addLinkInternal(ax,ay,bx,by);
-                }
-                return true;
-            }
-        });
-    }
-    
-    //for each point in network...
-    //store set of links
-    //build rings, always going left (stop when get back to origin, remove last connector from set of available.
-    //get ring centroid
-    //test if centroid outside - if so add it to holes
-    private void populateHoleCentroids(final Network network, final VectSet holeCentroidsOut, final Tolerance accuracy){
-        if(children.length == 0){
-            return; // no children means no holes, so we can skip the rest of the logic
-        }
-        //NOT WORKING OR INEFFICIENT
-        network.map.forEach(new VectMapProcessor<VectList>(){
-            final VectList path = new VectList();
-            final VectBuilder workingVect = new VectBuilder();
-            final Set<Line> done = new HashSet<>();
-            @Override
-            public boolean process(double ax, double ay, VectList links) { // for each point
-                final double ox = ax; // store origin - we need it to know when we have reached the end of a closed ring
-                final double oy = ay;
-                for(int b = links.size(); b-- > 0;){
-                    ax = ox;
-                    ay = oy;
-                    double bx = links.getX(b);
-                    double by = links.getY(b);
-                    Line line = new Line(ax, ay, bx, by);
-                    if(!done.contains(line)){
-                        path.clear();
-                        path.add(ax, ay);
-                        path.add(bx, by);
-                        done.add(line);
-                        while((bx != ox) || (by != oy)){ // follow path always taking leftmost turn to get a closed linear ring
-                            network.nextCW(bx, by, ax, ay, workingVect);
-                            ax = bx;
-                            ay = by;
-                            bx = workingVect.getX();
-                            by = workingVect.getY();
-                            path.add(bx, by);
-                            done.add(new Line(ax, ay, bx, by));
-                        }
-                        if(Ring.getArea(path) > 0){ // only counter clockwise paths are valid
-                            Vect centroid = Ring.getCentroid(path);
-                            if(Relation.isBOutsideA(relate(centroid, accuracy))){ // If the centroid is outside, then this is a hole!
-                                holeCentroidsOut.add(centroid);
-                            }
-                        }
-                    }
-                }
-                return true;
-            }
-        });
-    }
-    
-    private boolean followConvexRing(double ax, double ay, double bx, double by, Network network, VectList current,
-            VectSet currentSet, VectBuilder workingVect, VectList holeCentroids, Tolerance accuracy) {
-        final double ox = ax;
-        final double oy = ay;
-        current.clear();
-        current.add(ax, ay);
-        current.add(bx, by);
-        currentSet.clear();
-        currentSet.add(ax, ay);
-        currentSet.add(bx, by);
-        double cx = ax;
-        double cy = ay;
-        boolean removeFromSet = false;
-        while(true){ //traverse ring adding points to current. Do not allow any right turns.
-            
-            while(true){
-                network.nextCCW(bx, by, cx, cy, workingVect);
-                
-                if((workingVect.getX() == ax) && (workingVect.getY() == ay)){
-                    removeFromSet = true;
-                    break; //current should be removed
-                }
-                
-                //Calculate number determining if point is left, right, or on line, stop only when not a right turn
-                int val = accuracy.check((workingVect.getX() - ax) * (by - ay) - (workingVect.getY() - ay) * (bx - ax));
-                if(val <= 0){
-                    ax = bx;
-                    ay = by;
-                    bx = workingVect.getX();
-                    by = workingVect.getY();
-                    current.add(bx, by);
-                    break;
-                }
-                cx = workingVect.getX();
-                cy = workingVect.getY();
-            }
-            
-            int originRight = accuracy.check((ox - ax) * (by - ay) - (oy - ay) * (bx - ax));
-            
-            if((originRight > 0) || currentSet.contains(bx, by)){
-                if((current.getX(0) == bx) && (current.getY(0) == by)){
-                    // looped back to start - check that the final triangle is convex...
-                    originRight = accuracy.check((ox - ax) * (current.getY(1) - ay) - (oy - ay) * (current.getX(1) - ax));
-                    boolean valid = (originRight >= 0);
-                    
-                    //check if we contain any hole centroids
-                    for(int h = holeCentroids.size(); valid && (h-- > 0);){
-                        if(Relation.isBInsideA(Ring.convexRelate(current, holeCentroids.getX(h), holeCentroids.getY(h), accuracy))){
-                            valid = false;
-                        }
-                    }
-                    if(valid){
-                        return true;
-                    }
-                }
-                //Collided with self or looped inwards - take a step back and try again
-                int index = current.size()-1;
-                if(index < 2){
-                    return false;
-                }
-                cx = current.getX(index);
-                cy = current.getY(index);
-                current.remove(index);
-                if(removeFromSet){
-                    currentSet.remove(cx, cy);
-                    removeFromSet = false;
-                }
-                index--;
-                bx = current.getX(index);
-                by = current.getY(index);
-                index--;
-                ax = current.getX(index);
-                ay = current.getY(index);
-            }else{
-                currentSet.add(bx, by);
-                cx = ax;
-                cy = ay;
-            }
-        }
-    }
-  
-    
 
     static class AreaBuilder {
 

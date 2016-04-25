@@ -246,14 +246,14 @@ public class LineString implements Geom {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         LineString[] array = new LineString[]{this};
         LineSet lines = new LineSet(array);
         return new GeoShape(null, lines, null, getBounds());
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         addTo(network);
     }
 
@@ -367,19 +367,19 @@ public class LineString implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
         Vect.check(amt, "Invalid amt {0}");
         if (amt < 0) {
             return null;
         } else if (amt == 0) {
             return this;
         }
-        VectList buffer = bufferInternal(vects, amt, flatness, accuracy);
+        VectList buffer = bufferInternal(vects, amt, linearizer, accuracy);
         return Ring.buildGeomFromRing(buffer, accuracy);
     }
 
     //The buffer produced by this may be self overlapping, and will need to be cleaned in a network before use
-    static VectList bufferInternal(VectList vects, double amt, Tolerance flatness, Tolerance tolerance) {
+    static VectList bufferInternal(VectList vects, double amt, Linearizer linearizer, Tolerance tolerance) {
         VectList result = new VectList(vects.size() << 2);
         VectBuilder vect = new VectBuilder();
 
@@ -393,13 +393,13 @@ public class LineString implements Geom {
         double ix = vect.getX();
         double iy = vect.getY();
         Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, vect);
-        Vect.linearizeArc(ax, ay, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
+        linearizer.linearizeSegment(ax, ay, ix, iy, vect.getX(), vect.getY(), result);
 
         int index = 1;
         while (++index < vects.size()) {
             double cx = vects.getX(index);
             double cy = vects.getY(index);
-            projectOutward(ax, ay, bx, by, cx, cy, amt, flatness, tolerance, vect, result);
+            projectOutward(ax, ay, bx, by, cx, cy, amt, linearizer, tolerance, vect, result);
             ax = bx;
             bx = cx;
             ay = by;
@@ -411,7 +411,7 @@ public class LineString implements Geom {
         ix = vect.getX();
         iy = vect.getY();
         Line.projectOutward(bx, by, ax, ay, 0, amt, tolerance, vect);
-        Vect.linearizeArc(bx, by, ix, iy, vect.getX(), vect.getY(), Math.abs(amt), flatness.getTolerance(), result);
+        linearizer.linearizeSegment(bx, by, ix, iy, vect.getX(), vect.getY(), result);
 
         double tmp = ax;
         ax = bx;
@@ -424,7 +424,7 @@ public class LineString implements Geom {
         while (--index >= 0) {
             double cx = vects.getX(index);
             double cy = vects.getY(index);
-            projectOutward(ax, ay, bx, by, cx, cy, amt, flatness, tolerance, vect, result);
+            projectOutward(ax, ay, bx, by, cx, cy, amt, linearizer, tolerance, vect, result);
             ax = bx;
             bx = cx;
             ay = by;
@@ -437,7 +437,7 @@ public class LineString implements Geom {
         return result;
     }
 
-    static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Tolerance flatness, Tolerance tolerance, VectBuilder work, VectList result) {
+    static void projectOutward(double ax, double ay, double bx, double by, double cx, double cy, double amt, Linearizer linearizer, Tolerance tolerance, VectBuilder work, VectList result) {
         if(amt > 0){
             if (Line.counterClockwise(ax, ay, cx, cy, bx, by, tolerance) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
                 Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
@@ -449,7 +449,7 @@ public class LineString implements Geom {
                 double ix = work.getX();
                 double iy = work.getY();
                 Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
-                Vect.linearizeArc(bx, by, ix, iy, work.getX(), work.getY(), Math.abs(amt), flatness.getTolerance(), result);
+                linearizer.linearizeSegment(bx, by, ix, iy, work.getX(), work.getY(), result);
             }
         }else{
             if (Line.counterClockwise(ax, ay, cx, cy, bx, by, tolerance) <= 0) { //if angle abc is acute, then this is easy - no linearize needed
@@ -458,7 +458,7 @@ public class LineString implements Geom {
                 double iy = work.getY();
                 Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
                 VectList arc = new VectList();
-                Vect.linearizeArc(bx, by, work.getX(), work.getY(), ix, iy, Math.abs(amt), flatness.getTolerance(), arc);
+                linearizer.linearizeSegment(bx, by, work.getX(), work.getY(), ix, iy, arc);
                 arc.reverse();
                 result.addAll(arc);
             } else { //if angle abc is obtuse, then this is easy - no linearize needed
@@ -487,8 +487,8 @@ public class LineString implements Geom {
     }
 
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return NetworkRelationProcessor.relate(this, geom, linearizer, accuracy);
     }
     
     /**
@@ -501,23 +501,23 @@ public class LineString implements Geom {
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return toLineSet().union(other, flatness, accuracy);
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toLineSet().union(other, linearizer, accuracy);
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return toLineSet().intersection(other, flatness, accuracy);
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toLineSet().intersection(other, linearizer, accuracy);
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        LineSet ret = toLineSet().less(other, flatness, accuracy);
+    public Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        LineSet ret = toLineSet().less(other, linearizer, accuracy);
         return (ret == null) ? null : ret.simplify();
     }
     
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy){
+    public double getArea(Linearizer linearizer, Tolerance accuracy){
         return 0;
     }
     

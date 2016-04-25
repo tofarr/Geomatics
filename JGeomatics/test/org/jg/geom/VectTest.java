@@ -191,11 +191,11 @@ public class VectTest {
     @Test
     public void testRelate_Geom() {
         Tolerance tolerance = new Tolerance(0.15);
-        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 20), tolerance, tolerance));
-        assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), tolerance, tolerance));
-        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), tolerance, new Tolerance(1)));
-        assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), tolerance, tolerance));
-        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), tolerance, new Tolerance(1)));
+        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 20), Linearizer.DEFAULT, tolerance));
+        assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), Linearizer.DEFAULT, tolerance));
+        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), Linearizer.DEFAULT, new Tolerance(1)));
+        assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), Linearizer.DEFAULT, tolerance));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), Linearizer.DEFAULT, new Tolerance(1)));
     }
 
     @Test
@@ -394,141 +394,90 @@ public class VectTest {
     public void testAddTo() {
         Vect vect = Vect.valueOf(3, 7);
         Network network = new Network();
-        vect.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        vect.addTo(network, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals("[[3,7]]", network.toString());
-        vect.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        vect.addTo(network, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals("[[3,7]]", network.toString());
     }
     
     @Test
     public void testBuffer(){
         Vect vect = Vect.valueOf(3, 7);
-        Ring buffered = (Ring)vect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
+        Ring buffered = (Ring)vect.buffer(2, new Linearizer(0.5), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), buffered.getBounds());
         assertEquals(Math.PI * 4, buffered.getArea(), 0.5);
         assertEquals(Math.PI * 4, buffered.getLength(), 0.5);
         
-        buffered = (Ring)vect.buffer(2, new Tolerance(0.1), Tolerance.DEFAULT);
+        buffered = (Ring)vect.buffer(2, new Linearizer(0.1), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), buffered.getBounds());
         assertEquals(Math.PI * 4, buffered.getArea(), 0.1);
         assertEquals(Math.PI * 4, buffered.getLength(), 0.1);
         
-        assertNull(vect.buffer(-1, new Tolerance(0.1), Tolerance.DEFAULT));
-        assertSame(vect, vect.buffer(0, new Tolerance(0.1), Tolerance.DEFAULT));
-        assertSame(vect, vect.buffer(2, new Tolerance(2), Tolerance.DEFAULT));
-    }
-    
-    @Test
-    public void testLinearizeArc(){
-        VectList result = new VectList();
-        Vect.linearizeArc(0, 0, 0, 2, 2, 0, 2, 0.1, result);
-        result.add(0, 0).add(0, 2);
-        Rect bounds = result.getBounds();
-        assertEquals(-2, bounds.minX, 0.1);
-        assertEquals(-2, bounds.minY, 0.1);
-        assertEquals(2, bounds.maxX, 0.1);
-        assertEquals(2, bounds.maxY, 0.1);
-        assertEquals(Math.PI * 3, Ring.getArea(result), 0.1);
-        assertEquals(Math.PI * 3 + 4, LineString.getLength(result), 0.2);
-        
-        result.clear().add(0, 0);
-        Vect.linearizeArc(0, 0, 2, 0, 0, 2, 2, 0.1, result);
-        result.add(0, 0);
-        bounds = result.getBounds();
-        assertEquals(0, bounds.minX, 0.1);
-        assertEquals(0, bounds.minY, 0.1);
-        assertEquals(2, bounds.maxX, 0.1);
-        assertEquals(2, bounds.maxY, 0.1);
-        assertEquals(Math.PI, Ring.getArea(result), 0.1);
-        assertEquals(Math.PI + 4, LineString.getLength(result), 0.2);
-        
-        result.clear();
-        Vect.linearizeArc(0, 0, 2, 0, 0, 2, 1, 1, result);
-        assertEquals(new VectList(0, 0), result);
-        
-        result.clear();
-        Vect.linearizeArc(0, 0, Math.PI/2, 0, 2, 0.1, result);
-        result.add(0, 0).add(0, 2);
-        bounds = result.getBounds();
-        assertEquals(-2, bounds.minX, 0.1);
-        assertEquals(-2, bounds.minY, 0.1);
-        assertEquals(2, bounds.maxX, 0.1);
-        assertEquals(2, bounds.maxY, 0.1);
-        assertEquals(Math.PI * 3, Ring.getArea(result), 0.1);
-        assertEquals(Math.PI * 3 + 4, LineString.getLength(result), 0.2);
-        
-        result.clear().add(0, 0);
-        Vect.linearizeArc(0, 0, 0, Math.PI/2, 2, 0.1, result);
-        result.add(0, 0);
-        bounds = result.getBounds();
-        assertEquals(0, bounds.minX, 0.1);
-        assertEquals(0, bounds.minY, 0.1);
-        assertEquals(2, bounds.maxX, 0.1);
-        assertEquals(2, bounds.maxY, 0.1);
-        assertEquals(Math.PI, Ring.getArea(result), 0.1);
-        assertEquals(Math.PI + 4, LineString.getLength(result), 0.2);
+        assertNull(vect.buffer(-1, new Linearizer(0.1), Tolerance.DEFAULT));
+        assertSame(vect, vect.buffer(0, new Linearizer(0.1), Tolerance.DEFAULT));
+        assertSame(vect, vect.buffer(2, new Linearizer(2.0), Tolerance.DEFAULT));
     }
     
     @Test
     public void testUnion(){
         Rect rect = Rect.valueOf(10, 20, 30, 40);
-        assertSame(rect, Vect.valueOf(20, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(rect, Vect.valueOf(10, 30).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(rect, Vect.valueOf(15, 20).union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(rect, Vect.valueOf(20, 30).union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(rect, Vect.valueOf(10, 30).union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(rect, Vect.valueOf(15, 20).union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         Vect a = Vect.valueOf(5, 30);
-        assertEquals("[\"GS\",[\"AR\"[[10,20, 30,20, 30,40, 10,40, 10,20]]],[\"PS\", 5,30]]", a.union(rect, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
-        assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals("[\"GS\",[\"AR\"[[10,20, 30,20, 30,40, 10,40, 10,20]]],[\"PS\", 5,30]]", a.union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals(a, a.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         Vect b = Vect.valueOf(10, 25);
         PointSet c = new PointSet(new VectList(5, 30, 10,25));
-        assertEquals(c, a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(c, a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
-        assertEquals(new PointSet(new VectList(5, 30, 10, 25, 15, 35)), Vect.valueOf(15, 35).union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(new PointSet(new VectList(5, 30, 10, 25, 15, 35)), Vect.valueOf(15, 35).union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
-        GeoShape gs = b.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
-        assertSame(gs, b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        GeoShape gs = b.toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT);
+        assertSame(gs, b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
-        gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
-        assertEquals("[\"PS\", 10,20, 10,25, 10,30]", b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT);
+        assertEquals("[\"PS\", 10,20, 10,25, 10,30]", b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         
-        gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
-        assertSame(gs, b.union(gs, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT);
+        assertSame(gs, b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         PointSet mp = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25));
-        assertSame(mp, b.union(mp, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(mp, b.union(mp, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
     
     @Test
     public void testIntersection(){
         Rect rect = Rect.valueOf(10, 20, 30, 40);
         Vect a = Vect.valueOf(20, 30);
-        assertSame(a, a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(a, a.intersection(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         a = Vect.valueOf(10, 30);
-        assertSame(a, a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(a, a.intersection(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         a = Vect.valueOf(15, 20);
-        assertSame(a, a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(a, a.intersection(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         a = Vect.valueOf(5, 30);
-        assertNull(a.intersection(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.intersection(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
     
     @Test
     public void testLess(){
         Rect rect = Rect.valueOf(10, 20, 30, 40);
         Vect a = Vect.valueOf(20, 20);
-        assertNull(a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.less(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         a = Vect.valueOf(10, 30);
-        assertNull( a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull( a.less(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         a = Vect.valueOf(20, 30);
-        assertNull(a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.less(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         a = Vect.valueOf(5, 30);
-        assertSame(a, a.less(rect, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(a, a.less(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
     
     @Test
     public void testGetArea(){
-        assertEquals(0, Vect.valueOf(20, 30).getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+        assertEquals(0, Vect.valueOf(20, 30).getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
 }

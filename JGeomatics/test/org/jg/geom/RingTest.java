@@ -178,11 +178,11 @@ public class RingTest {
         Ring d = Ring.valueOf(TOL, 5,5, 10,5, 5,10, 5,5);
         Ring e = Ring.valueOf(TOL, 0,0, 100,0, 100,100, 0,0);
 
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Tolerance.FLATNESS, TOL));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, TOL));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Tolerance.FLATNESS, TOL));
-        assertEquals(Relation.A_OUTSIDE_B | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(d, Tolerance.FLATNESS, TOL));
-        assertEquals(Relation.ALL, a.relate(e, Tolerance.FLATNESS, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(d, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL, a.relate(e, Linearizer.DEFAULT, TOL));
         
     }
 
@@ -358,8 +358,8 @@ public class RingTest {
     @Test
     public void testBuffer() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        assertSame(ring, ring.buffer(0, Tolerance.FLATNESS, TOL));
-        Ring a = (Ring)ring.buffer(-1, Tolerance.FLATNESS, TOL);
+        assertSame(ring, ring.buffer(0, Linearizer.DEFAULT, TOL));
+        Ring a = (Ring)ring.buffer(-1, Linearizer.DEFAULT, TOL);
         assertEquals(5, a.numVects());
         Rect bounds = a.getBounds();
         assertEquals(bounds.minX, 1, 0.01);
@@ -367,21 +367,21 @@ public class RingTest {
         assertEquals(bounds.maxX, 5, 0.01);
         assertEquals(bounds.maxY, 12.125, 0.01);
         assertEquals(20.53, a.getArea(), 0.01);
-        Ring b = (Ring)ring.buffer(10, Tolerance.FLATNESS, TOL);
+        Ring b = (Ring)ring.buffer(10, Linearizer.DEFAULT, TOL);
         bounds = b.getBounds();
         assertEquals(bounds.minX, -10, 0.01);
         assertEquals(bounds.minY, -10, 0.01);
         assertEquals(bounds.maxX, 16, 0.01);
         assertEquals(bounds.maxY, 24, 0.01);
         assertEquals(694, b.getArea(), 1);
-        assertNull(ring.buffer(-15, Tolerance.FLATNESS, TOL));
+        assertNull(ring.buffer(-15, Linearizer.DEFAULT, TOL));
     } 
     
     @Test
     public void testBuffer_L(){
         Ring a = Ring.valueOf(TOL, 0,0, 50,0, 50,10, 10,10, 10,50, 0,50, 0,0);
         
-        GeoShape result = (GeoShape)a.buffer(-5, Tolerance.FLATNESS, TOL);
+        GeoShape result = (GeoShape)a.buffer(-5, Linearizer.DEFAULT, TOL);
         assertEquals(5.49, result.area.getArea(), 0.01);
         assertEquals(result.area.numRings(), 1);
         assertEquals(Rect.valueOf(5,5,10,10), result.area.getBounds());
@@ -391,10 +391,10 @@ public class RingTest {
         assertEquals(LineSet.valueOf(TOL, network), result.lines);
         assertNull(result.points);
 
-        assertNull(a.buffer(-8, Tolerance.FLATNESS, TOL)); // leaves nothing
-        assertNull(a.buffer(-20, Tolerance.FLATNESS, TOL)); // leaves nothing
+        assertNull(a.buffer(-8, Linearizer.DEFAULT, TOL)); // leaves nothing
+        assertNull(a.buffer(-20, Linearizer.DEFAULT, TOL)); // leaves nothing
         
-        Ring ring = (Ring) a.buffer(10, Tolerance.FLATNESS, TOL);
+        Ring ring = (Ring) a.buffer(10, Linearizer.DEFAULT, TOL);
         assertEquals(3192, ring.getArea(), 1);
         assertEquals(Rect.valueOf(-10, -10, 60, 60), ring.getBounds());
     }
@@ -403,15 +403,15 @@ public class RingTest {
     @Test
     public void testBuffer_toLine(){
         Ring a = Ring.valueOf(TOL, 30,40, 40,40, 40,70, 30,70, 30,40);
-        assertNull(a.buffer(-6, Tolerance.FLATNESS, TOL));
-        Geom b = a.buffer(-5, Tolerance.FLATNESS, TOL);
+        assertNull(a.buffer(-6, Linearizer.DEFAULT, TOL));
+        Geom b = a.buffer(-5, Linearizer.DEFAULT, TOL);
         assertEquals(Line.valueOf(35,45, 35,65), b);
     }
     
     @Test
     public void testBuffer_connectedBlobs(){
         Ring ring = Ring.valueOf(TOL, 0,0, 50,0, 50,25, 30,25, 30,10, 10,10, 10,30, 25,30, 25,50, 0,50, 0,0);
-        GeoShape result = (GeoShape)ring.buffer(-5, Tolerance.FLATNESS, TOL);
+        GeoShape result = (GeoShape)ring.buffer(-5, Linearizer.DEFAULT, TOL);
         assertEquals(Rect.valueOf(5,5,45,45), result.getBounds());
         
         Network network = new Network();
@@ -429,11 +429,11 @@ public class RingTest {
     @Test
     public void testBuffer_toDeath(){
         Ring ring = Ring.valueOf(TOL, -40,-30, 40,-30, 40,30, -40,30, -40,-30);
-        assertNull(ring.buffer(-40, Tolerance.FLATNESS, TOL));
+        assertNull(ring.buffer(-40, Linearizer.DEFAULT, TOL));
         ring = Ring.valueOf(TOL, 90,0, 100,0, 100,10, 90,0);
-        assertNull(ring.buffer(-40, Tolerance.FLATNESS, TOL));
+        assertNull(ring.buffer(-40, Linearizer.DEFAULT, TOL));
         ring = Ring.valueOf(TOL, 0,0, 200,0, 200,10, 191,1, 9,1, 0,10, 0,0);
-        assertNull(ring.buffer(-40, Tolerance.FLATNESS, TOL));
+        assertNull(ring.buffer(-40, Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -516,14 +516,14 @@ public class RingTest {
     @Test
     public void testToGeoShape() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        assertEquals(new GeoShape(new Area(ring), null, null), ring.toGeoShape(Tolerance.FLATNESS, TOL));
+        assertEquals(new GeoShape(new Area(ring), null, null), ring.toGeoShape(Linearizer.DEFAULT, TOL));
     }
 
     @Test
     public void testAddTo_3args() {
         Network network = new Network();
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        ring.addTo(network, Tolerance.FLATNESS, TOL);
+        ring.addTo(network, Linearizer.DEFAULT, TOL);
         assertEquals("[[0,0, 6,8, 6,14, 0,10, 0,0]]", network.toString());
     }
 
@@ -553,24 +553,24 @@ public class RingTest {
         Ring p = new Ring(new VectList(10,5, 20,5, 20,20, 10,20, 10,5), null);
         Ring q = new Ring(new VectList(0,0, 10,0, 10,5, 20,5, 20,20, 10,20, 10,10, 0,10, 0,0), null);
         
-        assertEquals(a, a.union(a, Tolerance.FLATNESS, TOL));
-        assertEquals(e, a.union(b, Tolerance.FLATNESS, TOL));
-        assertEquals(g, a.union(c, Tolerance.FLATNESS, TOL));
-        assertEquals(g, c.union(a, Tolerance.FLATNESS, TOL));
-        assertEquals(h, a.union(d, Tolerance.FLATNESS, TOL));
+        assertEquals(a, a.union(a, Linearizer.DEFAULT, TOL));
+        assertEquals(e, a.union(b, Linearizer.DEFAULT, TOL));
+        assertEquals(g, a.union(c, Linearizer.DEFAULT, TOL));
+        assertEquals(g, c.union(a, Linearizer.DEFAULT, TOL));
+        assertEquals(h, a.union(d, Linearizer.DEFAULT, TOL));
         
-        assertEquals(j, a.union(f, Tolerance.FLATNESS, TOL));
-        assertEquals(k, a.union(i, Tolerance.FLATNESS, TOL));
-        assertEquals(m, a.union(l, Tolerance.FLATNESS, TOL));
+        assertEquals(j, a.union(f, Linearizer.DEFAULT, TOL));
+        assertEquals(k, a.union(i, Linearizer.DEFAULT, TOL));
+        assertEquals(m, a.union(l, Linearizer.DEFAULT, TOL));
         
-        assertEquals(e, e.union(a, Tolerance.FLATNESS, TOL));
-        assertEquals(e, e.union(f, Tolerance.FLATNESS, TOL));
+        assertEquals(e, e.union(a, Linearizer.DEFAULT, TOL));
+        assertEquals(e, e.union(f, Linearizer.DEFAULT, TOL));
         
-        assertEquals(o, a.union(n, Tolerance.FLATNESS, TOL));
-        assertEquals(o, n.union(a, Tolerance.FLATNESS, TOL));
+        assertEquals(o, a.union(n, Linearizer.DEFAULT, TOL));
+        assertEquals(o, n.union(a, Linearizer.DEFAULT, TOL));
         
-        assertEquals(q, a.union(p, Tolerance.FLATNESS, TOL));
-        assertEquals(q, p.union(a, Tolerance.FLATNESS, TOL));
+        assertEquals(q, a.union(p, Linearizer.DEFAULT, TOL));
+        assertEquals(q, p.union(a, Linearizer.DEFAULT, TOL));
         
     }
 
@@ -582,29 +582,29 @@ public class RingTest {
         Ring d = new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null);
         Ring e = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
         
-        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, TOL));
-        assertEquals(Line.valueOf(10, 0, 10, 10), a.intersection(b, Tolerance.FLATNESS, TOL));
-        assertEquals(Vect.valueOf(10, 10), a.intersection(c, Tolerance.FLATNESS, TOL));
-        assertNull(a.intersection(d, Tolerance.FLATNESS, TOL));
-        assertEquals(new Ring(new VectList(5,5, 10,5, 10,10, 5,10, 5,5), null), a.intersection(e, Tolerance.FLATNESS, TOL));
+        assertEquals(a, a.intersection(a, Linearizer.DEFAULT, TOL));
+        assertEquals(Line.valueOf(10, 0, 10, 10), a.intersection(b, Linearizer.DEFAULT, TOL));
+        assertEquals(Vect.valueOf(10, 10), a.intersection(c, Linearizer.DEFAULT, TOL));
+        assertNull(a.intersection(d, Linearizer.DEFAULT, TOL));
+        assertEquals(new Ring(new VectList(5,5, 10,5, 10,10, 5,10, 5,5), null), a.intersection(e, Linearizer.DEFAULT, TOL));
         
         LineString f = LineString.valueOf(TOL, 10,5, 25,5, 25,0, 40,0);
         LineString g = LineString.valueOf(TOL, 20,5, 25,5, 25,0, 30,0);
-        assertEquals(g, d.intersection(f, Tolerance.FLATNESS, TOL));
+        assertEquals(g, d.intersection(f, Linearizer.DEFAULT, TOL));
         
         PointSet h = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10).add(35, 5));
         PointSet i = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10));
-        assertEquals(i, d.intersection(h, Tolerance.FLATNESS, TOL));
+        assertEquals(i, d.intersection(h, Linearizer.DEFAULT, TOL));
         
         GeoShape j = new GeoShape(null, f.toLineSet(), h);
         GeoShape k = new GeoShape(null, g.toLineSet(), i);
-        assertEquals(k, d.intersection(j, Tolerance.FLATNESS, TOL));
+        assertEquals(k, d.intersection(j, Linearizer.DEFAULT, TOL));
         
         Ring l = new Ring(new VectList(0,0, 30,0, 30,10, 10,10, 10,20, 30,20, 30,30, 0,30, 0,0), null);
         Ring m = new Ring(new VectList(0,0, 10,0, 10,20, 20,20, 20,0, 30,0, 30,30, 0,30, 0,0), null);
         Area n = new Area(null, new Ring(new VectList(0,0, 10,0, 10,10, 10,20, 20,20, 30,20, 30,30, 0,30, 0,0), null).toArea(),
                 new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null).toArea());
-        assertEquals(n, l.intersection(m, Tolerance.FLATNESS, TOL));
+        assertEquals(n, l.intersection(m, Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -616,26 +616,26 @@ public class RingTest {
         Ring e = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
         
         
-        assertNull(a.less(a, Tolerance.FLATNESS, TOL));
-        assertEquals(a, a.less(b, Tolerance.FLATNESS, TOL));
-        assertEquals(a, a.less(c, Tolerance.FLATNESS, TOL));
-        assertEquals(new Ring(new VectList(0,0, 10,0, 10,5, 5,5, 5,10, 0,10, 0,0), null), a.less(e, Tolerance.FLATNESS, TOL));
+        assertNull(a.less(a, Linearizer.DEFAULT, TOL));
+        assertEquals(a, a.less(b, Linearizer.DEFAULT, TOL));
+        assertEquals(a, a.less(c, Linearizer.DEFAULT, TOL));
+        assertEquals(new Ring(new VectList(0,0, 10,0, 10,5, 5,5, 5,10, 0,10, 0,0), null), a.less(e, Linearizer.DEFAULT, TOL));
         
-        assertEquals(a, a.less(d, Tolerance.FLATNESS, TOL));
+        assertEquals(a, a.less(d, Linearizer.DEFAULT, TOL));
         
         LineString f = LineString.valueOf(TOL, 10,5, 25,5, 25,0, 40,0);
-        assertEquals(d, d.less(f, Tolerance.FLATNESS, TOL));
+        assertEquals(d, d.less(f, Linearizer.DEFAULT, TOL));
         
         PointSet h = PointSet.valueOf(new VectSet().add(25, 6).add(30, 6).add(30, 10).add(35, 5));
-        assertEquals(d, d.less(h, Tolerance.FLATNESS, TOL));
+        assertEquals(d, d.less(h, Linearizer.DEFAULT, TOL));
         
         GeoShape j = new GeoShape(null, f.toLineSet(), h);
-        assertEquals(d, d.less(j, Tolerance.FLATNESS, TOL));
+        assertEquals(d, d.less(j, Linearizer.DEFAULT, TOL));
         
         Ring l = new Ring(new VectList(0,0, 30,0, 30,10, 10,10, 10,20, 30,20, 30,30, 0,30, 0,0), null);
         Ring m = new Ring(new VectList(0,0, 10,0, 10,20, 20,20, 20,0, 30,0, 30,30, 0,30, 0,0), null);
         Ring n = new Ring(new VectList(10,0, 20,0, 20,10, 10,10, 10,0), null);
-        assertEquals(n, l.less(m, Tolerance.FLATNESS, TOL));
+        assertEquals(n, l.less(m, Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -700,7 +700,7 @@ public class RingTest {
     @Test
     public void testGetEdgeBuffer(){
         Ring ring = Ring.valueOf(TOL, 0,0, 10,0, 0,10, 0,0);
-        assertEquals(new VectList(0,0, 10,0, 0,10, 0,0), ring.getEdgeBuffer(0, Tolerance.FLATNESS, TOL));
+        assertEquals(new VectList(0,0, 10,0, 0,10, 0,0), ring.getEdgeBuffer(0, Linearizer.DEFAULT, TOL));
     }
     
     @Test
@@ -717,37 +717,4 @@ public class RingTest {
         Ring b = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,0);
         assertEquals(b, a.convexHull(Tolerance.DEFAULT));
     }
-    
-//    @Test
-//    public void testLargestConvexRing_A(){
-//        Ring a = Ring.valueOf(TOL, 0,0, 35,0, 70,70, 80,70, 80,60, 90,60, 100,100, 0,100, 10,20, 0,0);
-//        Ring b = Ring.valueOf(TOL, 0,100, 12.5,0, 35,0, 85,100, 0,100);
-//        Ring c = a.largestConvexRing(TOL);
-//        assertEquals(b, c);
-//        assertSame(b, b.largestConvexRing(TOL));
-//    }
-//    
-//    @Test
-//    public void testLargestConvexRing_B(){
-//        Ring a = Ring.valueOf(TOL, 0,0, 100,0, 200,100, 100,100, 10,10, 100,10, 180,90, 100,90, 25,15, 20,15, 100,95, 190,95, 100,5, 5,5, 0,0);
-//        Ring b = Ring.valueOf(TOL, 20,10, 100,10, 180,90, 100,90, 20,10);
-//        Ring c = a.largestConvexRing(TOL);
-//        assertEquals(b, c);
-//    }
-//    
-//    @Test
-//    public void testLargestConvexRing_C(){
-//        Ring a = Ring.valueOf(TOL, 0,0, 50,100, 60,80, 70,100, 120,0, 0,0);
-//        Ring b = Ring.valueOf(TOL, 0,0, 120,0, 80,80, 40,80, 0,0);
-//        Ring c = a.largestConvexRing(TOL);
-//        assertEquals(b, c);
-//    }
-//    
-//    @Test
-//    public void testLargestConvexRing_D(){
-//        Ring a = Ring.valueOf(TOL, 0,0, 20,0, 20,20, 40,20, 40,0, 80,0, 80,60, 40,60, 40,40, 20,40, 20,60, 0,60, 0,0);
-//        Ring b = Ring.valueOf(TOL, 40,0, 80,0, 80,60, 40,60, 40,0);
-//        Ring c = a.largestConvexRing(TOL);
-//        assertEquals(b, c);
-//    } 
 }

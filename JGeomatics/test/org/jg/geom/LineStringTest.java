@@ -209,7 +209,7 @@ public class LineStringTest {
     public void testAddTo() {
         LineString ls = LineString.valueOf(Tolerance.DEFAULT, 20, 20, 20, 0, 0, 0, 0, 20, 20, 20);
         Network network = new Network();
-        ls.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        ls.addTo(network, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals("[[0,0, 20,0, 20,20, 0,20, 0,0]]", network.toString());
     }
     
@@ -217,7 +217,7 @@ public class LineStringTest {
     public void testToGeoShape(){
         LineString ls = LineString.valueOf(Tolerance.DEFAULT, 0,0, 10,0, 13,4, 0,4, 0,0);
         GeoShape gs = new GeoShape(null, new LineSet(ls), null);
-        assertEquals(gs, ls.toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO));
+        assertEquals(gs, ls.toGeoShape(Linearizer.DEFAULT, Tolerance.ZERO));
     }
 
     @Test
@@ -358,12 +358,12 @@ public class LineStringTest {
 
     @Test
     public void testBuffer_RightAngle() {
-        Tolerance flatness = new Tolerance(0.5);
+        Linearizer linearizer = new Linearizer(0.5);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 60, 60, 60);
-        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
-        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+        assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
 
-        Ring r = (Ring) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Ring r = (Ring) s.buffer(5, linearizer, Tolerance.DEFAULT);
         double area = (35 * 10)
                 + (55 * 10)
                 + (25 * Math.PI)
@@ -376,12 +376,12 @@ public class LineStringTest {
 
     @Test
     public void testBuffer_Loop() {
-        Tolerance flatness = new Tolerance(0.5);
+        Linearizer linearizer = new Linearizer(0.5);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 5,5, 25,5, 25,45, 5,45, 5,5);
-        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
-        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+        assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
 
-        Area r = (Area) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Area r = (Area) s.buffer(5, linearizer, Tolerance.DEFAULT);
         double area = (10 * 10 * 2)
                 + (10 * 30 * 2)
                 + (5 * 5 * 3 * 4)
@@ -395,12 +395,12 @@ public class LineStringTest {
 
     @Test
     public void testBuffer_V() {
-        Tolerance flatness = new Tolerance(0.5);
+        Linearizer linearizer = new Linearizer(0.5);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 10, 19, 10.2, 20, 10.4, 20, 30);
-        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
-        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+        assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
 
-        Ring r = (Ring) s.buffer(5, flatness, Tolerance.DEFAULT);
+        Ring r = (Ring) s.buffer(5, linearizer, Tolerance.DEFAULT);
         
         assertEquals(Rect.valueOf(14, -5, 25, 35), r.getBounds());
         assertEquals(382, r.getArea(), 1);
@@ -408,12 +408,12 @@ public class LineStringTest {
     
     @Test
     public void testBuffer_Irregular() {
-        Tolerance flatness = new Tolerance(0.5);
+        Linearizer linearizer = new Linearizer(0.5);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 10,5, 70,5, 70,23, 56,23, 56,13, 44,13, 44,9, 32,9);
-        assertNull(s.buffer(-1, flatness, Tolerance.DEFAULT)); // buffer out of existance
-        assertSame(s, s.buffer(0, flatness, Tolerance.DEFAULT)); // no op buffer
+        assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
+        assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
 
-        Area r = (Area) s.buffer(4, flatness, Tolerance.DEFAULT);
+        Area r = (Area) s.buffer(4, linearizer, Tolerance.DEFAULT);
         assertEquals(996, r.getArea(), 1);
         assertEquals(Rect.valueOf(6,1,74,27), r.getBounds());
         assertNotNull(r.shell);
@@ -423,11 +423,11 @@ public class LineStringTest {
 
     @Test
     public void testProjectOutward() {
-        Tolerance flatness = new Tolerance(0.5);
+        Linearizer linearizer = new Linearizer(0.5);
         VectBuilder work = new VectBuilder();
         VectList result = new VectList();
 
-        LineString.projectOutward(0, 0, 0, 10, 10, 10, 5, flatness, Tolerance.DEFAULT, work, result);
+        LineString.projectOutward(0, 0, 0, 10, 10, 10, 5, linearizer, Tolerance.DEFAULT, work, result);
         assertEquals(2, result.size());
         assertEquals(5, result.getX(0), 0.0001);
         assertEquals(10, result.getY(0), 0.0001);
@@ -435,7 +435,7 @@ public class LineStringTest {
         assertEquals(5, result.getY(1), 0.0001);
 
         result.clear();
-        LineString.projectOutward(19, 10.2, 20, 10, 20, 0, 5, flatness, Tolerance.DEFAULT, work, result);
+        LineString.projectOutward(19, 10.2, 20, 10, 20, 0, 5, linearizer, Tolerance.DEFAULT, work, result);
         assertEquals(2, result.size());
         assertEquals(19.019419324309084, result.getX(0), 0.0001);
         assertEquals(5.097096621545399, result.getY(0), 0.0001);
@@ -443,7 +443,7 @@ public class LineStringTest {
         assertEquals(10, result.getY(1), 0.0001);
 
         result.clear();
-        LineString.projectOutward(10,50, 10,10, 50,10, -5, flatness, Tolerance.DEFAULT, work, result);
+        LineString.projectOutward(10,50, 10,10, 50,10, -5, linearizer, Tolerance.DEFAULT, work, result);
         assertEquals(2, result.size());
         assertEquals(15, result.getX(0), 0.0001);
         assertEquals(10, result.getY(0), 0.0001);
@@ -451,7 +451,7 @@ public class LineStringTest {
         assertEquals(15, result.getY(1), 0.0001);
         
         result.clear();
-        LineString.projectOutward(50,10, 10,10, 10,50, -5, flatness, Tolerance.DEFAULT, work, result);
+        LineString.projectOutward(50,10, 10,10, 10,50, -5, linearizer, Tolerance.DEFAULT, work, result);
         assertTrue(2 < result.size());
         assertTrue(20 > result.size());
         assertEquals(Rect.valueOf(5, 5, 10, 10), result.getBounds());
@@ -581,15 +581,15 @@ public class LineStringTest {
         LineString c = LineString.valueOf(Tolerance.DEFAULT, 150,50, 150,150, 250,150, 250,50);
         LineString d = LineString.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100, 0,100, 0,0);
         Rect e = Rect.valueOf(50,50, 150,150);
-        assertEquals(Relation.TOUCH, a.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.DISJOINT, a.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, b.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, d.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, b.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, c.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));        
+        assertEquals(Relation.TOUCH, a.relate(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, b.relate(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, d.relate(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, b.relate(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, c.relate(e, Linearizer.DEFAULT, Tolerance.DEFAULT));        
     }
     
     @Test
@@ -599,8 +599,8 @@ public class LineStringTest {
         LineString c = new LineString(new VectList(50,90, 140,0)); //touch on point
         GeoShape d = new GeoShape(Rect.valueOf(40, 80, 95, 95).toArea(), null, new PointSet(new VectList(10, 10, 30, 90, 30, 100, 100, 100)));
         
-        assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new LineSet(a, b), a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(new LineSet(a, b), a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         LineSet e = new LineSet(
             new LineString(new VectList(0,90, 50,90)),
@@ -609,9 +609,9 @@ public class LineStringTest {
             new LineString(new VectList(90,0, 90,50)),
             new LineString(new VectList(90,50, 140,0))
         );
-        assertEquals(e, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(e, a.union(c.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(e, a.union(c.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(e, a.union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(e, a.union(c.toLineSet(), Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(e, a.union(c.toLineSet(), Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         LineSet f = new LineSet(
             new LineString(new VectList(0,100, 100,100, 100,40)),
@@ -619,18 +619,18 @@ public class LineStringTest {
             new LineString(new VectList(100,0, 100,40)),
             new LineString(new VectList(100,40, 140,0))
         );
-        assertEquals(f, b.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(f, b.union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         assertEquals("GEOMETRYCOLLECTION(POLYGON((40 80, 95 80, 95 95, 40 95, 40 80)),LINESTRING(0 90, 40 90),LINESTRING(90 0, 90 80),POINT(10 10),POINT(30 100),POINT(100 100))",
-                a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
+                a.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toGeoShape(Linearizer.DEFAULT, Tolerance.ZERO).toWkt());
         assertEquals("GEOMETRYCOLLECTION(POLYGON((40 80, 95 80, 95 95, 40 95, 40 80)),LINESTRING(0 100, 100 100, 100 0),POINT(10 10),POINT(30 90))",
-                b.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
+                b.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toGeoShape(Linearizer.DEFAULT, Tolerance.ZERO).toWkt());
         assertEquals("GEOMETRYCOLLECTION(POLYGON((40 80, 95 80, 95 95, 40 95, 40 80)),LINESTRING(60 80, 140 0),POINT(10 10),POINT(30 90),POINT(30 100),POINT(100 100))",
-                c.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
+                c.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toGeoShape(Linearizer.DEFAULT, Tolerance.ZERO).toWkt());
         
         LineString g = new LineString(new VectList(0, 100, 100,100, 100, 200)); //touch on point
-        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g, Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.ZERO).toWkt());
-        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g.toLineSet(), Tolerance.FLATNESS, Tolerance.DEFAULT).toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT).toWkt());
+        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g, Linearizer.DEFAULT, Tolerance.DEFAULT).toGeoShape(Linearizer.DEFAULT, Tolerance.ZERO).toWkt());
+        assertEquals("MULTILINESTRING((0 90, 90 90, 90 0), (0 100, 100 100, 100 200))", a.union(g.toLineSet(), Linearizer.DEFAULT, Tolerance.DEFAULT).toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT).toWkt());
     }
 
     @Test
@@ -642,12 +642,12 @@ public class LineStringTest {
         Rect e = Rect.valueOf(80,80, 100,100);
         LineString f = new LineString(new VectList(10,10, 80,10, 80,80)); //disjoint but bounds not disjoint
         
-        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new PointSet(new VectList(50,90, 90,50)), a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(d, a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(new LineString(new VectList(80,90, 90,90, 90,80)), a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.intersection(f, Tolerance.FLATNESS, Tolerance.ZERO));
+        assertEquals(a, a.intersection(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.intersection(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(new PointSet(new VectList(50,90, 90,50)), a.intersection(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, a.intersection(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(new LineString(new VectList(80,90, 90,90, 90,80)), a.intersection(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.intersection(f, Linearizer.DEFAULT, Tolerance.ZERO));
     }
 
     @Test
@@ -658,18 +658,18 @@ public class LineStringTest {
         LineString d = new LineString(new VectList(50,90, 90,90, 90,50)); //touch on line
         Rect e = Rect.valueOf(80,80, 100,100);
         
-        assertNull(a.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.less(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(a, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals("[\"LS\", 0,90, 50,90, 90,90, 90,50, 90,0]",
-                a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+                a.less(c, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         assertEquals("[\"LT\", [0,90, 50,90], [90,0, 90,50]]",
-                a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
-        assertEquals("[\"LT\", [0,90, 80,90], [90,0, 90,80]]", a.less(e, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+                a.less(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"LT\", [0,90, 80,90], [90,0, 90,80]]", a.less(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
     }
           
     @Test
     public void testGetArea(){
         LineString a = new LineString(new VectList(0, 90, 90,90, 90, 0)); //touch on point
-        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+        assertEquals(0, a.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
 }

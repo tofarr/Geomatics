@@ -713,16 +713,16 @@ public class LineTest {
     public void testAddTo() {
         Line a = Line.valueOf(2, 3, 7, 13);
         Network network = new Network();
-        a.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        a.addTo(network, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals("[[2,3, 7,13]]", network.toString());
     }
     
     @Test
     public void testBuffer(){
         Line a = Line.valueOf(2, 3, 7, 13);
-        assertNull(a.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        assertSame(a, a.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        Area b = (Area)a.buffer(3, new Tolerance(0.1), Tolerance.DEFAULT);
+        assertNull(a.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(a, a.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        Area b = (Area)a.buffer(3, new Linearizer(0.1), Tolerance.DEFAULT);
         
         Rect bounds = b.getBounds();
         assertEquals(-1, bounds.minX, 0.1);
@@ -736,11 +736,11 @@ public class LineTest {
     @Test
     public void testCounterClockwise(){
         Line a = Line.valueOf(0, 0, 100, 100);
-        assertEquals(1, a.counterClockwise(new Vect(100, 0)));
-        assertEquals(-1, a.counterClockwise(new VectBuilder(0, 100)));
-        assertEquals(0, a.counterClockwise(Vect.valueOf(50, 50)));
-        assertEquals(1, a.counterClockwise(new VectBuilder(150, 150)));
-        assertEquals(1, a.counterClockwise(new VectBuilder(20, 0)));
+        assertEquals(1, a.counterClockwise(new Vect(100, 0), Tolerance.DEFAULT));
+        assertEquals(-1, a.counterClockwise(new VectBuilder(0, 100), Tolerance.DEFAULT));
+        assertEquals(0, a.counterClockwise(Vect.valueOf(50, 50), Tolerance.DEFAULT));
+        assertEquals(1, a.counterClockwise(new VectBuilder(150, 150), Tolerance.DEFAULT));
+        assertEquals(1, a.counterClockwise(new VectBuilder(20, 0), Tolerance.DEFAULT));
     }
     
     @Test
@@ -763,12 +763,12 @@ public class LineTest {
         Rect e = Rect.valueOf(40, 40, 60, 60);
         Rect f = Rect.valueOf(-10, -10, 110, 110);
         
-        assertEquals(Relation.TOUCH, a.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.DISJOINT, a.relate(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, a.relate(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
     }
     
@@ -838,20 +838,20 @@ public class LineTest {
         Line a = new Line(0,0, 100,100);
         Line b = new Line(0,100, 100,0);
         Rect c = new Rect(150,0,200,50);
-        assertEquals(a, a.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         LineSet expected = new LineSet(
             new LineString(new VectList(0,0,50,50)),
             new LineString(new VectList(0,100,50,50)),
             new LineString(new VectList(50,50,100,0)),
             new LineString(new VectList(50,50,100,100))
         );
-        Geom found = a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        Geom found = a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals(expected, found);
         LineSet d = new LineSet(
             new LineString(new VectList(0,0,100,100)),
             new LineString(new VectList(150,0,200,50))
         );
-        assertEquals(d, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(d, a.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -859,9 +859,9 @@ public class LineTest {
         Line a = new Line(0,0, 100,100);
         Line b = new Line(0,100, 100,0);
         Rect c = new Rect(150,0,200,50);
-        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Vect.valueOf(50,50), a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.intersection(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.intersection(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Vect.valueOf(50,50), a.intersection(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -870,17 +870,17 @@ public class LineTest {
         Line b = new Line(0,100, 100,0);
         Rect c = new Rect(150,0,200,50);
         Rect d = new Rect(-1,-1,101,101);
-        assertEquals(a, a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.less(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.less(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
-        Geom geom = a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        Geom geom = a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT);
         Geom expected = LineSet.valueOf(Tolerance.DEFAULT, 0,0, 50,50, 100,100).simplify();
-        assertEquals(expected, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(expected, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
           
     @Test
     public void testGetArea(){
         Line a = new Line(0,0, 100,100);
-        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+        assertEquals(0, a.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
 }

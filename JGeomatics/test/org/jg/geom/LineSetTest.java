@@ -209,7 +209,7 @@ public class LineSetTest {
     @Test
     public void testToGeoShape() {
         LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
-        assertEquals(new GeoShape(null, ls, null), ls.toGeoShape(Tolerance.FLATNESS, TOL));
+        assertEquals(new GeoShape(null, ls, null), ls.toGeoShape(Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -217,16 +217,16 @@ public class LineSetTest {
         LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
         Network network = new Network();
         network.addLink(0, 100, 30, 80);
-        ls.addTo(network, Tolerance.FLATNESS, TOL);
+        ls.addTo(network, Linearizer.DEFAULT, TOL);
         assertEquals("[[0,100, 0,0, 50,50],[0,100, 30,80],[0,100, 50,50],[50,50, 100,0, 100,100, 50,50]]", network.toString());
     }
 
     @Test
     public void testBuffer() {
         LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
-        assertNull(ls.buffer(-1, Tolerance.FLATNESS, TOL));
-        assertSame(ls, ls.buffer(0, Tolerance.FLATNESS, TOL));
-        Area area = (Area)ls.buffer(5, Tolerance.FLATNESS, TOL);
+        assertNull(ls.buffer(-1, Linearizer.DEFAULT, TOL));
+        assertSame(ls, ls.buffer(0, Linearizer.DEFAULT, TOL));
+        Area area = (Area)ls.buffer(5, Linearizer.DEFAULT, TOL);
         assertEquals(3, area.numRings());
         assertNotNull(area.shell);
         assertEquals(2, area.numChildren());
@@ -307,11 +307,11 @@ public class LineSetTest {
     @Test
     public void testRelate_Geom() {
         LineSet ls = LineSet.valueOf(TOL, 0,0, 100,100, 200,0, 200,100, 100,0, 0,100);
-        assertEquals(Relation.TOUCH, ls.relate(ls, TOL, TOL));
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, ls.relate(ls.getBounds(), TOL, TOL));
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, ls.relate(Rect.valueOf(0,0,100,200), TOL, TOL));
+        assertEquals(Relation.TOUCH, ls.relate(ls, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, ls.relate(ls.getBounds(), Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, ls.relate(Rect.valueOf(0,0,100,200), Linearizer.DEFAULT, TOL));
         try{
-            ls.relate(null, TOL, TOL);
+            ls.relate(null, Linearizer.DEFAULT, TOL);
             fail("Exception expected");
         }catch(NullPointerException ex){
         }
@@ -321,7 +321,7 @@ public class LineSetTest {
     public void testRelate_Geom_B() {
         LineSet a = LineSet.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
         Ring b = Ring.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100, 0,100, 0,0);
-        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -330,18 +330,18 @@ public class LineSetTest {
         LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
         LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
         Rect d = Rect.valueOf(0,60, 40,100);
-        assertEquals(new LineSet(a.getLineString(0), b), a.union(b, Tolerance.FLATNESS, TOL));
+        assertEquals(new LineSet(a.getLineString(0), b), a.union(b, Linearizer.DEFAULT, TOL));
         assertEquals(new LineSet(a.getLineString(0), b), a.union(b.toLineSet(), TOL));
         assertEquals("[\"LT\", [0,40, 20,40], [20,40, 20,20, 40,20], [20,40, 40,40, 40,20], [20,40, 20,80, 60,80], [40,0, 40,20], [40,20, 60,20]]",
-                a.union(c, Tolerance.FLATNESS, TOL).toString());
-        assertEquals(new GeoShape(d.toArea(), a, null), a.union(d, Tolerance.FLATNESS, TOL));
-        assertEquals(Ring.valueOf(TOL, 0,60, 40,60, 40,100, 0,100, 0,60), b.toLineSet().union(d, Tolerance.FLATNESS, TOL));
-        Geom e = c.union(d, Tolerance.FLATNESS, TOL);
+                a.union(c, Linearizer.DEFAULT, TOL).toString());
+        assertEquals(new GeoShape(d.toArea(), a, null), a.union(d, Linearizer.DEFAULT, TOL));
+        assertEquals(Ring.valueOf(TOL, 0,60, 40,60, 40,100, 0,100, 0,60), b.toLineSet().union(d, Linearizer.DEFAULT, TOL));
+        Geom e = c.union(d, Linearizer.DEFAULT, TOL);
         assertEquals("[\"GS\",[\"AR\"[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80]]]",
                 e.toString());
         LineSet f = LineSet.valueOf(TOL, 60,140, 80,140, 80,120);
         assertEquals("[\"GS\",[\"AR\"[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80], [60,140, 80,140, 80,120]]]",
-                f.union(e, Tolerance.FLATNESS, TOL).toString());
+                f.union(e, Linearizer.DEFAULT, TOL).toString());
         
         
         
@@ -353,14 +353,14 @@ public class LineSetTest {
         LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
         LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
         Rect d = Rect.valueOf(0,60, 40,100);
-        assertNull(a.intersection(b, Tolerance.FLATNESS, TOL));
-        assertNull(a.intersection(b.toGeoShape(Tolerance.FLATNESS, TOL), Tolerance.FLATNESS, TOL));
+        assertNull(a.intersection(b, Linearizer.DEFAULT, TOL));
+        assertNull(a.intersection(b.toGeoShape(Linearizer.DEFAULT, TOL), Linearizer.DEFAULT, TOL));
         assertEquals(PointSet.valueOf(new VectSet().add(20,40).add(40,20)),
-                a.intersection(c, Tolerance.FLATNESS, TOL));
-        assertNull(a.intersection(d, Tolerance.FLATNESS, TOL));
-        assertEquals(LineString.valueOf(TOL, 0,60, 40,60, 40,100), b.toLineSet().intersection(d, Tolerance.FLATNESS, TOL));
+                a.intersection(c, Linearizer.DEFAULT, TOL));
+        assertNull(a.intersection(d, Linearizer.DEFAULT, TOL));
+        assertEquals(LineString.valueOf(TOL, 0,60, 40,60, 40,100), b.toLineSet().intersection(d, Linearizer.DEFAULT, TOL));
         assertEquals(LineString.valueOf(TOL, 20,60, 20,80, 40,80),
-                c.intersection(d, Tolerance.FLATNESS, TOL));
+                c.intersection(d, Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -369,14 +369,14 @@ public class LineSetTest {
         LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
         LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
         Rect d = Rect.valueOf(0,60, 40,100);
-        assertSame(a, a.less(b, Tolerance.FLATNESS, TOL));
-        assertSame(a, a.less(b.toGeoShape(Tolerance.FLATNESS, TOL), Tolerance.FLATNESS, TOL));
+        assertSame(a, a.less(b, Linearizer.DEFAULT, TOL));
+        assertSame(a, a.less(b.toGeoShape(Linearizer.DEFAULT, TOL), Linearizer.DEFAULT, TOL));
         assertEquals(LineSet.valueOf(TOL, 0,40, 20,40, 40,40, 40,20, 40,0),
-                a.less(c, Tolerance.FLATNESS, TOL));
-        assertSame(a, a.less(d, Tolerance.FLATNESS, TOL));
-        assertNull(b.toLineSet().less(d, Tolerance.FLATNESS, TOL));
+                a.less(c, Linearizer.DEFAULT, TOL));
+        assertSame(a, a.less(d, Linearizer.DEFAULT, TOL));
+        assertNull(b.toLineSet().less(d, Linearizer.DEFAULT, TOL));
         assertEquals("[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80]]",
-                c.less(d, Tolerance.FLATNESS, TOL).toString());
+                c.less(d, Linearizer.DEFAULT, TOL).toString());
     }
 
     @Test
@@ -407,6 +407,6 @@ public class LineSetTest {
     @Test
     public void testGetArea(){
         LineSet a = LineSet.valueOf(TOL, 0,0, 100,100, 100,0, 0,100, 0,0);
-        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+        assertEquals(0, a.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
 }

@@ -174,7 +174,7 @@ public class PointSetTest {
     @Test
     public void testToGeoShape() {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(new VectList(1, 3, 7, 13, 23, 29)));
-        GeoShape gs = ps.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT);
+        GeoShape gs = ps.toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals(new GeoShape(null, null, ps), gs);
     }
 
@@ -184,7 +184,7 @@ public class PointSetTest {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
         Network network = new Network();
         network.addLink(1, 3, 2, 3);
-        ps.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        ps.addTo(network, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals("GEOMETRYCOLLECTION(POINT(7 13),POINT(23 29),LINESTRING(1 3, 2 3))", network.toWkt());
     }
 
@@ -192,9 +192,9 @@ public class PointSetTest {
     public void testBuffer() {
         VectList vects = new VectList(5, 5, 5, 7, 7, 5, 14, 5, 22, 5, 31, 5);
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
-        assertNull(ps.buffer(-1, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(ps, ps.buffer(0, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        Area buffered = (Area) ps.buffer(4, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        assertNull(ps.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(ps, ps.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        Area buffered = (Area) ps.buffer(4, Linearizer.DEFAULT, Tolerance.DEFAULT);
         Rect bounds = buffered.getBounds();
         assertEquals(1, bounds.minX, 0.00001);
         assertEquals(1, bounds.minY, 0.00001);
@@ -208,7 +208,7 @@ public class PointSetTest {
     public void testBuffer2(){
         VectList vects = new VectList(100, 100, 107.5, 100);
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
-        Area buffered = (Area) ps.buffer(4, new Tolerance(1), Tolerance.DEFAULT);
+        Area buffered = (Area) ps.buffer(4, new Linearizer(1.0), Tolerance.DEFAULT);
         assertEquals(1, buffered.numRings());
         Rect bounds = buffered.getBounds();
         assertEquals(96, bounds.minX, 0.00001);
@@ -284,18 +284,18 @@ public class PointSetTest {
         Rect e = Rect.valueOf(0,1,8,9);
         Rect f = Rect.valueOf(3,4,5,6);
         
-        assertEquals(Relation.TOUCH, a.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.DISJOINT, a.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, b.relate(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.A_INSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH, a.relate(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, a.relate(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, a.relate(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, b.relate(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.A_INSIDE_B | Relation.B_OUTSIDE_A, a.relate(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(Vect.valueOf(3, 4), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(Vect.valueOf(3, 4), Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         PointSet g = PointSet.valueOf(1,2, 3,4, 7,8, 9,10);
-        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(g, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.TOUCH | Relation.B_OUTSIDE_A, a.relate(g, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -304,15 +304,15 @@ public class PointSetTest {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
 
         Vect touch = Vect.valueOf(14, 5);
-        assertSame(ps, ps.union(touch, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(ps, ps.union(touch, Linearizer.DEFAULT, Tolerance.DEFAULT));
 
         Vect outside = Vect.valueOf(14, 6);
         vects.add(14, 6);
-        assertEquals(PointSet.valueOf(new VectSet().addAll(vects)), ps.union(outside, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(PointSet.valueOf(new VectSet().addAll(vects)), ps.union(outside, Linearizer.DEFAULT, Tolerance.DEFAULT));
 
         Vect outsideBounds = Vect.valueOf(14, 8);
         vects.set(vects.size() - 1, outsideBounds);
-        assertEquals(PointSet.valueOf(new VectSet().addAll(vects)), ps.union(outsideBounds, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(PointSet.valueOf(new VectSet().addAll(vects)), ps.union(outsideBounds, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -323,10 +323,10 @@ public class PointSetTest {
         PointSet c = PointSet.valueOf(new VectSet().addAll(new VectList(2, 3, 5, 7, 11, 13, 17, 19, 23, 29)));
         PointSet d = PointSet.valueOf(new VectSet().addAll(new VectList(17, 19, 23, 29)));
 
-        assertSame(c, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(c, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(c, a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(c, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(c, a.union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(c, c.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -337,12 +337,12 @@ public class PointSetTest {
         GeoShape c = new GeoShape(b.area, null, PointSet.valueOf(new VectSet().add(2, 3)));
         Ring d = Rect.valueOf(1, 2, 11, 14).toRing();
 
-        assertEquals(c, a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(c, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(d, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(c, a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, a.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
 
         try {
-            a.union(null, Tolerance.FLATNESS, Tolerance.DEFAULT);
+            a.union(null, Linearizer.DEFAULT, Tolerance.DEFAULT);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
@@ -359,16 +359,16 @@ public class PointSetTest {
         Rect f = Rect.valueOf(13, 1, 14, 2);
         Vect g = Vect.valueOf(2, 4);
         
-        assertEquals(a, a.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(c, a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(c, a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(d, a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(a, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.intersection(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.intersection(g, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(a, a.intersection(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.intersection(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.intersection(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, a.intersection(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(a, a.intersection(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.intersection(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.intersection(g, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         try {
-            a.intersection(null, Tolerance.FLATNESS, Tolerance.DEFAULT);
+            a.intersection(null, Linearizer.DEFAULT, Tolerance.DEFAULT);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
@@ -386,16 +386,16 @@ public class PointSetTest {
         Vect g = Vect.valueOf(2, 4);
         
         
-        assertNull(a.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(d, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(d, a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(c, a.less(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.less(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(a, a.less(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(a, a.less(g, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertNull(a.less(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, a.less(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.less(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.less(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(a, a.less(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(a, a.less(g, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         try {
-            a.less(null, Tolerance.FLATNESS, Tolerance.DEFAULT);
+            a.less(null, Linearizer.DEFAULT, Tolerance.DEFAULT);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
@@ -492,6 +492,6 @@ public class PointSetTest {
     @Test
     public void testGetArea(){
         PointSet a = new PointSet(new VectList(0, 0, 100, 1, 100, 100));
-        assertEquals(0, a.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0);
+        assertEquals(0, a.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
 }

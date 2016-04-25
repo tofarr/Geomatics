@@ -52,7 +52,7 @@ public class RectTest {
         rect = Rect.valueOf(7, 3, 1, 13);
         assertEquals(60, rect.getArea(), 0.00001);
         rect = Rect.valueOf(7, 13, 1, 3);
-        assertEquals(60, rect.getArea(Tolerance.FLATNESS, Tolerance.DEFAULT), 0.00001);
+        assertEquals(60, rect.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0.00001);
     }
 
     @Test
@@ -128,9 +128,9 @@ public class RectTest {
     @Test
     public void testRelate_Geom() {
         Rect a = Rect.valueOf(10, 10, 20, 20);
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a.toRing(), Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(new LineString(a.toRing().vects), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a.toRing(), Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, a.relate(new LineString(a.toRing().vects), Linearizer.DEFAULT, Tolerance.DEFAULT));
         
     }
 
@@ -216,9 +216,9 @@ public class RectTest {
     @Test
     public void testBuffer_Tolerance() {
         Rect rect = Rect.valueOf(3, 7, 13, 23);
-        assertSame(rect, rect.buffer(0, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Tolerance.DEFAULT, Tolerance.DEFAULT));
-        Area ringSet = (Area) rect.buffer(2, new Tolerance(0.5), Tolerance.DEFAULT);
+        assertSame(rect, rect.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        Area ringSet = (Area) rect.buffer(2, new Linearizer(0.5), Tolerance.DEFAULT);
 
         assertEquals(Rect.valueOf(1, 5, 15, 25), ringSet.getBounds());
         assertEquals(264 + (Math.PI * 4), ringSet.getArea(), 0.5);
@@ -426,7 +426,7 @@ public class RectTest {
     public void testAddTo() {
         Network network = new Network();
         Rect a = Rect.valueOf(3, 7, 13, 29);
-        a.addTo(network, Tolerance.FLATNESS, Tolerance.DEFAULT);
+        a.addTo(network, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals("[[3,7, 13,7, 13,29, 3,29, 3,7]]", network.toString());
     }
 
@@ -437,12 +437,12 @@ public class RectTest {
         Rect c = Rect.valueOf(11, 21, 29, 39);
         Rect d = Rect.valueOf(15, 25, 35, 45);
         Area e = Area.valueOf(Tolerance.DEFAULT, 15,25, 35,25, 35,45, 15,45, 15,25);
-        assertSame(a, a.union(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(a, c.union(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals("[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Tolerance.FLATNESS, Tolerance.DEFAULT).toString());
+        assertSame(a, a.union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(a, c.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals("[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         Ring expected = Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20);
-        assertEquals(expected, a.union(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(expected, a.union(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(expected, a.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(expected, a.union(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -452,15 +452,15 @@ public class RectTest {
         Rect c = Rect.valueOf(11, 21, 29, 39);
         Rect d = Rect.valueOf(15, 25, 35, 45);
         Area e = Area.valueOf(Tolerance.DEFAULT, 15,25, 35,25, 35,45, 15,45, 15,25);
-        assertSame(c, a.intersection(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(c, c.intersection(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.intersection(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(c, a.intersection(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(c, c.intersection(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.intersection(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(Rect.valueOf(15,25,30,40), a.intersection(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
         Ring result = Ring.valueOf(Tolerance.DEFAULT, 15,25, 30,25, 30,40, 15,40, 15,25);
-        assertEquals(result, a.intersection(e, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(result, a.intersection(d.toGeoShape(Tolerance.FLATNESS, Tolerance.DEFAULT), Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertSame(result, a.intersection(result, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(b.intersection(result, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(result, a.intersection(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(result, a.intersection(d.toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT), Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(result, a.intersection(result, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(b.intersection(result, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 
     @Test
@@ -472,13 +472,13 @@ public class RectTest {
         Ring e = Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,40, 10,40, 10,20);
         Area f = Area.valueOf(Tolerance.DEFAULT, 11,21, 29,21, 29,39, 11,39, 11,21);
         Area g = new Area(e,new Area[]{f});
-        assertSame(a, a.less(b, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(c.less(a, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(g, a.less(c, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertEquals(g, a.less(f, Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertSame(a, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(c.less(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(g, a.less(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(g, a.less(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
         Ring h = Ring.valueOf(Tolerance.DEFAULT, 15,25, 30,25, 30,40, 15,40, 15,25);
         Ring i = Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 15,25, 15,40, 10,40, 10,20);
-        assertEquals(i, a.less(h, Tolerance.FLATNESS, Tolerance.DEFAULT));
-        assertNull(a.less(a.toArea(), Tolerance.FLATNESS, Tolerance.DEFAULT));
+        assertEquals(i, a.less(h, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(a.less(a.toArea(), Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
 }

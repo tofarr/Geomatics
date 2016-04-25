@@ -193,13 +193,13 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         GeoShape ret = new GeoShape(null, null, new PointSet(new VectList().add(this)));
         return ret;
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         network.addVertex(this);
     }
 
@@ -214,7 +214,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (geom instanceof Vect) {
             return relate((Vect) geom, accuracy);
         }
@@ -224,7 +224,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         check(amt, "Invalid buffer amt {0}");
         if (amt == 0) {
             return this;
@@ -234,91 +234,13 @@ public final class Vect implements Geom, Comparable<Vect> {
             VectList result = new VectList();
             double angleSize = 2 * Math.PI;
             double sy = y + amt;
-            linearizeArcInternal(x, y, angleSize, x, sy, x, sy, amt, flatness.getTolerance(), result);
+            linearizer.linearizeSegment(x, y, x, sy, angleSize, result);
             if (result.size() < 4) {
                 return this;
             }
             Ring ring = new Ring(result, null, null, null, this, true);
             return ring;
         }
-    }
-
-    //Assumes CCW direction
-    static void linearizeArc(double ox, double oy, double ax, double ay, double bx, double by, double radius, double flatness, VectList result) throws NullPointerException {
-        double angleA = Vect.directionInRadiansTo(ox, oy, ax, ay);
-        double angleB = Vect.directionInRadiansTo(ox, oy, bx, by);
-        double angleSize = angleB - angleA;
-        if (angleSize < 0) {
-            angleSize += 2 * Math.PI;
-        }
-        linearizeArcInternal(ox, oy, angleSize, ax, ay, bx, by, radius, flatness, result);
-    }
-
-    static void linearizeArc(double ox, double oy, double angleA, double angleB, double radius, double flatness, VectList result) throws NullPointerException {
-        double angleSize = angleB - angleA;
-        if (angleSize < 0) {
-            angleSize += 2 * Math.PI;
-        }
-        double ax = ox + (Math.cos(angleA) * radius);
-        double ay = oy + (Math.sin(angleA) * radius);
-        double bx = ox + (Math.cos(angleB) * radius);
-        double by = oy + (Math.sin(angleB) * radius);
-        linearizeArcInternal(ox, oy, angleSize, ax, ay, bx, by, radius, flatness, result);
-    }
-
-    static void linearizeArcInternal(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
-            double radius, double flatness, VectList result) {
-        if (radius <= flatness) {
-            result.add(ox, oy);
-            return;
-        }
-        double radiusSq = radius * radius;
-        double flatnessSq = flatness * flatness;
-        if (angleSize >= 2 * Math.PI) {
-            bx = ox + (ox - ax);
-            by = oy + (oy - ay);
-            linearizeArcSegment(ox, oy, Math.PI, ax, ay, bx, by, radius, radiusSq, flatnessSq, result);
-            linearizeArcSegment(ox, oy, Math.PI, bx, by, ax, ay, radius, radiusSq, flatnessSq, result);
-            result.add(ax, ay);
-            return;
-        }
-        linearizeArcSegment(ox, oy, angleSize, ax, ay, bx, by, radius, radiusSq, flatnessSq, result);
-        result.add(bx, by);
-    }
-
-    private static void linearizeArcSegment(double ox, double oy, double angleSize, double ax, double ay, double bx, double by,
-            double radius, double radiusSq, double flatnessSq, VectList result) {
-
-        double mx = (ax + bx) / 2; //get mid point between a and b
-        double my = (ay + by) / 2;
-
-        if (angleSize > Math.PI) { // If angle is greater than 180 degrees, invert vector direction.
-            mx = ox + (ox - mx);
-            my = oy + (oy - my);
-        }
-
-        double distSq = Vect.distSq(ox, oy, mx, my);
-        double diffSq = radiusSq - distSq; //Diff calculation is wrong. need mid vs radius - using normal is wrong
-        if (diffSq <= flatnessSq) { // If the value is less than flatnes, simply add a - b will be added later
-            result.add(ax, ay);
-        } else {
-            double nx, ny;
-            if (distSq == 0) { // project normal 
-                double dx = mx - ax;
-                double dy = my - ay;
-                nx = mx + dy; // normals are (-dy,dx) and (dy,-dx)
-                ny = my - dx; //TODO : is this on the right?
-            } else {
-                double dist = Math.sqrt(distSq);
-                nx = (mx - ox) * radius / dist + ox; //calculate a new mid point
-                ny = (my - oy) * radius / dist + oy;
-            }
-            angleSize /= 2; // angle size is halved
-
-            linearizeArcSegment(ox, oy, angleSize, ax, ay, nx, ny, radius, radiusSq, flatnessSq, result);
-            linearizeArcSegment(ox, oy, angleSize, nx, ny, bx, by, radius, radiusSq, flatnessSq, result);
-        }
-
     }
 
     /**
@@ -333,14 +255,14 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Vect) {
             return union((Vect) other, accuracy);
         }
         if (other.relate(this, accuracy) != Relation.DISJOINT) {
             return other;
         }
-        return other.union(this, flatness, accuracy);
+        return other.union(this, linearizer, accuracy);
     }
 
     /**
@@ -362,7 +284,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Vect intersection(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+    public Vect intersection(Geom other, Linearizer linearizer, Tolerance tolerance) throws NullPointerException {
         if (other.relate(this, tolerance) == Relation.DISJOINT) {
             return null;
         }
@@ -370,7 +292,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public Vect less(Geom other, Tolerance flatness, Tolerance tolerance) throws NullPointerException {
+    public Vect less(Geom other, Linearizer linearizer, Tolerance tolerance) throws NullPointerException {
         if (other.relate(this, tolerance) == Relation.DISJOINT) {
             return this;
         }
@@ -378,7 +300,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy){
+    public double getArea(Linearizer linearizer, Tolerance accuracy){
         return 0;
     }
     

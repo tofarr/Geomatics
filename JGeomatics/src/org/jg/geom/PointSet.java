@@ -161,7 +161,7 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return toGeoShape();
     }
 
@@ -174,7 +174,7 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         addTo(network);
     }
     
@@ -187,7 +187,7 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) throws IllegalArgumentException, NullPointerException {
         if (amt < 0) {
             return null;
         } else if (amt == 0) {
@@ -198,7 +198,7 @@ public final class PointSet implements Geom {
         VectList point = new VectList();
         double angleSize = 2 * Math.PI;
         double sy = amt;
-        Vect.linearizeArcInternal(0, 0, angleSize, 0, sy, 0, sy, amt, flatness.getTolerance(), point);
+        linearizer.linearizeSegment(0, 0, 0, sy, angleSize, point);
 
         Area result = null;
         int s = point.size();
@@ -276,25 +276,25 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if(geom instanceof Vect){
             return relate((Vect)geom, accuracy);
         }else if(geom instanceof PointSet){
             return relate((PointSet)geom, accuracy);
         }else{
-            int ret = NetworkRelationProcessor.relate(this, geom, flatness, accuracy);
+            int ret = NetworkRelationProcessor.relate(this, geom, linearizer, accuracy);
             return ret;
         }
     }
     
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (other instanceof Vect) {
             return union((Vect)other, accuracy).simplify();
         } else if (other instanceof PointSet) {
             return union((PointSet) other, accuracy).simplify();
         } else {
-            return toGeoShape().union(other, flatness, accuracy);
+            return toGeoShape().union(other, linearizer, accuracy);
         }
     }
     
@@ -341,7 +341,7 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         PointSet ret = intersection(other, accuracy);
         if ((ret != null) && (ret.numPoints() == 1)) {
             return ret.getPoint(0);
@@ -378,7 +378,7 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         PointSet ret = less(other, accuracy);
         return (ret == null) ? null : ret.simplify();
     }
@@ -405,7 +405,7 @@ public final class PointSet implements Geom {
     }
       
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy){
+    public double getArea(Linearizer linearizer, Tolerance accuracy){
         return 0;
     }
 

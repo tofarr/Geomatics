@@ -55,34 +55,35 @@ public interface Geom extends Cloneable, Serializable {
 
     /** 
      * Convert this to a standard format GeoShape
-     * @param flatness
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy
      * @return 
+     * @throws NullPointerException if accuracy or linearizer was null
      */
-    GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
     
     /**
-     * Add this shape to the network given, using the flatness given to convert
+     * Add this shape to the network given, using the linearizer given to convert
      * any curves to lines
      *
      * @param network network to which to add this geometry
-     * @param flatness flatness for converting curves to lines
+     * @param linearizer number of lines used to approximate a quadrant
      * @param accuracy
-     * @throws NullPointerException if network flatness or accuracy was null
+     * @throws NullPointerException if network or accuracy was null
      */
-    void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Create a buffered version of this geometry
      *
      * @param amt amount by which to buffer - may be positive or negative
-     * @param flatness flatness if converting curves to lines is required
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy tolerance for inaccuracy
      * @return buffered geometry
      * @throws IllegalArgumentException if amt was infinite or NaN
-     * @throws NullPointerException if flatness or tolerance was null
+     * @throws NullPointerException if tolerance or linearizer was null
      */
-    Geom buffer(double amt, Tolerance flatness, Tolerance accuracy) throws IllegalArgumentException, NullPointerException;
+    Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) throws IllegalArgumentException, NullPointerException;
 
     /**
      * Get the relation between this geometry and the vector given
@@ -108,22 +109,24 @@ public interface Geom extends Cloneable, Serializable {
      * Get the relation between this geometry and the geometry given
      *
      * @param geom geometry
-     * @param flatness
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy tolerance for inaccuracy
      * @return relation
-     * @throws NullPointerException if geom, flatness or accuracy was null
+     * @throws NullPointerException if geom or accuracy was null
+     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
     
     /**
      * Get the area of this geometry.
      * 
-     * @param flatness
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy
      * @return
      * @throws NullPointerException if accuracy was null
+     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
     
     /**
      * Get the union of this geometry and that given. Any point touching one of
@@ -131,12 +134,13 @@ public interface Geom extends Cloneable, Serializable {
      * geometry should be inside the result
      *
      * @param other other geometry
-     * @param flatness value for turning curves into lines where required
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy tolerance for inaccuracy
      * @return union geometry
-     * @throws NullPointerException if other, flatness or tolerance was null
+     * @throws NullPointerException if other or tolerance was null
+     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Get the intersection of this geometry and that given. Any point touching
@@ -144,23 +148,25 @@ public interface Geom extends Cloneable, Serializable {
      * both geometries should be inside the result
      *
      * @param other other geometry
-     * @param flatness value for turning curves into lines where required
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy tolerance for inaccuracy
      * @return union geometry
      * @throws NullPointerException if other or tolerance was null
+     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Get the product of this geometry less the geometry given. Any point inside the
      * geometry given should be outside the result
      * @param other other geometry
-     * @param flatness for turning curves into lines where required
+     * @param linearizer converter for arcs to lines if required
      * @param accuracy tolerance for inaccuracy
      * @return this less other
      * @throws NullPointerException if other or tolerance was null
+     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    Geom less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException;
+    Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
     
     /**
      * Comparator for comparing geometries by their Bounds

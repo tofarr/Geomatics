@@ -200,7 +200,7 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public void addTo(Network network, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public void addTo(Network network, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         addTo(network);
     }
 
@@ -238,12 +238,12 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public GeoShape toGeoShape(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return this;
     }
 
     @Override
-    public Geom buffer(double amt, Tolerance flatness, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
+    public Geom buffer(double amt, Linearizer linearizer, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -281,8 +281,8 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public int relate(Geom geom, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return relate(geom.toGeoShape(flatness, accuracy), accuracy);
+    public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return relate(geom.toGeoShape(linearizer, accuracy), accuracy);
     }
     
     public int relate(GeoShape geom, Tolerance accuracy) throws NullPointerException{
@@ -297,19 +297,19 @@ public class GeoShape implements Geom {
             ret |= Relation.B_OUTSIDE_A;
         }
         if((lines != null) || (points != null) || (geom.lines != null) || (geom.points != null)){
-            ret |= NetworkRelationProcessor.relate(this, geom, accuracy, accuracy);
+            ret |= NetworkRelationProcessor.relate(this, geom, Linearizer.DEFAULT, accuracy);
         }
         return ret;
     }
 
     @Override
-    public double getArea(Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return (area == null) ? 0 : area.getArea();
     }
 
     @Override
-    public Geom union(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
-        return union(other.toGeoShape(flatness, accuracy), accuracy).simplify();
+    public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return union(other.toGeoShape(linearizer, accuracy), accuracy).simplify();
     }
 
     public GeoShape union(GeoShape other, Tolerance accuracy) {
@@ -332,7 +332,7 @@ public class GeoShape implements Geom {
             _lines = lines.union(other.lines, accuracy);
         }
         if((_lines != null) && (_area != null)){
-            _lines = _lines.less(_area, accuracy, accuracy);
+            _lines = _lines.less(_area, Linearizer.DEFAULT, accuracy);
         }
         
         PointSet _points;
@@ -354,11 +354,11 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public Geom intersection(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return null;
         }
-        GeoShape ret = intersection(other.toGeoShape(flatness, accuracy), accuracy);
+        GeoShape ret = intersection(other.toGeoShape(linearizer, accuracy), accuracy);
         return (ret == null) ? null : ret.simplify();
     }
 
@@ -367,7 +367,7 @@ public class GeoShape implements Geom {
             return null;
         }
         
-        final Network network = Network.valueOf(accuracy, accuracy, this, other);
+        final Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         network.forEachVertex(new VertexProcessor(){
             @Override
             public boolean process(double x, double y, int numLinks) {
@@ -396,11 +396,11 @@ public class GeoShape implements Geom {
     }
     
     @Override
-    public GeoShape less(Geom other, Tolerance flatness, Tolerance accuracy) throws NullPointerException {
+    public GeoShape less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return this;
         }
-        return less(other.toGeoShape(flatness, accuracy), accuracy);
+        return less(other.toGeoShape(linearizer, accuracy), accuracy);
     }
     
     public GeoShape less(GeoShape other, final Tolerance accuracy) throws NullPointerException {
@@ -414,7 +414,7 @@ public class GeoShape implements Geom {
         }
         LineSet _lines = null;
         if(lines != null){
-            _lines = lines.less(other, accuracy, accuracy);
+            _lines = lines.less(other, Linearizer.DEFAULT, accuracy);
         }
         PointSet _points = null;
         if(points != null){
