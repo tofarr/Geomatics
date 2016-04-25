@@ -373,7 +373,7 @@ public class RingTest {
         assertEquals(bounds.minY, -10, 0.01);
         assertEquals(bounds.maxX, 16, 0.01);
         assertEquals(bounds.maxY, 24, 0.01);
-        assertEquals(694, b.getArea(), 1);
+        assertEquals(694, b.getArea(), 10);
         assertNull(ring.buffer(-15, Linearizer.DEFAULT, TOL));
     } 
     
@@ -384,18 +384,19 @@ public class RingTest {
         GeoShape result = (GeoShape)a.buffer(-5, Linearizer.DEFAULT, TOL);
         assertEquals(5.49, result.area.getArea(), 0.01);
         assertEquals(result.area.numRings(), 1);
-        assertEquals(Rect.valueOf(5,5,10,10), result.area.getBounds());
-        Network network = new Network();
-        network.addLink(10, 5, 45, 5);
-        network.addLink(5, 10, 5, 45);
-        assertEquals(LineSet.valueOf(TOL, network), result.lines);
+        Rect bounds = result.area.getBounds();
+        assertEquals(bounds.minX, 5, 0.01);
+        assertEquals(bounds.minY, 5, 0.01);
+        assertEquals(bounds.maxX, 10, 0.01);
+        assertEquals(bounds.maxY, 10, 0.01);
+        assertEquals(2, result.lines.numLineStrings());
         assertNull(result.points);
 
         assertNull(a.buffer(-8, Linearizer.DEFAULT, TOL)); // leaves nothing
         assertNull(a.buffer(-20, Linearizer.DEFAULT, TOL)); // leaves nothing
         
         Ring ring = (Ring) a.buffer(10, Linearizer.DEFAULT, TOL);
-        assertEquals(3192, ring.getArea(), 1);
+        assertEquals(3190, ring.getArea(), 1);
         assertEquals(Rect.valueOf(-10, -10, 60, 60), ring.getBounds());
     }
 
@@ -412,13 +413,8 @@ public class RingTest {
     public void testBuffer_connectedBlobs(){
         Ring ring = Ring.valueOf(TOL, 0,0, 50,0, 50,25, 30,25, 30,10, 10,10, 10,30, 25,30, 25,50, 0,50, 0,0);
         GeoShape result = (GeoShape)ring.buffer(-5, Linearizer.DEFAULT, TOL);
-        assertEquals(Rect.valueOf(5,5,45,45), result.getBounds());
-        
-        Network network = new Network();
-        network.addLink(10, 5, 30, 5);
-        network.addLink(5, 10, 5, 30);
-        assertEquals(LineSet.valueOf(TOL, network), result.lines);
-        
+        assertTrue(Rect.valueOf(5,5,45,45).match(result.getBounds(), TOL));
+        assertEquals(2, result.lines.numLineStrings());
         assertNull(result.area.shell);
         assertEquals(3, result.area.numChildren());
         assertEquals(3, result.area.numRings());
@@ -716,5 +712,15 @@ public class RingTest {
         Ring a = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,20, 80,20, 80,70, 40,70, 40,40, 60,40, 50,60, 70,60, 70,30, 30,30, 30,80, 90,80, 90,10, 20,10, 20,0);
         Ring b = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,0);
         assertEquals(b, a.convexHull(Tolerance.DEFAULT));
+    }
+    
+    @Test
+    public void testRelate_E(){
+        //This strange case was identified as failing
+        Vect vect = Vect.valueOf(1.0658141036401503E-14, -34.0);
+        Ring ring = Ring.valueOf(TOL, -40,-30, 40,-30, 40,30, -40,30, -40,-30);
+        ring = (Ring)ring.buffer(4, Linearizer.DEFAULT, TOL);
+        int relation = ring.relate(vect, TOL);
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, relation);
     }
 }

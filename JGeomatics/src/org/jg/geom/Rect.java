@@ -300,9 +300,13 @@ public class Rect implements Geom {
         double _maxX = maxX + amt;
         double _maxY = maxY + amt;
 
+        result.add(_minX, minY);
         linearizer.linearizeSegment(minX, minY, _minX, minY, minX, _minY, result);
+        result.add(maxX, _minY);
         linearizer.linearizeSegment(maxX, minY, maxX, _minY, _maxX, minY, result);
+        result.add(_maxX, maxY);
         linearizer.linearizeSegment(maxX, maxY, _maxX, maxY, maxX, _maxY, result);
+        result.add(minX, _maxY);
         linearizer.linearizeSegment(minX, maxY, minX, _maxY, _minX, maxY, result);
         result.add(_minX, minY);
 
@@ -487,6 +491,20 @@ public class Rect implements Geom {
     @Override
     public Rect clone() {
         return this;
+    }
+    
+    /**
+     * Detemine if this rectangle matches that given within the tolerance given
+     * @param rect
+     * @param accuracy
+     * @return true if rectangles match, false otherwise
+     * @throws NullPointerException if rect or accuracy was null
+     */
+    public boolean match(Rect rect, Tolerance accuracy) throws NullPointerException{
+        return accuracy.match(minX, rect.minX)
+                && accuracy.match(minY, rect.minY)
+                && accuracy.match(maxX, rect.maxX)
+                && accuracy.match(maxY, rect.maxY);
     }
 
     @Override

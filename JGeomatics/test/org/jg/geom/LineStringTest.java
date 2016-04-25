@@ -369,7 +369,7 @@ public class LineStringTest {
                 + (25 * Math.PI)
                 + (5 * 5 * 3)
                 + (25 * Math.PI * 0.25);
-        assertEquals(area, r.getArea(), 1);
+        assertEquals(area, r.getArea(), 10);
         assertEquals(Rect.valueOf(15, -5, 65, 65), r.getBounds());
 
     }
@@ -386,7 +386,7 @@ public class LineStringTest {
                 + (10 * 30 * 2)
                 + (5 * 5 * 3 * 4)
                 + (5 * 5 * Math.PI);
-        assertEquals(area, r.getArea(), 1);
+        assertEquals(area, r.getArea(), 10);
         assertEquals(Rect.valueOf(0,0,30,50), r.getBounds());
         assertNotNull(r.shell);
         assertEquals(2, r.numRings());
@@ -403,7 +403,7 @@ public class LineStringTest {
         Ring r = (Ring) s.buffer(5, linearizer, Tolerance.DEFAULT);
         
         assertEquals(Rect.valueOf(14, -5, 25, 35), r.getBounds());
-        assertEquals(382, r.getArea(), 1);
+        assertEquals(382, r.getArea(), 10);
     }
     
     @Test
@@ -414,7 +414,7 @@ public class LineStringTest {
         assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
 
         Area r = (Area) s.buffer(4, linearizer, Tolerance.DEFAULT);
-        assertEquals(996, r.getArea(), 1);
+        assertEquals(990, r.getArea(), 10);
         assertEquals(Rect.valueOf(6,1,74,27), r.getBounds());
         assertNotNull(r.shell);
         assertEquals(2, r.numRings());

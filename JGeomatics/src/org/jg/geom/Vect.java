@@ -233,8 +233,9 @@ public final class Vect implements Geom, Comparable<Vect> {
         } else {
             VectList result = new VectList();
             double angleSize = 2 * Math.PI;
-            double sy = y + amt;
-            linearizer.linearizeSegment(x, y, x, sy, angleSize, result);
+            double sx = x + amt;
+            result.add(sx, y);
+            linearizer.linearizeSegment(x, y, sx, y, angleSize, result);
             if (result.size() < 4) {
                 return this;
             }

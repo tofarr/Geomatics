@@ -194,28 +194,28 @@ public class PointSetTest {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
         assertNull(ps.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertSame(ps, ps.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        Area buffered = (Area) ps.buffer(4, Linearizer.DEFAULT, Tolerance.DEFAULT);
+        Area buffered = (Area) ps.buffer(4, new Linearizer(4), Tolerance.DEFAULT);
         Rect bounds = buffered.getBounds();
         assertEquals(1, bounds.minX, 0.00001);
         assertEquals(1, bounds.minY, 0.00001);
         assertEquals(35, bounds.maxX, 0.00001);
         assertEquals(11, bounds.maxY, 0.00001);
         assertEquals(3, buffered.numRings());
-        assertEquals(226, buffered.getArea(), 1);
+        assertEquals(222, buffered.getArea(), 1);
     }
     
     @Test
     public void testBuffer2(){
         VectList vects = new VectList(100, 100, 107.5, 100);
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
-        Area buffered = (Area) ps.buffer(4, new Linearizer(1.0), Tolerance.DEFAULT);
+        Area buffered = (Area) ps.buffer(4, Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertEquals(1, buffered.numRings());
         Rect bounds = buffered.getBounds();
         assertEquals(96, bounds.minX, 0.00001);
         assertEquals(96, bounds.minY, 0.00001);
         assertEquals(111.5, bounds.maxX, 0.00001);
         assertEquals(104, bounds.maxY, 0.00001);
-        assertEquals(98, buffered.getArea(), 1);
+        assertEquals(99, buffered.getArea(), 1);
     }
 
     @Test

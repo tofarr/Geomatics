@@ -885,12 +885,14 @@ public class Line implements Geom, Comparable<Line> {
         projectOutward(0, -amt, tolerance, vect);
         double ix = vect.getX();
         double iy = vect.getY();
+        result.add(ix, iy);
         projectOutward(0, amt, tolerance, vect);
         linearizer.linearizeSegment(ax, ay, ix, iy, vect.getX(), vect.getY(), result);
 
         projectOutward(1, amt, tolerance, vect);
         double jx = vect.getX();
         double jy = vect.getY();
+        result.add(jx, jy);
         projectOutward(1, -amt, tolerance, vect);
         linearizer.linearizeSegment(bx, by, jx, jy, vect.getX(), vect.getY(), result);
 

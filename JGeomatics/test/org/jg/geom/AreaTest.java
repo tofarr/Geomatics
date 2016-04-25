@@ -459,13 +459,13 @@ public class AreaTest {
         assertEquals(2, resultA.numChildren());
         assertEquals(6, resultA.numRings());
         assertEquals(5, resultA.getDepth());
-        assertEquals(Rect.valueOf(-84, -74, 104, 74), resultA.getBounds());
+        assertTrue(Rect.valueOf(-84, -74, 104, 74).match(resultA.getBounds(), TOL));
         assertEquals(23458, resultA.getArea(), 1);
         
         Area resultB = (Area)area.buffer(5, Linearizer.DEFAULT, TOL); // clear channels except at corners
         assertNull(resultB.shell);
         assertEquals(2, resultB.numChildren());
-        assertEquals(6, resultB.numRings());
+        assertEquals(10, resultB.numRings()); 
         assertEquals(2, resultB.getDepth());
         assertEquals(Rect.valueOf(-85, -75, 105, 75), resultB.getBounds());
         assertEquals(25755, resultB.getArea(), 1);

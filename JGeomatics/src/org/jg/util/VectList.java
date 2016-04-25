@@ -455,7 +455,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
         cachedRect = null;
         return this;
     }
-
+    
     /**
      * Insert the vector given at the index given, increasing the index of later
      * vectors by 1

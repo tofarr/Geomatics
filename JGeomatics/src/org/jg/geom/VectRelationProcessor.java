@@ -58,9 +58,9 @@ class VectRelationProcessor implements NodeProcessor<Line> {
             ay = by;
             by = tmp;
         }
-
+        
         //if (Math.abs(ay - by) <= tolerance) { // line is horizontal or almost horizontal
-        if (ay == by) { // line has same slope as ray
+        if (Math.abs(ay - by) <= tol) { // line has almost the same slope as ray
             if (Math.abs(ay - y) <= tol) { // ray is within the tolerance of line on the y axis - do they overlap on x?
                 if (((ax - tol) <= x) && ((bx + tol) >= x)) {
                     relation = Relation.TOUCH;

@@ -392,6 +392,7 @@ public class LineString implements Geom {
         Line.projectOutward(ax, ay, bx, by, 0, -amt, tolerance, vect);
         double ix = vect.getX();
         double iy = vect.getY();
+        result.add(ix, iy);
         Line.projectOutward(ax, ay, bx, by, 0, amt, tolerance, vect);
         linearizer.linearizeSegment(ax, ay, ix, iy, vect.getX(), vect.getY(), result);
 
@@ -410,6 +411,7 @@ public class LineString implements Geom {
         Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, vect);
         ix = vect.getX();
         iy = vect.getY();
+        result.add(ix, iy);
         Line.projectOutward(bx, by, ax, ay, 0, amt, tolerance, vect);
         linearizer.linearizeSegment(bx, by, ix, iy, vect.getX(), vect.getY(), result);
 
@@ -448,6 +450,7 @@ public class LineString implements Geom {
                 Line.projectOutward(ax, ay, bx, by, 1, amt, tolerance, work);
                 double ix = work.getX();
                 double iy = work.getY();
+                result.add(ix, iy);
                 Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
                 linearizer.linearizeSegment(bx, by, ix, iy, work.getX(), work.getY(), result);
             }
@@ -458,6 +461,7 @@ public class LineString implements Geom {
                 double iy = work.getY();
                 Line.projectOutward(bx, by, cx, cy, 0, amt, tolerance, work);
                 VectList arc = new VectList();
+                arc.add(work);
                 linearizer.linearizeSegment(bx, by, work.getX(), work.getY(), ix, iy, arc);
                 arc.reverse();
                 result.addAll(arc);

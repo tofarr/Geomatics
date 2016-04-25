@@ -197,8 +197,9 @@ public final class PointSet implements Geom {
         //Create a buffer at 0
         VectList point = new VectList();
         double angleSize = 2 * Math.PI;
-        double sy = amt;
-        linearizer.linearizeSegment(0, 0, 0, sy, angleSize, point);
+        double sx = amt;
+        point.add(sx, 0);
+        linearizer.linearizeSegment(0, 0, sx, 0, angleSize, point);
 
         Area result = null;
         int s = point.size();

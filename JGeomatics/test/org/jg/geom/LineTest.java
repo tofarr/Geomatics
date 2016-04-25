@@ -729,8 +729,8 @@ public class LineTest {
         assertEquals(0, bounds.minY, 0.1);
         assertEquals(10, bounds.maxX, 0.1);
         assertEquals(16, bounds.maxY, 0.1);
-        assertEquals((Math.sqrt(125) * 6) + (Math.PI * 9), b.getArea(), 0.2);
-        assertEquals((Math.sqrt(125) * 2) + (Math.PI * 6), b.shell.getLength(), 0.1);
+        assertEquals((Math.sqrt(125) * 6) + (Math.PI * 9), b.getArea(), 1);
+        assertEquals((Math.sqrt(125) * 2) + (Math.PI * 6), b.shell.getLength(), 0.2);
     }
     
     @Test
