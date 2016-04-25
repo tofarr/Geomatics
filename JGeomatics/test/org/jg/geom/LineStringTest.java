@@ -301,7 +301,7 @@ public class LineStringTest {
         map.put(Rect.valueOf(10, 0, 10, 40), Line.valueOf(10, 0, 10, 40));
         map.put(Rect.valueOf(10, 40, 40, 40), Line.valueOf(10, 40, 40, 40));
 
-        assertTrue(a.forInteractingLines(Rect.valueOf(0, 40, 10, 50), new NodeProcessor<Line>() {
+        assertTrue(a.forInteractingLines(Rect.valueOf(0, 40, 10, 50), Tolerance.DEFAULT, new NodeProcessor<Line>() {
             @Override
             public boolean process(Rect bounds, Line value) {
                 assertEquals(map.remove(bounds), value);
@@ -310,7 +310,7 @@ public class LineStringTest {
 
         }));
 
-        assertFalse(a.forInteractingLines(Rect.valueOf(0, 40, 10, 50), new NodeProcessor<Line>() {
+        assertFalse(a.forInteractingLines(Rect.valueOf(0, 40, 10, 50), Tolerance.DEFAULT, new NodeProcessor<Line>() {
             boolean done;
             @Override
             public boolean process(Rect bounds, Line value) {

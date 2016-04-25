@@ -550,12 +550,13 @@ public final class RTree<E> {
      * Get any entries not disjoint from the rect given
      *
      * @param rect
+     * @param accuracy
      * @param processor
      * @return false if processor returned false, true otherwise
      * @throws NullPointerException if rect or processor was null
      */
-    public boolean forInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
-        return root.forInteracting(rect, processor);
+    public boolean forInteracting(Rect rect, Tolerance accuracy, NodeProcessor<E> processor) throws NullPointerException {
+        return root.forInteracting(rect, accuracy, processor);
     }
 
     /**

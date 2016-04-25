@@ -283,21 +283,22 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
      * Get any entries not disjoint from the rect given
      *
      * @param rect
+     * @param accuracy
      * @param processor
      * @return false if processor returned false, true otherwise
      * @throws NullPointerException if rect or processor was null
      */
-    public boolean forInteracting(Rect rect, NodeProcessor<E> processor) throws NullPointerException {
-        int relate = relate(rect, Tolerance.ZERO);
+    public boolean forInteracting(Rect rect, Tolerance accuracy, NodeProcessor<E> processor) throws NullPointerException {
+        int relate = relate(rect, accuracy);
         if (!Relation.isAOutsideB(relate)) {
             return forEach(processor);
         } else if (Relation.isDisjoint(relate)) {
             return true;
         } else if (isBranch()) {
-            return a.forInteracting(rect, processor) && b.forInteracting(rect, processor);
+            return a.forInteracting(rect, accuracy, processor) && b.forInteracting(rect, accuracy, processor);
         } else {
             for (int i = 0; i < size; i++) {
-                if (!Relation.isDisjoint(rect.relate(itemBounds[i], Tolerance.ZERO))) {
+                if (!Relation.isDisjoint(rect.relate(itemBounds[i], accuracy))) {
                     if (!processor.process(itemBounds[i], itemValues[i])) {
                         return false;
                     }

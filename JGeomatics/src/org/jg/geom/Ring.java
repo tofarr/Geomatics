@@ -323,7 +323,7 @@ public class Ring implements Geom {
         }
         Rect selection = Rect.valueOf(x, y, bounds.maxX, y);
         VectRelationProcessor processor = new VectRelationProcessor(tolerance, x, y);
-        lineIndex.forInteracting(selection, processor);
+        lineIndex.forInteracting(selection, tolerance, processor);
         return processor.getRelation() | Relation.A_OUTSIDE_B;
     }
 

@@ -234,7 +234,6 @@ public class LineSet implements Geom {
         } else if (amt == 0) {
             return this;
         }
-        Network network = new Network();
         Geom ret = null;
         for (LineString lineString : lineStrings) {
             Geom buffer = lineString.buffer(amt, linearizer, accuracy);

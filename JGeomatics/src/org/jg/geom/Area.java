@@ -630,6 +630,11 @@ public class Area implements Geom {
             public boolean process(double ax, double ay, double bx, double by) {
                 double x = (ax + bx) / 2;
                 double y = (ay + by) / 2;
+                
+                if(ax == -65 && ay == -55 && bx == -60.00000000000001 && by == -54.999999999999986){
+                    System.out.println("ZZZ");
+                }
+                
                 int relate = relateInternal(x, y, accuracy);
                 int otherRelate = other.relateInternal(x, y, accuracy);
                 if(Relation.isDisjoint(relate)

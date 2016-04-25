@@ -443,7 +443,7 @@ public class RTreeTest {
                 map.put(Rect.valueOf(i, j, i + 1, j + 1), i + "_" + j);
             }
         }
-        assertTrue(staticTree.forInteracting(Rect.valueOf(2, 3, 7, 13), new NodeProcessor<String>() {
+        assertTrue(staticTree.forInteracting(Rect.valueOf(2, 3, 7, 13), Tolerance.DEFAULT, new NodeProcessor<String>() {
 
             @Override
             public boolean process(Rect bounds, String value) {

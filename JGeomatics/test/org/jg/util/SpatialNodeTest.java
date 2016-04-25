@@ -225,7 +225,7 @@ public class SpatialNodeTest {
     @Test
     public void testGetInteracting() {
         SpatialNode<String> c = createABC();
-        assertTrue(c.forInteracting(Rect.valueOf(70, 80, 90, 100), new NodeProcessor<String>() {
+        assertTrue(c.forInteracting(Rect.valueOf(70, 80, 90, 100), Tolerance.DEFAULT, new NodeProcessor<String>() {
             @Override
             public boolean process(Rect bounds, String value) {
                 throw new IllegalStateException("Execution flow should not reach this point!");
@@ -237,7 +237,7 @@ public class SpatialNodeTest {
         map.put(Rect.valueOf(30, 0, 60, 40), "C");
         map.put(Rect.valueOf(30, 40, 60, 80), "D");
         map.put(Rect.valueOf(20, 30, 40, 50), "E");
-        assertTrue(c.forInteracting(Rect.valueOf(0, 0, 30, 80), new NodeProcessor<String>() {
+        assertTrue(c.forInteracting(Rect.valueOf(0, 0, 30, 80), Tolerance.DEFAULT, new NodeProcessor<String>() {
 
             @Override
             public boolean process(Rect bounds, String value) {
@@ -250,7 +250,7 @@ public class SpatialNodeTest {
 
         map.put(Rect.valueOf(30, 0, 60, 40), "C");
         map.put(Rect.valueOf(30, 40, 60, 80), "D");
-        assertFalse(c.forInteracting(Rect.valueOf(31, 0, 60, 80), new NodeProcessor<String>() {
+        assertFalse(c.forInteracting(Rect.valueOf(31, 0, 60, 80), Tolerance.DEFAULT, new NodeProcessor<String>() {
 
             @Override
             public boolean process(Rect bounds, String value) {
@@ -260,7 +260,7 @@ public class SpatialNodeTest {
         }));
         assertTrue(map.isEmpty());
 
-        assertFalse(c.forInteracting(Rect.valueOf(0, 0, 30, 80), new NodeProcessor<String>() {
+        assertFalse(c.forInteracting(Rect.valueOf(0, 0, 30, 80), Tolerance.DEFAULT, new NodeProcessor<String>() {
 
             boolean done;
 
@@ -275,7 +275,7 @@ public class SpatialNodeTest {
 
         }));
         try {
-            c.forInteracting(null, new NodeProcessor<String>() {
+            c.forInteracting(null, Tolerance.DEFAULT, new NodeProcessor<String>() {
 
                 @Override
                 public boolean process(Rect bounds, String value) {
@@ -287,7 +287,7 @@ public class SpatialNodeTest {
         } catch (NullPointerException ex) {
         }
         try {
-            c.forInteracting(Rect.valueOf(0, 0, 30, 80), null);
+            c.forInteracting(Rect.valueOf(0, 0, 30, 80), Tolerance.DEFAULT, null);
             fail("Exception expected");
         } catch (NullPointerException ex) {
         }
@@ -296,7 +296,7 @@ public class SpatialNodeTest {
     @Test
     public void testForInteracting2() {
         SpatialNode<String> a = new SpatialNode<>(new Rect[]{Rect.valueOf(0, 0, 20, 20), Rect.valueOf(80, 80, 100, 100)}, new String[]{"A", "B"});
-        a.forInteracting(Rect.valueOf(40, 50, 60, 70), new NodeProcessor<String>() {
+        a.forInteracting(Rect.valueOf(40, 50, 60, 70), Tolerance.DEFAULT, new NodeProcessor<String>() {
 
             @Override
             public boolean process(Rect bounds, String value) {

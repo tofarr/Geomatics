@@ -333,6 +333,9 @@ public final class Network implements Serializable, Cloneable {
     }
 
     boolean removeLinkInternal(double ax, double ay, double bx, double by) {
+        if(ax == -45 && ay == -35 && bx == -39.99999999999999 && by == -35){
+            System.out.println("ZOOP");
+        }
         VectList links = map.get(ax, ay);
         if (links == null) {
             return false;
@@ -511,8 +514,8 @@ public final class Network implements Serializable, Cloneable {
         });
     }
 
-    public boolean forInteractingLinks(Rect rect, NodeProcessor<Line> processor) throws NullPointerException {
-        return getLinks().forInteracting(rect, processor);
+    public boolean forInteractingLinks(Rect rect, Tolerance accuracy, NodeProcessor<Line> processor) throws NullPointerException {
+        return getLinks().forInteracting(rect, accuracy, processor);
     }
 
     public boolean forOverlappingLinks(Rect rect, NodeProcessor<Line> processor) throws NullPointerException {
@@ -552,14 +555,14 @@ public final class Network implements Serializable, Cloneable {
         return explicitIntersectionsWith(other.getLinks(), tolerance);
     }
 
-    public Network explicitIntersectionsWith(final SpatialNode<Line> otherLinks, Tolerance tolerance) {
+    public Network explicitIntersectionsWith(final SpatialNode<Line> otherLinks, final Tolerance tolerance) {
         SpatialNode<Line> links = getLinks();
         final IntersectionFinder finder = new IntersectionFinder(tolerance);
         links.forEach(new NodeProcessor<Line>() {
             @Override
             public boolean process(Rect bounds, Line value) {
                 finder.reset(value);
-                otherLinks.forInteracting(bounds, finder);
+                otherLinks.forInteracting(bounds, tolerance, finder);
                 VectList intersections = finder.intersections;
                 if (intersections.size() > 0) {
                     double ax = value.ax;

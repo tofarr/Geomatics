@@ -351,8 +351,8 @@ public class LineString implements Geom {
      * @param lineProcessor
      * @return
      */
-    public boolean forInteractingLines(Rect bounds, final NodeProcessor<Line> lineProcessor) {
-        return getLineIndex().forInteracting(bounds, lineProcessor);
+    public boolean forInteractingLines(Rect bounds, Tolerance accuracy, final NodeProcessor<Line> lineProcessor) {
+        return getLineIndex().forInteracting(bounds, accuracy, lineProcessor);
     }
 
     /**
@@ -486,7 +486,7 @@ public class LineString implements Geom {
 
     int relateInternal(double x, double y, Tolerance accuracy) {
         RelateProcessor processor = new RelateProcessor(x, y, accuracy);
-        return Relation.A_OUTSIDE_B | (getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), processor)
+        return Relation.A_OUTSIDE_B | (getLineIndex().forInteracting(Rect.valueOf(x, y, x, y), accuracy, processor)
                 ? Relation.B_OUTSIDE_A : Relation.TOUCH);
     }
 
