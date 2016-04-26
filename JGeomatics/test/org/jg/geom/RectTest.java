@@ -481,4 +481,17 @@ public class RectTest {
         assertEquals(i, a.less(h, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertNull(a.less(a.toArea(), Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
+    
+    @Test
+    public void testMatch() {
+        assertTrue(Rect.valueOf(20, 30, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertTrue(Rect.valueOf(21, 30, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertTrue(Rect.valueOf(20, 31, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertTrue(Rect.valueOf(20, 30, 71, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertTrue(Rect.valueOf(20, 30, 70, 131).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertFalse(Rect.valueOf(22, 30, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertFalse(Rect.valueOf(20, 32, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertFalse(Rect.valueOf(20, 30, 72, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+        assertFalse(Rect.valueOf(20, 30, 70, 132).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
+    }
 }

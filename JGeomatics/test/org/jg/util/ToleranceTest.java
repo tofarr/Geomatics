@@ -126,4 +126,24 @@ public class ToleranceTest {
         b.toString(str);
         assertEquals("4", str.toString());
     }
+    
+    @Test
+    public void testSnap(){
+        Tolerance tol = new Tolerance(10);
+        assertEquals(0, tol.snap(0), 0.0001);
+        assertEquals(0, tol.snap(1), 0.0001);
+        assertEquals(0, tol.snap(2), 0.0001);
+        assertEquals(0, tol.snap(4), 0.0001);
+        assertEquals(0, tol.snap(4.9), 0.0001);
+        assertEquals(10, tol.snap(5), 0.0001);
+        assertEquals(10, tol.snap(7), 0.0001);
+        assertEquals(10, tol.snap(9), 0.0001);
+        assertEquals(10, tol.snap(10), 0.0001);
+        assertEquals(10, tol.snap(13), 0.0001);
+        assertEquals(20, tol.snap(15), 0.0001);
+        tol = new Tolerance(0.1);
+        assertEquals(0.1, tol.snap(0.1234), 0.0001);
+        assertEquals(0.6, tol.snap(0.5678), 0.0001);
+        assertEquals(95, tol.snap(94.96), 0.0001);
+    }
 }

@@ -711,7 +711,8 @@ public class RingTest {
     public void testConvexHull(){
         Ring a = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,20, 80,20, 80,70, 40,70, 40,40, 60,40, 50,60, 70,60, 70,30, 30,30, 30,80, 90,80, 90,10, 20,10, 20,0);
         Ring b = Ring.valueOf(TOL, 20,0, 100,0, 100,90, 20,90, 20,0);
-        assertEquals(b, a.convexHull(Tolerance.DEFAULT));
+        assertEquals(b, a.convexHull(TOL));
+        assertSame(b, b.convexHull(TOL));
     }
     
     @Test
@@ -722,5 +723,25 @@ public class RingTest {
         ring = (Ring)ring.buffer(4, Linearizer.DEFAULT, TOL);
         int relation = ring.relate(vect, TOL);
         assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B, relation);
+    }
+    
+    @Test
+    public void testGetInternalPoint_A(){
+        Ring ring = Ring.valueOf(TOL, 20,30, 50,30, 50,70, 20,70, 20,30);
+        Vect internal = ring.getInternalPoint(TOL);
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, ring.relate(internal, TOL));
+    }
+    
+    @Test
+    public void testGetInternalPoint_B(){
+        Ring ring = Ring.valueOf(TOL, 0,0, 10,0, 10,50, 50,50, 50,10, 40,10, 40,40, 20,40, 20,0, 60,0, 60,60, 0,60, 0,0);
+        Vect internal = ring.getInternalPoint(TOL);
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, ring.relate(internal, TOL));
+        Tolerance tol = new Tolerance(6);
+        internal = ring.getInternalPoint(tol);
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, ring.relate(internal, tol));
+        tol = new Tolerance(10);
+        internal = ring.getInternalPoint(tol);
+        assertNull(internal);
     }
 }

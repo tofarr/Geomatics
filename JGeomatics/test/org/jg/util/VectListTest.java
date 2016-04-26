@@ -831,6 +831,41 @@ public class VectListTest {
             //expected
         }
     }
+    
+    @Test
+    public void testToWkt() {
+        VectList vects = new VectList();
+        assertTrue(vects.toWkt().isEmpty());
+        vects.add(1, 2);
+        assertEquals("POINT(1 2)", vects.toWkt());
+        vects.add(3, 4);
+        assertEquals("LINESTRING(1 2, 3 4)", vects.toWkt());
+        vects.add(3, 4);
+        assertEquals("LINESTRING(1 2, 3 4, 3 4)", vects.toWkt());
+        try {
+            vects.toWkt(new Appendable() {
+
+                @Override
+                public Appendable append(CharSequence csq) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(CharSequence csq, int start, int end) throws IOException {
+                    throw new IOException();
+                }
+
+                @Override
+                public Appendable append(char c) throws IOException {
+                    throw new IOException();
+                }
+
+            });
+            fail("Exception expected");
+        } catch (GeomException ex) {
+            //expected
+        }
+    }
 
     @Test
     public void testClone() {

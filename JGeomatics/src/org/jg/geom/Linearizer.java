@@ -64,7 +64,7 @@ public class Linearizer {
             double bx = ox + cos(angleB) * radius;
             double by = oy + sin(angleB) * radius;
             double maxDistSq = Math.pow(radius - flatness, 2);
-            linearizeByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
+            linearizeArcByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
         }else{
             linearizeByNumSegments(ox, oy, ax, ay, angleSize, result);
         }
@@ -81,7 +81,7 @@ public class Linearizer {
             double bx = ox + cos(angleB) * radius;
             double by = oy + sin(angleB) * radius;
             double maxDistSq = Math.pow(radius - flatness, 2);
-            linearizeByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
+            linearizeArcByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
         }else{
             linearizeByNumSegments(ox, oy, ax, ay, angleSize, result);
         }
@@ -97,7 +97,7 @@ public class Linearizer {
         if(segmentsPerQuadrant == null){
             double radius = Math.sqrt(Vect.distSq(ax, ay, ox, oy));
             double maxDistSq = Math.pow(radius - flatness, 2);
-            linearizeByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
+            linearizeArcByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
         }else{
             linearizeByNumSegments(ox, oy, ax, ay, angleSize, result);
         }
@@ -127,6 +127,15 @@ public class Linearizer {
                 transform.transform(vect, vect);
             }
             result.add(vect);
+        }
+    }
+    
+    private void linearizeArcByFlatness(double ox, double oy, double ax, double ay, double bx, double by,
+            double maxDistSq, double angleSize, double radius, VectList result){
+        if(flatness >= radius){
+            result.add(bx, by);
+        }else{
+            linearizeByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
         }
     }
     

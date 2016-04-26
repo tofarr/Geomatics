@@ -981,8 +981,16 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
     
     public void toWkt(Appendable appendable) throws GeomException{
         try {
-            appendable.append("LINESTRING");
-            toString(appendable, '(', ')', ' ');
+            switch(size){
+                case 0:
+                    return;
+                case 1:
+                    appendable.append("POINT(").append(Vect.ordToStr(getX(0))).append(' ').append(Vect.ordToStr(getY(0))).append(')');
+                    return;
+                default:
+                    appendable.append("LINESTRING");
+                    toString(appendable, '(', ')', ' ');
+            }
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
         }

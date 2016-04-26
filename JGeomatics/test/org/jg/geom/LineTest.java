@@ -883,4 +883,46 @@ public class LineTest {
         Line a = new Line(0,0, 100,100);
         assertEquals(0, a.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
+    
+    @Test
+    public void testSegCrossing(){
+        Rect bounds = Rect.valueOf(20, 30, 70, 130);
+        
+        Line line = Line.valueOf(20, 30, 70, 130);
+        Line crossing = line.segCrossing(bounds);
+        assertEquals(Relation.DISJOINT, bounds.relate(crossing.getA(), Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, bounds.relate(crossing.getB(), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, line.relate(crossing, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        
+        line = Line.valueOf(30, 50, 60, 110);
+        crossing = line.segCrossing(bounds);
+        assertEquals(Relation.DISJOINT, bounds.relate(crossing.getA(), Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, bounds.relate(crossing.getB(), Tolerance.DEFAULT));
+        assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, line.relate(crossing, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        
+        line = Line.valueOf(10, 20, 14, 22);
+        crossing = line.segCrossing(bounds);
+        assertEquals(Relation.DISJOINT, bounds.relate(crossing.getA(), Tolerance.DEFAULT));
+        assertEquals(Relation.DISJOINT, bounds.relate(crossing.getB(), Tolerance.DEFAULT));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A | Relation.B_INSIDE_A | Relation.TOUCH, bounds.relate(crossing, Linearizer.DEFAULT, Tolerance.DEFAULT));
+
+        line = Line.valueOf(16, 22, 20, 20);
+        assertNull(line.segCrossing(bounds));
+        
+        line = Line.valueOf(18, 24, 20, 20);
+        assertNull(line.segCrossing(bounds));
+        
+        line = Line.valueOf(79, 140, 80, 138);
+        assertNull(line.segCrossing(bounds));
+        
+        line = Line.valueOf(78, 140, 80, 139);
+        assertNull(line.segCrossing(bounds));
+        
+        try{
+            line.segCrossing(null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+        
+    }
 }

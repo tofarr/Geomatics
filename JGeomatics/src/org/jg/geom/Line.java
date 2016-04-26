@@ -952,10 +952,10 @@ public class Line implements Geom, Comparable<Line> {
      * Get a line segment based on this line where both end points are guaranteed to be outside the
      * bounds given, and the line will cross the bounds so long as they are not disjoint
      * @param bounds
-     * @return
+     * @return crossing segment, or null if line is disjoint from bounds
      * @throws NullPointerException if bounds was null
      */
-    Line segCrossing(Rect bounds) throws NullPointerException{
+    public Line segCrossing(Rect bounds) throws NullPointerException{
         double dx = bx - ax;
         double dy = by - ay;
         double dydx = dy / dx;
@@ -965,12 +965,22 @@ public class Line implements Geom, Comparable<Line> {
             iy = dydx * (ix - ax) + ay;
             jx = bounds.maxX + 1;
             jy = dydx * (jx - ax) + ay;
+            double minY = Math.min(iy, jy);
+            double maxY = Math.max(iy, jy);
+            if((minY > bounds.maxY) || (maxY < bounds.minY)){
+                return null;
+            }
         }else{ // line is more vertical - calculate x for y values
             double dxdy = dx / dy;
             iy = bounds.minY - 1;
             ix = dxdy * (iy - ay) + ax;
             jy = bounds.maxY + 1;
             jx = dxdy * (jy - ay) + ax;
+            double minX = Math.min(ix, jx);
+            double maxX = Math.max(ix, jx);
+            if((minX > bounds.maxX) || (maxX < bounds.minX)){
+                return null;
+            }
         }
         return new Line(ix, iy, jx, jy);
     }

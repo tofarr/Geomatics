@@ -672,4 +672,14 @@ public class LineStringTest {
         LineString a = new LineString(new VectList(0, 90, 90,90, 90, 0)); //touch on point
         assertEquals(0, a.getArea(Linearizer.DEFAULT, Tolerance.DEFAULT), 0);
     }
+    
+    @Test
+    public void testExcludeColinear(){
+        LineString a = LineString.valueOf(Tolerance.DEFAULT, 0,0, 50,0, 100,0, 100,25, 101,50, 100,75, 100,100);
+        assertEquals(a.excludeColinear(Tolerance.DEFAULT), LineString.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,25, 101,50, 100,75, 100,100));
+        LineString b = LineString.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100);
+        assertEquals(b, a.excludeColinear(new Tolerance(2)));
+        assertEquals(new VectList(1,2, 3,4), LineString.excludeColinear(new VectList(1,2, 3,4), Tolerance.DEFAULT));
+        assertSame(b, b.excludeColinear(new Tolerance(2)));
+    }
 }

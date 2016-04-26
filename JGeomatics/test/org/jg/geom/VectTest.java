@@ -420,13 +420,16 @@ public class VectTest {
         assertNull(vect.buffer(-1, new Linearizer(0.1, Tolerance.DEFAULT), Tolerance.DEFAULT));
         assertSame(vect, vect.buffer(0, new Linearizer(0.1, Tolerance.DEFAULT), Tolerance.DEFAULT));
         
-        buffered = (Ring)vect.buffer(2, new Linearizer(2.0, Tolerance.DEFAULT), Tolerance.DEFAULT);
+        buffered = (Ring)vect.buffer(2, new Linearizer(1.0, Tolerance.DEFAULT), Tolerance.DEFAULT);
         bounds = buffered.getBounds();
         assertEquals(1, bounds.minX, 0.0001);
         assertEquals(5, bounds.minY, 0.0001);
         assertEquals(5, bounds.maxX, 0.0001);
         assertEquals(9, bounds.maxY, 0.0001);
         assertEquals(4, buffered.numLines());
+  
+        Linearizer linearizer = new Linearizer(20.0, Tolerance.DEFAULT);
+        assertSame(vect, vect.buffer(2, linearizer, Tolerance.DEFAULT));
     }
     
     @Test

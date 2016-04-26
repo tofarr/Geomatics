@@ -894,12 +894,61 @@ public class Ring implements Geom {
     }
     
     /**
-     * Get a point which is definitely inside this linear ring.
+     * Get a point which is inside this linear ring. at least the distance given from an edge.
+     * The details of which point are undefined.
+     * If no part of the ring given is the required distance from its edge, return null
      * @param accuracy
      * @return Vect
      */
     public Vect getInternalPoint(Tolerance accuracy){
-        throw new UnsupportedOperationException("Not Yet implemented");
+        if(isConvex()){
+            return getCentroid();
+        }
+        return getInternalPoint(accuracy, getLineIndex());
+    }
+
+    Vect getInternalPoint(Tolerance accuracy, SpatialNode<Line> _lineIndex){
+        IntersectionProcessor intersectionProcessor = new IntersectionProcessor(accuracy);
+        ClosestLineProcessor closestLineProcessor = new ClosestLineProcessor();
+        VectList intersections = new VectList();
+        Rect bounds = getBounds();
+        final double tolSq = accuracy.tolerance * accuracy.tolerance;
+        double bx = vects.getX(0);
+        double by = vects.getY(0);
+        for(int i = vects.size()-1; i-- > 0;){
+            double ax = vects.getX(i);
+            double ay = vects.getY(i);
+            
+            //check normal from mid point of ab
+            double mx = (ax + bx) / 2;
+            double my = (ay + by) / 2;
+            
+            double dx = ay - by;
+            double dy = bx - ax;
+
+            int mul = (int)Math.ceil(Math.min(Math.abs(bounds.getWidth() / dx), Math.abs(bounds.getHeight() / dy)));
+            dx = dx * mul + mx;
+            dy = dy * mul + my;
+            Line ray = new Line(mx, my, dx, dy);
+            
+            intersectionProcessor.reset(ray);
+            _lineIndex.forInteracting(ray.getBounds(), accuracy, intersectionProcessor);
+            intersectionProcessor.getIntersections(intersections);
+            
+            if(intersections.size() > 1){
+                Vect mid = Vect.valueOf((intersections.getX(1) + mx) / 2, (intersections.getY(1) + my) / 2);
+                closestLineProcessor.reset(mid);
+                _lineIndex.forInteracting(mid.getBounds(), accuracy, closestLineProcessor);
+
+                if(closestLineProcessor.getMinDistSq() > tolSq){
+                    return mid;
+                }
+            }
+            
+            bx = ax;
+            by = ay;
+        }
+        return null;
     }
     
     public Ring convexHull(Tolerance accuracy){
@@ -911,30 +960,7 @@ public class Ring implements Geom {
         Ring ring = new Ring(ret, null, null, null, null, Boolean.TRUE);
         return ring;
     }
-         
-    //unsafe operation
-    //Assumes vects represents a closed ring
-    //Assumes vects is in counter clockwise order
-    //Assumes vects ring is convex
-    static int convexRelate(VectList vects, double x, double y, Tolerance accuracy){
-        int i = vects.size()-1;
-        double bx = vects.getX(i);
-        double by = vects.getY(i);
-        while(--i >= 0){
-            double ax = vects.getX(i);
-            double ay = vects.getY(i);
-            int ccw = Line.counterClockwise(ax, ay, bx, by, x, y, accuracy);
-            if(ccw > 0){
-                return Relation.DISJOINT;
-            }else if(ccw == 0){
-                return Relation.TOUCH | Relation.A_OUTSIDE_B;
-            }
-            bx = ax;
-            by = ay;
-        }
-        return Relation.B_INSIDE_A | Relation.A_OUTSIDE_B;
-    }
-    
+
     @Override
     public int hashCode() {
         int hash = 7;
