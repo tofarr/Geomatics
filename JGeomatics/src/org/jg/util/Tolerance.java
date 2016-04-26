@@ -109,6 +109,21 @@ public final class Tolerance implements Serializable, Cloneable {
     public Tolerance leastPrecise(Tolerance other) {
         return (tolerance >= other.tolerance) ? this : other;
     }
+    
+    
+    public double round(double value){
+        long bits = Double.doubleToLongBits(value);
+        long upperMask = 0xFFFFFFFFFFFFFF00L;
+        long upper = bits & upperMask;
+        long lowerMask = 0x80L;
+        long lower = bits & lowerMask;
+        if((bits & 0x80L) == 0x80L){
+            upper += 0x100L; 
+        }
+        double ret = Double.longBitsToDouble(upper);
+        return ret;
+        //return (tolerance == 0) ? value : Math.round(value / tolerance) * tolerance;
+    }
 
     @Override
     public String toString() {

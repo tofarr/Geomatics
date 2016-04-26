@@ -403,7 +403,7 @@ public class VectTest {
     @Test
     public void testBuffer(){
         Vect vect = Vect.valueOf(3, 7);
-        Ring buffered = (Ring)vect.buffer(2, new Linearizer(0.5), Tolerance.DEFAULT);
+        Ring buffered = (Ring)vect.buffer(2, new Linearizer(0.5, Tolerance.DEFAULT), Tolerance.DEFAULT);
         assertEquals(Rect.valueOf(1, 5, 5, 9), buffered.getBounds());
         assertEquals(Math.PI * 4, buffered.getArea(), 1.5);
         assertEquals(Math.PI * 4, buffered.getLength(), 0.5);
@@ -417,10 +417,10 @@ public class VectTest {
         assertEquals(Math.PI * 4, buffered.getArea(), 0.3);
         assertEquals(Math.PI * 4, buffered.getLength(), 0.1);
         
-        assertNull(vect.buffer(-1, new Linearizer(0.1), Tolerance.DEFAULT));
-        assertSame(vect, vect.buffer(0, new Linearizer(0.1), Tolerance.DEFAULT));
+        assertNull(vect.buffer(-1, new Linearizer(0.1, Tolerance.DEFAULT), Tolerance.DEFAULT));
+        assertSame(vect, vect.buffer(0, new Linearizer(0.1, Tolerance.DEFAULT), Tolerance.DEFAULT));
         
-        buffered = (Ring)vect.buffer(2, new Linearizer(2.0), Tolerance.DEFAULT);
+        buffered = (Ring)vect.buffer(2, new Linearizer(2.0, Tolerance.DEFAULT), Tolerance.DEFAULT);
         bounds = buffered.getBounds();
         assertEquals(1, bounds.minX, 0.0001);
         assertEquals(5, bounds.minY, 0.0001);

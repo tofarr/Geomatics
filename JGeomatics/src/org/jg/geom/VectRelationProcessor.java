@@ -61,12 +61,14 @@ class VectRelationProcessor implements NodeProcessor<Line> {
         //Get progress along line
         double u = (y - line.ay) / (line.by - line.ay);
         double ix = u * (line.bx - line.ax) + line.ax;
-        if(tolerance.match(ix, y, line.ax, line.ay)){
-            touchEnd(line.ay, line.by);
-        }else if(tolerance.match(ix, y, line.bx, line.by)){
-            touchEnd(line.by, line.ay);
-        }else if((u > 0) && (u < 1)){
-            flipRelation();
+        if(ix >= x){
+            if(tolerance.match(ix, y, line.ax, line.ay)){
+                touchEnd(line.ay, line.by);
+            }else if(tolerance.match(ix, y, line.bx, line.by)){
+                touchEnd(line.by, line.ay);
+            }else { // if((u > 0) && (u < 1)){
+                flipRelation();
+            }
         }
         return true;
     }

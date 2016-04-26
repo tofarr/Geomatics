@@ -218,7 +218,7 @@ public class RectTest {
         Rect rect = Rect.valueOf(3, 7, 13, 23);
         assertSame(rect, rect.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(Rect.valueOf(4, 8, 12, 22), rect.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        Area a = (Area) rect.buffer(2, new Linearizer(0.5), Tolerance.DEFAULT);
+        Area a = (Area) rect.buffer(2, new Linearizer(0.5, Tolerance.DEFAULT), Tolerance.DEFAULT);
 
         assertEquals(Rect.valueOf(1, 5, 15, 25), a.getBounds());
         assertEquals(264 + (Math.PI * 4), a.getArea(), 2);

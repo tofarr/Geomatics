@@ -1,5 +1,6 @@
 package org.jg.geom;
 
+import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.TransformBuilder;
 import org.jg.util.VectList;
@@ -12,26 +13,35 @@ import org.jg.util.VectList;
  */
 public class Linearizer {
 
-    public static final Linearizer DEFAULT = new Linearizer(8);
+    public static final Linearizer DEFAULT = new Linearizer(8, Tolerance.DEFAULT);
 
     private final Integer segmentsPerQuadrant;
     private final Double flatness;
+    private final Tolerance precision;
 
-    public Linearizer(Integer segmentsPerQuadrant) {
+    public Linearizer(Integer segmentsPerQuadrant, Tolerance precision) {
         if (segmentsPerQuadrant <= 0) {
             throw new IllegalArgumentException("Must be at least one segment per quadrant!");
         }
+        if(precision == null){
+            throw new NullPointerException("Precision must not be null (may be 0)");
+        }
         this.segmentsPerQuadrant = segmentsPerQuadrant;
         this.flatness = null;
+        this.precision = precision;
     }
 
-    public Linearizer(Double flatness) {
+    public Linearizer(Double flatness, Tolerance precision) {
         Vect.check(flatness, "Invalid flatness : {0}");
         if (flatness <= 0) {
             throw new IllegalArgumentException("Invalid flatness : " + flatness);
         }
+        if(precision == null){
+            throw new NullPointerException("Precision must not be null (may be 0)");
+        }
         this.segmentsPerQuadrant = null;
         this.flatness = flatness;
+        this.precision = precision;
     }
 
     public Integer getSegmentsPerQuadrant() {
@@ -44,15 +54,15 @@ public class Linearizer {
 
     //assumes ccw direction
     public void linearizeArc(double ox, double oy, double angleA, double angleB, double radius, VectList result){
-        double ax = ox + Math.cos(angleA) * radius;
-        double ay = oy + Math.sin(angleA) * radius;
+        double ax = ox + cos(angleA) * radius;
+        double ay = oy + sin(angleA) * radius;
         double angleSize = angleB - angleA;
         if (angleSize < 0) {
             angleSize += 2 * Math.PI;
         }
         if(segmentsPerQuadrant == null){
-            double bx = ox + Math.cos(angleB) * radius;
-            double by = oy + Math.sin(angleB) * radius;
+            double bx = ox + cos(angleB) * radius;
+            double by = oy + sin(angleB) * radius;
             double maxDistSq = Math.pow(radius - flatness, 2);
             linearizeByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
         }else{
@@ -68,8 +78,8 @@ public class Linearizer {
         }
         if(segmentsPerQuadrant == null){
             double radius = Math.sqrt(Vect.distSq(ax, ay, ox, oy));
-            double bx = ox + Math.cos(angleB) * radius;
-            double by = oy + Math.sin(angleB) * radius;
+            double bx = ox + cos(angleB) * radius;
+            double by = oy + sin(angleB) * radius;
             double maxDistSq = Math.pow(radius - flatness, 2);
             linearizeByFlatness(ox, oy, ax, ay, bx, by, maxDistSq, angleSize, radius, result);
         }else{
@@ -100,8 +110,22 @@ public class Linearizer {
         Transform transform = new TransformBuilder().rotateRadiansAround(segmentSize, ox, oy).build();
         VectBuilder vect = new VectBuilder();
         vect.set(ax, ay);
+        double angle = 0;
         for(int i = 0; i < numSegments; i++){
-            transform.transform(vect, vect);
+            angle += segmentSize;
+            //Rounding errors here are onconvenient, so we check if the angle is within a tolerance of
+            //a 90 degree angle and set values directly
+            if (precision.match(angle, Math.PI / 2)) { // 90 degree shift
+                vect.set(ox - (ay - oy), oy + (ax - ox));
+            } else if (precision.match(angle, Math.PI)) { // 180 degree shift
+                vect.set(ox + ox - ax, oy + oy - ay);
+            } else if (precision.match(angle, Math.PI * 3 / 2)) { // 270 degree shift
+                vect.set(ox + (ay - oy), oy - (ax - ox));
+            } else if (precision.match(angle, 2 * Math.PI)){ // 360 degree shift
+                vect.set(ax, ay);
+            }else{ // normal transform
+                transform.transform(vect, vect);
+            }
             result.add(vect);
         }
     }
@@ -137,6 +161,26 @@ public class Linearizer {
 
             linearizeByFlatness(ox, oy, ax, ay, nx, ny, maxDistSq, angleSize, radius, result);
             linearizeByFlatness(ox, oy, nx, ny, bx, by, maxDistSq, angleSize, radius, result);
+        }
+    }
+      
+    //Get cosine of angle. Math.cos returns numbers very close to but not quite zero for PI/2 and PI
+    //Thie attempts to correct this.
+    private static double cos(double angle){
+        if((angle == Math.PI / 2) || (angle == Math.PI * 3 / 2)){
+            return 0;
+        }else{
+            return Math.cos(angle);
+        }
+    }
+    
+    //Get sin of angle. Math.sin returns numbers very close to but not quite zero for PI and 2PI
+    //Thie attempts to correct this.
+    private static double sin(double angle){
+        if((angle == Math.PI) || (angle == Math.PI * 2)){
+            return 0;
+        }else{
+            return Math.sin(angle);
         }
     }
 }

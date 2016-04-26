@@ -194,12 +194,8 @@ public class PointSetTest {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(vects));
         assertNull(ps.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertSame(ps, ps.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        Area buffered = (Area) ps.buffer(4, new Linearizer(4), Tolerance.DEFAULT);
-        Rect bounds = buffered.getBounds();
-        assertEquals(1, bounds.minX, 0.00001);
-        assertEquals(1, bounds.minY, 0.00001);
-        assertEquals(35, bounds.maxX, 0.00001);
-        assertEquals(11, bounds.maxY, 0.00001);
+        Area buffered = (Area) ps.buffer(4, new Linearizer(4, Tolerance.DEFAULT), Tolerance.DEFAULT);
+        assertEquals(Rect.valueOf(1,1,35,11), buffered.getBounds());
         assertEquals(3, buffered.numRings());
         assertEquals(222, buffered.getArea(), 1);
     }

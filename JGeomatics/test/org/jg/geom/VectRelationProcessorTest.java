@@ -1,10 +1,6 @@
 package org.jg.geom;
 
 import org.jg.util.Tolerance;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -12,7 +8,7 @@ import static org.junit.Assert.*;
  *
  * @author tofarrell
  */
-public class RelationProcessorTest {
+public class VectRelationProcessorTest {
 
     @Test
     public void testReset() {
@@ -63,23 +59,23 @@ public class RelationProcessorTest {
         //Line line = Line.valueOf(5, 4, 8, 8);
         Line line = Line.valueOf(7, 4, 12, 6.9999);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
+        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
         
         line = Line.valueOf(-1, 4, -6, 7.0001);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
+        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
         
         line = Line.valueOf(7, 4, 12, 7);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
+        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
+        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
         
         assertTrue(processor.process(line.getBounds(), line));
         
         line = Line.valueOf(7, 10, 12, 7);
         assertTrue(processor.process(line.getBounds(), line));
-        assertEquals(Relation.B_INSIDE_A, processor.getRelation());
+        assertEquals(Relation.B_OUTSIDE_A, processor.getRelation());
         
         processor = new VectRelationProcessor(Tolerance.DEFAULT, 3, 7);
         assertTrue(processor.process(line.getBounds(), line));

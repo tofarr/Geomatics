@@ -722,7 +722,7 @@ public class LineTest {
         Line a = Line.valueOf(2, 3, 7, 13);
         assertNull(a.buffer(-1, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertSame(a, a.buffer(0, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        Area b = (Area)a.buffer(3, new Linearizer(0.1), Tolerance.DEFAULT);
+        Area b = (Area)a.buffer(3, new Linearizer(0.1, Tolerance.DEFAULT), Tolerance.DEFAULT);
         
         Rect bounds = b.getBounds();
         assertEquals(-1, bounds.minX, 0.1);

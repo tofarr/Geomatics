@@ -1,5 +1,6 @@
 package org.jg.geom;
 
+import org.jg.util.Tolerance;
 import org.jg.util.VectList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -12,17 +13,17 @@ public class LinearizerTest {
 
     @Test
     public void testConstructor() {
-        Linearizer linearizer = new Linearizer(0.1);
+        Linearizer linearizer = new Linearizer(0.1, Tolerance.DEFAULT);
         assertEquals(0.1, linearizer.getFlatness(), 0.0001);
         assertNull(linearizer.getSegmentsPerQuadrant());
-        linearizer = new Linearizer(6);
+        linearizer = new Linearizer(6, Tolerance.DEFAULT);
         assertNull(linearizer.getFlatness());
         assertEquals(6, linearizer.getSegmentsPerQuadrant().intValue());
     }
 
     @Test
     public void testLinearizeArc_A() {
-        Linearizer linearizer = new Linearizer(0.1);
+        Linearizer linearizer = new Linearizer(0.1, Tolerance.DEFAULT);
         VectList result = new VectList();
         result.add(0, 2);
         linearizer.linearizeArc(0, 0, Math.PI / 2, Math.PI * 2, 2, result);
@@ -47,12 +48,12 @@ public class LinearizerTest {
         assertEquals(Math.PI + 4, LineString.getLength(result), 0.2);
 
         result.clear();
-        linearizer = new Linearizer(1.0);
+        linearizer = new Linearizer(1.0, Tolerance.DEFAULT);
         linearizer.linearizeSegment(0, 0, 2, 0, 0, 2, result);
         assertEquals(new VectList(0, 2), result);
 
         result.clear();
-        linearizer = new Linearizer(0.1);
+        linearizer = new Linearizer(0.1, Tolerance.DEFAULT);
         result.add(0, 0).add(0, 2);
         linearizer.linearizeArc(0, 0, Math.PI / 2, Math.PI * 2, 2, result);
         result.add(0, 0);
@@ -85,7 +86,7 @@ public class LinearizerTest {
         assertEquals(9, result.size());
         result.clear();
         result.add(10, 0);
-        linearizer = new Linearizer(4);
+        linearizer = new Linearizer(4, Tolerance.DEFAULT);
         linearizer.linearizeArc(0, 0, 0, Math.PI / 2, 10, result);
         assertEquals(5, result.size());
     }

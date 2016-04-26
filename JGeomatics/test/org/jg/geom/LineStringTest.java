@@ -358,7 +358,7 @@ public class LineStringTest {
 
     @Test
     public void testBuffer_RightAngle() {
-        Linearizer linearizer = new Linearizer(0.5);
+        Linearizer linearizer = new Linearizer(0.5, Tolerance.DEFAULT);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 60, 60, 60);
         assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
@@ -376,7 +376,7 @@ public class LineStringTest {
 
     @Test
     public void testBuffer_Loop() {
-        Linearizer linearizer = new Linearizer(0.5);
+        Linearizer linearizer = new Linearizer(0.5, Tolerance.DEFAULT);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 5,5, 25,5, 25,45, 5,45, 5,5);
         assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
@@ -395,7 +395,7 @@ public class LineStringTest {
 
     @Test
     public void testBuffer_V() {
-        Linearizer linearizer = new Linearizer(0.5);
+        Linearizer linearizer = new Linearizer(0.5, Tolerance.DEFAULT);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 20, 0, 20, 10, 19, 10.2, 20, 10.4, 20, 30);
         assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
@@ -408,7 +408,7 @@ public class LineStringTest {
     
     @Test
     public void testBuffer_Irregular() {
-        Linearizer linearizer = new Linearizer(0.5);
+        Linearizer linearizer = new Linearizer(0.5, Tolerance.DEFAULT);
         LineString s = LineString.valueOf(Tolerance.DEFAULT, 10,5, 70,5, 70,23, 56,23, 56,13, 44,13, 44,9, 32,9);
         assertNull(s.buffer(-1, linearizer, Tolerance.DEFAULT)); // buffer out of existance
         assertSame(s, s.buffer(0, linearizer, Tolerance.DEFAULT)); // no op buffer
@@ -423,7 +423,7 @@ public class LineStringTest {
 
     @Test
     public void testProjectOutward() {
-        Linearizer linearizer = new Linearizer(0.5);
+        Linearizer linearizer = new Linearizer(0.5, Tolerance.DEFAULT);
         VectBuilder work = new VectBuilder();
         VectList result = new VectList();
 
