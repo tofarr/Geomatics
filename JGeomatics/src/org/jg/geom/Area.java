@@ -623,28 +623,31 @@ public class Area implements Geom {
                 return true;
             }
         });
-        final Network otherNetwork = new Network();
+        
+        final Network networkA = new Network();
+        final Network networkB = new Network();
         final boolean[] touching = new boolean[1];
         network.forEachLink(new LinkProcessor(){
             @Override
             public boolean process(double ax, double ay, double bx, double by) {
                 double x = (ax + bx) / 2;
                 double y = (ay + by) / 2;
+                                
+                int relateA = relateInternal(x, y, accuracy);
+                int relateB = other.relateInternal(x, y, accuracy);
                 
-                if(ax == -65 && ay == -55 && bx == -60.00000000000001 && by == -54.999999999999986){
-                    System.out.println("ZZZ");
-                }
-                
-                int relate = relateInternal(x, y, accuracy);
-                int otherRelate = other.relateInternal(x, y, accuracy);
-                if(Relation.isDisjoint(relate)
-                    || Relation.isBInsideA(otherRelate)){
+                if(Relation.isDisjoint(relateA)
+                    || Relation.isBInsideA(relateB)){
                     network.removeLinkInternal(ax, ay, bx, by);
-                }
-                if(Relation.isTouch(otherRelate)){
-                    otherNetwork.addLinkInternal(ax, ay, bx, by);
-                    if(Relation.isTouch(relate)){
-                        touching[0] = true;
+                }else{
+                    if(Relation.isTouch(relateA)){
+                        networkA.addLink(ax, ay, bx, by);
+                        if(Relation.isTouch(relateB)){
+                            touching[0] = true;
+                        }
+                    }
+                    if(Relation.isTouch(relateB)){
+                        networkB.addLink(ax, ay, bx, by);
                     }
                 }
                 return true;
@@ -655,24 +658,29 @@ public class Area implements Geom {
             return Area.valueOfInternal(accuracy, network);
         }
         
+        //logic here is wrong - holes from other network disappear
         List<Ring> rings = Ring.parseAllInternal(network, accuracy, true);
         for(int i = rings.size(); i-- > 0;){
             Ring ring = rings.get(i);
             int index = ring.numVects()-1;
             double bx = ring.getX(index);
             double by = ring.getY(index);
-            boolean discard = true;
+            boolean allTouchB = true;
+            boolean touchA = false;
             while(index-- != 0){
                 double ax = ring.getX(index);
                 double ay = ring.getY(index);
-                if(!otherNetwork.hasLink(ax, ay, bx, by)){
-                    discard = false;
+                if(!networkB.hasLink(ax, ay, bx, by)){
+                    allTouchB = false;
                     break;
+                }
+                if((!touchA) && networkA.hasLink(ax, ay, bx, by)){
+                    touchA = true;
                 }
                 bx = ax;
                 by = ay;
             }
-            if(discard){
+            if(allTouchB && touchA){
                 rings.remove(i);
             }
         }

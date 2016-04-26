@@ -333,9 +333,6 @@ public final class Network implements Serializable, Cloneable {
     }
 
     boolean removeLinkInternal(double ax, double ay, double bx, double by) {
-        if(ax == -45 && ay == -35 && bx == -39.99999999999999 && by == -35){
-            System.out.println("ZOOP");
-        }
         VectList links = map.get(ax, ay);
         if (links == null) {
             return false;

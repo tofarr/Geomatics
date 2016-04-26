@@ -454,13 +454,13 @@ public class AreaTest {
         final Area area = Area.valueOf(TOL, network);
         assertSame(area, area.buffer(0, Linearizer.DEFAULT, TOL));
         
-//        Area resultA = (Area)area.buffer(4, Linearizer.DEFAULT, TOL); // leave channels
-//        assertNull(resultA.shell);
-//        assertEquals(2, resultA.numChildren());
-//        assertEquals(6, resultA.numRings());
-//        assertEquals(5, resultA.getDepth());
-//        assertTrue(Rect.valueOf(-84, -74, 104, 74).match(resultA.getBounds(), TOL));
-//        assertEquals(23458, resultA.getArea(), 1);
+        Area resultA = (Area)area.buffer(4, Linearizer.DEFAULT, TOL); // leave channels
+        assertNull(resultA.shell);
+        assertEquals(2, resultA.numChildren());
+        assertEquals(6, resultA.numRings());
+        assertEquals(5, resultA.getDepth());
+        assertTrue(Rect.valueOf(-84, -74, 104, 74).match(resultA.getBounds(), TOL));
+        assertEquals(23458, resultA.getArea(), 1);
         
         Area resultB = (Area)area.buffer(5, Linearizer.DEFAULT, TOL); // clear channels except at corners
         assertNull(resultB.shell);
@@ -468,11 +468,11 @@ public class AreaTest {
         assertEquals(10, resultB.numRings()); 
         assertEquals(2, resultB.getDepth());
         assertEquals(Rect.valueOf(-85, -75, 105, 75), resultB.getBounds());
-        assertEquals(25755, resultB.getArea(), 1);
+        assertEquals(25733, resultB.getArea(), 1);
         
         Ring resultC = (Ring)area.buffer(8, Linearizer.DEFAULT, TOL);
         assertEquals(Rect.valueOf(-88, -78, 108, 78), resultC.getBounds());
-        assertEquals(27854, resultC.getArea(), 1);
+        assertEquals(27852, resultC.getArea(), 1);
         
         Ring resultD = (Ring)area.buffer(-40, Linearizer.DEFAULT, TOL);
         assertNull(resultD);

@@ -14,7 +14,10 @@ public class ConvexHull {
 
     private final Tolerance accuracy;
 
-    public ConvexHull(Tolerance accuracy) {
+    public ConvexHull(Tolerance accuracy) throws NullPointerException {
+        if (accuracy == null) {
+            throw new NullPointerException("Accuracy must not be null!");
+        }
         this.accuracy = accuracy;
     }
 
