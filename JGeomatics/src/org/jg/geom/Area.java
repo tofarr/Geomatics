@@ -411,57 +411,94 @@ public class Area implements Geom {
             return toGeoShape().relate(geom, linearizer, accuracy);
         }
     }
-    
-    public int relate(Area area, Tolerance accuracy){
-        if(area.shell == null){
-            int ret = Relation.NULL;
-            for(Area child : area.children){
-                int childRelate = relate(child, accuracy); WRONG
-                if(!Relation.isBOutsideA(childRelate)){ // fully contained within a child
-                    childRelate |= Relation.A_OUTSIDE_B;
-                    return childRelate; 
+      
+    public int relate(final Area area, final Tolerance accuracy){
+        Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, area);
+        final Network touch = new Network();
+        final int[] ret = new int[]{Relation.NULL};
+        network.map.forEach(new VectMapProcessor<VectList>(){
+            @Override
+            public boolean process(double ax, double ay, VectList links) {
+                int relateA = Area.this.relateInternal(ax, ay, accuracy);
+                int relateB = area.relateInternal(ax, ay, accuracy);
+                if(Relation.isBInsideA(relateA)){
+                    ret[0] |= Relation.B_INSIDE_A;
                 }
-                ret |= relate(child, accuracy);
-                if(ret == Relation.ALL){
-                    return ret;
+                if(Relation.isBOutsideA(relateA)){
+                    ret[0] |= Relation.B_OUTSIDE_A;
+                }
+                if(Relation.isBInsideA(relateB)){
+                    ret[0] |= Relation.A_INSIDE_B;
+                }
+                if(Relation.isBOutsideA(relateB)){
+                    ret[0] |= Relation.A_OUTSIDE_B;
+                }
+                if(Relation.isTouch(relateA) && Relation.isTouch(relateB)){
+                    ret[0] |= Relation.TOUCH;
+                }
+                return true;
+            }
+        });
+        network.forEachLink(new LinkProcessor(){
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                double x = (ax + bx) / 2;
+                double y = (ay + by) / 2;
+                int relateA = Area.this.relateInternal(x, y, accuracy);
+                int relateB = area.relateInternal(x, y, accuracy);
+                if(Relation.isBInsideA(relateA)){
+                    ret[0] |= Relation.B_INSIDE_A;
+                }
+                if(Relation.isBOutsideA(relateA)){
+                    ret[0] |= Relation.B_OUTSIDE_A;
+                }
+                if(Relation.isBInsideA(relateB)){
+                    ret[0] |= Relation.A_INSIDE_B;
+                }
+                if(Relation.isBOutsideA(relateB)){
+                    ret[0] |= Relation.A_OUTSIDE_B;
+                }
+                if(Relation.isTouch(relateA) && Relation.isTouch(relateB)){
+                    ret[0] |= Relation.TOUCH;
+                    touch.addLinkInternal(ax, ay, bx, by);
+                }
+                return true;
+            }
+        
+        });
+        touch.removeHangLines();
+        
+        if(touch.numLinks() > 0){
+            Area touchArea = Area.valueOfInternal(accuracy, touch);
+            if(touchArea.shell == null){
+                for(int i = touchArea.children.length; i-- > 0;){
+                    Vect internalPoint = touchArea.children[i].shell.getInternalPoint(accuracy, touchArea.getLineIndex());
+                    if(internalPoint != null){
+                        if(Relation.isBInsideA(relate(internalPoint, accuracy)) && Relation.isBInsideA(area.relate(internalPoint, accuracy))){
+                            ret[0] |= Relation.A_INSIDE_B | Relation.B_INSIDE_A;
+                        }else{
+                            ret[0] |= Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A;
+                        }
+                    }
+                }
+            }else{
+                Vect internalPoint = touchArea.shell.getInternalPoint(accuracy, touchArea.getLineIndex());
+                if(internalPoint != null){
+                    if(Relation.isBInsideA(relate(internalPoint, accuracy)) && Relation.isBInsideA(area.relate(internalPoint, accuracy))){
+                        ret[0] |= Relation.A_INSIDE_B | Relation.B_INSIDE_A;
+                    }else{
+                        ret[0] |= Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A;
+                    }
                 }
             }
-            return ret;
         }
-        int ret = relate(area.shell, accuracy);
-        int inverse = Relation.NULL;
-        for(Area child : area.children){
-            int childRelate = relate(child, accuracy);
-            if(!Relation.isBOutsideA(childRelate)){ // fully contained within a hole
-                ret = Relation.invert(childRelate);
-                ret |= Relation.A_OUTSIDE_B;
-                return ret; 
-            }
-            inverse |= child.relate(child, accuracy);
-            if(inverse == Relation.ALL){
-                return inverse;
-            }
-        }
-        ret |= Relation.invert(inverse);
-        return ret;
+        
+        return ret[0];
             
     }
     
     public int relate(Ring ring, Tolerance accuracy){
-        if(shell == null){
-            int ret = Relation.NULL;
-            for(Area child : children){
-                ret |= child.relate(ring, accuracy);
-            }
-            return ret;
-        }
-        int ret = shell.relate(ring, accuracy);
-        int inverse = Relation.NULL;
-        for(Area child : children){
-            inverse |= child.relate(ring, accuracy);
-        }
-        ret |= Relation.invert(inverse);
-        return ret;
+        return relate(ring.toArea(), accuracy);
     }
 
     private static void addDisjoint(Area area, List<Area> results) {
