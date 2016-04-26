@@ -180,7 +180,7 @@ public class AreaTest {
         }
         Area area = Area.valueOf(TOL, network);
         PathIterator iter = area.pathIterator();
-        
+        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
         for(int i = 90; i >= 0; i -= 10){
             int x = 40 + i;
             int y = 30 + i;
@@ -437,6 +437,41 @@ public class AreaTest {
         assertEquals(Relation.DISJOINT, area.relate(45, 55, TOL));
         assertEquals(Relation.DISJOINT, area.relate(55, 55, TOL));
         assertEquals(Relation.DISJOINT, area.relate(65, 55, TOL));
+    }
+    
+    @Test
+    public void testRelate_Area() {
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        Ring b = Ring.valueOf(TOL, 50,50, 150,50, 150,150, 50,150, 50,50);
+        Area c = new Area(b);
+        Area d = Area.valueOf(TOL, 150,50, 250,50, 250,150, 150,150, 150,50);
+        Area e = new Area(Ring.valueOf(TOL, 40,40, 160,40, 160,160, 40,160, 40,40), c);
+        Area f = new Area(null, c, d);
+        
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, a.relate(a, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL, a.relate(b, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL, a.relate(c, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.DISJOINT, a.relate(d, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL, a.relate(e, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL, a.relate(f, Linearizer.DEFAULT, TOL));
+        
+        assertEquals(Relation.ALL, c.relate(a, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, c.relate(b, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, c.relate(c, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A | Relation.TOUCH, c.relate(d, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.TOUCH | Relation.A_OUTSIDE_B | Relation.B_OUTSIDE_A, c.relate(e, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL ^ Relation.A_OUTSIDE_B, c.relate(f, Linearizer.DEFAULT, TOL));
+        
+        
+        
+        
+        assertEquals(Relation.ALL, c.relate(b, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL ^ Relation.TOUCH, d.relate(b, Linearizer.DEFAULT, TOL));
+         
+        assertEquals(Relation.ALL, a.relate(c, Linearizer.DEFAULT, TOL));
+        assertEquals(Relation.ALL, a.relate(d, Linearizer.DEFAULT, TOL));
+        
+        fail("No assertions");
     }
     
     @Test

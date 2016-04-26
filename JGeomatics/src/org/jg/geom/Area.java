@@ -416,14 +416,31 @@ public class Area implements Geom {
         if(area.shell == null){
             int ret = Relation.NULL;
             for(Area child : area.children){
-                ret |= child.relate(child, accuracy);
+                int childRelate = relate(child, accuracy); WRONG
+                if(!Relation.isBOutsideA(childRelate)){ // fully contained within a child
+                    childRelate |= Relation.A_OUTSIDE_B;
+                    return childRelate; 
+                }
+                ret |= relate(child, accuracy);
+                if(ret == Relation.ALL){
+                    return ret;
+                }
             }
             return ret;
         }
         int ret = relate(area.shell, accuracy);
         int inverse = Relation.NULL;
         for(Area child : area.children){
+            int childRelate = relate(child, accuracy);
+            if(!Relation.isBOutsideA(childRelate)){ // fully contained within a hole
+                ret = Relation.invert(childRelate);
+                ret |= Relation.A_OUTSIDE_B;
+                return ret; 
+            }
             inverse |= child.relate(child, accuracy);
+            if(inverse == Relation.ALL){
+                return inverse;
+            }
         }
         ret |= Relation.invert(inverse);
         return ret;
@@ -431,14 +448,14 @@ public class Area implements Geom {
     }
     
     public int relate(Ring ring, Tolerance accuracy){
-        if(ring == null){
+        if(shell == null){
             int ret = Relation.NULL;
             for(Area child : children){
                 ret |= child.relate(ring, accuracy);
             }
             return ret;
         }
-        int ret = shell.relate(shell, accuracy);
+        int ret = shell.relate(ring, accuracy);
         int inverse = Relation.NULL;
         for(Area child : children){
             inverse |= child.relate(ring, accuracy);
