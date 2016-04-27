@@ -484,6 +484,11 @@ public final class Rect implements Geom {
     }
 
     @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toRing().xor(other, linearizer, accuracy);
+    }
+    
+    @Override
     public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return getArea();
     }

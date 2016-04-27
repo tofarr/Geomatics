@@ -502,7 +502,7 @@ public class VectTest {
         assertSame(rect, a.xor(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         Vect b = Vect.valueOf(5, 30);
         assertEquals(new GeoShape(rect.toArea(), null, new PointSet(new VectList(5,30))), b.xor(rect, Linearizer.DEFAULT, Tolerance.DEFAULT)); // shoul
-        assertEquals(new PointSet(new VectList(5,30,20,20)), a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(new PointSet(new VectList(5,30,20,30)), a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
     
     @Test

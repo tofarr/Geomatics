@@ -635,6 +635,22 @@ public class RingTest {
     }
 
     @Test
+    public void testXor() {
+        Ring a = new Ring(new VectList(0,0, 10,0, 10,10, 0,10, 0,0), null);
+        Ring b = new Ring(new VectList(10,0, 20,0, 20,10, 10,10, 10,0), null);
+        Ring c = new Ring(new VectList(10,10, 20,10, 20,20, 10,20, 10,10), null);
+        Ring d = new Ring(new VectList(20,0, 30,0, 30,10, 20,10, 20,0), null);
+        Ring e = new Ring(new VectList(5,5, 15,5, 15,15, 5,15, 5,5), null);
+        
+        
+        assertNull(a.xor(a, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(b, Linearizer.DEFAULT, TOL).less(a.intersection(b, Linearizer.DEFAULT, TOL), Linearizer.DEFAULT, TOL), a.xor(b, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(c, Linearizer.DEFAULT, TOL).less(a.intersection(c, Linearizer.DEFAULT, TOL), Linearizer.DEFAULT, TOL), a.xor(c, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(d, Linearizer.DEFAULT, TOL), a.xor(d, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(e, Linearizer.DEFAULT, TOL).less(a.intersection(e, Linearizer.DEFAULT, TOL), Linearizer.DEFAULT, TOL), a.xor(e, Linearizer.DEFAULT, TOL));
+    }
+
+    @Test
     public void testHashCode() {
         Set<Integer> hashCodes = new HashSet<>();
         for (int x = 0; x <= 10; x++) {

@@ -878,6 +878,24 @@ public class LineTest {
         assertEquals(expected, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
           
+    
+    @Test
+    public void testXor() {
+        Line a = new Line(0,0, 100,100);
+        Line b = new Line(0,100, 100,0);
+        Rect c = new Rect(150,0,200,50);
+        Rect d = new Rect(-1,-1,101,101);
+        assertEquals(new GeoShape(c.toArea(), a.toLineString().toLineSet(), null), a.xor(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d.toRing(), a.xor(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        
+        Geom geom = a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT);
+        Network network = new Network();
+        network.addLink(a);
+        network.addLink(b);
+        Geom expected = LineSet.valueOf(Tolerance.DEFAULT, network);
+        assertEquals(expected, geom);
+    }    
+    
     @Test
     public void testGetArea(){
         Line a = new Line(0,0, 100,100);

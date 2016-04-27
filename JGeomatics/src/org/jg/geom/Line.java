@@ -945,7 +945,7 @@ public final class Line implements Geom, Comparable<Line> {
 
     @Override
     public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
-        need a network xor class
+        return toLineString().xor(other, linearizer, accuracy);
     }
 
     @Override

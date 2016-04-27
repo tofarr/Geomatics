@@ -519,6 +519,11 @@ public final class LineString implements Geom {
         LineSet ret = toLineSet().less(other, linearizer, accuracy);
         return (ret == null) ? null : ret.simplify();
     }
+
+    @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toLineSet().xor(other, linearizer, accuracy);
+    }
     
     @Override
     public double getArea(Linearizer linearizer, Tolerance accuracy){

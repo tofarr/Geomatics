@@ -3,6 +3,7 @@ package org.jg.geom;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
+import org.jg.geom.Network.LinkProcessor;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -394,6 +395,55 @@ public final class LineSet implements Geom {
         });
 
         return LineSet.valueOfInternal(less); //Intersection may be null,Line,LineString,LineSet
+    }
+    
+    
+    @Override
+    public Geom xor(final Geom other, Linearizer linearizer, final Tolerance accuracy) throws NullPointerException {
+        if (other instanceof LineString) {
+            LineSet ret = xor((LineString)other, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        } else if (other instanceof LineSet) {
+            LineSet ret = xor((LineSet) other, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        } else {
+            GeoShape ret = toGeoShape().xor(other, linearizer, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        }
+    }
+    
+    /**
+     * xor this lineset and the linestring given
+     * @param other
+     * @param accuracy
+     * @return
+     */
+    public LineSet xor(LineString other, Tolerance accuracy) throws NullPointerException {
+        return xor(other.toLineSet(), accuracy);
+    }
+    
+    /**
+     * xor this lineset and the linestring given
+     * @param other
+     * @param accuracy
+     * @return
+     */
+    public LineSet xor(final LineSet other, final Tolerance accuracy) throws NullPointerException {
+        final Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
+        final VectBuilder workingVect = new VectBuilder();
+        network.forEachLink(new LinkProcessor(){
+            @Override
+            public boolean process(double ax, double ay, double bx, double by){
+                workingVect.set((ax+bx)/2, (ay+by)/2);
+                if(Relation.isTouch(LineSet.this.relate(workingVect, accuracy))
+                        && Relation.isTouch(other.relate(workingVect, accuracy))){
+                    network.removeLinkInternal(ax, ay, bx, by); // Anything not in original should not be in new...
+                }
+                
+                return true;
+            }
+        });
+        return LineSet.valueOfInternal(network); //Intersection may be null,Line,LineString,LineSet
     }
     
     @Override

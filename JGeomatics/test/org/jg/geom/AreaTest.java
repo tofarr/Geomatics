@@ -726,6 +726,21 @@ public class AreaTest {
         assertSame(a, a.less(d.getShell(), TOL));
     }
     
+
+    @Test
+    public void testXor_3args() {
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,100, 0,0);
+        GeoShape b = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
+                LineSet.valueOf(TOL, 0,120, 100,20, 100,40, 140,0),
+                PointSet.valueOf(0,150, 100,100, 150,0));
+        Area c = Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50);
+        assertEquals(c, a.xor(b, Linearizer.DEFAULT, TOL));
+        Area d = Area.valueOf(TOL, 200,0, 300,0, 300,100, 200,0);
+        assertSame(a, a.xor(d, Linearizer.DEFAULT, TOL));
+        assertSame(a, a.xor(d, TOL));
+        assertSame(a, a.xor(d.getShell(), TOL));
+    }
+    
     @Test
     public void testGetInternalPoint(){
         Network network = new Network();

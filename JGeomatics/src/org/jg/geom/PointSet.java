@@ -408,11 +408,14 @@ public final class PointSet implements Geom {
     @Override
     public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if(other instanceof Vect){
-            return xor((Vect)other, accuracy);
+            PointSet ret = xor((Vect)other, accuracy);
+            return (ret == null) ? null : ret.simplify();
         }else if(other instanceof PointSet){
-            return xor((PointSet)other, accuracy);
+            PointSet ret = xor((PointSet)other, accuracy);
+            return (ret == null) ? null : ret.simplify();
         }else{
-            return toGeoShape().xor(other, linearizer, accuracy);
+            GeoShape ret = toGeoShape().xor(other, linearizer, accuracy);
+            return (ret == null) ? null : ret.simplify();
         }
     }
       
@@ -421,7 +424,7 @@ public final class PointSet implements Geom {
         VectBuilder vect = new VectBuilder();
         for(int v = 0; v < vects.size(); v++){
             vects.getVect(v, vect);
-            if(other.relate(vect, accuracy) != Relation.TOUCH){
+            if(!Relation.isTouch(other.relate(vect, accuracy))){
                 ret.add(vect);
             }
         }
@@ -440,13 +443,13 @@ public final class PointSet implements Geom {
         VectBuilder vect = new VectBuilder();
         for(int v = 0; v < vects.size(); v++){
             vects.getVect(v, vect);
-            if(other.relate(vect, accuracy) != Relation.TOUCH){
+            if(!Relation.isTouch(other.relate(vect, accuracy))){
                 ret.add(vect);
             }
         }
         for(int v = 0; v < other.vects.size(); v++){
             other.vects.getVect(v, vect);
-            if(relate(vect, accuracy) != Relation.TOUCH){
+            if(!Relation.isTouch(relate(vect, accuracy))){
                 ret.add(vect);
             }
         }

@@ -379,6 +379,22 @@ public class LineSetTest {
                 c.less(d, Linearizer.DEFAULT, TOL).toString());
     }
 
+
+    @Test
+    public void testXor() {
+        LineSet a = LineSet.valueOf(TOL, 0,40, 40,40, 40,0);
+        LineString b = LineString.valueOf(TOL, 0,60, 40,60, 40,100);
+        LineSet c = LineSet.valueOf(TOL, 60,20, 20,20, 20,80, 60,80);
+        Rect d = Rect.valueOf(0,60, 40,100);
+        assertEquals(a.union(b, TOL), a.xor(b, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(b, TOL), a.xor(b.toGeoShape(Linearizer.DEFAULT, TOL), Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(c, TOL), a.xor(c, Linearizer.DEFAULT, TOL));
+        assertEquals(new GeoShape(d.toArea(), a.less(d, Linearizer.DEFAULT, TOL), null), a.xor(d, Linearizer.DEFAULT, TOL));
+        assertEquals(d.toRing(), b.toLineSet().xor(d, Linearizer.DEFAULT, TOL));
+        assertEquals("[\"GS\",[\"AR\"[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80]]]",
+                c.xor(d, Linearizer.DEFAULT, TOL).toString());
+    }
+
     @Test
     public void testEquals() {
         LineSet a = LineSet.valueOf(TOL, 0,0, 100,100, 100,0, 0,100, 0,0);

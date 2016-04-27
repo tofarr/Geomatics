@@ -903,6 +903,11 @@ public class Ring implements Geom {
         return (area == null) ? null : area.simplify();
     }
     
+    @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return toArea().xor(other, linearizer, accuracy);
+    }
+    
     /**
      * Get a point which is inside this linear ring. at least the distance given from an edge.
      * The details of which point are undefined.

@@ -422,6 +422,56 @@ public class GeoShape implements Geom {
         }
         return (_area != null) || (_lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
     }  
+
+    @Override
+    public GeoShape xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        return xor(other.toGeoShape(linearizer, accuracy), accuracy);
+    }
+    
+    /**
+     * Xor this geoshape with the geoshape given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException
+     */
+    public GeoShape xor(GeoShape other, final Tolerance accuracy) throws NullPointerException {
+        Area _area = area;
+        if(other.area != null){
+            _area = (_area == null) ? other.area : _area.xor(other.area, accuracy);
+        }
+        
+        LineSet _lines = lines;
+        if(other.lines != null){
+            _lines = (_lines == null) ? other.lines : _lines.xor(other.lines, accuracy);
+        }
+        if((_lines != null) && (area != null)){
+            _lines = _lines.less(area, Linearizer.DEFAULT, accuracy);
+        }
+        if((_lines != null) && (other.area != null)){
+            _lines = _lines.less(other.area, Linearizer.DEFAULT, accuracy);
+        }
+        
+        PointSet _points = points;
+        if(other.points != null){
+            _points = (_points == null) ? other.points : _points.xor(other.points, accuracy);
+        }
+        if((_points != null) && (area != null)){
+            _points = _points.less(area, accuracy);
+        }
+        if((_points != null) && (other.area != null)){
+            _points = _points.less(other.area, accuracy);
+        }
+        
+        if((_points != null) && (lines != null)){
+            _points = _points.less(lines, accuracy);
+        }
+        if((_points != null) && (other.lines != null)){
+            _points = _points.less(other.lines, accuracy);
+        }
+        
+        return (_area != null) || (_lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
+    }  
     
     @Override
     public int hashCode() {

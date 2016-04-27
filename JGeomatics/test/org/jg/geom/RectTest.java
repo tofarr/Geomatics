@@ -483,6 +483,27 @@ public class RectTest {
     }
     
     @Test
+    public void testXor() {
+        Rect a = Rect.valueOf(10, 20, 30, 40);
+        Rect b = Rect.valueOf(50, 60, 70, 80);
+        Rect c = Rect.valueOf(11, 21, 29, 39);
+        Rect d = Rect.valueOf(15, 25, 35, 45);
+        Ring e = Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,40, 10,40, 10,20);
+        Area f = Area.valueOf(Tolerance.DEFAULT, 11,21, 29,21, 29,39, 11,39, 11,21);
+        
+        Geom expected = a.union(b, Linearizer.DEFAULT, Tolerance.ZERO);
+        Geom found = a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT);
+        assertEquals(expected, found);
+        
+        assertEquals(a.union(c, Linearizer.DEFAULT, Tolerance.ZERO).less(a.intersection(c), Linearizer.DEFAULT, Tolerance.ZERO),
+                c.xor(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c.union(a, Linearizer.DEFAULT, Tolerance.ZERO).less(c.intersection(a), Linearizer.DEFAULT, Tolerance.ZERO),
+                a.xor(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(a.union(f, Linearizer.DEFAULT, Tolerance.ZERO).less(a.intersection(f, Linearizer.DEFAULT, Tolerance.ZERO), Linearizer.DEFAULT, Tolerance.ZERO),
+                a.xor(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
+    }
+    
+    @Test
     public void testMatch() {
         assertTrue(Rect.valueOf(20, 30, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));
         assertTrue(Rect.valueOf(21, 30, 70, 130).match(Rect.valueOf(20, 30, 70, 130), new Tolerance(1)));

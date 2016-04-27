@@ -658,24 +658,6 @@ public final class Area implements Geom {
         Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         return unionInternal(this, other, network, accuracy);
     }
-
-    /** 
-     * xor this area and the area given
-     */
-    public Area xor(Area other, Tolerance accuracy) {
-        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
-            final List<Area> areas = new ArrayList<>();
-            addDisjoint(this, areas);
-            addDisjoint(other, areas);
-            Area[] _children = areas.toArray(new Area[areas.size()]);
-            Arrays.sort(_children, COMPARATOR);
-            return new Area(null, _children);
-        }
-        Network network = new Network();
-        addTo(network);
-        other.toggleTo(network);
-        return Area.valueOf(accuracy, network);
-    }
         
     static Area unionInternal(final Area a, final Area b, final Network network, final Tolerance accuracy){
         final Network union = new Network();
@@ -904,6 +886,52 @@ public final class Area implements Geom {
         }
 
         return Area.valueOfInternal(rings);
+    }
+    
+    @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException{
+        if (other instanceof Area) {
+            Area ret = xor((Area) other, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        } else if (other instanceof Ring) {
+            Area ret = xor((Ring) other, accuracy);
+            return (ret == null) ? null : ret.simplify();
+        }
+        GeoShape ret = toGeoShape().xor(other, linearizer, accuracy);
+        return (ret == null) ? null : ret.simplify();
+    }
+    
+    /** 
+     * xor this area and the ring given
+     * 
+     * @param other
+     * @param accuracy
+     * @return 
+     */
+    public Area xor(Ring other, Tolerance accuracy){
+        return xor(other.toArea(), accuracy);
+    }
+    
+    /** 
+     * xor this area and the area given
+     * 
+     * @param other
+     * @param accuracy
+     * @return 
+     */
+    public Area xor(Area other, Tolerance accuracy) {
+        if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
+            final List<Area> areas = new ArrayList<>();
+            addDisjoint(this, areas);
+            addDisjoint(other, areas);
+            Area[] _children = areas.toArray(new Area[areas.size()]);
+            Arrays.sort(_children, COMPARATOR);
+            return new Area(null, _children);
+        }
+        Network network = new Network();
+        addTo(network);
+        other.toggleTo(network);
+        return Area.valueOf(accuracy, network);
     }
     
     /**

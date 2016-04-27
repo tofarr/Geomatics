@@ -398,6 +398,33 @@ public class PointSetTest {
     }
 
     @Test
+    public void testXor() {
+
+        PointSet a = PointSet.valueOf(new VectSet().addAll(new VectList(2, 3, 5, 7, 11, 13)));
+        Rect b = Rect.valueOf(4, 7, 12, 14);
+        PointSet c = PointSet.valueOf(new VectSet().add(5, 7).add(11, 13));
+        Vect d = Vect.valueOf(2, 3);
+        GeoShape e = new GeoShape(b.toArea(), null, d.toPointSet());
+        Ring f = Rect.valueOf(13, 1, 14, 2).toRing();
+        Vect g = Vect.valueOf(2, 4);
+        
+        
+        assertNull(a.xor(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(e, a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, a.xor(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(c, a.xor(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(b.toRing(), a.xor(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(new GeoShape(f.toArea(), null, a), a.xor(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(new PointSet(new VectList(2,3, 2,4, 5,7, 11,13)), a.xor(g, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        
+        try {
+            a.xor(null, Linearizer.DEFAULT, Tolerance.DEFAULT);
+            fail("Exception expected");
+        } catch (NullPointerException ex) {
+        }
+    }
+
+    @Test
     public void testGetPoint_int() {
         PointSet ps = PointSet.valueOf(new VectSet().add(3, 4).add(1, 2).add(3, 3).add(3, 4));
         assertEquals(Vect.valueOf(1, 2), ps.getPoint(0));
