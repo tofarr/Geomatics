@@ -531,7 +531,7 @@ public final class Network implements Serializable, Cloneable {
             return pointTouchesLineInternal(x, y, node.getA(), tolerance)
                     || pointTouchesLineInternal(x, y, node.getB(), tolerance);
         } else {
-            double tol = tolerance.tolerance * tolerance.tolerance;
+            double tol = tolerance.toleranceSq;
             for (int i = node.size(); i-- > 0;) {
                 Line line = node.getItemValue(i);
                 double distSq = Line.distSegVectSq(line.ax, line.ay, line.bx, line.by, x, y);
@@ -589,7 +589,7 @@ public final class Network implements Serializable, Cloneable {
     
     public Network removeColinearPoints(final Tolerance tolerance){
         final VectList toRemove = new VectList();
-        final double tolSq = tolerance.tolerance * tolerance.tolerance;
+        final double tolSq = tolerance.toleranceSq;
         map.forEach(new VectMapProcessor<VectList>(){
             @Override
             public boolean process(double x, double y, VectList links) {
@@ -655,7 +655,7 @@ public final class Network implements Serializable, Cloneable {
             return;
         }
         VectList vects = getVects(new VectList());
-        final double tolSq = tolerance.tolerance * tolerance.tolerance;
+        final double tolSq = tolerance.toleranceSq;
         while (a-- > 0) {
             double ax = vects.getX(a);
             double ay = vects.getY(a);
@@ -683,7 +683,7 @@ public final class Network implements Serializable, Cloneable {
             calculateSnapsForPoint(x, y, node.getB(), accuracy, workingVect, result);
             return;
         }
-        double tolSq = accuracy.tolerance * accuracy.tolerance;
+        double tolSq = accuracy.toleranceSq;
         for(int i = node.size(); i-- > 0;){
             Line line = node.getItemValue(i);
             if((line.ax == x) && (line.ay == y)){

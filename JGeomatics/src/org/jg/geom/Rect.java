@@ -16,7 +16,7 @@ import org.jg.util.VectList;
  *
  * @author tofar_000
  */
-public class Rect implements Geom {
+public final class Rect implements Geom {
 
     /**
      * min X value

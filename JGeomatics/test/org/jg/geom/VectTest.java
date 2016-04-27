@@ -193,7 +193,7 @@ public class VectTest {
         Tolerance tolerance = new Tolerance(0.15);
         assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 20), Linearizer.DEFAULT, tolerance));
         assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), Linearizer.DEFAULT, tolerance));
-        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10, 21), Linearizer.DEFAULT, new Tolerance(1)));
+        assertEquals(Relation.TOUCH, Vect.valueOf(10, 20).relate(Vect.valueOf(10.5, 20.5), Linearizer.DEFAULT, new Tolerance(1)));
         assertEquals(Relation.DISJOINT, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), Linearizer.DEFAULT, tolerance));
         assertEquals(Relation.TOUCH | Relation.B_OUTSIDE_A, Vect.valueOf(10, 20).relate(Rect.valueOf(11, 20, 15, 25), Linearizer.DEFAULT, new Tolerance(1)));
     }
@@ -488,6 +488,21 @@ public class VectTest {
         
         a = Vect.valueOf(5, 30);
         assertSame(a, a.less(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
+    }
+    
+    @Test
+    public void testXor(){
+        Rect rect = Rect.valueOf(10, 20, 30, 40);
+        Vect a = Vect.valueOf(20, 20);
+        assertNull(a.xor(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertSame(rect, a.xor(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        a = Vect.valueOf(10, 30);
+        assertSame(rect, a.xor(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        a = Vect.valueOf(20, 30);
+        assertSame(rect, a.xor(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        Vect b = Vect.valueOf(5, 30);
+        assertEquals(new GeoShape(rect.toArea(), null, new PointSet(new VectList(5,30))), b.xor(rect, Linearizer.DEFAULT, Tolerance.DEFAULT)); // shoul
+        assertEquals(new PointSet(new VectList(5,30,20,20)), a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
     }
     
     @Test

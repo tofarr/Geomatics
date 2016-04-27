@@ -17,7 +17,7 @@ import org.jg.util.VectList;
  *
  * @author tofar_000
  */
-public class Line implements Geom, Comparable<Line> {
+public final class Line implements Geom, Comparable<Line> {
 
     /**
      * ax
@@ -903,12 +903,12 @@ public class Line implements Geom, Comparable<Line> {
 
     @Override
     public int relate(Vect vect, Tolerance tolerance) throws NullPointerException {
-        return (distSegVectSq(vect) <= (tolerance.tolerance * tolerance.tolerance)) ? (Relation.TOUCH | Relation.A_OUTSIDE_B) : Relation.DISJOINT;
+        return (distSegVectSq(vect) <= (tolerance.toleranceSq)) ? (Relation.TOUCH | Relation.A_OUTSIDE_B) : Relation.DISJOINT;
     }
 
     @Override
     public int relate(VectBuilder vect, Tolerance tolerance) throws NullPointerException {
-        return (distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY()) <= (tolerance.tolerance * tolerance.tolerance))
+        return (distSegVectSq(ax, ay, bx, by, vect.getX(), vect.getY()) <= tolerance.toleranceSq)
                 ? (Relation.TOUCH | Relation.A_OUTSIDE_B) : Relation.DISJOINT;
     }
 
@@ -941,6 +941,11 @@ public class Line implements Geom, Comparable<Line> {
             return this;
         }
         return toLineString().less(other, linearizer, accuracy);
+    }
+
+    @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        need a network xor class
     }
 
     @Override

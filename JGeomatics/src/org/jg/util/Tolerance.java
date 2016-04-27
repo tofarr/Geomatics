@@ -27,6 +27,10 @@ public final class Tolerance implements Serializable, Cloneable {
      * Tolerance value
      */
     public final double tolerance;
+    /**
+     * Square of tolerance 
+     */
+    public final double toleranceSq;
 
     /**
      * Create a new instance of Tolerance
@@ -37,6 +41,7 @@ public final class Tolerance implements Serializable, Cloneable {
     public Tolerance(double tolerance) throws IllegalArgumentException {
         Vect.check(tolerance, "Invalid tolerance: {0}");
         this.tolerance = Math.abs(tolerance);
+        this.toleranceSq = tolerance * tolerance;
     }
 
     /**
@@ -46,6 +51,15 @@ public final class Tolerance implements Serializable, Cloneable {
      */
     public double getTolerance() {
         return tolerance;
+    }
+
+    /**
+     * Get square of tolerance
+     * 
+     * @return
+     */
+    public double getToleranceSq() {
+        return toleranceSq;
     }
 
     /**
@@ -87,7 +101,8 @@ public final class Tolerance implements Serializable, Cloneable {
      * @return true if same, false otherwise
      */
     public boolean match(double ax, double ay, double bx, double by) {
-        return match(ax, bx) && match(ay, by);
+        double distSq = Vect.distSq(ax, ay, bx, by);
+        return distSq < toleranceSq;
     }
 
     /**

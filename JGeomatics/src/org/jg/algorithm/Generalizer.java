@@ -15,11 +15,9 @@ import org.jg.util.VectList;
 public class Generalizer {
     
     private final Tolerance tolerance;
-    private final double tolSq;
 
     public Generalizer(Tolerance tolerance) {
         this.tolerance = tolerance;
-        tolSq = tolerance.tolerance * tolerance.tolerance;
     }
     
     public VectList generalize(VectList input){
@@ -58,7 +56,7 @@ public class Generalizer {
         double bx = input.getX(bIndex);
         double by = input.getY(bIndex);
         int maxDistIndex = -1;
-        double maxDist = tolSq;
+        double maxDist = tolerance.toleranceSq;
         for(int i = aIndex+1; i < bIndex; i++){
             double x = input.getX(i);
             double y = input.getY(i);

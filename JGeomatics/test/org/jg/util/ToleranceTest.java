@@ -48,7 +48,7 @@ public class ToleranceTest {
     public void testMatch_4args() {
         Tolerance tolerance = new Tolerance(0.06);
         assertTrue(tolerance.match(2, 5, 2, 5));
-        assertTrue(tolerance.match(2, 5, 2.05, 4.95));
+        assertTrue(tolerance.match(2, 5, 2.03, 4.97));
         assertFalse(tolerance.match(2, 5, 2.07, 4.95));
         assertFalse(tolerance.match(2, 5, 2.05, 4.93));
     }

@@ -14,7 +14,7 @@ import org.jg.util.VectMap.VectMapProcessor;
  *
  * @author tofar
  */
-public class LineSet implements Geom {
+public final class LineSet implements Geom {
 
     LineString[] lineStrings;
 

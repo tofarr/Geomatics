@@ -22,10 +22,13 @@ import org.jg.util.VectMap.VectMapProcessor;
 import org.jg.util.VectSet;
 
 /**
- *
+ * Immutable 2d area. Areas may have a single or multiple outer rings (shells). Checks are in place
+ * to insure that child rings must be completely inside their parent, and that sibling rings may not
+ * intersect (although they may touch).
+ * 
  * @author tofar_000
  */
-public class Area implements Geom {
+public final class Area implements Geom {
     
     public static final Area[] NO_CHILDREN = new Area[0];
 
@@ -40,6 +43,11 @@ public class Area implements Geom {
         this.children = children;
     }
 
+    /**
+     * Create a new area with a single outer shell.
+     * @param shell
+     * @throws NullPointerException if shell was null
+     */
     public Area(Ring shell) throws NullPointerException {
         this(shell, NO_CHILDREN);
         if(shell == null){
@@ -47,19 +55,44 @@ public class Area implements Geom {
         }
     }
     
-    public static Area valueOf(Tolerance accuracy, double... ords) throws NullPointerException,IllegalArgumentException{
+    /**
+     * Assuming the ordinates given represent a closed ring which may self intersect, create a new
+     * area based on the ordinates given, which may contain 0 or more rings.
+     * @param accuracy
+     * @param ords
+     * @return an area, or null if there was no closed rings
+     * @throws NullPointerException if accuracy or ords was null
+     * @throws IllegalArgumentException if an ordinate was infinite or NaN
+     */
+    public static Area valueOf(Tolerance accuracy, double... ords) throws NullPointerException, IllegalArgumentException{
         return valueOf(accuracy, new VectList(ords));
     }
-    
-    public static Area valueOf(Tolerance accuracy, VectList vects) throws NullPointerException,IllegalArgumentException{
+      
+    /**
+     * Assuming the ordinates given represent a closed ring which may self intersect, create a new
+     * area based on the ordinates given, which may contain 0 or more rings.
+     * @param accuracy
+     * @param vects
+     * @return an area, or null if there was no closed rings
+     * @throws NullPointerException if accuracy or vects was null
+     */
+    public static Area valueOf(Tolerance accuracy, VectList vects) throws NullPointerException{
         Network network = new Network();
         network.addAllLinks(vects);
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
         return valueOfInternal(accuracy, network);
     }
-    
-    public static Area valueOf(Tolerance accuracy, Network network) {
+      
+    /**
+     * Assuming the network given contains a number of closed rings, create a new
+     * area based on it.
+     * @param accuracy
+     * @param network
+     * @return an area, or null if there were no closed rings
+     * @throws NullPointerException if accuracy or network was null
+     */
+    public static Area valueOf(Tolerance accuracy, Network network) throws NullPointerException {
         network = network.clone();
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
@@ -88,6 +121,10 @@ public class Area implements Geom {
         }
     }
     
+    /**
+     * Get the area.
+     * @return
+     */
     public double getArea() {
         if (shell == null) {
             double ret = 0;
@@ -136,6 +173,10 @@ public class Area implements Geom {
         return new Area(transformedShell, transformedChildren);
     }
     
+    /**
+     * If there are no children, return the shell, otherwise return this
+     * @return
+     */
     public Geom simplify(){
         return (children.length == 0) ? shell : this;
     }
@@ -209,6 +250,10 @@ public class Area implements Geom {
         return this;
     }
 
+    /**
+     * Get the total number of rings in this area
+     * @return
+     */
     public int numRings() {
         int ret = (shell == null) ? 0 : 1;
         for (Area child : children) {
@@ -217,6 +262,10 @@ public class Area implements Geom {
         return ret;
     }
 
+    /**
+     * Get the total number of lines in this area
+     * @return
+     */
     public int numLines() {
         int ret = 0;
         if (shell != null) {
@@ -228,6 +277,10 @@ public class Area implements Geom {
         return ret;
     }
 
+    /**
+     * Get the total number of vectors in this area
+     * @return
+     */
     public int numVects() {
         int ret = 0;
         if (shell != null) {
@@ -239,6 +292,10 @@ public class Area implements Geom {
         return ret;
     }
 
+    /**
+     * Get a spatial node containing all lines in this area
+     * @return
+     */
     public SpatialNode<Line> getLineIndex() {
         SpatialNode<Line> ret = lineIndex;
         if (ret == null) {
@@ -269,21 +326,36 @@ public class Area implements Geom {
         return index;
     }
 
+    /**
+     * Get a flat list of all rings in this area
+     * @return
+     */
     public List<Ring> getRings() {
         List<Ring> ret = new ArrayList<>();
         getRings(ret);
         return ret;
     }
-
-    public void getRings(Collection<Ring> result) {
+    
+    /**
+     * Add all rings in this area to the collection given
+     * @param result
+     * @return
+     */
+    public Collection<Ring> getRings(Collection<Ring> result) {
         if (shell != null) {
             result.add(shell);
         }
         for (Area child : children) {
             child.getRings(result);
         }
+        return result;
     }
 
+    /**
+     * Add all vects in this area to the set given
+     * @param result
+     * @return result
+     */
     public VectSet getVects(VectSet result) {
         if (shell != null) {
             result.addAll(shell.vects);
@@ -326,6 +398,12 @@ public class Area implements Geom {
         }
     }
 
+    /**
+     * Add this area to the network given
+     * @param network
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
     public void addTo(Network network) throws NullPointerException, IllegalArgumentException {
         if (shell != null) {
             shell.addTo(network);
@@ -340,11 +418,31 @@ public class Area implements Geom {
         addTo(network);
     }
 
+    
+    /**
+     * Toggle this area in the network given - any links which did not exist are added, and any which
+     * did exist are removed
+     *
+     * @param network
+     */
+    public void toggleTo(Network network){
+        if (shell != null) {
+            shell.toggleTo(network);
+        }
+        for (int c = 0; c < children.length; c++) {
+            children[c].toggleTo(network);
+        }
+    }
+    
     @Override
     public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return toGeoShape();
     }
     
+    /**
+     * Convert this area to a geoshape
+     * @return
+     */
     public GeoShape toGeoShape(){
         return new GeoShape(this, null, null);
     }
@@ -392,6 +490,15 @@ public class Area implements Geom {
         return relateInternal(vect.getX(), vect.getY(), tolerance);
     }
 
+    /**
+     * Get the relation between this area and the point given
+     * @param x
+     * @param y
+     * @param tolerance
+     * @return
+     * @throws IllegalArgumentException if x or y was infinite or NaN
+     * @throws NullPointerException if tolerance was null
+     */
     public int relate(double x, double y, Tolerance tolerance) throws IllegalArgumentException, NullPointerException {
         Vect.check(x, y);
         return relateInternal(x, y, tolerance);
@@ -411,8 +518,15 @@ public class Area implements Geom {
             return toGeoShape().relate(geom, linearizer, accuracy);
         }
     }
-      
-    public int relate(final Area area, final Tolerance accuracy){
+
+    /**
+     * Get the relation between this area and the area given
+     * @param area
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if area or accuracy was null
+     */
+    public int relate(final Area area, final Tolerance accuracy) throws NullPointerException{
         Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, area);
         final Network touch = new Network();
         final int[] ret = new int[]{Relation.NULL};
@@ -483,7 +597,7 @@ public class Area implements Geom {
                 }
             }else{
                 Vect internalPoint = touchArea.shell.getInternalPoint(accuracy, touchArea.getLineIndex());
-                if(internalPoint != null){
+                if(internalPoint != null){ // If no internal point was found, the area is smaller than tolerance and will not be processed.
                     if(Relation.isBInsideA(relate(internalPoint, accuracy)) && Relation.isBInsideA(area.relate(internalPoint, accuracy))){
                         ret[0] |= Relation.A_INSIDE_B | Relation.B_INSIDE_A;
                     }else{
@@ -496,8 +610,15 @@ public class Area implements Geom {
         return ret[0];
             
     }
-    
-    public int relate(Ring ring, Tolerance accuracy){
+      
+    /**
+     * Get the relation between this area and the ring given
+     * @param ring
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if area or accuracy was null
+     */
+    public int relate(Ring ring, Tolerance accuracy) throws NullPointerException{
         return relate(ring.toArea(), accuracy);
     }
 
@@ -519,35 +640,43 @@ public class Area implements Geom {
         return toGeoShape().union(other, linearizer, accuracy);
     }
 
+    /**
+     * Get the union of this area and the area given
+     * @param other
+     * @param accuracy
+     * @return
+     */
     public Area union(Area other, Tolerance accuracy) {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
             addDisjoint(other, areas);
-            Area[] children = areas.toArray(new Area[areas.size()]);
-            Arrays.sort(children, COMPARATOR);
-            return new Area(null, children);
+            Area[] _children = areas.toArray(new Area[areas.size()]);
+            Arrays.sort(_children, COMPARATOR);
+            return new Area(null, _children);
         }
         Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
         return unionInternal(this, other, network, accuracy);
     }
 
-    //Assumes this and other are normalized against each other - no unspecified points of intersection
-    Area unionNormalized(Area other, Tolerance accuracy) {
+    /** 
+     * xor this area and the area given
+     */
+    public Area xor(Area other, Tolerance accuracy) {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
             addDisjoint(other, areas);
-            Area[] children = areas.toArray(new Area[areas.size()]);
-            Arrays.sort(children, COMPARATOR);
-            return new Area(null, children);
+            Area[] _children = areas.toArray(new Area[areas.size()]);
+            Arrays.sort(_children, COMPARATOR);
+            return new Area(null, _children);
         }
         Network network = new Network();
         addTo(network);
-        other.addTo(network);
-        return unionInternal(this, other, network, accuracy);
+        other.toggleTo(network);
+        return Area.valueOf(accuracy, network);
     }
-    
+        
     static Area unionInternal(final Area a, final Area b, final Network network, final Tolerance accuracy){
         final Network union = new Network();
         final VectBuilder workingVect = new VectBuilder();
@@ -588,7 +717,14 @@ public class Area implements Geom {
         return valueOfInternal(rings);
     }
 
-    public Area union(Ring other, Tolerance accuracy) {
+    /**
+     * Get the union of this and the ring given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
+    public Area union(Ring other, Tolerance accuracy) throws NullPointerException {
         return union(other.toArea(), accuracy);
     }
     
@@ -604,10 +740,24 @@ public class Area implements Geom {
         return toGeoShape().intersection(other, linearizer, accuracy);
     }
     
+    /**
+     * Get the intersection of this and the ring given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape intersection(Ring other, Tolerance accuracy) throws NullPointerException{
         return intersection(other.toArea(), accuracy);
     }
-
+    
+    /**
+     * Get the intersection of this and the area given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape intersection(final Area other, final Tolerance accuracy) throws NullPointerException {       
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return null;
@@ -657,11 +807,25 @@ public class Area implements Geom {
             return less(otherArea, accuracy);
         }
     }
-
+    
+    /**
+     * Get the area of this which is not inside the ring given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
     public Area less(final Ring other, final Tolerance accuracy) throws NullPointerException {
         return less(other.toArea(), accuracy);
     }
-    
+     
+    /**
+     * Get the area of this which is not inside the area given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
     public Area less(final Area other, final Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             return this;
@@ -742,6 +906,40 @@ public class Area implements Geom {
         return Area.valueOfInternal(rings);
     }
     
+    /**
+     * Get a point which is inside this linear ring. at least the distance given from an edge.
+     * The details of which point are undefined.
+     * If no part of the ring given is the required distance from its edge, return null
+     * @param accuracy
+     * @return Vect
+     */
+    public Vect getInternalPoint(Tolerance accuracy){
+        if(shell != null){
+            SpatialNode<Line> _lineIndex = getLineIndex();
+            Vect ret = shell.getInternalPoint(accuracy, _lineIndex);
+            if(ret != null){
+                return ret;
+            }
+            for(Area child : children){
+                for(Area grandchild : child.children){
+                    ret = grandchild.getInternalPoint(accuracy);
+                    if(ret != null){
+                        return ret;
+                    }
+                }
+            }
+            return null;
+        }else{
+            for(Area child : children){
+                Vect ret = child.getInternalPoint(accuracy);
+                if(ret != null){
+                    return ret;
+                }
+            }
+            return null;
+        }
+    }
+    
     @Override
     public int hashCode() {
         int hash = 3;
@@ -771,23 +969,28 @@ public class Area implements Geom {
         return ret;
     }
     
+    /**
+     * Get the number of child areas
+     * @return the number of child areas
+     */
     public int numChildren(){
         return children.length;
     }
-    
+        
+    /**
+     * Get the child at the index given (Children are sorted by x then y)
+     * @param index
+     * @return the child at the index given
+     */
     public Area getChild(int index){
         return children[index];
     }
     
-    void getVects(VectList results){
-        if(shell != null){
-            results.addAll(shell.vects);
-        }
-        for(Area child : children){
-            child.getVects(results);
-        }
-    }
-    
+    /**
+     * Get the convex hull of this area
+     * @param accuracy
+     * @return
+     */
     public Ring getConvexHull(Tolerance accuracy){
         if((shell != null) && shell.isConvex()){
             return shell;
@@ -798,15 +1001,32 @@ public class Area implements Geom {
         VectList convexHull = hull.getConvexHull(vects);
         return new Ring(convexHull, null);
     }
-      
+  
+    void getVects(VectList results){
+        if(shell != null){
+            results.addAll(shell.vects);
+        }
+        for(Area child : children){
+            child.getVects(results);
+        }
+    }
+    
     /**
      * Bisect this area along the line given. Returns either one or two areas, depending on whether
      * the line actually bisected this area.
+     * @param bisector
+     * @param accuracy
+     * @return 
+     * @throws NullPointerException if bisector or accuracy was null
      */
     public List<Area> bisect(Line bisector, Tolerance accuracy) throws NullPointerException {
         List<Area> ret = new ArrayList<>();
         bisector = bisector.segCrossing(getBounds());
-        bisectInternal(bisector, accuracy, ret);
+        if(bisector == null){
+            ret.add(this);
+        }else{
+            bisectInternal(bisector, accuracy, ret);
+        }
         return ret;
     }
     
@@ -903,10 +1123,18 @@ public class Area implements Geom {
         return network;
     }
     
+    /**
+     * Determine if this area is a convex ring with no holes
+     * @return
+     */
     public boolean isConvexRing(){
         return (children.length == 0) && shell.isConvex();
     }
     
+    /**
+     * Get the shell of this area (or null if it has no single outer shell)
+     * @return
+     */
     public Ring getShell(){
         return shell;
     }

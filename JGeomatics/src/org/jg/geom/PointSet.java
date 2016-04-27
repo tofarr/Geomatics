@@ -404,7 +404,59 @@ public final class PointSet implements Geom {
             return new PointSet(ret);
         }
     }
+
+    @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
+        if(other instanceof Vect){
+            return xor((Vect)other, accuracy);
+        }else if(other instanceof PointSet){
+            return xor((PointSet)other, accuracy);
+        }else{
+            return toGeoShape().xor(other, linearizer, accuracy);
+        }
+    }
       
+    public PointSet xor(Vect other, Tolerance accuracy) throws NullPointerException{
+        VectList ret = new VectList();
+        VectBuilder vect = new VectBuilder();
+        for(int v = 0; v < vects.size(); v++){
+            vects.getVect(v, vect);
+            if(other.relate(vect, accuracy) != Relation.TOUCH){
+                ret.add(vect);
+            }
+        }
+        if(ret.size() == 0){
+            return null;
+        }
+        if(ret.size() == vects.size()){
+            ret.add(other);
+            ret.sort();
+        }
+        return new PointSet(ret);
+    }
+      
+    public PointSet xor(PointSet other, Tolerance accuracy) throws NullPointerException{
+        VectList ret = new VectList();
+        VectBuilder vect = new VectBuilder();
+        for(int v = 0; v < vects.size(); v++){
+            vects.getVect(v, vect);
+            if(other.relate(vect, accuracy) != Relation.TOUCH){
+                ret.add(vect);
+            }
+        }
+        for(int v = 0; v < other.vects.size(); v++){
+            other.vects.getVect(v, vect);
+            if(relate(vect, accuracy) != Relation.TOUCH){
+                ret.add(vect);
+            }
+        }
+        if(ret.size() == 0){
+            return null;
+        }
+        ret.sort();
+        return new PointSet(ret);
+    }
+    
     @Override
     public double getArea(Linearizer linearizer, Tolerance accuracy){
         return 0;

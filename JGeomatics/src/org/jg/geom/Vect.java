@@ -301,6 +301,34 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
+    public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException {
+        if(other instanceof Vect){
+            return xor((Vect)other, accuracy);
+        }else if (other.relate(this, accuracy) != Relation.DISJOINT) {
+            return other;
+        }
+        return other.xor(this, linearizer, accuracy);
+    }
+    
+    /**
+     * xor this vect and that given
+     * @param other
+     * @param accuracy
+     * @return null if points same, pointset if different
+     */
+    public Geom xor(Vect other, Tolerance accuracy){
+        if(this.match(other, accuracy)) {
+            return null;
+        }else{
+            VectList vects = new VectList();
+            vects.add(this);
+            vects.add(other);
+            vects.sort();
+            return new PointSet(vects);
+        }
+    }
+
+    @Override
     public double getArea(Linearizer linearizer, Tolerance accuracy){
         return 0;
     }

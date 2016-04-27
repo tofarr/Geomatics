@@ -21,7 +21,7 @@ import org.jg.util.VectList;
  *
  * @author tofar_000
  */
-public class LineString implements Geom {
+public final class LineString implements Geom {
 
     public static final LineString[] EMPTY = new LineString[0];
     final VectList vects;
@@ -617,7 +617,6 @@ public class LineString implements Geom {
         if(input.size() < 3){
             return input.clone();
         }
-        final double tol = accuracy.tolerance * accuracy.tolerance;
         VectList output = new VectList();
         double ax = input.getX(0);
         double ay = input.getY(0);
@@ -627,7 +626,7 @@ public class LineString implements Geom {
         for(int i = 2; i < input.size(); i++){
             double cx = input.getX(i);
             double cy = input.getY(i);
-            if(Line.distSegVectSq(ax, ay, cx, cy, bx, by) > tol){
+            if(Line.distSegVectSq(ax, ay, cx, cy, bx, by) > accuracy.toleranceSq){
                 output.add(bx, by);
                 ax = bx;
                 ay = by;
@@ -648,7 +647,7 @@ public class LineString implements Geom {
         public RelateProcessor(double x, double y, Tolerance tolerance) {
             this.x = x;
             this.y = y;
-            toleranceSq = tolerance.tolerance * tolerance.tolerance;
+            toleranceSq = tolerance.toleranceSq;
         }
 
         @Override

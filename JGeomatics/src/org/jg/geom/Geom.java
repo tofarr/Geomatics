@@ -113,9 +113,8 @@ public interface Geom extends Cloneable, Serializable {
      * @param accuracy tolerance for inaccuracy
      * @return relation
      * @throws NullPointerException if geom or accuracy was null
-     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
+    int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
     
     /**
      * Get the area of this geometry.
@@ -124,9 +123,8 @@ public interface Geom extends Cloneable, Serializable {
      * @param accuracy
      * @return
      * @throws NullPointerException if accuracy was null
-     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
+    double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
     
     /**
      * Get the union of this geometry and that given. Any point touching one of
@@ -138,9 +136,8 @@ public interface Geom extends Cloneable, Serializable {
      * @param accuracy tolerance for inaccuracy
      * @return union geometry
      * @throws NullPointerException if other or tolerance was null
-     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
+    Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the intersection of this geometry and that given. Any point touching
@@ -152,9 +149,8 @@ public interface Geom extends Cloneable, Serializable {
      * @param accuracy tolerance for inaccuracy
      * @return union geometry
      * @throws NullPointerException if other or tolerance was null
-     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
+    Geom intersection(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
 
     /**
      * Get the product of this geometry less the geometry given. Any point inside the
@@ -164,9 +160,19 @@ public interface Geom extends Cloneable, Serializable {
      * @param accuracy tolerance for inaccuracy
      * @return this less other
      * @throws NullPointerException if other or tolerance was null
-     * @throws IllegalArgumentException if linesPerQuadrant <= 0
      */
-    Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException;
+    Geom less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
+    
+    /**
+     * Get the geometry which relresents everything touching or inside one geometry but not the
+     * other.
+     * @param other other geometry
+     * @param linearizer converter for arcs to lines if required
+     * @param accuracy tolerance for inaccuracy
+     * @return this less other
+     * @throws NullPointerException if other or tolerance was null
+     */
+    Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
     
     /**
      * Comparator for comparing geometries by their Bounds

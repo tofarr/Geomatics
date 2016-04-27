@@ -10,7 +10,6 @@ import org.jg.util.Tolerance;
 class VectRelationProcessor implements NodeProcessor<Line> {
 
     private final Tolerance tolerance;
-    private final double tolSq;
     private double x;
     private double y;
     private int relation;
@@ -19,7 +18,6 @@ class VectRelationProcessor implements NodeProcessor<Line> {
 
     VectRelationProcessor(Tolerance tolerance) {
         this.tolerance = tolerance;
-        this.tolSq = Math.pow(tolerance.tolerance, 2);
     }
 
     VectRelationProcessor(Tolerance tolerance, double x, double y) {
@@ -49,7 +47,7 @@ class VectRelationProcessor implements NodeProcessor<Line> {
     @Override
     public boolean process(Rect bounds, Line line) {
         
-        if(Line.distSegVectSq(line.ax, line.ay, line.bx, line.by, x, y) <= tolSq){
+        if(Line.distSegVectSq(line.ax, line.ay, line.bx, line.by, x, y) <= tolerance.toleranceSq){
             relation = Relation.TOUCH;
             return false;
         }

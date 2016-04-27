@@ -113,7 +113,7 @@ public class AreaTest {
     public void testGetArea() {
         Network network = new Network();
         network.addAllLinks(new VectList(0,0, 50,0, 50,70, 0,70, 0,0));
-        assertEquals(3500, Area.valueOf(TOL, network).getArea(), 0.01);
+        assertEquals(3500, Area.valueOf(TOL, network).getArea(Linearizer.DEFAULT, TOL), 0.01);
         network.addAllLinks(new VectList(10,10, 40,10, 40,60, 10,60, 10,10));
         assertEquals(2000, Area.valueOf(TOL, network).getArea(), 0.01);
         network.addAllLinks(new VectList(80,0, 90,0, 90,10, 80,10, 80,0));
@@ -482,6 +482,37 @@ public class AreaTest {
         assertEquals(Relation.ALL ^ Relation.B_OUTSIDE_A, f.relate(d, Linearizer.DEFAULT, TOL));
         assertEquals(Relation.ALL, f.relate(e, Linearizer.DEFAULT, TOL));
         assertEquals(Relation.TOUCH | Relation.A_INSIDE_B | Relation.B_INSIDE_A, f.relate(f, Linearizer.DEFAULT, TOL));
+    } 
+    
+    @Test
+    public void testRelate_Area_B() {
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 4,0, 0,4, 0,0));
+        network.addAllLinks(new VectList(1,1, 2,1, 1,2, 1,1));
+        Area a = Area.valueOf(TOL, network);
+        // Testing with a large tolerance means the internal area may not be processed correctly 
+        // - we may be missing the inside relation
+        assertTrue(Relation.isTouch(a.relate(a, Linearizer.DEFAULT, new Tolerance(2))));
+        
+        network = new Network();
+        network.addAllLinks(new VectList(1,1, 8,1, 1,8, 1,1));
+        network.addAllLinks(new VectList(20,0, 30,0, 20,10, 20,0));
+        network.addAllLinks(new VectList(21,1, 28,1, 21,8, 21,1));
+        Area b = Area.valueOf(TOL, network);
+        network.addAllLinks(new VectList(0,0, 10,0, 0,10, 0,0));        
+        Area c = Area.valueOf(TOL, network);
+        
+        // Testing with a large tolerance means the internal area may not be processed correctly 
+        // - we may be missing the inside relation
+        assertEquals(Relation.TOUCH, b.relate(b, Linearizer.DEFAULT, new Tolerance(2)));
+        int relate = b.relate(c, Linearizer.DEFAULT, new Tolerance(0.6));
+        assertTrue(Relation.isTouch(relate));
+        assertTrue(Relation.isAOutsideB(relate));
+        assertTrue(Relation.isBOutsideA(relate));
+        relate = c.relate(b, Linearizer.DEFAULT, new Tolerance(0.6));
+        assertTrue(Relation.isTouch(relate));
+        assertTrue(Relation.isAOutsideB(relate));
+        assertTrue(Relation.isBOutsideA(relate));
     }
     
     @Test
@@ -657,7 +688,11 @@ public class AreaTest {
         GeoShape c = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
                 LineSet.valueOf(TOL, 20,100, 100,20),
                 PointSet.valueOf(75,75));
+        Ring d = Ring.valueOf(TOL, 200,0, 300,0, 200,100, 200,0);
+        Area e = new Area(d);
         assertEquals(c, a.intersection(b, Linearizer.DEFAULT, TOL));
+        assertNull(a.intersection(d, Linearizer.DEFAULT, TOL));
+        assertNull(a.intersection(e, Linearizer.DEFAULT, TOL));
     }
 
     @Test
@@ -685,5 +720,101 @@ public class AreaTest {
                 PointSet.valueOf(0,150, 100,100, 150,0));
         Area c = Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50);
         assertEquals(c, a.less(b, Linearizer.DEFAULT, TOL));
+        Area d = Area.valueOf(TOL, 200,0, 300,0, 300,100, 200,0);
+        assertSame(a, a.less(d, Linearizer.DEFAULT, TOL));
+        assertSame(a, a.less(d, TOL));
+        assertSame(a, a.less(d.getShell(), TOL));
+    }
+    
+    @Test
+    public void testGetInternalPoint(){
+        Network network = new Network();
+        for(int i = 0; i < 5; i++){
+            Rect.valueOf(13-i,17-i,23+i,29+i).addTo(network, Linearizer.DEFAULT, TOL);
+        }
+        Area a = Area.valueOf(TOL, network);
+        Vect internalPoint = a.getInternalPoint(new Tolerance(2));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, a.relate(internalPoint, TOL));
+        
+        Area b = Area.valueOf(TOL, 0,0, 101,0, 101,100, 1,0, 0,1, 0,0);
+        internalPoint = b.getInternalPoint(new Tolerance(2));
+        assertEquals(Relation.A_OUTSIDE_B | Relation.B_INSIDE_A, b.relate(internalPoint, TOL));
+        
+        Area c = Area.valueOf(TOL, 0,0, 2,0, 2,1, 1,0, 0,1, 0,0);
+        internalPoint = c.getInternalPoint(new Tolerance(2));
+        assertNull(internalPoint);
+        
+        network = new Network();
+        for(int i = 0; i < 5; i++){
+            Rect.valueOf(5-i,5-i,5+i,5+i).addTo(network, Linearizer.DEFAULT, TOL);
+        }
+        Area d = Area.valueOf(TOL, network);
+        internalPoint = d.getInternalPoint(new Tolerance(2));
+        assertNull(internalPoint);
+    }
+    
+    @Test
+    public void testGetConvexHull(){
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 100,0, 40,40, 0,100, 0,0));
+        network.addAllLinks(new VectList(10,10, 80,10, 30,30, 10,80, 10,10));
+        network.addAllLinks(new VectList(200,0, 300,0, 240,40, 200,100, 200,0));
+        Area a = Area.valueOf(TOL, network);
+        Ring b = Ring.valueOf(TOL, 0,0, 300,0, 200,100, 0,100, 0,0);
+        Ring c = a.getConvexHull(TOL);
+        assertEquals(b, c);
+        assertSame(c, c.toArea().getConvexHull(TOL));
+        assertEquals(Ring.valueOf(TOL, 0,0, 100,0, 0,100, 0,0), a.getChild(0).getConvexHull(TOL));
+    }   
+    
+    @Test
+    public void testIsConvexRing(){
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 100,0, 0,100, 0,0));
+        network.addAllLinks(new VectList(10,10, 80,10, 30,30, 10,80, 10,10));
+        network.addAllLinks(new VectList(200,0, 300,0, 240,40, 200,100, 200,0));
+        network.addAllLinks(new VectList(400,0, 500,0, 400,100, 400,0));
+        Area a = Area.valueOf(TOL, network);
+        assertFalse(a.isConvexRing());
+        assertFalse(a.getChild(0).isConvexRing());
+        assertFalse(a.getChild(1).isConvexRing());
+        assertTrue(a.getChild(2).isConvexRing());
+    }
+
+    @Test
+    public void testBisect(){
+        Network network = new Network();
+        network.addAllLinks(new VectList(0,0, 120,0, 40,40, 0,120, 0,0));
+        network.addAllLinks(new VectList(10,10, 80,10, 30,30, 10,80, 10,10));
+        network.addAllLinks(new VectList(150,0, 270,0, 190,40, 150,120, 150,0));
+        Area a = Area.valueOf(TOL, network);
+        List<Area> parts = a.bisect(Line.valueOf(0,50, 10,50), TOL);
+        assertEquals(2, parts.size());
+        assertEquals(a.intersection(Rect.valueOf(0,0, 300,50).toRing(), TOL).simplify(), parts.get(0));
+        assertEquals(a.intersection(Rect.valueOf(0,50, 300,150).toRing(), TOL).simplify(), parts.get(1));
+        
+        parts = a.bisect(Line.valueOf(0,0, 10,10), TOL);
+        assertEquals(2, parts.size());        
+        assertEquals(a.intersection(Ring.valueOf(TOL, 0,0, 300,0, 300,300, 0,0), TOL).simplify(), parts.get(0));
+        assertEquals(a.intersection(Ring.valueOf(TOL, 0,0, 0,300, 300,300, 0,0), TOL).area, parts.get(1));
+        
+        parts = a.bisect(Line.valueOf(-10,0, -10,10), TOL);
+        assertEquals(1, parts.size());
+        assertEquals(a, parts.get(0));
+        
+        
+        network = new Network();
+        network.addAllLinks(new VectList(0,0, 100,0, 100,20, 0,20, 0,0));
+        network.addAllLinks(new VectList(30,40, 70,40, 70,60, 30,60, 30,40));
+        a = Area.valueOf(TOL, network);
+        
+        parts = a.bisect(Line.valueOf(0,30, 20,60), TOL);
+        assertEquals(1, parts.size());
+        assertEquals(a, parts.get(0));
+        
+        parts = a.bisect(Line.valueOf(80,60, 100,30), TOL);
+        assertEquals(1, parts.size());
+        assertEquals(a, parts.get(0));
+        
     }
 }

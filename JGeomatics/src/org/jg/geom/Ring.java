@@ -530,7 +530,17 @@ public class Ring implements Geom {
     public void addTo(Network network) {
         network.addAllLinks(vects);
     }
-
+    
+    /**
+     * Toggle this ring in the network given - any links which did not exist are added, and any which
+     * did exist are removed
+     *
+     * @param network
+     */
+    public void toggleTo(Network network){
+        network.toggleAllLinks(vects);
+    }
+    
     @Override
     public Geom buffer(double amt, Linearizer linearizer, Tolerance accuracy) {
         if (amt == 0) {
@@ -636,7 +646,7 @@ public class Ring implements Geom {
         }
         ret.add(a);
         VectList links = new VectList();
-        double tolSq = tolerance.tolerance * tolerance.tolerance;
+        double tolSq = tolerance.toleranceSq;
         for(int i = 1; i < template.size(); i++){
             template.getVect(i, b);
             if(!network.hasVect(b.getX(), b.getY())){ // a was snapped out - get closest point on a
@@ -912,7 +922,7 @@ public class Ring implements Geom {
         ClosestLineProcessor closestLineProcessor = new ClosestLineProcessor();
         VectList intersections = new VectList();
         Rect bounds = getBounds();
-        final double tolSq = accuracy.tolerance * accuracy.tolerance;
+        final double tolSq = accuracy.toleranceSq;
         double bx = vects.getX(0);
         double by = vects.getY(0);
         for(int i = vects.size()-1; i-- > 0;){
@@ -931,7 +941,7 @@ public class Ring implements Geom {
             dy = dy * mul + my;
             Line ray = new Line(mx, my, dx, dy);
             
-            intersectionProcessor.reset(ray);
+            intersectionProcessor.reset(ray);            
             _lineIndex.forInteracting(ray.getBounds(), accuracy, intersectionProcessor);
             intersectionProcessor.getIntersections(intersections);
             
