@@ -7,11 +7,8 @@ package org.jg.io;
 
 /**
  *
- * @author tofarrell
+ * @author tofar
  */
-public class GeomWriter {
+public class BinaryGeomWriter {
     
-    //get render from type
-    
-    //pass to render.
 }

@@ -7,13 +7,8 @@ package org.jg.io;
 
 /**
  *
- * @author tofarrell
+ * @author tofar
  */
-public class GeomReader {
+public class BinaryGeomReader {
     
-    //read 2 chars 
-    
-    //get type 
-    
-    //refer to appropriate parser
 }
