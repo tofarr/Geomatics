@@ -11,19 +11,28 @@ import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
 
-//TODO: Do not need multi point
-//TODO: Rename to LineGeom
 /**
+ * Immutable geometry combining Area,LineSet and PointSet. Any of these may be null, though at least
+ * one of these should be set. Checks are in place to insure that points are disjoint from lines and
+ * areas, and that no part of any line may be inside an area, and lines may only touch areas at
+ * their end points.
  *
  * @author tofarrell
  */
 public class GeoShape implements Geom {
 
-    // Area for this geom (may be null) 
+    /**
+     * Area for this geom (may be null)
+     */
     public final Area area;
-    //ine strings which are not part of an area 
+    /**
+     * Line strings (may be null) - no part may be inside area, and may only touch at the end point
+     * of a line.
+     */
     public final LineSet lines;
-    // Points which are not part of a line 
+    /**
+     * Points (may be null) - must be disjoint from area and line
+     */
     public final PointSet points;
     // Bounds for this geo shape 
     Rect bounds;
@@ -33,8 +42,8 @@ public class GeoShape implements Geom {
         this.bounds = bounds;
     }
 
-    public GeoShape(Area area, LineSet lines, PointSet points) throws NullPointerException {
-        if((area == null) && (lines == null) && (points == null)){
+    GeoShape(Area area, LineSet lines, PointSet points) throws NullPointerException {
+        if ((area == null) && (lines == null) && (points == null)) {
             throw new NullPointerException("Must set at least one of area, lines, or points");
         }
         this.area = area;
@@ -42,7 +51,38 @@ public class GeoShape implements Geom {
         this.points = points;
     }
 
-    public static GeoShape valueOf(Network network, Tolerance accuracy) {
+    /**
+     * Get a GeoShape based on the components given.
+     *
+     * @param area
+     * @param lines
+     * @param points
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if all components were null, or accuracy was null
+     */
+    public static GeoShape valueOf(Area area, LineSet lines, PointSet points, Tolerance accuracy) throws NullPointerException {
+        if ((lines != null) && (area != null)) {
+            lines = lines.less(area, Linearizer.DEFAULT, accuracy);
+        }
+        if ((points != null) && (area != null)) {
+            points = points.less(area, accuracy);
+        }
+        if ((points != null) && (lines != null)) {
+            points = points.less(lines, accuracy);
+        }
+        return new GeoShape(area, lines, points);
+    }
+
+    /**
+     * Get a geoshape based on the network given
+     *
+     * @param network
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if network or accuracy was null
+     */
+    public static GeoShape valueOf(Network network, Tolerance accuracy) throws NullPointerException {
         network.clone();
         network.explicitIntersections(accuracy);
         network.snap(accuracy);
@@ -50,7 +90,7 @@ public class GeoShape implements Geom {
     }
 
     static GeoShape valueOfInternal(Network network, Tolerance accuracy) {
-        if(network.numVects() == 0){
+        if (network.numVects() == 0) {
             return null;
         }
         VectList pointVects = new VectList();
@@ -59,9 +99,9 @@ public class GeoShape implements Geom {
         network.extractHangLines(linePaths);
         Area area = Area.valueOfInternal(accuracy, network);
         if (area != null) { // validate points and lines against area
-            
-            for(int p = pointVects.size(); p-- > 0;){
-                if(!Relation.isDisjoint(area.relateInternal(pointVects.getX(p), pointVects.getY(p), accuracy))){
+
+            for (int p = pointVects.size(); p-- > 0;) {
+                if (!Relation.isDisjoint(area.relateInternal(pointVects.getX(p), pointVects.getY(p), accuracy))) {
                     pointVects.remove(p);
                 }
             }
@@ -69,12 +109,12 @@ public class GeoShape implements Geom {
             for (VectList linePath : linePaths) {
                 double ax = linePath.getX(0);
                 double ay = linePath.getY(0);
-                for(int b = 1; b < linePath.size(); b++){
+                for (int b = 1; b < linePath.size(); b++) {
                     double bx = linePath.getX(b);
                     double by = linePath.getY(b);
                     double x = (ax + bx) / 2;
                     double y = (ay + by) / 2;
-                    if(Relation.isDisjoint(area.relateInternal(x, y, accuracy))){
+                    if (Relation.isDisjoint(area.relateInternal(x, y, accuracy))) {
                         lineNetwork.addLinkInternal(ax, ay, bx, by);
                     }
                 }
@@ -83,7 +123,7 @@ public class GeoShape implements Geom {
             lineNetwork.extractHangLines(linePaths);
         }
         PointSet points = null;
-        if(!pointVects.isEmpty()){
+        if (!pointVects.isEmpty()) {
             pointVects.sort();
             points = new PointSet(pointVects);
         }
@@ -187,6 +227,11 @@ public class GeoShape implements Geom {
         };
     }
 
+    /**
+     * Add this GeoShape to the network given
+     *
+     * @param network
+     */
     public void addTo(Network network) {
         if (area != null) {
             area.addTo(network);
@@ -257,20 +302,20 @@ public class GeoShape implements Geom {
         return relateInternal(vect.getX(), vect.getY(), tolerance);
     }
 
-    int relateInternal(double x, double y, Tolerance tolerance){
+    int relateInternal(double x, double y, Tolerance tolerance) {
         int relate = Relation.NULL;
-        if(points != null){
+        if (points != null) {
             relate = points.relateInternal(x, y, tolerance);
-            if(Relation.isTouch(relate)){
-                if((lines != null) || (area != null)){ // in case single point
+            if (Relation.isTouch(relate)) {
+                if ((lines != null) || (area != null)) { // in case single point
                     relate |= Relation.A_OUTSIDE_B;
                 }
                 return relate;
             }
         }
-        if(lines != null){
-            relate |= lines.relateInternal(x, y, tolerance);
-            if(Relation.isTouch(relate)){
+        if (lines != null) {
+            relate = lines.relateInternal(x, y, tolerance);
+            if (Relation.isTouch(relate)) {
                 return relate;
             }
         }
@@ -284,19 +329,19 @@ public class GeoShape implements Geom {
     public int relate(Geom geom, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return relate(geom.toGeoShape(linearizer, accuracy), accuracy);
     }
-    
-    public int relate(GeoShape geom, Tolerance accuracy) throws NullPointerException{
+
+    public int relate(GeoShape geom, Tolerance accuracy) throws NullPointerException {
         int ret = Relation.NULL;
-        if(area != null){
-            if(geom.area != null){
-                ret = area.relate(geom.area, accuracy);    
-            }else{
+        if (area != null) {
+            if (geom.area != null) {
+                ret = area.relate(geom.area, accuracy);
+            } else {
                 ret |= Relation.A_OUTSIDE_B;
             }
-        }else if(geom.area != null){
+        } else if (geom.area != null) {
             ret |= Relation.B_OUTSIDE_A;
         }
-        if((lines != null) || (points != null) || (geom.lines != null) || (geom.points != null)){
+        if ((lines != null) || (points != null) || (geom.lines != null) || (geom.points != null)) {
             ret |= NetworkRelationProcessor.relate(this, geom, Linearizer.DEFAULT, accuracy);
         }
         return ret;
@@ -312,8 +357,15 @@ public class GeoShape implements Geom {
         return union(other.toGeoShape(linearizer, accuracy), accuracy).simplify();
     }
 
-    public GeoShape union(GeoShape other, Tolerance accuracy) {
-        
+    /**
+     * Get the union of this geoshape and that given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
+    public GeoShape union(GeoShape other, Tolerance accuracy) throws NullPointerException {
+
         Area _area;
         if (area == null) {
             _area = other.area;
@@ -322,7 +374,7 @@ public class GeoShape implements Geom {
         } else {
             _area = area.union(other.area, accuracy);
         }
-        
+
         LineSet _lines;
         if (lines == null) {
             _lines = other.lines;
@@ -331,10 +383,10 @@ public class GeoShape implements Geom {
         } else {
             _lines = lines.union(other.lines, accuracy);
         }
-        if((_lines != null) && (_area != null)){
+        if ((_lines != null) && (_area != null)) {
             _lines = _lines.less(_area, Linearizer.DEFAULT, accuracy);
         }
-        
+
         PointSet _points;
         if (points == null) {
             _points = other.points;
@@ -343,13 +395,13 @@ public class GeoShape implements Geom {
         } else {
             _points = points.union(other.points, accuracy);
         }
-        if((_points != null) && (_area != null)){
+        if ((_points != null) && (_area != null)) {
             _points = _points.less(_area, accuracy);
         }
-        if((_points != null) && (_lines != null)){
+        if ((_points != null) && (_lines != null)) {
             _points = _points.less(_lines, accuracy);
         }
-        
+
         return new GeoShape(_area, _lines, _points, getBounds().add(other.getBounds()));
     }
 
@@ -361,40 +413,47 @@ public class GeoShape implements Geom {
         GeoShape ret = intersection(other.toGeoShape(linearizer, accuracy), accuracy);
         return (ret == null) ? null : ret.simplify();
     }
-
+    
+    /**
+     * Get the intersection of this geoshape and that given
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape intersection(final GeoShape other, final Tolerance accuracy) {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return null;
         }
-        
+
         final Network network = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
-        network.forEachVertex(new VertexProcessor(){
+        network.forEachVertex(new VertexProcessor() {
             @Override
             public boolean process(double x, double y, int numLinks) {
-                if(Relation.isDisjoint(relateInternal(x, y, accuracy))
-                    || Relation.isDisjoint(other.relateInternal(x, y, accuracy))){
+                if (Relation.isDisjoint(relateInternal(x, y, accuracy))
+                        || Relation.isDisjoint(other.relateInternal(x, y, accuracy))) {
                     network.removeVertexInternal(x, y);
                 }
                 return true;
             }
         });
-        network.forEachLink(new LinkProcessor(){
+        network.forEachLink(new LinkProcessor() {
             @Override
             public boolean process(double ax, double ay, double bx, double by) {
                 double x = (ax + bx) / 2;
                 double y = (ay + by) / 2;
-                if(Relation.isDisjoint(relateInternal(x, y, accuracy))
-                    || Relation.isDisjoint(other.relateInternal(x, y, accuracy))){
+                if (Relation.isDisjoint(relateInternal(x, y, accuracy))
+                        || Relation.isDisjoint(other.relateInternal(x, y, accuracy))) {
                     network.removeLinkInternal(ax, ay, bx, by);
                 }
                 return true;
             }
-        
+
         });
         GeoShape ret = GeoShape.valueOfInternal(network, accuracy);
         return ret;
     }
-    
+
     @Override
     public GeoShape less(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
@@ -403,6 +462,13 @@ public class GeoShape implements Geom {
         return less(other.toGeoShape(linearizer, accuracy), accuracy);
     }
     
+    /**
+     * Get the remainder of this geoshape after that given is subtracted
+     * @param other
+     * @param accuracy
+     * @return
+     * @throws NullPointerException if other or accuracy was null
+     */
     public GeoShape less(GeoShape other, final Tolerance accuracy) throws NullPointerException {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) {
             return this;
@@ -413,23 +479,24 @@ public class GeoShape implements Geom {
             _area = _area.less(other.area, accuracy);
         }
         LineSet _lines = null;
-        if(lines != null){
+        if (lines != null) {
             _lines = lines.less(other, Linearizer.DEFAULT, accuracy);
         }
         PointSet _points = null;
-        if(points != null){
+        if (points != null) {
             _points = points.less(other, accuracy);
         }
         return (_area != null) || (_lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
-    }  
+    }
 
     @Override
     public GeoShape xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return xor(other.toGeoShape(linearizer, accuracy), accuracy);
     }
-    
+
     /**
      * Xor this geoshape with the geoshape given
+     *
      * @param other
      * @param accuracy
      * @return
@@ -437,42 +504,42 @@ public class GeoShape implements Geom {
      */
     public GeoShape xor(GeoShape other, final Tolerance accuracy) throws NullPointerException {
         Area _area = area;
-        if(other.area != null){
+        if (other.area != null) {
             _area = (_area == null) ? other.area : _area.xor(other.area, accuracy);
         }
-        
+
         LineSet _lines = lines;
-        if(other.lines != null){
+        if (other.lines != null) {
             _lines = (_lines == null) ? other.lines : _lines.xor(other.lines, accuracy);
         }
-        if((_lines != null) && (area != null)){
+        if ((_lines != null) && (area != null)) {
             _lines = _lines.less(area, Linearizer.DEFAULT, accuracy);
         }
-        if((_lines != null) && (other.area != null)){
+        if ((_lines != null) && (other.area != null)) {
             _lines = _lines.less(other.area, Linearizer.DEFAULT, accuracy);
         }
-        
+
         PointSet _points = points;
-        if(other.points != null){
+        if (other.points != null) {
             _points = (_points == null) ? other.points : _points.xor(other.points, accuracy);
         }
-        if((_points != null) && (area != null)){
+        if ((_points != null) && (area != null)) {
             _points = _points.less(area, accuracy);
         }
-        if((_points != null) && (other.area != null)){
+        if ((_points != null) && (other.area != null)) {
             _points = _points.less(other.area, accuracy);
         }
-        
-        if((_points != null) && (lines != null)){
+
+        if ((_points != null) && (lines != null)) {
             _points = _points.less(lines, accuracy);
         }
-        if((_points != null) && (other.lines != null)){
+        if ((_points != null) && (other.lines != null)) {
             _points = _points.less(other.lines, accuracy);
         }
-        
+
         return (_area != null) || (_lines != null) || (_points != null) ? new GeoShape(_area, _lines, _points) : null;
-    }  
-    
+    }
+
     @Override
     public int hashCode() {
         int hash = 3;
@@ -484,15 +551,19 @@ public class GeoShape implements Geom {
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof GeoShape)){
+        if (!(obj instanceof GeoShape)) {
             return false;
         }
         final GeoShape other = (GeoShape) obj;
-        return Objects.equals(this.area, other.area) && 
-                Objects.equals(this.lines, other.lines) &&
-                Objects.equals(this.points, other.points);
+        return Objects.equals(this.area, other.area)
+                && Objects.equals(this.lines, other.lines)
+                && Objects.equals(this.points, other.points);
     }
 
+    /**
+     * Convert this geoshape to Well Known text
+     * @return
+     */
     public String toWkt() {
         StringBuilder str = new StringBuilder();
         toWkt(str);
@@ -514,8 +585,8 @@ public class GeoShape implements Geom {
             throw new GeomException("Error writing WKT", ex);
         }
     }
-    
-    public Geom simplify(){
+
+    public Geom simplify() {
         if ((area == null) && (lines == null)) {
             return points.simplify();
         } else if ((area == null) && (points == null)) {
@@ -526,12 +597,6 @@ public class GeoShape implements Geom {
             return this;
         }
     }
-    
-    /*
-    static Geom reduce(Area area, MultiLineString lines, PointSet mp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    */
 
     private void toPointWkt(Appendable appendable) throws IOException {
         if (points.numPoints() == 1) {
@@ -548,8 +613,8 @@ public class GeoShape implements Geom {
             toVectsWkt(lines.getLineString(0).vects, appendable);
         } else {
             appendable.append("MULTILINESTRING(");
-            for(int i = 0; i < lines.numLineStrings(); i++){
-                if(i != 0){
+            for (int i = 0; i < lines.numLineStrings(); i++) {
+                if (i != 0) {
                     appendable.append(", ");
                 }
                 toVectsWkt(lines.getLineString(i).vects, appendable);
@@ -582,8 +647,8 @@ public class GeoShape implements Geom {
         appendable.append("GEOMETRYCOLLECTION(");
         boolean comma = false;
         if (area != null) {
-            if(area.shell == null){
-                for(int i = 0; i < area.numChildren(); i++){
+            if (area.shell == null) {
+                for (int i = 0; i < area.numChildren(); i++) {
                     if (comma) {
                         appendable.append(',');
                     } else {
@@ -591,7 +656,7 @@ public class GeoShape implements Geom {
                     }
                     toPolygonWkt(area.getChild(i), appendable);
                 }
-            }else{
+            } else {
                 toPolygonWkt(area, appendable);
             }
             comma = true;
@@ -671,11 +736,11 @@ public class GeoShape implements Geom {
     }
 
     void addIntersections(Network network, Tolerance accuracy) {
-        if(area != null){
+        if (area != null) {
             network.explicitIntersectionsWith(area.getLineIndex(), accuracy);
         }
-        if(lines != null){
-            for(int i = lines.numLineStrings(); i-- > 0;){
+        if (lines != null) {
+            for (int i = lines.numLineStrings(); i-- > 0;) {
                 network.explicitIntersectionsWith(lines.getLineString(i).getLineIndex(), accuracy);
             }
         }

@@ -726,6 +726,33 @@ public class AreaTest {
         assertSame(a, a.less(d.getShell(), TOL));
     }
     
+    @Test
+    public void testToggleTo(){
+        Network network = new Network();
+        Area a = Area.valueOf(TOL, 0,0, 100,0, 100,100, 0,0);
+        Area b = Area.valueOf(TOL, 0,0, 100,100, 0,100, 0,0);
+        Area c = new Area(a.getBounds().buffer(10).toRing(), a, b);
+        Area d = new Area(null, a, b);
+        a.toggleTo(network);
+        assertEquals("[[0,0, 100,0, 100,100, 0,0]]", network.toString());
+        a.toggleTo(network);
+        assertEquals("[[0,0],[100,0],[100,100]]", network.toString());
+        a.toggleTo(network);
+        b.toggleTo(network);
+        assertEquals("[[0,0, 100,0, 100,100, 0,100, 0,0]]", network.toString());
+        b.toggleTo(network);
+        assertEquals("[[0,0, 100,0, 100,100, 0,0],[0,100]]", network.toString());
+        c.toggleTo(network);
+        assertEquals("[[-10,-10, 110,-10, 110,110, -10,110, -10,-10],[0,0, 100,100, 0,100, 0,0],[100,0]]", network.toString());
+        d.toggleTo(network);
+        assertEquals("[[-10,-10, 110,-10, 110,110, -10,110, -10,-10],[0,0, 100,0, 100,100, 0,0],[0,100]]", network.toString());
+        try{
+            a.toggleTo(null);
+            fail("Exception expected");
+        }catch(NullPointerException ex){
+        }
+    }
+    
 
     @Test
     public void testXor_3args() {
@@ -733,12 +760,19 @@ public class AreaTest {
         GeoShape b = new GeoShape(Area.valueOf(TOL, 0,0, 50,0, 0,50, 0,0),
                 LineSet.valueOf(TOL, 0,120, 100,20, 100,40, 140,0),
                 PointSet.valueOf(0,150, 100,100, 150,0));
-        Area c = Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50);
+        GeoShape c = new GeoShape(Area.valueOf(TOL, 0,50, 50,0, 100,0, 100,100, 0,100, 0,50),
+                b.lines.less(a, Linearizer.DEFAULT, TOL),
+                b.points.less(a, TOL));
         assertEquals(c, a.xor(b, Linearizer.DEFAULT, TOL));
-        Area d = Area.valueOf(TOL, 200,0, 300,0, 300,100, 200,0);
-        assertSame(a, a.xor(d, Linearizer.DEFAULT, TOL));
-        assertSame(a, a.xor(d, TOL));
-        assertSame(a, a.xor(d.getShell(), TOL));
+        assertEquals(c, b.xor(a, Linearizer.DEFAULT, TOL));
+        assertNull(a.xor(a, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(b.area, TOL).less(a.intersection(b.area, TOL), Linearizer.DEFAULT, TOL).simplify(), a.xor(b.area, Linearizer.DEFAULT, TOL));
+        assertEquals(a.union(c.area, TOL).less(a.intersection(c.area, TOL), Linearizer.DEFAULT, TOL).simplify(), a.xor(c.area, Linearizer.DEFAULT, TOL));
+        Geom d = b.union(c, Linearizer.DEFAULT, TOL);
+        Geom e = b.intersection(c, Linearizer.DEFAULT, TOL);
+        Geom f = d.less(e, Linearizer.DEFAULT, TOL);
+        assertEquals(f, b.xor(c, Linearizer.DEFAULT, TOL));
+        assertNull(a.xor(a.toGeoShape(), Linearizer.DEFAULT, TOL));
     }
     
     @Test

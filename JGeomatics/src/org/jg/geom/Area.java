@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import org.jg.algorithm.ConvexHull;
 import org.jg.geom.Network.LinkProcessor;
 import org.jg.geom.Network.VertexProcessor;
@@ -919,7 +917,7 @@ public final class Area implements Geom {
      * @param accuracy
      * @return 
      */
-    public Area xor(Area other, Tolerance accuracy) {
+    public Area xor(final Area other, final Tolerance accuracy) {
         if (Relation.isDisjoint(getBounds().relate(other.getBounds(), accuracy))) { // Skip networking polygonization - shortcut
             final List<Area> areas = new ArrayList<>();
             addDisjoint(this, areas);
@@ -928,12 +926,25 @@ public final class Area implements Geom {
             Arrays.sort(_children, COMPARATOR);
             return new Area(null, _children);
         }
-        Network network = new Network();
-        addTo(network);
-        other.toggleTo(network);
-        return Area.valueOf(accuracy, network);
+        Network normalized = Network.valueOf(accuracy, Linearizer.DEFAULT, this, other);
+        final Network network = new Network();
+        normalized.forEachLink(new LinkProcessor() {
+            @Override
+            public boolean process(double ax, double ay, double bx, double by) {
+                double x = (ax + bx) / 2;
+                double y = (ay + by) / 2;
+                int aRelate = Area.this.relateInternal(x, y, accuracy);
+                int bRelate = other.relateInternal(x, y, accuracy);
+                if(!(Relation.isTouch(aRelate) && Relation.isTouch(bRelate))){
+                    network.addLinkInternal(ax, ay, bx, by);
+                }
+                return true;
+            }
+        });
+        
+        return Area.valueOfInternal(accuracy, network);
     }
-    
+        
     /**
      * Get a point which is inside this linear ring. at least the distance given from an edge.
      * The details of which point are undefined.

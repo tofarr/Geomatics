@@ -393,6 +393,8 @@ public class LineSetTest {
         assertEquals(d.toRing(), b.toLineSet().xor(d, Linearizer.DEFAULT, TOL));
         assertEquals("[\"GS\",[\"AR\"[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\", [20,60, 20,20, 60,20], [40,80, 60,80]]]",
                 c.xor(d, Linearizer.DEFAULT, TOL).toString());
+        assertNull(a.xor(a, Linearizer.DEFAULT, TOL));
+        assertNull(a.xor(a.toGeoShape(), Linearizer.DEFAULT, TOL));
     }
 
     @Test

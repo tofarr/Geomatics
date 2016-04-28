@@ -408,14 +408,16 @@ public class PointSetTest {
         Ring f = Rect.valueOf(13, 1, 14, 2).toRing();
         Vect g = Vect.valueOf(2, 4);
         
-        
         assertNull(a.xor(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(e, a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(d, a.xor(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertEquals(d, c.xor(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(c, a.xor(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(b.toRing(), a.xor(e, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(new GeoShape(f.toArea(), null, a), a.xor(f, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(new PointSet(new VectList(2,3, 2,4, 5,7, 11,13)), a.xor(g, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(d.toPointSet().xor(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
+        assertNull(d.toPointSet().xor(d.toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT), Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         try {
             a.xor(null, Linearizer.DEFAULT, Tolerance.DEFAULT);

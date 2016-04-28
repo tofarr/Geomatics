@@ -369,27 +369,15 @@ public final class LineSet implements Geom {
         }
         final Network network = Network.valueOf(accuracy, linearizer, this, other);
         final Network less = new Network();
-        network.map.forEach(new VectMapProcessor<VectList>(){
+        network.forEachLink(new LinkProcessor(){
             final VectBuilder workingVect = new VectBuilder();
             @Override
-            public boolean process(double x, double y, VectList links) {
-                workingVect.set(x, y);
-                if(Relation.isBOutsideA(LineSet.this.relate(workingVect, accuracy))){
-                    return true; // Anything not in original should not be in new...
+            public boolean process(double ax, double ay, double bx, double by) {
+                workingVect.set((ax + bx) / 2, (ay + by) / 2);
+                if(Relation.isTouch(LineSet.this.relate(workingVect, accuracy)) &&
+                        Relation.isBOutsideA(other.relate(workingVect, accuracy))){ // any links not in original should be added
+                    less.addLinkInternal(ax, ay, bx, by);
                 }
-
-                //Process links
-                for(int i = links.size(); i-- > 0;){
-                    double bx = links.getX(i);
-                    double by = links.getY(i);
-                    if(Vect.compare(x, y, bx, by) < 0){ // prevent processing twice
-                        workingVect.set((x + bx) / 2, (y + by) / 2);
-                        if(Relation.isBOutsideA(other.relate(workingVect, accuracy))){ // any links not in original should be added
-                            less.addLinkInternal(x, y, bx, by);
-                        }
-                    }
-                }
-
                 return true;
             }
         });

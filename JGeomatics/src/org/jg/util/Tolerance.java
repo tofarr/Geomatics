@@ -102,7 +102,7 @@ public final class Tolerance implements Serializable, Cloneable {
      */
     public boolean match(double ax, double ay, double bx, double by) {
         double distSq = Vect.distSq(ax, ay, bx, by);
-        return distSq < toleranceSq;
+        return distSq <= toleranceSq;
     }
 
     /**
