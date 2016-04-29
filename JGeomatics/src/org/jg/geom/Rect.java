@@ -18,6 +18,7 @@ import org.jg.util.VectList;
  */
 public final class Rect implements Geom {
 
+    public static final String CODE = "RE";
     /**
      * min X value
      */
@@ -585,7 +586,7 @@ public final class Rect implements Geom {
 
     static void toString(double minX, double minY, double maxX, double maxY, Appendable appendable) {
         try {
-            appendable.append("[\"RE\",")
+            appendable.append("[\"").append(CODE).append("\",")
                     .append(Vect.ordToStr(minX)).append(',')
                     .append(Vect.ordToStr(minY)).append(',')
                     .append(Vect.ordToStr(maxX)).append(',')

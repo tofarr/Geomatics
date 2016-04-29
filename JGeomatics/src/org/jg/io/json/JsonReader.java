@@ -1,4 +1,4 @@
-package org.jg.io;
+package org.jg.io.json;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -8,13 +8,13 @@ import java.util.ArrayDeque;
 import org.jg.geom.GeomIOException;
 
 /**
- * Simple Json reader
+ * Simple streaming json reader
  *
  * @author tofar
  */
 public class JsonReader {
 
-    public enum Type {
+    private enum ReaderType {
         BEGIN_OBJECT,
         END_OBJECT,
         BEGIN_ARRAY,
@@ -28,9 +28,9 @@ public class JsonReader {
         COMMA,
     }
     private final PushbackReader reader;
-    private final ArrayDeque<Type> parents;
-    private Type parent;
-    private Type prev;
+    private final ArrayDeque<JsonType> parents;
+    private JsonType parent;
+    private ReaderType prev;
     private StringBuilder str;
     private double num;
     private boolean bool;
@@ -40,99 +40,104 @@ public class JsonReader {
         this.parents = new ArrayDeque<>();
     }
 
-    public Type next() {
+    /**
+     * Get next type from stream
+     *
+     * @return one of BEGIN_ARRAY,END_ARRAY,BEGIN_OBJECT,END_OBJECT,NAME,STRING,NUMBER,BOOLEAN,NULL
+     */
+    public JsonType next() {
         try {
             while (true) {
                 int c = nextValidChar();
                 switch (c) {
                     case '[':
-                        if ((parent == Type.BEGIN_OBJECT) && (prev != Type.COLON)) {
+                        if ((parent == JsonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
                             throw new GeomIOException("Values within objects must have a key!");
                         }
                         parents.push(parent);
-                        parent = Type.BEGIN_ARRAY;
+                        parent = JsonType.BEGIN_ARRAY;
                         prev = null;
-                        return Type.BEGIN_ARRAY;
+                        return JsonType.BEGIN_ARRAY;
                     case ']':
-                        if (parent != Type.BEGIN_ARRAY) {
+                        if (parent != JsonType.BEGIN_ARRAY) {
                             throw new GeomIOException("Attempting to close array when parent is " + parent);
-                        } else if (prev == Type.COMMA) {
+                        } else if (prev == ReaderType.COMMA) {
                             throw new GeomIOException("Trailing comma in array!");
                         }
                         parent = parents.pop();
-                        return Type.END_ARRAY;
+                        return JsonType.END_ARRAY;
                     case '{':
-                        if ((parent == Type.BEGIN_OBJECT) && (prev != Type.COLON)) {
+                        if ((parent == JsonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
                             throw new GeomIOException("Values within objects must have a key!");
                         }
                         parents.push(parent);
-                        parent = Type.BEGIN_OBJECT;
+                        parent = JsonType.BEGIN_OBJECT;
                         prev = null;
-                        return Type.BEGIN_OBJECT;
+                        return JsonType.BEGIN_OBJECT;
                     case '}':
-                        if (parent != Type.BEGIN_OBJECT) {
+                        if (parent != JsonType.BEGIN_OBJECT) {
                             throw new GeomIOException("Attempting to close object when parent is " + parent);
-                        } else if (prev == Type.COMMA) {
+                        } else if (prev == ReaderType.COMMA) {
                             throw new GeomIOException("Trailing comma in array!");
                         }
                         parent = parents.pop();
-                        return Type.END_OBJECT;
+                        return JsonType.END_OBJECT;
                     case ':':
-                        if (parent != Type.BEGIN_OBJECT) {
+                        if (parent != JsonType.BEGIN_OBJECT) {
                             throw new GeomIOException("Cannot specify key value pairs in type " + parent);
-                        } else if (prev != Type.NAME) {
+                        } else if (prev != ReaderType.NAME) {
                             throw new GeomIOException("Values within objects must have a key!");
                         }
-                        prev = Type.COLON;
+                        prev = ReaderType.COLON;
                         break;
                     case ',':
                         if (parent == null) {
                             throw new GeomIOException("Comma outside object!");
                         } else if (prev == null) {
                             throw new GeomIOException("Comma is first element in " + parent);
-                        } else if (prev == Type.NAME) {
+                        } else if (prev == ReaderType.NAME) {
                             throw new GeomIOException("Comma following name!");
-                        } else if (prev == Type.COLON) {
+                        } else if (prev == ReaderType.COLON) {
                             throw new GeomIOException("Comma following colon!");
-                        } else if (prev == Type.COMMA) {
+                        } else if (prev == ReaderType.COMMA) {
                             throw new GeomIOException("Comma outside object!");
                         }
-                        prev = Type.COMMA;
+                        prev = ReaderType.COMMA;
                         break;
                     case '"':
                         readCommentedString('"');
-                        if ((parent == Type.BEGIN_OBJECT) && (prev == null || prev == Type.COMMA)) {
-                            prev = Type.NAME;
-                            return prev;
+                        if ((parent == JsonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
+                            prev = ReaderType.NAME;
+                            return JsonType.NAME;
                         } else {
-                            prev = Type.STRING;
-                            return prev;
+                            prev = ReaderType.STRING;
+                            return JsonType.STRING;
                         }
                     default:
                         //could be name, or could be boolean number or null
-                        if ((parent == Type.BEGIN_OBJECT) && (prev == null || prev == Type.COMMA)) {
+                        if ((parent == JsonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
                             readUncommentedString();
-                            prev = Type.NAME;
-                            return prev;
+                            prev = ReaderType.NAME;
+                            return JsonType.NAME;
                         }
                         readUncommentedString();
                         String value = str.toString();
                         switch (value) {
                             case "true":
                                 bool = true;
-                                prev = Type.BOOLEAN;
-                                return prev;
+                                prev = ReaderType.BOOLEAN;
+                                return JsonType.BOOLEAN;
                             case "false":
                                 bool = false;
-                                prev = Type.BOOLEAN;
-                                return prev;
+                                prev = ReaderType.BOOLEAN;
+                                return JsonType.BOOLEAN;
                             case "null":
-                                prev = Type.NULL;
-                                return prev;
+                                prev = ReaderType.NULL;
+                                return JsonType.NULL;
                             default: // number
                                 num = Double.parseDouble(value);
-                                prev = Type.NUMBER;
-                                return prev;
+                                prev = ReaderType.NUMBER;
+                                return JsonType.NUMBER;
                         }
                 }
             }
@@ -225,27 +230,60 @@ public class JsonReader {
         }
     }
 
-    public String str() {
-        if (prev == Type.NAME || prev == Type.STRING) {
+    /**
+     * Get current string / name from stream
+     *
+     * @return
+     * @throws IllegalStateException if current was not string / name
+     */
+    public String str() throws IllegalStateException {
+        if (prev == ReaderType.NAME || prev == ReaderType.STRING) {
             return str.toString();
         } else {
             throw new IllegalStateException("Requested string when type was " + prev);
         }
     }
 
-    public double num() {
-        if (prev == Type.NUMBER) {
+    /**
+     * Get current number from stream
+     *
+     * @return
+     * @throws IllegalStateException if current was not number
+     */
+    public double num() throws IllegalStateException {
+        if (prev == ReaderType.NUMBER) {
             return num;
         } else {
             throw new IllegalStateException("Requested string when type was " + prev);
         }
     }
 
-    public boolean bool() {
-        if (prev == Type.BOOLEAN) {
+    /**
+     * Get current boolean from stream
+     *
+     * @return
+     * @throws IllegalStateException if currrent was not boolean
+     */
+    public boolean bool() throws IllegalStateException {
+        if (prev == ReaderType.BOOLEAN) {
             return bool;
         } else {
             throw new IllegalStateException("Requested string when type was " + prev);
         }
+    }
+
+    public String nextStr() {
+        next();
+        return str();
+    }
+
+    public double nextNum() {
+        next();
+        return num();
+    }
+
+    public boolean nextBool() {
+        next();
+        return bool();
     }
 }

@@ -17,6 +17,7 @@ import org.jg.util.VectMap.VectMapProcessor;
  */
 public final class LineSet implements Geom {
 
+    public static final String CODE = "LT";
     LineString[] lineStrings;
 
     Rect bounds;
@@ -187,7 +188,7 @@ public final class LineSet implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"LT\"");
+            appendable.append("[\"").append(CODE).append('"');
             for (LineString lineString : lineStrings) {
                 appendable.append(", ");
                 lineString.vects.toString(appendable);

@@ -49,9 +49,9 @@ public interface Geom extends Cloneable, Serializable {
      *
      * @param appendable appendable
      * @throws NullPointerException if appendable was null
-     * @throws GeomException if there was an IO error
+     * @throws GeomIOException if there was an IO error
      */
-    void toString(Appendable appendable) throws NullPointerException, GeomException;
+    void toString(Appendable appendable) throws NullPointerException, GeomIOException;
 
     /** 
      * Convert this to a standard format GeoShape
@@ -174,6 +174,13 @@ public interface Geom extends Cloneable, Serializable {
      */
     Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException;
     
+    /**
+     * Get the standard json based string version of this geometry
+     * 
+     * @return
+     */
+    String toString();
+        
     /**
      * Comparator for comparing geometries by their Bounds
      */

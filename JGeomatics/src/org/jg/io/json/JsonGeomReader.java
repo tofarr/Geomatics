@@ -1,7 +1,5 @@
-package org.jg.io;
+package org.jg.io.json;
 
-import com.google.gson.JsonArray;
-import com.google.gson.stream.JsonReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,25 +21,27 @@ public class JsonGeomReader {
     private static final Logger LOG = Logger.getLogger(JsonGeomReader.class.getName());
 
     public static final JsonGeomReader DEFAULT;
+
     static {
         ServiceLoader<JsonGeomParser> loader = ServiceLoader.load(JsonGeomParser.class);
         List<JsonGeomParser> parsers = new ArrayList<>();
-        for(JsonGeomParser parser : parsers){
-            
+        for (JsonGeomParser parser : loader) {
+            parsers.add(parser);
         }
-        
+        DEFAULT = new JsonGeomReader(parsers.toArray(new JsonGeomParser[parsers.size()]));
+
     }
     private final Map<String, JsonGeomParser> parsers;
 
-    public JsonGeomReader(JsonGeomParser... parsers) throws IllegalArgumentException, NullPointerException {
-        if (parsers.length == 0) {
+    public JsonGeomReader(JsonGeomParser... parserArray) throws IllegalArgumentException, NullPointerException {
+        if (parserArray.length == 0) {
             throw new IllegalArgumentException("No parsers defined!");
         }
         HashMap<String, JsonGeomParser> parserMap = new HashMap<>();
-        for(JsonGeomParser parser : parsers){
-            
+        for (JsonGeomParser parser : parserArray) {
+            parserMap.put(parser.getCode(), parser);
         }
-        parsers = Collections.unmodifiableMap(new HashMap<>(parsers));
+        parsers = Collections.unmodifiableMap(new HashMap<>(parserMap));
     }
 
     /**
@@ -54,21 +54,25 @@ public class JsonGeomReader {
     }
 
     public Geom read(Reader reader) throws GeomIOException {
-
+        JsonReader jsonReader = new JsonReader(reader);
+        return read(jsonReader);
     }
 
     public Geom read(JsonReader reader) throws GeomIOException {
-
-    }
-
-    public Geom read(JsonArray array) throws GeomIOException {
-
-    }
-
-    public interface JsonGeomParser {
-
-        public String getCode();
-
-        public Geom parse(JsonReader reader) throws GeomIOException;
+        JsonType type = reader.next();
+        if (type != JsonType.BEGIN_ARRAY) {
+            throw new GeomIOException("Unexpected type : " + type);
+        }
+        type = reader.next();
+        if(type != JsonType.STRING){
+            throw new GeomIOException("Unexpected type : " + type);
+        }
+        String geomType = reader.str();
+        JsonGeomParser parser = parsers.get(geomType);
+        if(parser == null){
+            throw new GeomIOException("Unknown type : "+geomType);
+        }
+        Geom ret = parser.parse(reader);
+        return ret;
     }
 }

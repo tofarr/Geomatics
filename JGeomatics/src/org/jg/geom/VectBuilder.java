@@ -253,35 +253,6 @@ public final class VectBuilder implements Cloneable, Serializable, Comparable<Ve
     public Vect build(){
         return (x == 0) && (y == 0) ? Vect.ZERO : new Vect(x, y);
     }
-
-    /**
-     * Write this vect to the DataOutput given
-     *
-     * @param out
-     * @throws NullPointerException if out was null
-     * @throws GeomException if there was an IO error
-     */
-    public void write(DataOutput out) throws NullPointerException, GeomException {
-        Vect.write(x, y, out);
-    }
-    
-    /**
-     * Read a vector from to the DataInput given
-     *
-     * @param in
-     * @return a vector
-     * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN ordinates
-     * @throws GeomException if there was an IO error
-     */
-    public static VectBuilder read(DataInput in) throws NullPointerException, IllegalArgumentException, 
-        GeomException {
-        try {
-            return new VectBuilder(in.readDouble(), in.readDouble());
-        } catch (IOException ex) {
-            throw new GeomException("Error reading vector", ex);
-        }
-    }
     
     @Override
     public int compareTo(VectBuilder vect) {

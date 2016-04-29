@@ -303,40 +303,6 @@ public class VectTest {
     }
 
     @Test
-    public void testExternalize() throws IOException {
-        Vect a = Vect.valueOf(7, 11);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (DataOutputStream out = new DataOutputStream(bout)) {
-            a.write(out);
-        }
-        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            Vect b = Vect.read(in);
-            assertEquals(a, b);
-        }
-        try{
-            a.write(new DataOutputStream(new OutputStream(){
-                @Override
-                public void write(int b) throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-        
-        try{
-            Vect.read(new DataInputStream(new InputStream(){
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-    }
-
-    @Test
     public void testGetBounds() {
         Vect vect = Vect.valueOf(1, 2);
         Rect bounds = vect.getBounds();

@@ -11,13 +11,14 @@ import org.jg.util.Transform;
 import org.jg.util.VectList;
 
 /**
- * Immutable 2D Line Segment defined by two end points. Checks are in place to
- * insure that ordinates are never infinite or NaN, and that the two end points
- * are not the same
+ * Immutable 2D Line Segment defined by two end points. Checks are in place to insure that ordinates
+ * are never infinite or NaN, and that the two end points are not the same
  *
  * @author tofar_000
  */
 public final class Line implements Geom, Comparable<Line> {
+
+    public static final String CODE = "LN";
 
     /**
      * ax
@@ -58,8 +59,8 @@ public final class Line implements Geom, Comparable<Line> {
      * @param bx
      * @param by
      * @return a line segment
-     * @throws IllegalArgumentException if an ordinate was Infinite or NaN, or A
-     * and B were the same point
+     * @throws IllegalArgumentException if an ordinate was Infinite or NaN, or A and B were the same
+     * point
      */
     public static Line valueOf(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         check(ax, ay, bx, by);
@@ -73,8 +74,7 @@ public final class Line implements Geom, Comparable<Line> {
      * @param ay
      * @param bx
      * @param by
-     * @throws IllegalArgumentException if ordinate was infinite or NaN or
-     * ordinates were same
+     * @throws IllegalArgumentException if ordinate was infinite or NaN or ordinates were same
      */
     public static void check(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         Vect.check(ax, ay);
@@ -182,8 +182,7 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Determine if the distance between the end points is greater than the
-     * tolerance given
+     * Determine if the distance between the end points is greater than the tolerance given
      *
      * @param tolerance
      * @return true if distance is greater, false otherwise
@@ -193,8 +192,8 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * If b is less than A when compared as a Vect, return a version of this
-     * line where A and B are swapped, otherwise return this
+     * If b is less than A when compared as a Vect, return a version of this line where A and B are
+     * swapped, otherwise return this
      *
      * @return a line.
      */
@@ -216,8 +215,8 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Get the square of the length of the line (faster than getting the length,
-     * and sufficient for some operations)
+     * Get the square of the length of the line (faster than getting the length, and sufficient for
+     * some operations)
      *
      * @return
      */
@@ -247,9 +246,9 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Get the side of the line on which vect lies. Positive values imply that
-     * it lies on the left of the line. Negative values imply it lies on the
-     * right of the line. 0 implies it lies on the line
+     * Get the side of the line on which vect lies. Positive values imply that it lies on the left
+     * of the line. Negative values imply it lies on the right of the line. 0 implies it lies on the
+     * line
      *
      * @param vect
      * @param tolerance
@@ -261,9 +260,9 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Get the side of the line on which vect lies. Positive values imply that
-     * it lies on the left of the line. Negative values imply it lies on the
-     * right of the line. 0 implies it lies on the line
+     * Get the side of the line on which vect lies. Positive values imply that it lies on the left
+     * of the line. Negative values imply it lies on the right of the line. 0 implies it lies on the
+     * line
      *
      * @param vect
      * @return
@@ -279,9 +278,9 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Project the value given along the line, where 0 represents A and 1
-     * represents B. Tolerance is used to snap points to A or B if close enough.
-     * Return true if such snapping occurs, or u > 0 or u < 1.
+     * Project the value given along the line, where 0 represents A and 1 represents B. Tolerance is
+     * used to snap points to A or B if close enough. Return true if such snapping occurs, or u > 0
+     * or u < 1.
      *
      * @param u
      * @param tolerance tolerance for snapping to end points
@@ -311,15 +310,13 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Project the value given along the line, where 0 represents A and 1
-     * represents B. Tolerance is used to snap points to A or B if close enough.
-     * Return true if such snapping occurs, or u > 0 or u < 1. Returned point is
-     * projected outward a dist distFromLine from the line, where positive
-     * values are on the right, negative values are on the left
+     * Project the value given along the line, where 0 represents A and 1 represents B. Tolerance is
+     * used to snap points to A or B if close enough. Return true if such snapping occurs, or u > 0
+     * or u < 1. Returned point is projected outward a dist distFromLine from the line, where
+     * positive values are on the right, negative values are on the left
      *
      * @param u
-     * @param distFromLine the distance from the line (positive on right,
-     * negative on left)
+     * @param distFromLine the distance from the line (positive on right, negative on left)
      * @param tolerance tolerance for snapping to end points
      * @param target target vector
      * @return true if on segment, false otherwise
@@ -349,10 +346,9 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Project the value given along the line segment, where 0 represents A and
-     * 1 represents B. Tolerance is used to snap points to A or B if close
-     * enough. If u < 0 return A and if u > 1 return B and the point is beyond
-     * the tolerance, return null
+     * Project the value given along the line segment, where 0 represents A and 1 represents B.
+     * Tolerance is used to snap points to A or B if close enough. If u < 0 return A and if u > 1
+     * return B and the point is beyond the tolerance, return null
      *
      * @param u
      * @param tolerance tolerance for snapping to end points
@@ -416,6 +412,7 @@ public final class Line implements Geom, Comparable<Line> {
 
     /**
      * Get the square of the distance from the line given to the point given
+     *
      * @param ax
      * @param ay
      * @param bx
@@ -459,6 +456,7 @@ public final class Line implements Geom, Comparable<Line> {
 
     /**
      * Get the distance between a line segment and a vector
+     *
      * @param ax
      * @param ay
      * @param bx
@@ -491,8 +489,8 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Determine if this line is parallell to that given, with differences in
-     * slope within the tolerance
+     * Determine if this line is parallell to that given, with differences in slope within the
+     * tolerance
      *
      * @param line
      * @param tolerance
@@ -510,9 +508,8 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Determine if segments intersect. Segments which do not intersect, but are
-     * within the tolerance given from each other are considered to intersect
-     * unless they are parallel
+     * Determine if segments intersect. Segments which do not intersect, but are within the
+     * tolerance given from each other are considered to intersect unless they are parallel
      *
      * @param line
      * @param tolerance
@@ -559,9 +556,9 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Get the intersection of this line and that given. Lines which do not
-     * intersect, but are within the tolerance given from each other are
-     * considered to intersect at their end points unless they are parallel
+     * Get the intersection of this line and that given. Lines which do not intersect, but are
+     * within the tolerance given from each other are considered to intersect at their end points
+     * unless they are parallel
      *
      * @param line
      * @param tolerance
@@ -646,9 +643,9 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Get the intersection of this segment and that given. Segments which do
-     * not intersect, but are within the tolerance given from each other are
-     * considered to intersect at their end points unless they are parallel
+     * Get the intersection of this segment and that given. Segments which do not intersect, but are
+     * within the tolerance given from each other are considered to intersect at their end points
+     * unless they are parallel
      *
      * @param line
      * @param tolerance
@@ -823,26 +820,22 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Determine if the triangle formed by the points a, vect, b is
-     * counterclockwise
+     * Determine if the triangle formed by the points a, vect, b is counterclockwise
      *
      * @param vect vector
      * @param accuracy
-     * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line
-     * segment ab
+     * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line segment ab
      */
     public int counterClockwise(Vect vect, Tolerance accuracy) throws NullPointerException {
         return counterClockwise(ax, ay, bx, by, vect.x, vect.y, accuracy);
     }
 
     /**
-     * Determine if the triangle formed by the points a, vect, b is
-     * counterclockwise
+     * Determine if the triangle formed by the points a, vect, b is counterclockwise
      *
      * @param vect vector
      * @param accuracy
-     * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line
-     * segment ab
+     * @return 1 if counter clockwise, -1 if clockwise, 0 if point is on line segment ab
      */
     public int counterClockwise(VectBuilder vect, Tolerance accuracy) throws NullPointerException {
         return counterClockwise(ax, ay, bx, by, vect.getX(), vect.getY(), accuracy);
@@ -850,6 +843,7 @@ public final class Line implements Geom, Comparable<Line> {
 
     /**
      * Determine if the point given lies to the left, right, or on the line given.
+     *
      * @param ax
      * @param ay
      * @param bx
@@ -921,7 +915,7 @@ public final class Line implements Geom, Comparable<Line> {
     public double getArea(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return 0;
     }
-    
+
     @Override
     public Geom union(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         return toLineString().union(other, linearizer, accuracy);
@@ -952,30 +946,31 @@ public final class Line implements Geom, Comparable<Line> {
     public int compareTo(Line other) {
         return compare(ax, ay, bx, by, other.ax, other.ay, other.bx, other.by);
     }
-    
+
     /**
      * Get a line segment based on this line where both end points are guaranteed to be outside the
      * bounds given, and the line will cross the bounds so long as they are not disjoint
+     *
      * @param bounds
      * @return crossing segment, or null if line is disjoint from bounds
      * @throws NullPointerException if bounds was null
      */
-    public Line segCrossing(Rect bounds) throws NullPointerException{
+    public Line segCrossing(Rect bounds) throws NullPointerException {
         double dx = bx - ax;
         double dy = by - ay;
         double dydx = dy / dx;
-        double ix,iy,jx,jy;
-        if((dydx >= -1) && (dydx <= 1)){ // line is more horizontal - calculate y for x values
+        double ix, iy, jx, jy;
+        if ((dydx >= -1) && (dydx <= 1)) { // line is more horizontal - calculate y for x values
             ix = bounds.minX - 1;
             iy = dydx * (ix - ax) + ay;
             jx = bounds.maxX + 1;
             jy = dydx * (jx - ax) + ay;
             double minY = Math.min(iy, jy);
             double maxY = Math.max(iy, jy);
-            if((minY > bounds.maxY) || (maxY < bounds.minY)){
+            if ((minY > bounds.maxY) || (maxY < bounds.minY)) {
                 return null;
             }
-        }else{ // line is more vertical - calculate x for y values
+        } else { // line is more vertical - calculate x for y values
             double dxdy = dx / dy;
             iy = bounds.minY - 1;
             ix = dxdy * (iy - ay) + ax;
@@ -983,7 +978,7 @@ public final class Line implements Geom, Comparable<Line> {
             jx = dxdy * (jy - ay) + ax;
             double minX = Math.min(ix, jx);
             double maxX = Math.max(ix, jx);
-            if((minX > bounds.maxX) || (maxX < bounds.minX)){
+            if ((minX > bounds.maxX) || (maxX < bounds.minX)) {
                 return null;
             }
         }
@@ -992,6 +987,7 @@ public final class Line implements Geom, Comparable<Line> {
 
     /**
      * Compare the 2 lines given. Assumes that a and b in each lines have standard vector ordering.
+     *
      * @param iax
      * @param iay
      * @param ibx
@@ -1052,8 +1048,7 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     /**
-     * Convert this line to a string in the format [ax,ay,bx,by] and add it to
-     * the appendable given
+     * Convert this line to a string in the format [ax,ay,bx,by] and add it to the appendable given
      *
      * @param appendable
      * @throws GeomException if there was an output error
@@ -1061,7 +1056,7 @@ public final class Line implements Geom, Comparable<Line> {
      */
     public void toString(Appendable appendable) throws GeomException, NullPointerException {
         try {
-            appendable.append("[\"LN\",")
+            appendable.append("[\"").append(CODE).append("\",")
                     .append(Vect.ordToStr(ax)).append(',')
                     .append(Vect.ordToStr(ay)).append(',')
                     .append(Vect.ordToStr(bx)).append(',')

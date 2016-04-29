@@ -19,6 +19,7 @@ import org.jg.util.VectList;
  */
 public final class Vect implements Geom, Comparable<Vect> {
 
+    public static final String CODE = "PT";
     /**
      * Vector [0,0]
      */
@@ -405,33 +406,6 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     /**
-     * Write this vect to the DataOutput given
-     *
-     * @param out
-     * @throws NullPointerException if out was null
-     * @throws GeomException if there was an IO error
-     */
-    public void write(DataOutput out) throws NullPointerException, GeomException {
-        write(x, y, out);
-    }
-
-    /**
-     * Write this vector to the DataOutput given
-     *
-     * @param out
-     * @throws NullPointerException if out was null
-     * @throws GeomException if there was an IO error
-     */
-    public static void write(double x, double y, DataOutput out) throws NullPointerException, GeomException {
-        try {
-            out.writeDouble(x);
-            out.writeDouble(y);
-        } catch (IOException ex) {
-            throw new GeomException("Error writing vector", ex);
-        }
-    }
-
-    /**
      * Read a vector from to the DataInput given
      *
      * @param in
@@ -609,11 +583,11 @@ public final class Vect implements Geom, Comparable<Vect> {
         return str.toString();
     }
 
-    static void toString(double x, double y, Appendable appendable) {
+    static void toString(double x, double y, Appendable appendable) throws GeomIOException {
         try {
-            appendable.append("[\"PT\",").append(ordToStr(x)).append(',').append(ordToStr(y)).append(']');
+            appendable.append("[\"").append(CODE).append("\",").append(ordToStr(x)).append(',').append(ordToStr(y)).append(']');
         } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
+            throw new GeomIOException("Error writing", ex);
         }
     }
 }

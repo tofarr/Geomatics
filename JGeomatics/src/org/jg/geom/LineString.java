@@ -23,6 +23,7 @@ import org.jg.util.VectList;
  */
 public final class LineString implements Geom {
 
+    public static final String CODE = "LS";
     public static final LineString[] EMPTY = new LineString[0];
     final VectList vects;
     SpatialNode<Line> lineIndex;
@@ -235,7 +236,7 @@ public final class LineString implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"LS\"");
+            appendable.append("[\"").append(CODE).append("\"");
             for (int i = 0; i < vects.size(); i++) {
                 appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
             }

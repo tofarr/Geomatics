@@ -300,6 +300,15 @@ public final class Transform implements Cloneable, Serializable {
     }
     
     /**
+     * Convert this instance to a TransformBuilder
+     * 
+     * @return
+     */
+    public TransformBuilder toBuilder(){
+        return new TransformBuilder(m00, m01, m10, m11, m02, m12);
+    }
+    
+    /**
      * Read a Transform from to the DataInput given
      *
      * @param in

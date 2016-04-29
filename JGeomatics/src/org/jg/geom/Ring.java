@@ -29,6 +29,7 @@ import org.jg.util.VectMap.VectMapProcessor;
  */
 public class Ring implements Geom {
 
+    public static final String CODE = "RG";
     static final Ring[] EMPTY = new Ring[0];
     final VectList vects;
     private SpatialNode<Line> lineIndex;
@@ -1005,7 +1006,7 @@ public class Ring implements Geom {
     @Override
     public void toString(Appendable appendable) throws GeomException, NullPointerException {
         try {
-            appendable.append("[\"RG\"");
+            appendable.append("[\"").append(CODE).append("\"");
             for (int i = 0; i < vects.size(); i++) {
                 appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
             }

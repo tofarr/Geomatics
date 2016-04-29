@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jg.io;
+package org.jg.gfx.swing;
 
 /**
  *
  * @author tofarrell
  */
-public class WktGeomReader {
+public class GeomPanel {
     
 }

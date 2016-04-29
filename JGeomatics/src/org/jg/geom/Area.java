@@ -28,6 +28,7 @@ import org.jg.util.VectSet;
  */
 public final class Area implements Geom {
     
+    public static final String CODE = "AR";
     public static final Area[] NO_CHILDREN = new Area[0];
 
     final Ring shell;
@@ -374,7 +375,7 @@ public final class Area implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"AR\"");
+            appendable.append("[\"").append(CODE).append('"');
             toStringInternal(appendable);
             appendable.append("]");
         } catch (IOException ex) {
@@ -383,7 +384,9 @@ public final class Area implements Geom {
     }
 
     private void toStringInternal(Appendable appendable) throws IOException {
-        if(shell != null){
+        if(shell == null){
+            appendable.append("null");
+        }else{
             appendable.append("[");
             shell.vects.toString(appendable);
         }

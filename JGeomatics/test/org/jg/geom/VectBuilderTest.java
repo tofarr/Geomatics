@@ -266,41 +266,7 @@ public class VectBuilderTest {
         assertNotSame(a, a.clone());
         assertEquals(a, a.clone());
     }
-    
-    @Test
-    public void testExternalize() throws IOException {
-        VectBuilder a = new VectBuilder(7,11);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try(DataOutputStream out = new DataOutputStream(bout)){
-            a.write(out);
-        }
-        try(DataInputStream in = new DataInputStream(new ByteArrayInputStream(bout.toByteArray()))){
-            VectBuilder b = VectBuilder.read(in);
-            assertEquals(a, b);
-        }
-        try{
-            a.write(new DataOutputStream(new OutputStream(){
-                @Override
-                public void write(int b) throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-        
-        try{
-            VectBuilder.read(new DataInputStream(new InputStream(){
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-    }
-    
+ 
     @Test
     public void testCompareTo() {
         assertEquals(-1, new VectBuilder(1, 2).compareTo(new VectBuilder(3, 4)));

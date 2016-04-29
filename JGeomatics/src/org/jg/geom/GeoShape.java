@@ -21,6 +21,7 @@ import org.jg.util.VectList;
  */
 public class GeoShape implements Geom {
 
+    public static final String CODE = "GS";
     /**
      * Area for this geom (may be null)
      */
@@ -257,17 +258,22 @@ public class GeoShape implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"GS\"");
-            if (area != null) {
-                appendable.append(',');
+            appendable.append("[\"").append(CODE).append('"');
+            if (area == null) {
+                appendable.append("null");
+            }else{
                 area.toString(appendable);
             }
-            if (lines != null) {
-                appendable.append(',');
+            appendable.append(',');
+            if (lines == null) {
+                appendable.append("null");
+            }else{
                 lines.toString(appendable);
             }
+            appendable.append(',');
             if (points != null) {
-                appendable.append(',');
+                appendable.append("null");
+            }else{
                 points.toString(appendable);
             }
             appendable.append(']');

@@ -1,4 +1,4 @@
-package org.jg.renderable;
+package org.jg.gfx.util;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
@@ -12,9 +12,16 @@ public class TransformingPathIterator implements PathIterator {
     final PathIterator iter;
     final AffineTransform transform;
 
-    public TransformingPathIterator(PathIterator iter, AffineTransform transform) {
+    private TransformingPathIterator(PathIterator iter, AffineTransform transform) {
         this.iter = iter;
         this.transform = transform;
+    }
+    
+    public static PathIterator valueOf(PathIterator iter, AffineTransform transform){
+        if((transform == null) || transform.isIdentity()){
+            return iter;
+        }
+        return new TransformingPathIterator(iter, transform);
     }
 
     @Override

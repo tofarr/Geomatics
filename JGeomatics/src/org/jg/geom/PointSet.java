@@ -14,7 +14,8 @@ import org.jg.util.VectSet;
  * @author tofar
  */
 public final class PointSet implements Geom {
-
+    
+    public static final String CODE = "PS";
     final VectList vects;
 
     PointSet(VectList vects) {
@@ -143,7 +144,7 @@ public final class PointSet implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"PS\"");
+            appendable.append("[\"").append(CODE).append('"');
             for (int i = 0; i < vects.size(); i++) {
                 appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
             }
