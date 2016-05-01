@@ -39,4 +39,14 @@ public class UrlImgSpec implements ImgSpec {
             throw new GeomException("Error loading image", ex);
         }
     }
+
+    @Override
+    public int imgWidth() throws GeomException {
+        return toImg().getWidth();
+    }
+
+    @Override
+    public int imgHeight() throws GeomException {
+        return toImg().getHeight();
+    }
 }

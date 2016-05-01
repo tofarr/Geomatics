@@ -13,15 +13,22 @@ import org.jg.util.Transform;
  */
 public class FixedImg implements Renderable {
 
+    private final long id;
     private final ImgSpec img;
     private final Rect bounds;
 
-    @ConstructorProperties({"img", "bounds"})
-    public FixedImg(ImgSpec img, Rect bounds) {
+    @ConstructorProperties({"id", "img", "bounds"})
+    public FixedImg(long id, ImgSpec img, Rect bounds) {
+        this.id = id;
         this.img = img;
         this.bounds = bounds;
     }
 
+    @Override
+    public long getId() {
+        return id;
+    }
+    
     public ImgSpec getImg() {
         return img;
     }
@@ -29,6 +36,12 @@ public class FixedImg implements Renderable {
     public Rect getBounds() {
         return bounds;
     }
+
+    @Override
+    public boolean boundsVariable() {
+        return false;
+    }
+    
 
     @Override
     public Rect toBounds(double resolution) {

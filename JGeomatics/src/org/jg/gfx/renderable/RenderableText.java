@@ -19,17 +19,23 @@ import org.jg.util.Transform;
  */
 public class RenderableText implements Renderable {
 
+    private final long id;
     private final String text;
     private final Vect location;
     private final Fill fill;
     private final FontSpec font;
 
-    @ConstructorProperties({"text", "location", "fill", "font"})
-    public RenderableText(String text, Vect location, Fill fill, FontSpec font) {
+    @ConstructorProperties({"id", "text", "location", "fill", "font"})
+    public RenderableText(long id, String text, Vect location, Fill fill, FontSpec font) {
+        this.id = id;
         this.text = text;
         this.location = location;
         this.fill = fill;
         this.font = font;
+    }
+
+    public long getId() {
+        return id;
     }
 
     public String getText() {

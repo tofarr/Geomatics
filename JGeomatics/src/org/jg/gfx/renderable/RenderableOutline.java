@@ -18,16 +18,23 @@ import org.jg.util.Transform;
  */
 public class RenderableOutline implements Renderable {
 
+    private final long id;
     private final Geom geom;
     private final Fill fill;
     private final Outline outline;
     private transient Shape shape;
 
-    @ConstructorProperties({"geom", "fill", "outline"})
-    public RenderableOutline(Geom geom, Fill fill, Outline outline) {
+    @ConstructorProperties({"id", "geom", "fill", "outline"})
+    public RenderableOutline(long id, Geom geom, Fill fill, Outline outline) {
+        this.id = id;
         this.geom = geom;
         this.fill = fill;
         this.outline = outline;
+    }
+
+    @Override
+    public long getId() {
+        return id;
     }
 
     public Geom getGeom() {
@@ -49,7 +56,7 @@ public class RenderableOutline implements Renderable {
 
     @Override
     public Rect toBounds(double resolution) {
-        double padding = outline.getPadding();
+        double padding = outline.getPadding() * resolution;
         return geom.getBounds().buffer(padding);
     }
 

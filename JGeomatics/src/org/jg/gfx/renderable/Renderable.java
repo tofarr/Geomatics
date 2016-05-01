@@ -11,6 +11,8 @@ import org.jg.util.Transform;
  */
 public interface Renderable {
     
+    long getId();
+    
     boolean boundsVariable(); // bounds may be fixed or vary depending on the resolution
         
     Rect toBounds(double resolution);

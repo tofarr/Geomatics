@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -168,15 +167,10 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        return new PathIterator() {
+    public PathIter iterator() {
+        return new PathIter() {
             int state = nextPathIterator(-1);
-            PathIterator iter;
-
-            @Override
-            public int getWindingRule() {
-                return WIND_NON_ZERO;
-            }
+            PathIter iter;
 
             @Override
             public boolean isDone() {
@@ -193,12 +187,7 @@ public class GeoShape implements Geom {
             }
 
             @Override
-            public int currentSegment(float[] coords) {
-                return iter.currentSegment(coords);
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
+            public PathSegType currentSegment(double[] coords) {
                 return iter.currentSegment(coords);
             }
 
@@ -221,7 +210,7 @@ public class GeoShape implements Geom {
                 if ((geom == null) && (state < 3)) {
                     return nextPathIterator(state);
                 }
-                iter = geom.pathIterator();
+                iter = geom.iterator();
                 return state;
             }
 

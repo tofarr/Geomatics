@@ -700,13 +700,23 @@ public class LineTest {
     @Test
     public void testPathIterator() {
         Line a = Line.valueOf(2, 3, 7, 13);
-        Path2D.Double path = new Path2D.Double();
-        path.append(a.pathIterator(), true);
-        Rectangle2D bounds = path.getBounds2D();
-        assertEquals(2, bounds.getMinX(), 0.0001);
-        assertEquals(3, bounds.getMinY(), 0.0001);
-        assertEquals(7, bounds.getMaxX(), 0.0001);
-        assertEquals(13, bounds.getMaxY(), 0.0001);
+        PathIter iter = a.iterator();
+        double[] coords = new double[6];
+
+        assertFalse(iter.isDone());
+        assertEquals(PathSegType.MOVE, iter.currentSegment(coords));
+        assertEquals(2, coords[0], 0.00001);
+        assertEquals(3, coords[1], 0.00001);
+        iter.next();
+
+        assertFalse(iter.isDone());
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
+        assertEquals(7, coords[0], 0.00001);
+        assertEquals(13, coords[1], 0.00001);
+        iter.next();
+
+        iter.next();
+        assertTrue(iter.isDone());
     }
 
     @Test

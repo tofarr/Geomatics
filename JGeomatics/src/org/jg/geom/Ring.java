@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -776,16 +775,11 @@ public class Ring implements Geom {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        return new PathIterator() {
+    public PathIter iterator() {
+        return new PathIter() {
 
             final int max = vects.size() - 1;
             int index;
-
-            @Override
-            public int getWindingRule() {
-                return WIND_NON_ZERO;
-            }
 
             @Override
             public boolean isDone() {
@@ -798,28 +792,15 @@ public class Ring implements Geom {
             }
 
             @Override
-            public int currentSegment(float[] coords) {
-                coords[0] = (float) vects.getX(index);
-                coords[1] = (float) vects.getY(index);
-                if (index == 0) {
-                    return SEG_MOVETO;
-                } else if (index == max) {
-                    return SEG_CLOSE;
-                } else {
-                    return SEG_LINETO;
-                }
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
+            public PathSegType currentSegment(double[] coords) {
                 coords[0] = vects.getX(index);
                 coords[1] = vects.getY(index);
                 if (index == 0) {
-                    return SEG_MOVETO;
+                    return PathSegType.MOVE;
                 } else if (index == max) {
-                    return SEG_CLOSE;
+                    return PathSegType.CLOSE;
                 } else {
-                    return SEG_LINETO;
+                    return PathSegType.LINE;
                 }
             }
 

@@ -9,9 +9,9 @@ import org.jg.geom.GeomException;
  */
 public interface ImgSpec {
 
-    int getWidth() throws GeomException;
+    int imgWidth() throws GeomException;
 
-    int getHeight() throws GeomException;
+    int imgHeight() throws GeomException;
 
     BufferedImage toImg() throws GeomException;
 }

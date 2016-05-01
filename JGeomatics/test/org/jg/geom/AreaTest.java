@@ -179,8 +179,7 @@ public class AreaTest {
             network.addLink(-x, y, -x, -y);
         }
         Area area = Area.valueOf(TOL, network);
-        PathIterator iter = area.pathIterator();
-        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
+        PathIter iter = area.iterator();
         for(int i = 90; i >= 0; i -= 10){
             int x = 40 + i;
             int y = 30 + i;
@@ -197,13 +196,10 @@ public class AreaTest {
         assertTrue(iter.isDone());
     }
     
-    private void checkIter(PathIterator iter, int result, double x, double y){
+    private void checkIter(PathIter iter, int result, double x, double y){
         double[] coords = new double[6];
-        float[] fcoords = new float[6];
         assertEquals(result, iter.currentSegment(coords));
-        assertEquals(result, iter.currentSegment(fcoords));
         assertArrayEquals(new double[]{x,y,0,0,0,0}, coords, 0.001);
-        assertArrayEquals(new float[]{(float)x,(float)y,0,0,0,0}, fcoords, 0.001f);
         iter.next();
     }
 

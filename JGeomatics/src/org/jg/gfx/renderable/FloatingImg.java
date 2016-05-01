@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.beans.ConstructorProperties;
 import org.jg.geom.Rect;
 import org.jg.geom.Vect;
+import org.jg.geom.VectBuilder;
 import org.jg.gfx.img.ImgSpec;
 import org.jg.util.Transform;
 
@@ -14,15 +15,22 @@ import org.jg.util.Transform;
  */
 public class FloatingImg implements Renderable {
 
+    private final long id;
     private final ImgSpec img;
     private final Vect location;
-    private final Vect offsetPx;
+    private final Vect offset;
 
-    @ConstructorProperties({"img", "location", "offsetPx"})
-    public FloatingImg(ImgSpec img, Vect location, Vect offsetPx) {
+    @ConstructorProperties({"id", "img", "location", "offset"})
+    public FloatingImg(long id, ImgSpec img, Vect location, Vect offset) {
+        this.id = id;
         this.img = img;
         this.location = location;
-        this.offsetPx = offsetPx;
+        this.offset = offset;
+    }
+
+    @Override
+    public long getId() {
+        return id;
     }
 
     public ImgSpec getImg() {
@@ -33,8 +41,8 @@ public class FloatingImg implements Renderable {
         return location;
     }
 
-    public Vect getOffsetPx() {
-        return offsetPx;
+    public Vect getOffset() {
+        return offset;
     }
 
     @Override
@@ -44,16 +52,21 @@ public class FloatingImg implements Renderable {
 
     @Override
     public Rect toBounds(double resolution) {
-        BufferedImage _img = img.toImg()
-        return bounds; //How does this work? Width is floating!
+        int width = img.imgWidth();
+        int height = img.imgHeight();
+        double minX = location.x - (width * offset.x * resolution);
+        double minY = location.y - (height * offset.y * resolution);
+        double maxX = location.x + (width * (1 - offset.x) * resolution);
+        double maxY = location.y + (height * (1 - offset.y) * resolution);
+        return Rect.valueOf(minX, minY, maxX, maxY);
     }
 
     @Override
     public void render(Graphics2D g, Transform transform) {
         BufferedImage _img = img.toImg();
-        Rect _bounds = bounds.transform(transform);
-        g.drawImage(_img, (int) Math.round(_bounds.minX), (int) Math.round(_bounds.minY), (int) Math.round(_bounds.maxX), (int) Math.round(_bounds.maxY),
-                0, 0, _img.getWidth(), _img.getHeight(), null);
+        VectBuilder vect = new VectBuilder(location.x - (_img.getWidth() * offset.x), location.y - (_img.getHeight() * offset.y));
+        transform.transform(vect, vect);
+        g.drawImage(_img, (int)Math.round(vect.getX()), (int)Math.round(vect.getY()), null);
     }
 
 }

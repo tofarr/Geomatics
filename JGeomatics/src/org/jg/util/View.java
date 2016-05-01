@@ -1,5 +1,6 @@
 package org.jg.util;
 
+import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -98,6 +99,11 @@ public class View implements Serializable, Cloneable {
 
     public double getResolutionY() {
         return resolutionY;
+    }
+    
+    @Transient
+    public double getResolution(){
+        return Math.max(resolutionX, resolutionY);
     }
 
     public int getWidthPx() {

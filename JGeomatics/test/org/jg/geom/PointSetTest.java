@@ -85,48 +85,42 @@ public class PointSetTest {
     @Test
     public void testPathIterator() {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(new VectList(1, 3, 7, 13, 23, 29)));
-        PathIterator iter = ps.pathIterator();
-        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
+        PathIter iter = ps.iterator();
 
         assertFalse(iter.isDone());
 
         double[] coords = new double[6];
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
-        assertEquals(1, coords[0], 0.0001);
-        assertEquals(3, coords[1], 0.0001);
-
-        float[] fcoords = new float[6];
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(fcoords));
-        assertEquals(1, fcoords[0], 0.0001);
-        assertEquals(3, fcoords[1], 0.0001);
-
-        iter.next();
-        assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.MOVE, iter.currentSegment(coords));
         assertEquals(1, coords[0], 0.0001);
         assertEquals(3, coords[1], 0.0001);
 
         iter.next();
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
+        assertEquals(1, coords[0], 0.0001);
+        assertEquals(3, coords[1], 0.0001);
+
+        iter.next();
+        assertFalse(iter.isDone());
+        assertEquals(PathSegType.MOVE, iter.currentSegment(coords));
         assertEquals(7, coords[0], 0.0001);
         assertEquals(13, coords[1], 0.0001);
 
         iter.next();
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
         assertEquals(7, coords[0], 0.0001);
         assertEquals(13, coords[1], 0.0001);
 
         iter.next();
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.MOVE, iter.currentSegment(coords));
         assertEquals(23, coords[0], 0.0001);
         assertEquals(29, coords[1], 0.0001);
 
         iter.next();
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
         assertEquals(23, coords[0], 0.0001);
         assertEquals(29, coords[1], 0.0001);
 

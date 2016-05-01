@@ -1,7 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -413,13 +411,13 @@ public class RectTest {
     @Test
     public void testPathIterator() {
         Rect a = Rect.valueOf(3, 7, 13, 29);
-        Path2D.Double path = new Path2D.Double();
-        path.append(a.pathIterator(), true);
-        Rectangle2D bounds = path.getBounds2D();
-        assertEquals(3, bounds.getMinX(), 0.0001);
-        assertEquals(7, bounds.getMinY(), 0.0001);
-        assertEquals(13, bounds.getMaxX(), 0.0001);
-        assertEquals(29, bounds.getMaxY(), 0.0001);
+        PathIter iter = a.iterator();
+        iter.next();
+        LineSetTest.assertPath(iter, PathSegType.MOVE, 3, 7);
+        LineSetTest.assertPath(iter, PathSegType.LINE, 13, 7);
+        LineSetTest.assertPath(iter, PathSegType.LINE, 13, 29);
+        LineSetTest.assertPath(iter, PathSegType.LINE, 3, 29);
+        LineSetTest.assertPath(iter, PathSegType.CLOSE, 3, 7);
     }
 
     @Test

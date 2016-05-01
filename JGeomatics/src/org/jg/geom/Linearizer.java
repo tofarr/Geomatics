@@ -18,6 +18,7 @@ public class Linearizer {
     private final Integer segmentsPerQuadrant;
     private final Double flatness;
     private final Tolerance precision;
+    private final double flatnessSq;
 
     public Linearizer(Integer segmentsPerQuadrant, Tolerance precision) {
         if (segmentsPerQuadrant <= 0) {
@@ -28,6 +29,7 @@ public class Linearizer {
         }
         this.segmentsPerQuadrant = segmentsPerQuadrant;
         this.flatness = null;
+        this.flatnessSq = -1;
         this.precision = precision;
     }
 
@@ -41,6 +43,7 @@ public class Linearizer {
         }
         this.segmentsPerQuadrant = null;
         this.flatness = flatness;
+        this.flatnessSq = flatness * flatness;
         this.precision = precision;
     }
 
@@ -101,6 +104,105 @@ public class Linearizer {
         }else{
             linearizeByNumSegments(ox, oy, ax, ay, angleSize, result);
         }
+    }
+    
+    public void bezierQuad(double ax, double ay, double bx, double by, double cx, double cy, VectList result){
+        if(segmentsPerQuadrant == null){
+            quadByFlatness(ax, ay, bx, by, cx, cy, result);
+        }else{
+            //split into segments per quadrant
+            VectBuilder workingVect = new VectBuilder();
+            double segmentSize = 1.0/segmentsPerQuadrant;
+            for(int i = 1 ; i < segmentsPerQuadrant; i++){
+                double t = i * segmentSize;
+                quad(ax, ay, bx, by, cx, cy, t, workingVect);
+                result.add(workingVect);
+            }
+        }
+    }
+    
+    public void bezierCubic(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy, VectList result){
+        if(segmentsPerQuadrant == null){
+            cubicByFlatness(ax, ay, bx, by, cx, cy, dx, dy, result);
+        }else{
+            //split into segments per quadrant
+            VectBuilder workingVect = new VectBuilder();
+            double segmentSize = 1.0/segmentsPerQuadrant;
+            for(int i = 1 ; i < segmentsPerQuadrant; i++){
+                double t = i * segmentSize;
+                cubic(ax, ay, bx, by, cx, cy, dx, dy, t, workingVect);
+                result.add(workingVect);
+            }
+        }
+    }
+    
+    private void cubicByFlatness(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy, VectList result){
+        //if b and c are more than flatness distance from ad, subdivide, otherwise add d to result
+        if((Line.distLineVectSq(ax, ay, dx, dy, bx, by) <= flatnessSq) && (Line.distLineVectSq(ax, ay, dx, dy, cx, cy) <= flatnessSq)){
+            result.add(dx, dy);
+            return;
+        }
+        
+        //subdivide
+        double abx = mid(ax, bx);
+        double aby = mid(ay, by);
+        double bcx = mid(bx, cx);
+        double bcy = mid(by, cy);
+        double cdx = mid(cx, dx);
+        double cdy = mid(cy, dy);
+        
+        double abcx = mid(abx, bcx);
+        double abcy = mid(aby, bcy);
+        double bcdx = mid(bcx, cdx);
+        double bcdy = mid(bcy, cdy);
+        
+        double abcdx = mid(abcx, bcdx);
+        double abcdy = mid(abcy, bcdy);
+        
+        cubicByFlatness(ax, ay, abx, aby, abcx, abcy, abcdx, abcdy, result);
+        cubicByFlatness(abcdx, abcdy, bcdx, bcdy, cdx, cdy, dx, dy, result);
+        
+    }
+    
+    private void quadByFlatness(double ax, double ay, double bx, double by, double cx, double cy, VectList result){
+        //if b and c are more than flatness distance from ad, subdivide, otherwise add d to result
+        if(Line.distLineVectSq(ax, ay, cx, cy, bx, by) <= flatnessSq){
+            result.add(cx, cy);
+            return;
+        }
+        
+        //subdivide
+        double abx = mid(ax, bx);
+        double aby = mid(ay, by);
+        double bcx = mid(bx, cx);
+        double bcy = mid(by, cy);
+        
+        double abcx = mid(abx, bcx);
+        double abcy = mid(aby, bcy);
+        
+        quadByFlatness(ax, ay, abx, aby, abcx, abcy, result);
+        quadByFlatness(abcx, abcy, bcx, bcy, cx, cy, result);
+        
+    }
+    
+    static void cubic(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy, double t, VectBuilder result){
+        quad(progress(ax, bx, t), progress(ay, by, t), progress(bx, cx, t), progress(by, cy, t), progress(cx, dx, t), progress(cy, dy, t), t, result);   
+    }
+    
+    static void quad(double ax, double ay, double bx, double by, double cx, double cy, double t, VectBuilder result){
+        linear(progress(ax, bx, t), progress(ay, by, t), progress(bx, cx, t), progress(by, cy, t), t, result);
+    }
+    
+    static void linear(double ax, double ay, double bx, double by, double t, VectBuilder result){
+        result.set(progress(ax, bx, t), progress(ay, by, t));
+    }
+    
+    static double mid(double a, double b){
+        return (a + b) / 2;
+    }
+    
+    static double progress(double a, double b, double t){
+        return (b - a) * t + a;
     }
     
     private void linearizeByNumSegments(double ox, double oy, double ax, double ay, double angleSize, VectList result) throws NullPointerException {

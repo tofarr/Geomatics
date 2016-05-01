@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
 import org.jg.geom.Network.LinkProcessor;
@@ -130,15 +129,10 @@ public final class LineSet implements Geom {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        PathIterator iter = new PathIterator() {
-            PathIterator iter = lineStrings[0].pathIterator();
+    public PathIter iterator() {
+        PathIter iter = new PathIter() {
+            PathIter iter = lineStrings[0].iterator();
             int index = 0;
-
-            @Override
-            public int getWindingRule() {
-                return WIND_NON_ZERO;
-            }
 
             @Override
             public boolean isDone() {
@@ -152,7 +146,7 @@ public final class LineSet implements Geom {
                     if (iter.isDone()) {
                         index++;
                         if (index < lineStrings.length) {
-                            iter = lineStrings[index].pathIterator();
+                            iter = lineStrings[index].iterator();
                         } else {
                             iter = null;
                         }
@@ -161,12 +155,7 @@ public final class LineSet implements Geom {
             }
 
             @Override
-            public int currentSegment(float[] coords) {
-                return iter.currentSegment(coords);
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
+            public PathSegType currentSegment(double[] coords) {
                 return iter.currentSegment(coords);
             }
         };

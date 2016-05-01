@@ -1,13 +1,7 @@
 package org.jg.geom;
 
 import java.awt.geom.PathIterator;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Tolerance;
@@ -312,29 +306,22 @@ public class VectTest {
     @Test
     public void testPathIterator() {
         double[] coords = new double[6];
-        float[] fcoords = new float[6];
         Vect vect = Vect.valueOf(1, 2);
-        PathIterator iter = vect.pathIterator();
-        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
+        PathIter iter = vect.iterator();
 
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.MOVE, iter.currentSegment(coords));
         assertEquals(1, coords[0], 0.00001);
         assertEquals(2, coords[1], 0.00001);
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(fcoords));
-        assertEquals(1, fcoords[0], 0.00001);
-        assertEquals(2, fcoords[1], 0.00001);
         iter.next();
 
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
         assertEquals(1, coords[0], 0.00001);
         assertEquals(2, coords[1], 0.00001);
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
-        assertEquals(1, fcoords[0], 0.00001);
-        assertEquals(2, fcoords[1], 0.00001);
         iter.next();
 
+        iter.next();
         assertTrue(iter.isDone());
     }
 

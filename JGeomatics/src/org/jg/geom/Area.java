@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -181,19 +180,14 @@ public final class Area implements Geom {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        return new PathIterator() {
+    public PathIter iterator() {
+        return new PathIter() {
 
             final List<Ring> rings = getRings();
             int ringIndex;
             VectList vects = rings.get(0).vects;
             int vectIndex;
             int last = vects.size() - 1;
-
-            @Override
-            public int getWindingRule() {
-                return WIND_NON_ZERO;
-            }
 
             @Override
             public boolean isDone() {
@@ -217,28 +211,15 @@ public final class Area implements Geom {
             }
 
             @Override
-            public int currentSegment(float[] coords) {
-                coords[0] = (float) vects.getX(vectIndex);
-                coords[1] = (float) vects.getY(vectIndex);
-                if (vectIndex == 0) {
-                    return SEG_MOVETO;
-                } else if (vectIndex == last) {
-                    return SEG_CLOSE;
-                } else {
-                    return SEG_LINETO;
-                }
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
+            public PathSegType currentSegment(double[] coords) {
                 coords[0] = vects.getX(vectIndex);
                 coords[1] = vects.getY(vectIndex);
                 if (vectIndex == 0) {
-                    return SEG_MOVETO;
+                    return PathSegType.MOVE;
                 } else if (vectIndex == last) {
-                    return SEG_CLOSE;
+                    return PathSegType.CLOSE;
                 } else {
-                    return SEG_LINETO;
+                    return PathSegType.LINE;
                 }
             }
         };

@@ -4,12 +4,10 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.FlatteningPathIterator;
-import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import org.jg.geom.Geom;
-import org.jg.geom.Linearizer;
 import org.jg.geom.Rect;
 import org.jg.geom.Relation;
 import org.jg.geom.Vect;
@@ -86,14 +84,14 @@ public class GeomShape implements Shape {
 
     @Override
     public PathIterator getPathIterator(AffineTransform at) {
-        PathIterator ret = geom.pathIterator();
+        PathIterator ret = new IterPathIterator(geom.iterator());
         ret = TransformingPathIterator.valueOf(ret, at);
         return ret;
     }
 
     @Override
     public PathIterator getPathIterator(AffineTransform at, double flatness) {
-        PathIterator ret = geom.pathIterator();
+        PathIterator ret = new IterPathIterator(geom.iterator());
         ret = TransformingPathIterator.valueOf(ret, at);
         if(flatness > 0){
             ret = new FlatteningPathIterator(ret, flatness);

@@ -17,14 +17,21 @@ import org.jg.util.Transform;
  */
 public class RenderableFill implements Renderable {
 
+    private final long id;
     private final Geom geom;
     private final Fill fill;
     private transient Shape shape;
 
-    @ConstructorProperties({"geom", "fill"})
-    public RenderableFill(Geom geom, Fill fill) {
+    @ConstructorProperties({"id", "geom", "fill"})
+    public RenderableFill(long id, Geom geom, Fill fill) {
+        this.id = id;
         this.geom = geom;
         this.fill = fill;
+    }
+
+    @Override
+    public long getId() {
+        return id;
     }
 
     public Geom getGeom() {

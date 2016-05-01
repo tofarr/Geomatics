@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.Serializable;
 import java.util.Comparator;
 import org.jg.util.Tolerance;
@@ -34,7 +33,7 @@ public interface Geom extends Cloneable, Serializable {
      *
      * @return path iterator
      */
-    PathIterator pathIterator();
+    PathIter iterator();
 
     /**
      * Create a deep copy of this geom - since geoms are immutable, usually just

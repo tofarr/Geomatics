@@ -135,33 +135,22 @@ public class LineStringTest {
     @Test
     public void testPathIterator() {
         LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
-        PathIterator iter = ls.pathIterator();
-        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
+        PathIter iter = ls.iterator();
         assertFalse(iter.isDone());
         double[] coords = new double[6];
-        float[] fcoords = new float[6];
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(coords));
-        assertEquals(PathIterator.SEG_MOVETO, iter.currentSegment(fcoords));
+        assertEquals(PathSegType.MOVE, iter.currentSegment(coords));
         assertEquals(1, coords[0], 0.00001);
         assertEquals(3, coords[1], 0.00001);
-        assertEquals(1, fcoords[0], 0.00001);
-        assertEquals(3, fcoords[1], 0.00001);
         iter.next();
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
         assertEquals(7, coords[0], 0.00001);
         assertEquals(13, coords[1], 0.00001);
-        assertEquals(7, fcoords[0], 0.00001);
-        assertEquals(13, fcoords[1], 0.00001);
         iter.next();
         assertFalse(iter.isDone());
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(coords));
-        assertEquals(PathIterator.SEG_LINETO, iter.currentSegment(fcoords));
+        assertEquals(PathSegType.LINE, iter.currentSegment(coords));
         assertEquals(17, coords[0], 0.00001);
         assertEquals(29, coords[1], 0.00001);
-        assertEquals(17, fcoords[0], 0.00001);
-        assertEquals(29, fcoords[1], 0.00001);
         iter.next();
         assertTrue(iter.isDone());
         iter.next();

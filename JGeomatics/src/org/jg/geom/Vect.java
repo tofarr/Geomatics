@@ -186,11 +186,30 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        Path2D.Double path = new Path2D.Double();
-        path.moveTo(x, y);
-        path.lineTo(x, y);
-        return path.getPathIterator(null);
+    public PathIter iterator() {
+        return new PathIter(){
+            int state;
+            
+            @Override
+            public boolean isDone() {
+                return (state < 2);
+            }
+
+            @Override
+            public void next() {
+                state++;
+            }
+
+            @Override
+            public PathSegType currentSegment(double[] coords) throws IllegalStateException {
+                if(state < 2){
+                    coords[0] = x;
+                    coords[1] = y;
+                    return (state == 0) ? PathSegType.MOVE : PathSegType.LINE;
+                }
+                throw new IllegalStateException();
+            }      
+        };
     }
 
     @Override

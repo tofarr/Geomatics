@@ -1,7 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -791,11 +789,37 @@ public final class Line implements Geom, Comparable<Line> {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        Path2D.Double path = new Path2D.Double();
-        path.moveTo(ax, ay);
-        path.lineTo(bx, by);
-        return path.getPathIterator(null);
+    public PathIter iterator() {
+        return new PathIter(){
+            int state;
+            
+            @Override
+            public boolean isDone() {
+                return (state < 2);
+            }
+
+            @Override
+            public void next() {
+                state++;
+            }
+
+            @Override
+            public PathSegType currentSegment(double[] coords) throws IllegalStateException {
+                switch(state){
+                    case 0:
+                        coords[0] = ax;
+                        coords[1] = ay;
+                        return PathSegType.MOVE;
+                    case 1:
+                        coords[0] = bx;
+                        coords[1] = by;
+                        return PathSegType.LINE;
+                    default:
+                        throw new IllegalStateException();
+                }
+                
+            }      
+        };
     }
 
     /**

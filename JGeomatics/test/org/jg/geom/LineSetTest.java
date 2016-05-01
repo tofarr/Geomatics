@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -135,24 +134,23 @@ public class LineSetTest {
     @Test
     public void testPathIterator() {
         LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
-        PathIterator iter = ls.pathIterator();
-        assertEquals(PathIterator.WIND_NON_ZERO, iter.getWindingRule());
-        assertPath(iter, PathIterator.SEG_MOVETO, 0, 0);
+        PathIter iter = ls.iterator();
+        assertPath(iter, PathSegType.MOVE, 0, 0);
         iter.next();
-        assertPath(iter, PathIterator.SEG_LINETO, 50, 50);
+        assertPath(iter, PathSegType.LINE, 50, 50);
         iter.next();
-        assertPath(iter, PathIterator.SEG_LINETO, 0, 100);
+        assertPath(iter, PathSegType.LINE, 0, 100);
         iter.next();
-        assertPath(iter, PathIterator.SEG_LINETO, 0, 0);
+        assertPath(iter, PathSegType.LINE, 0, 0);
         
         iter.next();
-        assertPath(iter, PathIterator.SEG_MOVETO, 50, 50);
+        assertPath(iter, PathSegType.MOVE, 50, 50);
         iter.next();
-        assertPath(iter, PathIterator.SEG_LINETO, 100, 0);
+        assertPath(iter, PathSegType.LINE, 100, 0);
         iter.next();
-        assertPath(iter, PathIterator.SEG_LINETO, 100, 100);
+        assertPath(iter, PathSegType.LINE, 100, 100);
         iter.next();
-        assertPath(iter, PathIterator.SEG_LINETO, 50, 50);
+        assertPath(iter, PathSegType.LINE, 50, 50);
         
         iter.next();
         assertTrue(iter.isDone());
@@ -160,16 +158,13 @@ public class LineSetTest {
         assertTrue(iter.isDone());
     }
     
-    void assertPath(PathIterator iter, int expectedResult, double... expectedCoords){
+    static void assertPath(PathIter iter, PathSegType expectedResult, double... expectedCoords){
         double[] coords = new double[6];
-        float[] fcoords = new float[6];
         expectedCoords = Arrays.copyOf(expectedCoords, 6);
         assertFalse(iter.isDone());
         assertEquals(expectedResult, iter.currentSegment(coords));
-        assertEquals(expectedResult, iter.currentSegment(fcoords));
         for(int i = 6; i-- > 0;){
             assertEquals(expectedCoords[i], coords[i], 0.0001);
-            assertEquals(expectedCoords[i], fcoords[i], 0.0001);
         }
     }
     

@@ -92,17 +92,12 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        return new PathIterator() {
+    public PathIter iterator() {
+        return new PathIter() {
 
             final int max = vects.size() - 1;
             int index;
-            int seg = SEG_MOVETO;
-
-            @Override
-            public int getWindingRule() {
-                return WIND_NON_ZERO;
-            }
+            PathSegType seg = PathSegType.MOVE;
 
             @Override
             public boolean isDone() {
@@ -111,23 +106,16 @@ public final class PointSet implements Geom {
 
             @Override
             public void next() {
-                if (seg == SEG_MOVETO) {
-                    seg = SEG_LINETO;
+                if (seg == PathSegType.MOVE) {
+                    seg = PathSegType.LINE;
                 } else if (index <= max) {
                     index++;
-                    seg = SEG_MOVETO;
+                    seg = PathSegType.MOVE;
                 }
             }
 
             @Override
-            public int currentSegment(float[] coords) {
-                coords[0] = (float) vects.getX(index);
-                coords[1] = (float) vects.getY(index);
-                return seg;
-            }
-
-            @Override
-            public int currentSegment(double[] coords) {
+            public PathSegType currentSegment(double[] coords) {
                 coords[0] = vects.getX(index);
                 coords[1] = vects.getY(index);
                 return seg;

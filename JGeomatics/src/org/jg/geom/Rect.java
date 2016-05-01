@@ -1,7 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -234,14 +232,12 @@ public final class Rect implements Geom {
     }
 
     @Override
-    public PathIterator pathIterator() {
-        Path2D.Double path = new Path2D.Double();
-        path.moveTo(minX, minY);
-        path.lineTo(minX, maxY);
-        path.lineTo(maxX, maxY);
-        path.lineTo(maxX, minY);
-        path.closePath();
-        return path.getPathIterator(null);
+    public PathIter iterator() {
+        return new Ring(new VectList(minX, minY,
+                minX, maxY,
+                maxX, maxY,
+                maxX, minY,
+                minX, minY), null).iterator();
     }
 
     @Override
