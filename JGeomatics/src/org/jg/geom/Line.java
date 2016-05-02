@@ -1,8 +1,6 @@
 package org.jg.geom;
 
 import java.beans.Transient;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -795,7 +793,7 @@ public final class Line implements Geom, Comparable<Line> {
             
             @Override
             public boolean isDone() {
-                return (state < 2);
+                return (state > 1);
             }
 
             @Override
@@ -1087,38 +1085,6 @@ public final class Line implements Geom, Comparable<Line> {
                     .append(Vect.ordToStr(by)).append(']');
         } catch (IOException ex) {
             throw new GeomException("Error writing", ex);
-        }
-    }
-
-    /**
-     * Write this line to the output given
-     *
-     * @param out
-     * @throws GeomException if there was an IO error
-     */
-    public void write(DataOutput out) throws GeomException {
-        try {
-            out.writeDouble(ax);
-            out.writeDouble(ay);
-            out.writeDouble(bx);
-            out.writeDouble(by);
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
-    }
-
-    /**
-     * Read a line from the input given
-     *
-     * @param in
-     * @return
-     * @throws GeomException if there was an IO error
-     */
-    public static Line read(DataInput in) throws GeomException {
-        try {
-            return valueOf(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
-        } catch (IOException ex) {
-            throw new GeomException("Error reading", ex);
         }
     }
 

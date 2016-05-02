@@ -326,41 +326,6 @@ public class RectTest {
     }
 
     @Test
-    public void testExternalize() throws Exception {
-        Rect a = Rect.valueOf(3, 7, 13, 29);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (DataOutputStream out = new DataOutputStream(bout)) {
-            a.write(out);
-        }
-        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            Rect b = Rect.read(in);
-            assertEquals(a, b);
-        }
-        
-        try{
-            a.write(new DataOutputStream(new OutputStream(){
-                @Override
-                public void write(int b) throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-        
-        try{
-            Rect.read(new DataInputStream(new InputStream(){
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-    }
-
-    @Test
     public void testValueOf() {
         Rect a = Rect.valueOf(3, 7, 13, 29);
         assertEquals(3, a.getMinX(), 0.00001);
@@ -412,12 +377,17 @@ public class RectTest {
     public void testPathIterator() {
         Rect a = Rect.valueOf(3, 7, 13, 29);
         PathIter iter = a.iterator();
-        iter.next();
         LineSetTest.assertPath(iter, PathSegType.MOVE, 3, 7);
+        iter.next();
         LineSetTest.assertPath(iter, PathSegType.LINE, 13, 7);
+        iter.next();
         LineSetTest.assertPath(iter, PathSegType.LINE, 13, 29);
+        iter.next();
         LineSetTest.assertPath(iter, PathSegType.LINE, 3, 29);
+        iter.next();
         LineSetTest.assertPath(iter, PathSegType.CLOSE, 3, 7);
+        iter.next();
+        assertTrue(iter.isDone());
     }
 
     @Test
@@ -437,7 +407,7 @@ public class RectTest {
         Area e = Area.valueOf(Tolerance.DEFAULT, 15,25, 35,25, 35,45, 15,45, 15,25);
         assertSame(a, a.union(c, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertSame(a, c.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        assertEquals("[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"AR\",null,[[10,20, 30,20, 30,40, 10,40, 10,20]],[[50,60, 70,60, 70,80, 50,80, 50,60]]]", a.union(b, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         Ring expected = Ring.valueOf(Tolerance.DEFAULT, 10,20, 30,20, 30,25, 35,25, 35,45, 15,45, 15,40, 10,40, 10,20);
         assertEquals(expected, a.union(d, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(expected, a.union(e, Linearizer.DEFAULT, Tolerance.DEFAULT));

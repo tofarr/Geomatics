@@ -184,11 +184,11 @@ public class AreaTest {
             int x = 40 + i;
             int y = 30 + i;
             assertFalse(iter.isDone());
-            checkIter(iter, PathIterator.SEG_MOVETO, -x, -y);
-            checkIter(iter, PathIterator.SEG_LINETO, x, -y);
-            checkIter(iter, PathIterator.SEG_LINETO, x, y);
-            checkIter(iter, PathIterator.SEG_LINETO, -x, y);
-            checkIter(iter, PathIterator.SEG_CLOSE, -x, -y);
+            checkIter(iter, PathSegType.MOVE, -x, -y);
+            checkIter(iter, PathSegType.LINE, x, -y);
+            checkIter(iter, PathSegType.LINE, x, y);
+            checkIter(iter, PathSegType.LINE, -x, y);
+            checkIter(iter, PathSegType.CLOSE, -x, -y);
         }
         
         assertTrue(iter.isDone());
@@ -196,7 +196,7 @@ public class AreaTest {
         assertTrue(iter.isDone());
     }
     
-    private void checkIter(PathIter iter, int result, double x, double y){
+    private void checkIter(PathIter iter, PathSegType result, double x, double y){
         double[] coords = new double[6];
         assertEquals(result, iter.currentSegment(coords));
         assertArrayEquals(new double[]{x,y,0,0,0,0}, coords, 0.001);
@@ -321,7 +321,7 @@ public class AreaTest {
         network.addAllLinks(new VectList(10,10, 30,10, 30,40, 10,40, 10,10));
         network.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
         Area area = Area.valueOf(TOL, network);
-        assertEquals("[\"AR\",[[0,0, 40,0, 40,50, 0,50, 0,0],[[10,10, 30,10, 30,40, 10,40, 10,10]]],[[100,100, 140,100, 140,150, 100,150, 100,100]]]", area.toString());
+        assertEquals("[\"AR\",null,[[0,0, 40,0, 40,50, 0,50, 0,0],[[10,10, 30,10, 30,40, 10,40, 10,10]]],[[100,100, 140,100, 140,150, 100,150, 100,100]]]", area.toString());
         try {
             area.toString(null);
             fail("Exception expected");

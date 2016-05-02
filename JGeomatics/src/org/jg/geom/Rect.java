@@ -234,9 +234,9 @@ public final class Rect implements Geom {
     @Override
     public PathIter iterator() {
         return new Ring(new VectList(minX, minY,
-                minX, maxY,
-                maxX, maxY,
                 maxX, minY,
+                maxX, maxY,
+                minX, maxY,
                 minX, minY), null).iterator();
     }
 
@@ -529,38 +529,6 @@ public final class Rect implements Geom {
                     && (maxY == rect.maxY);
         } else {
             return false;
-        }
-    }
-
-    /**
-     * Write this rect to the output given
-     *
-     * @param out
-     * @throws IOException
-     */
-    public void write(DataOutput out) throws IOException {
-        try {
-            out.writeDouble(minX);
-            out.writeDouble(minY);
-            out.writeDouble(maxX);
-            out.writeDouble(maxY);
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
-    }
-
-    /**
-     * Read a Rectangle from the input given
-     *
-     * @param in
-     * @return a Rectangle
-     * @throws GeomException
-     */
-    public static Rect read(DataInput in) throws GeomException {
-        try {
-            return valueOf(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
-        } catch (IOException ex) {
-            throw new GeomException("Error reading", ex);
         }
     }
 

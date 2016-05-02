@@ -179,7 +179,7 @@ public final class LineSet implements Geom {
         try {
             appendable.append("[\"").append(CODE).append('"');
             for (LineString lineString : lineStrings) {
-                appendable.append(", ");
+                appendable.append(',');
                 lineString.vects.toString(appendable);
             }
             appendable.append(']');

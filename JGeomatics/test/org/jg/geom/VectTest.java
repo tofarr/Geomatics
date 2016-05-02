@@ -250,21 +250,21 @@ public class VectTest {
             v.toString(new Appendable(){
                 @Override
                 public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException("SomeMsg");
+                    throw new IOException();
                 }
 
                 @Override
                 public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException("SomeMsg");
+                    throw new IOException();
                 }
 
                 @Override
                 public Appendable append(char c) throws IOException {
-                    throw new IOException("SomeMsg");
+                    throw new IOException();
                 }
             });
             fail("Exception expected");
-        }catch(GeomException ex){
+        }catch(GeomIOException ex){
         }
     }
 
@@ -393,7 +393,7 @@ public class VectTest {
         assertSame(rect, Vect.valueOf(15, 20).union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         Vect a = Vect.valueOf(5, 30);
-        assertEquals("[\"GS\",[\"AR\"[[10,20, 30,20, 30,40, 10,40, 10,20]]],[\"PS\", 5,30]]", a.union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"GS\",[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]]],[\"PS\", 5,30]]", a.union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         assertEquals(a, a.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         Vect b = Vect.valueOf(10, 25);

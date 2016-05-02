@@ -2,7 +2,6 @@ package org.jg.geom;
 
 import java.beans.Transient;
 import java.io.Serializable;
-import org.jg.util.VectList;
 
 /**
  *

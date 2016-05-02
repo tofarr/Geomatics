@@ -20,8 +20,8 @@ import org.jg.geom.VectBuilder;
  */
 public final class SpatialNode<E> implements Externalizable, Cloneable {
 
-    static Rect[] EMPTY_BOUNDS = new Rect[0];
-    static Object[] EMPTY_VALUES = new Object[0];
+    static final Rect[] EMPTY_BOUNDS = new Rect[0];
+    static final Object[] EMPTY_VALUES = new Object[0];
     SpatialNode<E> a;
     SpatialNode<E> b;
 
@@ -478,7 +478,11 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             out.writeBoolean(false);
             out.writeInt(size);
             for (int i = 0; i < size; i++) {
-                itemBounds[i].write(out);
+                Rect itemBound = itemBounds[i];
+                out.writeDouble(itemBound.minX);
+                out.writeDouble(itemBound.minY);
+                out.writeDouble(itemBound.maxX);
+                out.writeDouble(itemBound.maxY);
             }
             for (int i = 0; i < size; i++) {
                 out.writeObject(itemValues[i]);
@@ -503,7 +507,7 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
             itemValues = (E[]) new Object[size];
             bounds.reset();
             for (int i = 0; i < itemBounds.length; i++) {
-                Rect rect = Rect.read(in);
+                Rect rect = Rect.valueOf(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
                 itemBounds[i] = rect;
                 bounds.add(rect);
             }

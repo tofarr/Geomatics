@@ -356,7 +356,7 @@ public final class Area implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"").append(CODE).append('"');
+            appendable.append("[\"").append(CODE).append("\",");
             toStringInternal(appendable);
             appendable.append("]");
         } catch (IOException ex) {

@@ -247,22 +247,23 @@ public class GeoShape implements Geom {
     @Override
     public void toString(Appendable appendable) throws NullPointerException, GeomException {
         try {
-            appendable.append("[\"").append(CODE).append('"');
-            if (area == null) {
-                appendable.append("null");
-            }else{
+            appendable.append("[\"").append(CODE).append("\",");
+            boolean comma = false;
+            if (area != null) {
                 area.toString(appendable);
+                comma = true;
             }
-            appendable.append(',');
-            if (lines == null) {
-                appendable.append("null");
-            }else{
+            if (lines != null) {
+                if(comma){
+                    appendable.append(',');   
+                }
                 lines.toString(appendable);
+                comma = true;
             }
-            appendable.append(',');
             if (points != null) {
-                appendable.append("null");
-            }else{
+                if(comma){
+                    appendable.append(',');   
+                }
                 points.toString(appendable);
             }
             appendable.append(']');

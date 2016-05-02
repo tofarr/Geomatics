@@ -1,10 +1,7 @@
 package org.jg.geom;
 
-import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.beans.Transient;
 import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
 import org.jg.util.Tolerance;
@@ -192,7 +189,7 @@ public final class Vect implements Geom, Comparable<Vect> {
             
             @Override
             public boolean isDone() {
-                return (state < 2);
+                return (state >= 2);
             }
 
             @Override
@@ -420,7 +417,7 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
+    public void toString(Appendable appendable) throws NullPointerException, GeomIOException {
         toString(x, y, appendable);
     }
 

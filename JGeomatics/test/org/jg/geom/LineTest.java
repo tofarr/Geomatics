@@ -605,50 +605,6 @@ public class LineTest {
     }
 
     @Test
-    public void testExternalize() throws Exception {
-        Line a = new Line(3, 7, 13, 23);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            out.writeObject(a);
-        }
-        Line b;
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            b = (Line) in.readObject();
-        }
-        assertEquals(a, b);
-        bout = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            a.write(out);
-        }
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            b = Line.read(in);
-        }
-        assertEquals(a, b);
-        
-        try{
-            a.write(new DataOutputStream(new OutputStream(){
-                @Override
-                public void write(int b) throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-        
-        try{
-            Line.read(new DataInputStream(new InputStream(){
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-    }
-
-    @Test
     public void testGetBounds() {
         Line a = new Line(13, 23, 3, 7);
         assertEquals(new Rect(3, 7, 13, 23), a.getBounds());

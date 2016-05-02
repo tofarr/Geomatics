@@ -202,50 +202,6 @@ public class ViewTest {
     }
 
     @Test
-    public void testExternaliize() throws IOException, ClassNotFoundException {
-        View a = new View(Rect.valueOf(2000, 1000, 6000, 7000), 400, 300);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            out.writeObject(a);
-        }
-        View b;
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            b = (View) in.readObject();
-        }
-        assertEquals(a, b);
-        bout = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            a.write(out);
-        }
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            b = View.read(in);
-        }
-        assertEquals(a, b);
-        
-        try{
-            a.write(new DataOutputStream(new OutputStream(){
-                @Override
-                public void write(int b) throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-        
-        try{
-            View.read(new DataInputStream(new InputStream(){
-                @Override
-                public int read() throws IOException {
-                    throw new IOException();
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-    }
-
-    @Test
     public void testZoom() {
         View a = new View(Rect.valueOf(2000, 1000, 6000, 7000), 400, 300);
         View b = a.zoom(0.5);
@@ -275,56 +231,4 @@ public class ViewTest {
         View b = a.resizeTo(640, 480);
         assertEquals(new View(Rect.valueOf(800,-800,7200,8800), 640, 480), b);
     }
-    
-    @Test
-    public void testExternalize() throws Exception {
-        View a = new View(Rect.valueOf(2000, 1000, 6000, 7000), 400, 300);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            out.writeObject(a);
-        }
-        View b;
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            b = (View) in.readObject();
-        }
-        assertEquals(a, b);
-        bout = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bout)) {
-            a.write(out);
-        }
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()))) {
-            b = View.read(in);
-        }
-        assertEquals(a, b);
-        
-        try{
-            a.write(new DataOutputStream(new OutputStream(){
-                int count = 0;
-                @Override
-                public void write(int b) throws IOException {
-                    if(++count > 32){
-                        throw new IOException();
-                    }
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-        
-        try{
-            Transform.read(new DataInputStream(new InputStream(){
-                int count = 0;
-                @Override
-                public int read() throws IOException {
-                    if(++count > 32){
-                        throw new IOException();
-                    }
-                    return 0;
-                }
-            }));
-            fail("Exception expected");
-        }catch(GeomException ex){   
-        }
-    }
-
 }

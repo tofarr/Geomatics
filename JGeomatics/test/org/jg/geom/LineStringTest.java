@@ -651,9 +651,9 @@ public class LineStringTest {
         assertEquals(a, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals("[\"LS\", 0,90, 50,90, 90,90, 90,50, 90,0]",
                 a.less(c, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
-        assertEquals("[\"LT\", [0,90, 50,90], [90,0, 90,50]]",
+        assertEquals("[\"LT\",[0,90, 50,90],[90,0, 90,50]]",
                 a.less(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
-        assertEquals("[\"LT\", [0,90, 80,90], [90,0, 90,80]]", a.less(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"LT\",[0,90, 80,90],[90,0, 90,80]]", a.less(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
     }
 
     @Test
@@ -666,11 +666,11 @@ public class LineStringTest {
         
         assertNull(a.xor(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(new GeoShape(b.toArea(), a.toLineSet(), null), a.xor(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        assertEquals("[\"LT\", [0,90, 50,90], [50,90, 50,50, 90,50], [50,90, 90,90, 90,50], [90,0, 90,50], [90,50, 100,50]]",
+        assertEquals("[\"LT\",[0,90, 50,90],[50,90, 50,50, 90,50],[50,90, 90,90, 90,50],[90,0, 90,50],[90,50, 100,50]]",
                 a.xor(c, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
-        assertEquals("[\"LT\", [0,90, 50,90], [90,0, 90,50]]",
+        assertEquals("[\"LT\",[0,90, 50,90],[90,0, 90,50]]",
                 a.xor(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
-        assertEquals("[\"GS\",[\"AR\"[[80,80, 100,80, 100,100, 80,100, 80,80]]],[\"LT\", [0,90, 80,90], [90,0, 90,80]]]", a.xor(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"GS\",[\"AR\",[[80,80, 100,80, 100,100, 80,100, 80,80]]],[\"LT\",[0,90, 80,90],[90,0, 90,80]]]", a.xor(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
     }
           
     @Test

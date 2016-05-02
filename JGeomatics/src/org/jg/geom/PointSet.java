@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
