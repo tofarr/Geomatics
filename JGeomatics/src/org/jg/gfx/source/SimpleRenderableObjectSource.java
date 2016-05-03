@@ -13,6 +13,7 @@ import org.jg.util.View;
  */
 public class SimpleRenderableObjectSource implements RenderableObjectSource {
 
+    public static final SimpleRenderableObjectSource EMPTY = new SimpleRenderableObjectSource();
     private final Renderable[] renderables;
 
     @ConstructorProperties({"renderables"})

@@ -1,11 +1,7 @@
 package org.jg.util;
 
 import java.beans.Transient;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.io.Serializable;
-import org.jg.geom.GeomException;
 import org.jg.geom.Rect;
 import org.jg.geom.Vect;
 

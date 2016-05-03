@@ -75,6 +75,6 @@ public class RenderableOutline implements Renderable {
         g.setStroke(outline.toStroke());
         Shape _shape = toShape();
         _shape = TransformingShape.valueOf(shape, transform);
-        g.fill(_shape);
+        g.draw(_shape);
     }
 }
