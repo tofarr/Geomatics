@@ -10,6 +10,7 @@ import java.beans.PropertyChangeListener;
 import java.text.DecimalFormat;
 import javax.swing.BorderFactory;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import org.jg.geom.LineString;
 import org.jg.geom.Rect;
 import org.jg.geom.Ring;
@@ -70,14 +71,22 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     public void setModel(GeomViewerModel model) {
         renderPanel.setViewPoint(model.getViewPoint());
         renderPanel.setSource(CompoundRenderableObjectSource.valueOf(model.getLayers()));
-        Component[] components = layersMenu.getComponents();
+        Component[] components = layersMenu.getMenuComponents();
         for(int c = components.length; c-- > 2;){
             layersMenu.remove(components[c]);
         }
-        //for(GeomLayer layer : model.getLayers()){
-        //    addLayerMenu(layer);
-        //}
+        for(GeomLayer layer : model.getLayers()){
+            addLayerMenu(layer);
+        }
         this.model = model;
+    }
+    
+    private void addLayerMenu(GeomLayer layer){
+        JMenu menu = new JMenu(layer.getTitle());
+        menu.add(new JMenuItem("Style"));
+        //menu.add(new JMenuItem("Edit")); // not implementing this for now...
+        menu.add(new JMenuItem("Delete"));
+        layersMenu.add(menu);
     }
 
     /**
@@ -131,6 +140,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         });
 
         viewLocation.setBorder(null);
+        viewLocation.setOpaque(false);
         viewLocation.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewLocationActionPerformed(evt);
@@ -155,11 +165,13 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         renderPanelLayout.setVerticalGroup(
             renderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, renderPanelLayout.createSequentialGroup()
-                .addGap(0, 265, Short.MAX_VALUE)
+                .addContainerGap(265, Short.MAX_VALUE)
                 .addGroup(renderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(viewLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(mouseLocation)))
         );
+
+        getContentPane().add(renderPanel, java.awt.BorderLayout.CENTER);
 
         viewMenu.setText("View");
 
@@ -264,17 +276,6 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         mainMenu.add(layersMenu);
 
         setJMenuBar(mainMenu);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(renderPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(renderPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
