@@ -6,8 +6,8 @@
 package org.jg.io.json.parsers;
 
 import org.jg.geom.GeomIOException;
-import org.jg.io.json.JsonReader;
-import org.jg.io.json.JsonType;
+import org.jsonutil.JsonReader;
+import org.jsonutil.JsonType;
 import org.jg.util.VectList;
 
 /**

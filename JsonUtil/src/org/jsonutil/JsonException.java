@@ -1,4 +1,4 @@
-package org.jg.io.json;
+package org.jsonutil;
 
 /**
  *

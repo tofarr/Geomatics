@@ -3,9 +3,9 @@ package org.jg.io.json.parsers;
 import org.jg.geom.GeomFactory;
 import org.jg.geom.GeomIOException;
 import org.jg.geom.Line;
-import org.jg.io.json.JsonGeomParser;
-import org.jg.io.json.JsonReader;
-import org.jg.io.json.JsonType;
+import org.jsonutil.JsonGeomParser;
+import org.jsonutil.JsonReader;
+import org.jsonutil.JsonType;
 
 /**
  *

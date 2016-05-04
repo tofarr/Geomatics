@@ -1,4 +1,4 @@
-package org.jg.io.json;
+package org.jg.io.json.parsers;
 
 import java.io.Reader;
 import java.util.ArrayList;
@@ -10,6 +10,9 @@ import java.util.ServiceLoader;
 import java.util.logging.Logger;
 import org.jg.geom.Geom;
 import org.jg.geom.GeomIOException;
+import org.jsonutil.JsonGeomParser;
+import org.jsonutil.JsonReader;
+import org.jsonutil.JsonType;
 
 /**
  * Standard Geom reader is based on Gson.

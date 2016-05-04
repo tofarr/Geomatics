@@ -1,18 +1,17 @@
-package org.jg.io.json;
+package org.jsonutil;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.ArrayDeque;
-import org.jg.geom.GeomIOException;
 
 /**
  * Simple streaming json reader
  *
  * @author tofar
  */
-public class JsonReader {
+public class JsonReader extends JsonInput {
 
     private enum ReaderType {
         BEGIN_OBJECT,
@@ -35,24 +34,32 @@ public class JsonReader {
     private double num;
     private boolean bool;
 
-    public JsonReader(Reader reader) throws NullPointerException, GeomIOException {
+    public JsonReader(Reader reader) throws NullPointerException, JsonException {
         this.reader = new PushbackReader(reader);
         this.parents = new ArrayDeque<>();
     }
 
     /**
-     * Get next type from stream
+     * Get next type from stream - return null when end of stream reached
      *
      * @return one of BEGIN_ARRAY,END_ARRAY,BEGIN_OBJECT,END_OBJECT,NAME,STRING,NUMBER,BOOLEAN,NULL
      */
+    @Override
     public JsonType next() {
         try {
             while (true) {
                 int c = nextValidChar();
+                if(c < 0){
+                    if(parents.isEmpty()){
+                        return null;
+                    }else{
+                        throw new JsonException("Unexpected end of stream!");
+                    }
+                }
                 switch (c) {
                     case '[':
                         if ((parent == JsonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
-                            throw new GeomIOException("Values within objects must have a key!");
+                            throw new JsonException("Values within objects must have a key!");
                         }
                         parents.push(parent);
                         parent = JsonType.BEGIN_ARRAY;
@@ -60,15 +67,15 @@ public class JsonReader {
                         return JsonType.BEGIN_ARRAY;
                     case ']':
                         if (parent != JsonType.BEGIN_ARRAY) {
-                            throw new GeomIOException("Attempting to close array when parent is " + parent);
+                            throw new JsonException("Attempting to close array when parent is " + parent);
                         } else if (prev == ReaderType.COMMA) {
-                            throw new GeomIOException("Trailing comma in array!");
+                            throw new JsonException("Trailing comma in array!");
                         }
                         parent = parents.pop();
                         return JsonType.END_ARRAY;
                     case '{':
                         if ((parent == JsonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
-                            throw new GeomIOException("Values within objects must have a key!");
+                            throw new JsonException("Values within objects must have a key!");
                         }
                         parents.push(parent);
                         parent = JsonType.BEGIN_OBJECT;
@@ -76,31 +83,31 @@ public class JsonReader {
                         return JsonType.BEGIN_OBJECT;
                     case '}':
                         if (parent != JsonType.BEGIN_OBJECT) {
-                            throw new GeomIOException("Attempting to close object when parent is " + parent);
+                            throw new JsonException("Attempting to close object when parent is " + parent);
                         } else if (prev == ReaderType.COMMA) {
-                            throw new GeomIOException("Trailing comma in array!");
+                            throw new JsonException("Trailing comma in array!");
                         }
                         parent = parents.pop();
                         return JsonType.END_OBJECT;
                     case ':':
                         if (parent != JsonType.BEGIN_OBJECT) {
-                            throw new GeomIOException("Cannot specify key value pairs in type " + parent);
+                            throw new JsonException("Cannot specify key value pairs in type " + parent);
                         } else if (prev != ReaderType.NAME) {
-                            throw new GeomIOException("Values within objects must have a key!");
+                            throw new JsonException("Values within objects must have a key!");
                         }
                         prev = ReaderType.COLON;
                         break;
                     case ',':
                         if (parent == null) {
-                            throw new GeomIOException("Comma outside object!");
+                            throw new JsonException("Comma outside object!");
                         } else if (prev == null) {
-                            throw new GeomIOException("Comma is first element in " + parent);
+                            throw new JsonException("Comma is first element in " + parent);
                         } else if (prev == ReaderType.NAME) {
-                            throw new GeomIOException("Comma following name!");
+                            throw new JsonException("Comma following name!");
                         } else if (prev == ReaderType.COLON) {
-                            throw new GeomIOException("Comma following colon!");
+                            throw new JsonException("Comma following colon!");
                         } else if (prev == ReaderType.COMMA) {
-                            throw new GeomIOException("Comma outside object!");
+                            throw new JsonException("Comma outside object!");
                         }
                         prev = ReaderType.COMMA;
                         break;
@@ -142,7 +149,7 @@ public class JsonReader {
                 }
             }
         } catch (IOException ex) {
-            throw new GeomIOException("Error reading Json", ex);
+            throw new JsonException("Error reading Json", ex);
         }
     }
 
@@ -183,7 +190,7 @@ public class JsonReader {
         while (true) {
             int c = reader.read();
             if (c < 0) {
-                throw new EOFException();
+                return c;
             }
             if (Character.isWhitespace(c)) {
                 continue;
@@ -234,13 +241,13 @@ public class JsonReader {
      * Get current string / name from stream
      *
      * @return
-     * @throws IllegalStateException if current was not string / name
+     * @throws JsonException if current was not string / name
      */
-    public String str() throws IllegalStateException {
+    public String str() throws JsonException {
         if (prev == ReaderType.NAME || prev == ReaderType.STRING) {
             return str.toString();
         } else {
-            throw new IllegalStateException("Requested string when type was " + prev);
+            throw new JsonException("Expected STRING found " + prev);
         }
     }
 
@@ -248,13 +255,13 @@ public class JsonReader {
      * Get current number from stream
      *
      * @return
-     * @throws IllegalStateException if current was not number
+     * @throws JsonException if current was not number
      */
-    public double num() throws IllegalStateException {
+    public double num() throws JsonException {
         if (prev == ReaderType.NUMBER) {
             return num;
         } else {
-            throw new IllegalStateException("Requested string when type was " + prev);
+            throw new JsonException("Expected NUMBER found " + prev);
         }
     }
 
@@ -262,28 +269,13 @@ public class JsonReader {
      * Get current boolean from stream
      *
      * @return
-     * @throws IllegalStateException if currrent was not boolean
+     * @throws JsonException if currrent was not boolean
      */
-    public boolean bool() throws IllegalStateException {
+    public boolean bool() throws JsonException {
         if (prev == ReaderType.BOOLEAN) {
             return bool;
         } else {
-            throw new IllegalStateException("Requested string when type was " + prev);
+            throw new JsonException("Expected BOOLEAN found " + prev);
         }
-    }
-
-    public String nextStr() {
-        next();
-        return str();
-    }
-
-    public double nextNum() {
-        next();
-        return num();
-    }
-
-    public boolean nextBool() {
-        next();
-        return bool();
     }
 }
