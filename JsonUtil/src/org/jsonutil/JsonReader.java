@@ -1,6 +1,5 @@
 package org.jsonutil;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
@@ -28,15 +27,17 @@ public class JsonReader extends JsonInput {
     }
     private final PushbackReader reader;
     private final ArrayDeque<JsonType> parents;
+    private final StringBuilder str;
     private JsonType parent;
     private ReaderType prev;
-    private StringBuilder str;
     private double num;
     private boolean bool;
 
     public JsonReader(Reader reader) throws NullPointerException, JsonException {
         this.reader = new PushbackReader(reader);
         this.parents = new ArrayDeque<>();
+        parent = JsonType.NULL;
+        str = new StringBuilder();
     }
 
     /**
@@ -85,7 +86,7 @@ public class JsonReader extends JsonInput {
                         if (parent != JsonType.BEGIN_OBJECT) {
                             throw new JsonException("Attempting to close object when parent is " + parent);
                         } else if (prev == ReaderType.COMMA) {
-                            throw new JsonException("Trailing comma in array!");
+                            throw new JsonException("Trailing comma in object!");
                         }
                         parent = parents.pop();
                         return JsonType.END_OBJECT;
@@ -98,7 +99,7 @@ public class JsonReader extends JsonInput {
                         prev = ReaderType.COLON;
                         break;
                     case ',':
-                        if (parent == null) {
+                        if (parent == JsonType.NULL) {
                             throw new JsonException("Comma outside object!");
                         } else if (prev == null) {
                             throw new JsonException("Comma is first element in " + parent);
@@ -112,6 +113,9 @@ public class JsonReader extends JsonInput {
                         prev = ReaderType.COMMA;
                         break;
                     case '"':
+                        if((prev != null) && (prev != ReaderType.COLON) && (prev != ReaderType.COMMA)){
+                            throw new JsonException("Found STRING when expected COMMA");
+                        }
                         readCommentedString('"');
                         if ((parent == JsonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
                             prev = ReaderType.NAME;
@@ -123,11 +127,11 @@ public class JsonReader extends JsonInput {
                     default:
                         //could be name, or could be boolean number or null
                         if ((parent == JsonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
-                            readUncommentedString();
+                            readUncommentedString(c);
                             prev = ReaderType.NAME;
                             return JsonType.NAME;
                         }
-                        readUncommentedString();
+                        readUncommentedString(c);
                         String value = str.toString();
                         switch (value) {
                             case "true":
@@ -142,7 +146,11 @@ public class JsonReader extends JsonInput {
                                 prev = ReaderType.NULL;
                                 return JsonType.NULL;
                             default: // number
-                                num = Double.parseDouble(value);
+                                try{
+                                    num = Double.parseDouble(value);
+                                }catch(NumberFormatException ex){
+                                    throw new JsonException("Error parsing number "+value, ex);
+                                }
                                 prev = ReaderType.NUMBER;
                                 return JsonType.NUMBER;
                         }
@@ -153,18 +161,21 @@ public class JsonReader extends JsonInput {
         }
     }
 
-    private void readUncommentedString() throws IOException {
+    private void readUncommentedString(int c) throws IOException {
         str.setLength(0);
         while (true) {
-            int c = reader.read();
             if (c < 0) {
-                throw new EOFException();
-            } else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$') || (c == '.')) {
-                str.append(c);
+                if(parent == JsonType.NULL){
+                    return;
+                }
+                throw new JsonException("Unexpected end of stream!");
+            } else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$') || (c == '.') || (c == '+')) {
+                str.append((char)c);
             } else {
                 reader.unread(c);
                 return;
             }
+            c = reader.read();
         }
     }
 
@@ -173,16 +184,16 @@ public class JsonReader extends JsonInput {
         while (true) {
             int c = reader.read();
             if (c < 0) {
-                throw new EOFException();
+                throw new JsonException("Unexpected end of stream!");
             } else if (c == endChar) {
                 return;
             } else if (c == '\\') {
                 c = reader.read();
                 if (c < 0) {
-                    throw new EOFException();
+                    throw new JsonException("Unexpected end of stream!");
                 }
             }
-            str.append(c);
+            str.append((char)c);
         }
     }
 
@@ -195,45 +206,45 @@ public class JsonReader extends JsonInput {
             if (Character.isWhitespace(c)) {
                 continue;
             }
-            if (c == '/') { // a comment
-                c = reader.read();
-                if (c < 0) {
-                    throw new EOFException();
-                }
-                switch (c) {
-                    case '*':
-                        while (true) {
-                            c = reader.read();
-                            if (c < 0) {
-                                throw new EOFException();
-                            }
-                            if (c == '*') {
-                                c = reader.read();
-                                if (c < 0) {
-                                    throw new EOFException();
-                                }
-                                if (c == '/') {
-                                    break;
-                                }
-                            }
+            if (c != '/') { // a comment
+                return c;
+            }
+            c = reader.read();
+            if (c < 0) {
+                throw new JsonException("Unexpected end of stream!");
+            }
+            switch (c) {
+                case '*':
+                    while (true) {
+                        c = reader.read();
+                        if (c < 0) {
+                            throw new JsonException("Unexpected end of stream!");
                         }
-                        break;
-                    case '/':
-                        while (true) {
+                        if (c == '*') {
                             c = reader.read();
                             if (c < 0) {
-                                throw new EOFException();
+                                throw new JsonException("Unexpected end of stream!");
                             }
-                            if (c == '\n') {
+                            if (c == '/') {
                                 break;
                             }
                         }
-                        break;
-                    default:
-                        throw new IOException("Unexpected characters: /" + ((char) c));
-                }
+                    }
+                    break;
+                case '/':
+                    while (true) {
+                        c = reader.read();
+                        if (c < 0) {
+                            return c;
+                        }
+                        if (c == '\n') {
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    throw new JsonException("Unexpected characters: /" + ((char) c));
             }
-            return c;
         }
     }
 
@@ -243,6 +254,7 @@ public class JsonReader extends JsonInput {
      * @return
      * @throws JsonException if current was not string / name
      */
+    @Override
     public String str() throws JsonException {
         if (prev == ReaderType.NAME || prev == ReaderType.STRING) {
             return str.toString();
@@ -257,6 +269,7 @@ public class JsonReader extends JsonInput {
      * @return
      * @throws JsonException if current was not number
      */
+    @Override
     public double num() throws JsonException {
         if (prev == ReaderType.NUMBER) {
             return num;
@@ -271,6 +284,7 @@ public class JsonReader extends JsonInput {
      * @return
      * @throws JsonException if currrent was not boolean
      */
+    @Override
     public boolean bool() throws JsonException {
         if (prev == ReaderType.BOOLEAN) {
             return bool;

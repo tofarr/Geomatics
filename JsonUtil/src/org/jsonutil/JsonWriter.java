@@ -1,7 +1,6 @@
 package org.jsonutil;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 
 /**
  *
@@ -41,6 +40,13 @@ public final class JsonWriter extends JsonOutput {
 
     @Override
     protected void writeName(String name) throws JsonException {
+        if(prev != null){
+            append(',');
+        }
+        if (whitespace) {
+            append(' ');
+            whitespace = false;
+        }
         name = sanitize(name);
         append(name);
     }
@@ -105,7 +111,7 @@ public final class JsonWriter extends JsonOutput {
     protected void beforeValue() {
         super.beforeValue();
         if (prev != null) {
-            append(',');
+            append((prev == JsonType.NAME) ? ':' : ',');
         }
         if (whitespace) {
             append(' ');
@@ -118,11 +124,12 @@ public final class JsonWriter extends JsonOutput {
             return "\"\"";
         }
         char c = name.charAt(0);
-        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'Z') || (c == '$'))) {
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$'))) {
             return '"' + name.replace("\"", "\\\"") + '"';
         }
         for (int i = 1; i < name.length(); i++) {
-            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'Z') || (c == '$') || (c >= '0' && c <= '9'))) {
+            c = name.charAt(i);
+            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$') || (c >= '0' && c <= '9'))) {
                 return '"' + name.replace("\"", "\\\"") + '"';
             }
         }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StringParser.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;JsonUtil&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.source.html" class="el_package">org.jsonutil.parser</a> &gt; <span class="el_source">StringParser.java</span></div><h1>StringParser.java</h1><pre class="source lang-java linenums">package org.jsonutil.parser;
+
+import java.lang.reflect.Type;
+import org.jsonutil.JsonCoder;
+import org.jsonutil.JsonException;
+import org.jsonutil.JsonInput;
+import org.jsonutil.JsonType;
+import static org.jsonutil.JsonType.BOOLEAN;
+import static org.jsonutil.JsonType.NULL;
+import static org.jsonutil.JsonType.NUMBER;
+import static org.jsonutil.JsonType.STRING;
+
+/**
+ *
+ * @author tofarrell
+ */
+public final class StringParser extends JsonParser&lt;String&gt; {
+
+<span class="nc" id="L19">    public static final StringParser INSTANCE = new StringParser();</span>
+
+<span class="nc" id="L21">    private StringParser() {</span>
+<span class="nc" id="L22">    }</span>
+
+    @Override
+    public String parse(JsonType type, JsonCoder coder, JsonInput input) {
+<span class="nc bnc" id="L26" title="All 5 branches missed.">        switch (type) {</span>
+            case BOOLEAN:
+<span class="nc" id="L28">                return Boolean.toString(input.bool());</span>
+            case NULL:
+<span class="nc" id="L30">                return null;</span>
+            case NUMBER:
+<span class="nc" id="L32">                return Double.toString(input.num());</span>
+            case STRING:
+<span class="nc" id="L34">                return input.str();</span>
+            default:
+<span class="nc" id="L36">                throw new JsonException(&quot;Expected STRING, found &quot; + type);</span>
+        }
+    }
+
+    public static class StringParserFactory extends JsonParserFactory {
+
+        public StringParserFactory() {
+<span class="nc" id="L43">            super(LATE);</span>
+<span class="nc" id="L44">        }</span>
+
+        @Override
+        public JsonParser getParserFor(Type type) throws JsonException {
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            return (type == String.class) ? INSTANCE : null;</span>
+        }
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,6 +1,5 @@
 package org.jsonutil;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 
 /**
@@ -15,6 +14,7 @@ public abstract class JsonOutput {
 
     public JsonOutput() throws NullPointerException {
         this.parents = new ArrayDeque<>();
+        parent = JsonType.NULL;
     }
     
     public JsonOutput beginObject() throws JsonException, IllegalStateException {
@@ -73,8 +73,8 @@ public abstract class JsonOutput {
         if (prev == JsonType.NAME) {
             throw new IllegalStateException("Cannot add key without value!");
         }
-        prev = JsonType.NAME;
         writeName(name);
+        prev = JsonType.NAME;
         return this;
     }
 
@@ -147,7 +147,7 @@ public abstract class JsonOutput {
                     endObject();
                     break;
                 case NAME:
-                    beginArray();
+                    name(input.str());
                     break;
                 case NULL:
                     nul();

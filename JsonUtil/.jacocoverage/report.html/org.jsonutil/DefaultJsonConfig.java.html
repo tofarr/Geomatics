@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultJsonConfig.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;JsonUtil&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.source.html" class="el_package">org.jsonutil</a> &gt; <span class="el_source">DefaultJsonConfig.java</span></div><h1>DefaultJsonConfig.java</h1><pre class="source lang-java linenums">package org.jsonutil;
+
+import org.jsonutil.parser.ArrayParser;
+import org.jsonutil.parser.BooleanParser;
+import org.jsonutil.parser.CollectionParser;
+import org.jsonutil.parser.ConstructorParser;
+import org.jsonutil.parser.NumberParser;
+import org.jsonutil.parser.StaticMethodParser;
+import org.jsonutil.parser.StringParser;
+import org.jsonutil.poly.PolymorphicMap;
+import org.jsonutil.poly.PolymorphicParser;
+import org.jsonutil.poly.PolymorphicRender;
+import org.jsonutil.render.ArrayRender;
+import org.jsonutil.render.BooleanRender;
+import org.jsonutil.render.CollectionRender;
+import org.jsonutil.render.DefaultRender;
+import org.jsonutil.render.NumberRender;
+import org.jsonutil.render.StringRender;
+
+/**
+ *
+ * @author tofarrell
+ */
+public class DefaultJsonConfig extends JsonConfig {
+
+    public DefaultJsonConfig() {
+<span class="nc" id="L27">        super(EARLY);</span>
+<span class="nc" id="L28">    }</span>
+
+    @Override
+    public void configure(JsonCoderBuilder builder) {
+<span class="nc" id="L32">        PolymorphicMap polymorphicMap = PolymorphicMap.getInstance();</span>
+        
+        //Default parsers
+<span class="nc" id="L35">        builder.addParserFactory(new ArrayParser.ArrayParserFactory());</span>
+<span class="nc" id="L36">        builder.addParserFactory(new BooleanParser.BooleanParserFactory());</span>
+<span class="nc" id="L37">        builder.addParserFactory(new CollectionParser.CollectionParserFactory());</span>
+<span class="nc" id="L38">        builder.addParserFactory(new ConstructorParser.ConstructorParserFactory());</span>
+<span class="nc" id="L39">        builder.addParserFactory(new NumberParser.NumberParserFactory());</span>
+<span class="nc" id="L40">        builder.addParserFactory(new StaticMethodParser.StaticMethodParserFactory());</span>
+<span class="nc" id="L41">        builder.addParserFactory(new StringParser.StringParserFactory());</span>
+<span class="nc" id="L42">        builder.addParserFactory(new PolymorphicParser.PolymorphicParserFactory(polymorphicMap));</span>
+        
+        //Default renders
+<span class="nc" id="L45">        builder.addRenderFactory(new ArrayRender.ArrayRenderFactory());</span>
+<span class="nc" id="L46">        builder.addRenderFactory(new BooleanRender.BooleanRenderFactory());</span>
+<span class="nc" id="L47">        builder.addRenderFactory(new CollectionRender.CollectionRenderFactory());</span>
+<span class="nc" id="L48">        builder.addRenderFactory(new DefaultRender.DefaultRenderFactory());</span>
+<span class="nc" id="L49">        builder.addRenderFactory(new NumberRender.NumberRenderFactory());</span>
+<span class="nc" id="L50">        builder.addRenderFactory(new StringRender.StringRenderFactory());</span>
+<span class="nc" id="L51">        builder.addRenderFactory(new PolymorphicRender.PolymorphicRenderFactory(polymorphicMap));</span>
+<span class="nc" id="L52">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
