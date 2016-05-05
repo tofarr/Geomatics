@@ -264,7 +264,7 @@ public final class Area implements Geom {
     public int numVects() {
         int ret = 0;
         if (shell != null) {
-            ret += shell.numVects();
+            ret += shell.numPoints();
         }
         for (Area child : children) {
             ret += child.numVects();
@@ -844,7 +844,7 @@ public final class Area implements Geom {
         List<Ring> rings = Ring.parseAllInternal(network, accuracy, true);
         for(int i = rings.size(); i-- > 0;){
             Ring ring = rings.get(i);
-            int index = ring.numVects()-1;
+            int index = ring.numPoints()-1;
             double bx = ring.getX(index);
             double by = ring.getY(index);
             boolean allTouchB = true;

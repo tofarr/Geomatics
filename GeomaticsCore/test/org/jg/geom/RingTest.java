@@ -127,7 +127,7 @@ public class RingTest {
     @Test
     public void testNumVects() {
         Ring ring = Ring.valueOf(TOL, 0,0, 3,4, 3,14, 0,10, 0,0);
-        assertEquals(5, ring.numVects());
+        assertEquals(5, ring.numPoints());
     }
 
     @Test
@@ -359,7 +359,7 @@ public class RingTest {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
         assertSame(ring, ring.buffer(0, Linearizer.DEFAULT, TOL));
         Ring a = (Ring)ring.buffer(-1, Linearizer.DEFAULT, TOL);
-        assertEquals(5, a.numVects());
+        assertEquals(5, a.numPoints());
         Rect bounds = a.getBounds();
         assertEquals(bounds.minX, 1, 0.01);
         assertEquals(bounds.minY, 3, 0.01);

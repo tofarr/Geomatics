@@ -245,7 +245,7 @@ public class Ring implements Geom {
      *
      * @return
      */
-    public int numVects() {
+    public int numPoints() {
         return vects.size();
     }
 

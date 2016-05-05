@@ -41,10 +41,9 @@ public abstract class JaysonInput implements AutoCloseable {
      * Get next string from stream
      *
      * @return
-     * @throws JaysonException
      * @throws JaysonException if next was not string
      */
-    public final String nextStr() throws JaysonException, JaysonException {
+    public final String nextStr() throws JaysonException {
         next();
         return str();
     }
@@ -53,10 +52,9 @@ public abstract class JaysonInput implements AutoCloseable {
      * Get next num from stream
      *
      * @return
-     * @throws JaysonException
      * @throws JaysonException if next was not num
      */
-    public final double nextNum() throws JaysonException, JaysonException {
+    public final double nextNum() throws JaysonException {
         next();
         return num();
     }
@@ -65,11 +63,24 @@ public abstract class JaysonInput implements AutoCloseable {
      * Get next boolean from stream
      *
      * @return
-     * @throws JaysonException
      * @throws JaysonException if next was not boolean
      */
-    public final boolean nextBool() throws JaysonException, JaysonException {
+    public final boolean nextBool() throws JaysonException {
         next();
         return bool();
+    }
+    
+    /**
+     * Get next object from stream and check against expected value
+     *
+     * @return this
+     * @throws JaysonException if next was not boolean
+     */
+    public final JaysonInput next(JaysonType expected) throws JaysonException {
+        JaysonType type = next();
+        if(type != expected){
+            throw new JaysonException("Expected "+expected+" found "+type);
+        }
+        return this;
     }
 }
