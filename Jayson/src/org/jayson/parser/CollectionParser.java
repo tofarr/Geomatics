@@ -1,13 +1,17 @@
 package org.jayson.parser;
 
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
 
 
 /**
@@ -15,7 +19,7 @@ import org.jayson.JsonType;
  * @author tofarrell
  * @param <E>
  */
-public class CollectionParser<E extends Collection> extends JsonParser<E> {
+public class CollectionParser<E extends Collection> extends JaysonParser<E> {
 
     final Class<E> collectionType;
     final Type contentType;
@@ -29,17 +33,17 @@ public class CollectionParser<E extends Collection> extends JsonParser<E> {
     }
 
     @Override
-    public E parse(JsonType type, Jayson coder, JsonInput input) {
+    public E parse(JaysonType type, Jayson coder, JaysonInput input) {
         try {
-            if (type == JsonType.NULL) {
+            if (type == JaysonType.NULL) {
                 return null;
-            } else if (type != JsonType.BEGIN_ARRAY) {
-                throw new JsonException("Expected array, found: " + type);
+            } else if (type != JaysonType.BEGIN_ARRAY) {
+                throw new JaysonException("Expected array, found: " + type);
             }
             E collection = collectionType.newInstance();
             while (true) {
                 type = input.next();
-                if (type == JsonType.END_ARRAY) {
+                if (type == JaysonType.END_ARRAY) {
                     break;
                 }
                 Object value = coder.parse(contentType, type, input);
@@ -47,29 +51,41 @@ public class CollectionParser<E extends Collection> extends JsonParser<E> {
             }
             return collection;
         } catch (Exception ex) {
-            throw new JsonException("Error initializing", ex);
+            throw new JaysonException("Error initializing", ex);
         }
     }
     
-    public static class CollectionParserFactory extends JsonParserFactory{
+    public static class CollectionParserFactory extends JaysonParserFactory{
 
-        public CollectionParserFactory() {
-            super(LATE);
+        public CollectionParserFactory(int priority) {
+            super(priority);
         }
 
         @Override
-        public JsonParser getParserFor(Type type) {
+        public JaysonParser getParserFor(Type type) {
             if(type instanceof ParameterizedType){
                 ParameterizedType pt = (ParameterizedType)type;
                 Type rawType = pt.getRawType();
                 if(rawType instanceof Class){
                     Class collectionType = (Class)rawType;
                     if(Collection.class.isAssignableFrom(collectionType)){
-                        return new CollectionParser(collectionType, pt.getActualTypeArguments()[1]);
+                        collectionType = getImpl(collectionType);
+                        return new CollectionParser(collectionType, pt.getActualTypeArguments()[0]);
                     }
                 }
             }
             return null;
+        }
+        
+        public static Class getImpl(Class clazz){
+            if(clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers())){
+                if(Set.class.isAssignableFrom(clazz)){
+                    clazz = HashSet.class;
+                }else{
+                    clazz = ArrayList.class;
+                }
+            }
+            return clazz;
         }
     };
 }

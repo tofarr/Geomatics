@@ -7,11 +7,11 @@ import org.jayson.AbstractPrioritized;
  *
  * @author tofarrell
  */
-public abstract class JsonParserFactory extends AbstractPrioritized {
+public abstract class JaysonParserFactory extends AbstractPrioritized {
 
-    public JsonParserFactory(int priority) {
+    public JaysonParserFactory(int priority) {
         super(priority);
     }
 
-    public abstract JsonParser getParserFor(Type type);
+    public abstract JaysonParser getParserFor(Type type);
 }

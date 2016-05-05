@@ -2,14 +2,14 @@ package org.jayson.render;
 
 import java.lang.reflect.Type;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonOutput;
+import org.jayson.JaysonException;
+import org.jayson.JaysonOutput;
 
 /**
  *
  * @author tofarrell
  */
-public class NumberRender implements JsonRender<Number> {
+public class NumberRender implements JaysonRender<Number> {
 
     public static final NumberRender INSTANCE = new NumberRender();
     
@@ -17,18 +17,18 @@ public class NumberRender implements JsonRender<Number> {
     }
     
     @Override
-    public void render(Number value, Jayson coder, JsonOutput out) throws JsonException {
+    public void render(Number value, Jayson coder, JaysonOutput out) throws JaysonException {
         out.num(value.doubleValue());        
     }
     
-    public static class NumberRenderFactory extends JsonRenderFactory{
+    public static class NumberRenderFactory extends JaysonRenderFactory{
 
-        public NumberRenderFactory() {
-            super(LATE);
+        public NumberRenderFactory(int priority){
+            super(priority);
         }
         
         @Override
-        public JsonRender getRenderFor(Type type) throws JsonException {
+        public JaysonRender getRenderFor(Type type) throws JaysonException {
             if(type instanceof Class){
                 Class clazz = (Class)type;
                 if(clazz.isPrimitive()){

@@ -11,8 +11,8 @@ import java.util.logging.Logger;
 import org.jg.geom.Geom;
 import org.jg.geom.GeomIOException;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 
 /**
  * Standard Geom reader is based on Gson.
@@ -57,17 +57,17 @@ public class JsonGeomReader {
     }
 
     public Geom read(Reader reader) throws GeomIOException {
-        JsonReader jsonReader = new JsonReader(reader);
+        JaysonReader jsonReader = new JaysonReader(reader);
         return read(jsonReader);
     }
 
-    public Geom read(JsonReader reader) throws GeomIOException {
-        JsonType type = reader.next();
-        if (type != JsonType.BEGIN_ARRAY) {
+    public Geom read(JaysonReader reader) throws GeomIOException {
+        JaysonType type = reader.next();
+        if (type != JaysonType.BEGIN_ARRAY) {
             throw new GeomIOException("Unexpected type : " + type);
         }
         type = reader.next();
-        if(type != JsonType.STRING){
+        if(type != JaysonType.STRING){
             throw new GeomIOException("Unexpected type : " + type);
         }
         String geomType = reader.str();

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ServiceLoader;
-import org.jayson.parser.JsonParserFactory;
-import org.jayson.render.JsonRenderFactory;
+import org.jayson.parser.JaysonParserFactory;
+import org.jayson.render.JaysonRenderFactory;
 
 /**
  *
@@ -13,8 +13,8 @@ import org.jayson.render.JsonRenderFactory;
  */
 public class JaysonBuilder {
 
-    private final List<JsonParserFactory> parserFactories;
-    private final List<JsonRenderFactory> renderFactories;
+    private final List<JaysonParserFactory> parserFactories;
+    private final List<JaysonRenderFactory> renderFactories;
 
     public JaysonBuilder() {
         parserFactories = new ArrayList<>();
@@ -23,20 +23,20 @@ public class JaysonBuilder {
 
     //Gets default instance based on service loaders
     public static JaysonBuilder getInstance(){
-        List<JsonConfig> configList = new ArrayList<>();
-        for(JsonConfig config : ServiceLoader.load(JsonConfig.class)){
+        List<JaysonConfig> configList = new ArrayList<>();
+        for(JaysonConfig config : ServiceLoader.load(JaysonConfig.class)){
             configList.add(config);
         }
-        JsonConfig[] configArray = configList.toArray(new JsonConfig[configList.size()]);
+        JaysonConfig[] configArray = configList.toArray(new JaysonConfig[configList.size()]);
         Arrays.sort(configArray);
         JaysonBuilder builder = new JaysonBuilder();
-        for(JsonConfig config : configArray){
+        for(JaysonConfig config : configArray){
             config.configure(builder);
         }
         return builder;
     }
     
-    public JaysonBuilder addParserFactory(JsonParserFactory parserFactory) throws NullPointerException {
+    public JaysonBuilder addParserFactory(JaysonParserFactory parserFactory) throws NullPointerException {
         if (parserFactory == null) {
             throw new NullPointerException();
         }
@@ -44,7 +44,7 @@ public class JaysonBuilder {
         return this;
     }
 
-    public JaysonBuilder addRenderFactory(JsonRenderFactory renderFactory) throws NullPointerException {
+    public JaysonBuilder addRenderFactory(JaysonRenderFactory renderFactory) throws NullPointerException {
         if (renderFactory == null) {
             throw new NullPointerException();
         }
@@ -52,9 +52,9 @@ public class JaysonBuilder {
         return this;
     }
 
-    public Jayson build() throws JsonException {
-        JsonParserFactory[] parserFactoryArray = parserFactories.toArray(new JsonParserFactory[parserFactories.size()]);
-        JsonRenderFactory[] renderFactoryArray = renderFactories.toArray(new JsonRenderFactory[renderFactories.size()]);
+    public Jayson build() throws JaysonException {
+        JaysonParserFactory[] parserFactoryArray = parserFactories.toArray(new JaysonParserFactory[parserFactories.size()]);
+        JaysonRenderFactory[] renderFactoryArray = renderFactories.toArray(new JaysonRenderFactory[renderFactories.size()]);
         return new Jayson(parserFactoryArray, renderFactoryArray);
     }
 

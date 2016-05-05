@@ -7,8 +7,8 @@ import org.jg.geom.GeomIOException;
 import org.jg.geom.LineSet;
 import org.jg.geom.LineString;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 
 /**
  *
@@ -36,14 +36,14 @@ public class LineSetParser implements JsonGeomParser<LineSet> {
     }
 
     @Override
-    public LineSet parse(JsonReader reader) throws GeomIOException {
+    public LineSet parse(JaysonReader reader) throws GeomIOException {
         List<LineString> lineStrings = new ArrayList<>();
         while(true){
-            JsonType type = reader.next();
-            if(type == JsonType.END_ARRAY){
+            JaysonType type = reader.next();
+            if(type == JaysonType.END_ARRAY){
                 LineSet ret = factory.lineSet(lineStrings);
                 return ret;
-            }else if(type != JsonType.BEGIN_ARRAY){
+            }else if(type != JaysonType.BEGIN_ARRAY){
                 throw new GeomIOException("BEGIN_ARRAY expected");
             }
             LineString lineString = parser.parse(reader);

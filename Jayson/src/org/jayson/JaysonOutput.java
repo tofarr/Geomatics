@@ -6,129 +6,129 @@ import java.util.ArrayDeque;
  *
  * @author tofarrell
  */
-public abstract class JsonOutput implements AutoCloseable {
+public abstract class JaysonOutput implements AutoCloseable {
 
-    protected final ArrayDeque<JsonType> parents;
-    protected JsonType parent;
-    protected JsonType prev;
+    protected final ArrayDeque<JaysonType> parents;
+    protected JaysonType parent;
+    protected JaysonType prev;
 
-    public JsonOutput() throws NullPointerException {
+    public JaysonOutput() throws NullPointerException {
         this.parents = new ArrayDeque<>();
-        parent = JsonType.NULL;
+        parent = JaysonType.NULL;
     }
     
-    public JsonOutput beginObject() throws JsonException {
+    public JaysonOutput beginObject() throws JaysonException {
         beforeValue();
         parents.push(parent);
-        parent = JsonType.BEGIN_OBJECT;
+        parent = JaysonType.BEGIN_OBJECT;
         prev = null;
         writeBeginObject();
         return this;
     }
 
-    protected abstract void writeBeginObject() throws JsonException;
+    protected abstract void writeBeginObject() throws JaysonException;
 
-    public JsonOutput endObject() throws JsonException {
-        if (parent != JsonType.BEGIN_OBJECT) {
-            throw new JsonException("Cannot end object!");
+    public JaysonOutput endObject() throws JaysonException {
+        if (parent != JaysonType.BEGIN_OBJECT) {
+            throw new JaysonException("Cannot end object!");
         }
-        if (prev == JsonType.NAME) {
-            throw new JsonException("Cannot add key without value!");
+        if (prev == JaysonType.NAME) {
+            throw new JaysonException("Cannot add key without value!");
         }
-        prev = JsonType.END_OBJECT;
+        prev = JaysonType.END_OBJECT;
         parent = parents.pop();
         writeEndObject();
         return this;
     }
 
-    protected abstract void writeEndObject() throws JsonException;
+    protected abstract void writeEndObject() throws JaysonException;
 
-    public JsonOutput beginArray() throws JsonException {
+    public JaysonOutput beginArray() throws JaysonException {
         beforeValue();
         parents.push(parent);
-        parent = JsonType.BEGIN_ARRAY;
+        parent = JaysonType.BEGIN_ARRAY;
         prev = null;
         writeBeginArray();
         return this;
     }
 
-    protected abstract void writeBeginArray() throws JsonException;
+    protected abstract void writeBeginArray() throws JaysonException;
 
-    public JsonOutput endArray() throws JsonException {
-        if (parent != JsonType.BEGIN_ARRAY) {
-            throw new JsonException("Cannot end array!");
+    public JaysonOutput endArray() throws JaysonException {
+        if (parent != JaysonType.BEGIN_ARRAY) {
+            throw new JaysonException("Cannot end array!");
         }
-        prev = JsonType.END_ARRAY;
+        prev = JaysonType.END_ARRAY;
         parent = parents.pop();
         writeEndArray();
         return this;
     }
 
-    protected abstract void writeEndArray() throws JsonException;
+    protected abstract void writeEndArray() throws JaysonException;
 
-    public JsonOutput name(String name) throws JsonException, NullPointerException, JsonException {
-        if (parent != JsonType.BEGIN_OBJECT) {
-            throw new JsonException("Cannot add key outside object!");
+    public JaysonOutput name(String name) throws JaysonException, NullPointerException, JaysonException {
+        if (parent != JaysonType.BEGIN_OBJECT) {
+            throw new JaysonException("Cannot add key outside object!");
         }
-        if (prev == JsonType.NAME) {
-            throw new JsonException("Cannot add key without value!");
+        if (prev == JaysonType.NAME) {
+            throw new JaysonException("Cannot add key without value!");
         }
         writeName(name);
-        prev = JsonType.NAME;
+        prev = JaysonType.NAME;
         return this;
     }
 
-    protected abstract void writeName(String name) throws JsonException;
+    protected abstract void writeName(String name) throws JaysonException;
 
-    public JsonOutput str(String str) throws JsonException {
+    public JaysonOutput str(String str) throws JaysonException {
         beforeValue();
-        prev = JsonType.STRING;
+        prev = JaysonType.STRING;
         writeStr(str);
         return this;
     }
 
-    protected abstract void writeStr(String name) throws JsonException;
+    protected abstract void writeStr(String name) throws JaysonException;
 
-    public JsonOutput num(double num) throws JsonException {
+    public JaysonOutput num(double num) throws JaysonException {
         beforeValue();
-        prev = JsonType.NUMBER;
+        prev = JaysonType.NUMBER;
         writeNum(num);
         return this;
     }
 
-    protected abstract void writeNum(double num) throws JsonException;
+    protected abstract void writeNum(double num) throws JaysonException;
 
-    public JsonOutput bool(boolean bool) throws JsonException {
+    public JaysonOutput bool(boolean bool) throws JaysonException {
         beforeValue();
-        prev = JsonType.BOOLEAN;
+        prev = JaysonType.BOOLEAN;
         writeBool(bool);
         return this;
 
     }
 
-    protected abstract void writeBool(boolean bool) throws JsonException;
+    protected abstract void writeBool(boolean bool) throws JaysonException;
 
-    public JsonOutput nul() throws JsonException {
+    public JaysonOutput nul() throws JaysonException {
         beforeValue();
-        prev = JsonType.NULL;
+        prev = JaysonType.NULL;
         writeNull();
         return this;
     }
     
-    protected abstract void writeNull() throws JsonException;
+    protected abstract void writeNull() throws JaysonException;
     
 
-    protected void beforeValue() throws JsonException {
-        if (parent == JsonType.BEGIN_OBJECT && (prev != JsonType.NAME)) {
-            throw new JsonException("Cannot add value without key!");
+    protected void beforeValue() throws JaysonException {
+        if (parent == JaysonType.BEGIN_OBJECT && (prev != JaysonType.NAME)) {
+            throw new JaysonException("Cannot add value without key!");
         }
     }
 
-    public final void copyRemaining(JsonInput input) {
+    public final void copyRemaining(JaysonInput input) {
         do {
-            JsonType type = input.next();
+            JaysonType type = input.next();
             if (type == null) {
-                throw new JsonException("Unexpected end of stream");
+                throw new JaysonException("Unexpected end of stream");
             }
             switch (type) {
                 case BEGIN_ARRAY:

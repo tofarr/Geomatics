@@ -8,8 +8,8 @@ import org.jg.geom.GeomIOException;
 import org.jg.geom.LineSet;
 import org.jg.geom.Ring;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 
 /**
  *
@@ -37,22 +37,22 @@ public class AreaParser implements JsonGeomParser<Area> {
     }
 
     @Override
-    public Area parse(JsonReader reader) throws GeomIOException {
-        JsonType type = reader.next();
+    public Area parse(JaysonReader reader) throws GeomIOException {
+        JaysonType type = reader.next();
         Ring shell = null;
-        if (type == JsonType.BEGIN_ARRAY) { // shell
+        if (type == JaysonType.BEGIN_ARRAY) { // shell
             shell = parser.parse(reader);
-        } else if (type != JsonType.NULL) {
+        } else if (type != JaysonType.NULL) {
             throw new GeomIOException("Unexpected type : " + type);
         }
 
         List<Area> children = new ArrayList<>();
         while (true) {
             type = reader.next();
-            if (type == JsonType.END_ARRAY) {
+            if (type == JaysonType.END_ARRAY) {
                 Area ret = factory.area(shell, children);
                 return ret;
-            } else if (type != JsonType.BEGIN_ARRAY) {
+            } else if (type != JaysonType.BEGIN_ARRAY) {
                 throw new GeomIOException("BEGIN_ARRAY expected");
             }
             Area child = parse(reader);

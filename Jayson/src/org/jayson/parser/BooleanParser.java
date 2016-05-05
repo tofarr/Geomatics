@@ -2,15 +2,15 @@ package org.jayson.parser;
 
 import java.lang.reflect.Type;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
 
 /**
  *
  * @author tofarrell
  */
-public class BooleanParser extends JsonParser<Boolean> {
+public class BooleanParser extends JaysonParser<Boolean> {
 
     public static final BooleanParser INSTANCE = new BooleanParser();
 
@@ -18,7 +18,7 @@ public class BooleanParser extends JsonParser<Boolean> {
     }
 
     @Override
-    public Boolean parse(JsonType type, Jayson coder, JsonInput input) {
+    public Boolean parse(JaysonType type, Jayson coder, JaysonInput input) {
         switch (type) {
             case BOOLEAN:
                 return input.bool();
@@ -29,18 +29,18 @@ public class BooleanParser extends JsonParser<Boolean> {
             case STRING:
                 return !("false".equalsIgnoreCase(input.str()) || input.str().isEmpty() || "0".equals(input.str()));
             default:
-                throw new JsonException("Expected BOOLEAN, found " + type);
+                throw new JaysonException("Expected BOOLEAN, found " + type);
         }
     }
 
-    public static class BooleanParserFactory extends JsonParserFactory {
+    public static class BooleanParserFactory extends JaysonParserFactory {
 
-        public BooleanParserFactory() {
-            super(LATE);
+        public BooleanParserFactory(int priority) {
+            super(priority);
         }
 
         @Override
-        public JsonParser getParserFor(Type type) throws JsonException {
+        public JaysonParser getParserFor(Type type) throws JaysonException {
             return (type == boolean.class || type == Boolean.class) ? INSTANCE : null;
         }
 

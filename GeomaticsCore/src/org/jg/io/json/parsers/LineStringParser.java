@@ -4,7 +4,7 @@ import org.jg.geom.GeomFactory;
 import org.jg.geom.GeomIOException;
 import org.jg.geom.LineString;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
+import org.jayson.JaysonReader;
 import org.jg.util.VectList;
 
 /**
@@ -28,7 +28,7 @@ public class LineStringParser implements JsonGeomParser<LineString> {
     }
 
     @Override
-    public LineString parse(JsonReader reader) throws GeomIOException {
+    public LineString parse(JaysonReader reader) throws GeomIOException {
         VectList vects = VectListParser.INSTANCE.parse(reader);
         LineString ret = factory.lineString(vects);
         return ret;

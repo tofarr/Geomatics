@@ -4,7 +4,7 @@ package org.jayson;
  *
  * @author tofarrell
  */
-public enum JsonType {
+public enum JaysonType {
 
     BEGIN_OBJECT ,
     END_OBJECT,

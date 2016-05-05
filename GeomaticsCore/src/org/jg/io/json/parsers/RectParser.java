@@ -4,8 +4,8 @@ import org.jg.geom.GeomFactory;
 import org.jg.geom.GeomIOException;
 import org.jg.geom.Rect;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 
 /**
  *
@@ -29,9 +29,9 @@ public class RectParser implements JsonGeomParser<Rect> {
     }
 
     @Override
-    public Rect parse(JsonReader reader) throws GeomIOException {
+    public Rect parse(JaysonReader reader) throws GeomIOException {
         Rect ret = factory.rect(reader.nextNum(), reader.nextNum(), reader.nextNum(), reader.nextNum());
-        if (reader.next() != JsonType.END_ARRAY) {
+        if (reader.next() != JaysonType.END_ARRAY) {
             throw new GeomIOException("Line must not contain additional data");
         }
         return ret;

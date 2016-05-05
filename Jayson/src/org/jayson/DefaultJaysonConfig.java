@@ -21,10 +21,10 @@ import org.jayson.render.StringRender;
  *
  * @author tofarrell
  */
-public class DefaultJsonConfig extends JsonConfig {
+public class DefaultJaysonConfig extends JaysonConfig {
 
-    public DefaultJsonConfig() {
-        super(EARLY);
+    public DefaultJaysonConfig() {
+        super(MED);
     }
 
     @Override
@@ -32,22 +32,23 @@ public class DefaultJsonConfig extends JsonConfig {
         PolymorphicMap polymorphicMap = PolymorphicMap.getInstance();
         
         //Default parsers
-        builder.addParserFactory(new ArrayParser.ArrayParserFactory());
-        builder.addParserFactory(new BooleanParser.BooleanParserFactory());
-        builder.addParserFactory(new CollectionParser.CollectionParserFactory());
-        builder.addParserFactory(new ConstructorParser.ConstructorParserFactory());
-        builder.addParserFactory(new NumberParser.NumberParserFactory());
-        builder.addParserFactory(new StaticMethodParser.StaticMethodParserFactory());
-        builder.addParserFactory(new StringParser.StringParserFactory());
-        builder.addParserFactory(new PolymorphicParser.PolymorphicParserFactory(polymorphicMap));
+        builder.addParserFactory(new PolymorphicParser.PolymorphicParserFactory(10000, polymorphicMap));
+        builder.addParserFactory(new ArrayParser.ArrayParserFactory(20000));
+        builder.addParserFactory(new BooleanParser.BooleanParserFactory(30000));
+        builder.addParserFactory(new NumberParser.NumberParserFactory(40000));
+        builder.addParserFactory(new StringParser.StringParserFactory(50000));
+        builder.addParserFactory(new CollectionParser.CollectionParserFactory(60000));
+        builder.addParserFactory(new ConstructorParser.ConstructorParserFactory(70000));
+        builder.addParserFactory(new StaticMethodParser.StaticMethodParserFactory(80000));
         
         //Default renders
-        builder.addRenderFactory(new ArrayRender.ArrayRenderFactory());
-        builder.addRenderFactory(new BooleanRender.BooleanRenderFactory());
-        builder.addRenderFactory(new CollectionRender.CollectionRenderFactory());
-        builder.addRenderFactory(new DefaultRender.DefaultRenderFactory());
-        builder.addRenderFactory(new NumberRender.NumberRenderFactory());
-        builder.addRenderFactory(new StringRender.StringRenderFactory());
-        builder.addRenderFactory(new PolymorphicRender.PolymorphicRenderFactory(polymorphicMap));
+        builder.addRenderFactory(new PolymorphicRender.PolymorphicRenderFactory(10000, polymorphicMap));
+        builder.addRenderFactory(new ArrayRender.ArrayRenderFactory(20000));
+        builder.addRenderFactory(new BooleanRender.BooleanRenderFactory(30000));
+        builder.addRenderFactory(new NumberRender.NumberRenderFactory(40000));
+        builder.addRenderFactory(new StringRender.StringRenderFactory(50000));
+        builder.addRenderFactory(new CollectionRender.CollectionRenderFactory(60000));
+        builder.addRenderFactory(new DefaultRender.DefaultRenderFactory(70000));
+        
     }
 }

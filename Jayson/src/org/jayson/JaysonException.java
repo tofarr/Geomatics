@@ -4,13 +4,13 @@ package org.jayson;
  *
  * @author tofar
  */
-public class JsonException extends RuntimeException {
+public class JaysonException extends RuntimeException {
 
-    public JsonException(String message) {
+    public JaysonException(String message) {
         super(message);
     }
 
-    public JsonException(String message, Throwable cause) {
+    public JaysonException(String message, Throwable cause) {
         super(message, cause);
     }
 

@@ -8,24 +8,28 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
 
 /**
  *
  * @author tofarrell
  * @param <E>
  */
-public class ConstructorParser<E> extends JsonParser<E> {
+public class ConstructorParser<E> extends JaysonParser<E> {
 
+    static final Object[] EMPTY = new Object[0];
     private final Constructor<E> constructor;
     private final Type[] paramTypes;
     private final Map<String, Integer> namesToIndices;
+    private final SetterMap setterMap;
 
-    public ConstructorParser(Constructor<E> constructor, String... propertyNames) {
+    public ConstructorParser(Constructor<E> constructor, SetterMap setterMap, String... propertyNames) throws NullPointerException {
         this.constructor = constructor;
+        this.setterMap = setterMap;
         this.paramTypes = constructor.getGenericParameterTypes();
         if (propertyNames.length != paramTypes.length) {
             throw new IllegalArgumentException("Wrong number of propertyNames : " + constructor);
@@ -38,37 +42,62 @@ public class ConstructorParser<E> extends JsonParser<E> {
     }
 
     @Override
-    public E parse(JsonType type, Jayson coder, JsonInput input) {
+    public E parse(JaysonType type, Jayson coder, JaysonInput input) {
         try {
             switch (type) {
                 case NULL:
                     return null;
                 case BEGIN_OBJECT:
-                    Object[] params = paramsFromObject(coder, input, paramTypes, namesToIndices);
-                    return constructor.newInstance(params);
+                    Object[] params = (paramTypes.length != 0) ? new Object[paramTypes.length] : EMPTY;
+                    Map<String,Object> setterValues = (setterMap == null) ? null : new HashMap<>();
+                    parseParams(coder, input, paramTypes, namesToIndices, params, setterMap, setterValues);
+                    E ret = constructor.newInstance(params);
+                    if(setterValues != null){
+                        for(Entry<String,Object> entry : setterValues.entrySet()){
+                            setterMap.apply(entry.getKey(), entry.getValue(), ret);
+                        }
+                    }
+                    return ret;
                 default:
                     throw new IllegalArgumentException("Unexpected type : " + type + " when trying to parse " + constructor);
             }
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new JsonException("Error initializing", ex);
+            throw new JaysonException("Error initializing", ex);
         }
     }
 
-    public static class ConstructorParserFactory extends JsonParserFactory {
+    public static class ConstructorParserFactory extends JaysonParserFactory {
 
-        public ConstructorParserFactory() {
-            super(EARLY);
+        public ConstructorParserFactory(int priority) {
+            super(priority);
         }
 
         @Override
-        public JsonParser getParserFor(Type type) {
+        public JaysonParser getParserFor(Type type) {
             if (type instanceof Class) {
                 Class<?> clazz = (Class) type;
-                if (!((Class) type).isPrimitive()) {
+                if (!clazz.isPrimitive()) {
                     for (Constructor<?> constructor : clazz.getConstructors()) {
                         if (Modifier.isPublic(constructor.getModifiers())) {
                             ConstructorProperties constructorProperties = constructor.getAnnotation(ConstructorProperties.class);
-                            return new ConstructorParser(constructor, constructorProperties.value());
+                            if(constructorProperties != null){
+                                SetterMap setterMap = new SetterMap(clazz);
+                                if(setterMap.isEmpty()){
+                                    setterMap = null;
+                                }
+                                return new ConstructorParser(constructor, setterMap, constructorProperties.value());
+                            }
+                        }
+                    }
+                    for (Constructor<?> constructor : clazz.getConstructors()) {
+                        if (Modifier.isPublic(constructor.getModifiers())) {
+                            if(constructor.getParameterCount() == 0){
+                                SetterMap setterMap = new SetterMap(clazz);
+                                if(setterMap.isEmpty()){
+                                    setterMap = null;
+                                }
+                                return new ConstructorParser(constructor, setterMap);
+                            }
                         }
                     }
                 }
@@ -78,26 +107,33 @@ public class ConstructorParser<E> extends JsonParser<E> {
 
     };
 
-    static Object[] paramsFromObject(Jayson coder, JsonInput input, Type[] paramTypes, Map<String, Integer> namesToIndices) {
-        Object[] params = new Object[paramTypes.length];
-        while (input.next() == JsonType.NAME) {
+    static void parseParams(Jayson coder, JaysonInput input,
+            Type[] paramTypes, Map<String, Integer> namesToIndices, Object[] params,
+            SetterMap setterMap, Map<String,Object> setterValues) {
+        while (input.next() == JaysonType.NAME) {
             String key = input.str();
             Integer index = namesToIndices.get(key);
             if (index != null) {
                 Type type = paramTypes[index];
                 params[index] = coder.parse(type, input);
-            } else {
-                skip(input); // skip not found
+                continue;
+            } else if(setterMap != null){
+                Type type = setterMap.getTypeFor(key);
+                if(type != null){
+                    Object value = coder.parse(type, input);
+                    setterValues.put(key, value);
+                    continue;
+                }
             }
+            skip(input); // skip not found
         }
         assignPrimatives(paramTypes, params);
-        return params;
     }
 
-    static void skip(JsonInput input) {
+    static void skip(JaysonInput input) {
         int count = 0;
         do {
-            JsonType type = input.next();
+            JaysonType type = input.next();
             switch (type) {
                 case BEGIN_ARRAY:
                 case BEGIN_OBJECT:
@@ -132,8 +168,8 @@ public class ConstructorParser<E> extends JsonParser<E> {
             } else if (type == long.class) {
                 params[i] = 0L;
             } else if (type == short.class) {
+                params[i] = (short) 0;
             }
-            params[i] = (short) 0;
         }
     }
 }

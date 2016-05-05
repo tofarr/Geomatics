@@ -6,8 +6,8 @@
 package org.jg.io.json.parsers;
 
 import org.jg.geom.GeomIOException;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 import org.jg.util.VectList;
 
 /**
@@ -18,9 +18,9 @@ public final class VectListParser {
 
     public static final VectListParser INSTANCE = new VectListParser();
 
-    public VectList parse(JsonReader reader) throws GeomIOException {
+    public VectList parse(JaysonReader reader) throws GeomIOException {
         VectList ret = new VectList();
-        while (reader.next() != JsonType.END_ARRAY) {
+        while (reader.next() != JaysonType.END_ARRAY) {
             double x = reader.num();
             double y = reader.nextNum();
             ret.add(x, y);

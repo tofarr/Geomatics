@@ -4,8 +4,8 @@ import org.jg.geom.GeomFactory;
 import org.jg.geom.GeomIOException;
 import org.jg.geom.Line;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 
 /**
  *
@@ -29,9 +29,9 @@ public final class LineParser implements JsonGeomParser<Line> {
     }
 
     @Override
-    public Line parse(JsonReader reader) throws GeomIOException {
+    public Line parse(JaysonReader reader) throws GeomIOException {
         Line ret = factory.line(reader.nextNum(), reader.nextNum(), reader.nextNum(), reader.nextNum());
-        if (reader.next() != JsonType.END_ARRAY) {
+        if (reader.next() != JaysonType.END_ARRAY) {
             throw new GeomIOException("Line must not contain additional data");
         }
         return ret;

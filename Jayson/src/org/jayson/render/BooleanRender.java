@@ -2,14 +2,14 @@ package org.jayson.render;
 
 import java.lang.reflect.Type;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonOutput;
+import org.jayson.JaysonException;
+import org.jayson.JaysonOutput;
 
 /**
  *
  * @author tofarrell
  */
-public final class BooleanRender implements JsonRender<Boolean> {
+public final class BooleanRender implements JaysonRender<Boolean> {
 
     public static final BooleanRender INSTANCE = new BooleanRender();
 
@@ -17,18 +17,18 @@ public final class BooleanRender implements JsonRender<Boolean> {
     }
 
     @Override
-    public void render(Boolean value, Jayson coder, JsonOutput out) throws JsonException {
+    public void render(Boolean value, Jayson coder, JaysonOutput out) throws JaysonException {
         out.bool(value);
     }
 
-    public static class BooleanRenderFactory extends JsonRenderFactory {
+    public static class BooleanRenderFactory extends JaysonRenderFactory {
 
-        public BooleanRenderFactory() {
-            super(LATE);
+        public BooleanRenderFactory(int priority){
+            super(priority);
         }
 
         @Override
-        public JsonRender getRenderFor(Type type) throws JsonException {
+        public JaysonRender getRenderFor(Type type) throws JaysonException {
             return (type == boolean.class || type == Boolean.class) ? INSTANCE : null;
         }
 

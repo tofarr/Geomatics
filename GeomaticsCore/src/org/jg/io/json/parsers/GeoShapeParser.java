@@ -3,7 +3,7 @@ package org.jg.io.json.parsers;
 import org.jg.geom.GeoShape;
 import org.jg.geom.GeomIOException;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
+import org.jayson.JaysonReader;
 
 /**
  *
@@ -36,7 +36,7 @@ public class GeoShapeParser implements JsonGeomParser<GeoShape> {
     }
 
     @Override
-    public GeoShape parse(JsonReader reader) throws GeomIOException {
+    public GeoShape parse(JaysonReader reader) throws GeomIOException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

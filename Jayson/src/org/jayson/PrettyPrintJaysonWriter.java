@@ -4,29 +4,29 @@ package org.jayson;
  * Output json in a more human readable format
  * @author tofarrell
  */
-public class PrettyPrintJsonWriter extends JsonWriter {
+public class PrettyPrintJaysonWriter extends JaysonWriter {
     
     private int indent;
 
-    public PrettyPrintJsonWriter(Appendable appendable) throws NullPointerException {
+    public PrettyPrintJaysonWriter(Appendable appendable) throws NullPointerException {
         super(appendable);
     }
 
     @Override
-    protected void writeEndObject() throws JsonException {
+    protected void writeEndObject() throws JaysonException {
         indent--;
         newLineIndent();
         super.writeEndObject();
     }
 
     @Override
-    protected void writeBeginObject() throws JsonException {
+    protected void writeBeginObject() throws JaysonException {
         super.writeBeginObject();
         indent++;
     }
 
     @Override
-    protected void writeName(String name) throws JsonException {
+    protected void writeName(String name) throws JaysonException {
         if (prev != null) {
             append(',');
         }
@@ -35,7 +35,7 @@ public class PrettyPrintJsonWriter extends JsonWriter {
         append(name);
     }   
     
-    public PrettyPrintJsonWriter comment(String comment) throws JsonException {
+    public PrettyPrintJaysonWriter comment(String comment) throws JaysonException {
         comment = "/* " + comment.replace("*", "* ") + " */";
         newLineIndent();
         append(comment);

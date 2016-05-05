@@ -4,8 +4,8 @@ import org.jg.geom.GeomFactory;
 import org.jg.geom.GeomIOException;
 import org.jg.geom.PointSet;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
-import org.jayson.JsonType;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonType;
 import org.jg.util.VectSet;
 
 /**
@@ -29,9 +29,9 @@ public final class PointSetParser implements JsonGeomParser<PointSet> {
     }
 
     @Override
-    public PointSet parse(JsonReader reader) throws GeomIOException {
+    public PointSet parse(JaysonReader reader) throws GeomIOException {
         VectSet vects = new VectSet();
-        while (reader.next() != JsonType.END_ARRAY) {
+        while (reader.next() != JaysonType.END_ARRAY) {
             vects.add(reader.num(), reader.nextNum());
         }
         PointSet ret = factory.pointSet(vects);

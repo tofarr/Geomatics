@@ -1,25 +1,25 @@
 package org.jayson.parser;
 
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
 
 /**
  *
  * @author tofar
  * @param <E>
  */
-public abstract class JsonParser<E> {
+public abstract class JaysonParser<E> {
 
-    public final E parse(Jayson coder, JsonInput input) {
+    public final E parse(Jayson coder, JaysonInput input) {
         try {
             return parse(input.next(), coder, input);
         } catch (Exception ex) {
-            throw new JsonException("Error initializing", ex);
+            throw new JaysonException("Error initializing", ex);
         }
     }
 
-    public abstract E parse(JsonType type, Jayson coder, JsonInput input);
+    public abstract E parse(JaysonType type, Jayson coder, JaysonInput input);
 
 }

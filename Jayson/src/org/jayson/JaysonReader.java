@@ -10,7 +10,7 @@ import java.util.ArrayDeque;
  *
  * @author tofar
  */
-public class JsonReader extends JsonInput {
+public class JaysonReader extends JaysonInput {
 
     private enum ReaderType {
         BEGIN_OBJECT,
@@ -26,17 +26,17 @@ public class JsonReader extends JsonInput {
         COMMA,
     }
     private final PushbackReader reader;
-    private final ArrayDeque<JsonType> parents;
+    private final ArrayDeque<JaysonType> parents;
     private final StringBuilder str;
-    private JsonType parent;
+    private JaysonType parent;
     private ReaderType prev;
     private double num;
     private boolean bool;
 
-    public JsonReader(Reader reader) throws NullPointerException, JsonException {
+    public JaysonReader(Reader reader) throws NullPointerException, JaysonException {
         this.reader = new PushbackReader(reader);
         this.parents = new ArrayDeque<>();
-        parent = JsonType.NULL;
+        parent = JaysonType.NULL;
         str = new StringBuilder();
     }
 
@@ -46,7 +46,7 @@ public class JsonReader extends JsonInput {
      * @return one of BEGIN_ARRAY,END_ARRAY,BEGIN_OBJECT,END_OBJECT,NAME,STRING,NUMBER,BOOLEAN,NULL
      */
     @Override
-    public JsonType next() {
+    public JaysonType next() {
         try {
             while (true) {
                 int c = nextValidChar();
@@ -54,82 +54,82 @@ public class JsonReader extends JsonInput {
                     if(parents.isEmpty()){
                         return null;
                     }else{
-                        throw new JsonException("Unexpected end of stream!");
+                        throw new JaysonException("Unexpected end of stream!");
                     }
                 }
                 switch (c) {
                     case '[':
-                        if ((parent == JsonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
-                            throw new JsonException("Values within objects must have a key!");
+                        if ((parent == JaysonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
+                            throw new JaysonException("Values within objects must have a key!");
                         }
                         parents.push(parent);
-                        parent = JsonType.BEGIN_ARRAY;
+                        parent = JaysonType.BEGIN_ARRAY;
                         prev = null;
-                        return JsonType.BEGIN_ARRAY;
+                        return JaysonType.BEGIN_ARRAY;
                     case ']':
-                        if (parent != JsonType.BEGIN_ARRAY) {
-                            throw new JsonException("Attempting to close array when parent is " + parent);
+                        if (parent != JaysonType.BEGIN_ARRAY) {
+                            throw new JaysonException("Attempting to close array when parent is " + parent);
                         } else if (prev == ReaderType.COMMA) {
-                            throw new JsonException("Trailing comma in array!");
+                            throw new JaysonException("Trailing comma in array!");
                         }
                         parent = parents.pop();
-                        return JsonType.END_ARRAY;
+                        return JaysonType.END_ARRAY;
                     case '{':
-                        if ((parent == JsonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
-                            throw new JsonException("Values within objects must have a key!");
+                        if ((parent == JaysonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
+                            throw new JaysonException("Values within objects must have a key!");
                         }
                         parents.push(parent);
-                        parent = JsonType.BEGIN_OBJECT;
+                        parent = JaysonType.BEGIN_OBJECT;
                         prev = null;
-                        return JsonType.BEGIN_OBJECT;
+                        return JaysonType.BEGIN_OBJECT;
                     case '}':
-                        if (parent != JsonType.BEGIN_OBJECT) {
-                            throw new JsonException("Attempting to close object when parent is " + parent);
+                        if (parent != JaysonType.BEGIN_OBJECT) {
+                            throw new JaysonException("Attempting to close object when parent is " + parent);
                         } else if (prev == ReaderType.COMMA) {
-                            throw new JsonException("Trailing comma in object!");
+                            throw new JaysonException("Trailing comma in object!");
                         }
                         parent = parents.pop();
-                        return JsonType.END_OBJECT;
+                        return JaysonType.END_OBJECT;
                     case ':':
-                        if (parent != JsonType.BEGIN_OBJECT) {
-                            throw new JsonException("Cannot specify key value pairs in type " + parent);
+                        if (parent != JaysonType.BEGIN_OBJECT) {
+                            throw new JaysonException("Cannot specify key value pairs in type " + parent);
                         } else if (prev != ReaderType.NAME) {
-                            throw new JsonException("Values within objects must have a key!");
+                            throw new JaysonException("Values within objects must have a key!");
                         }
                         prev = ReaderType.COLON;
                         break;
                     case ',':
-                        if (parent == JsonType.NULL) {
-                            throw new JsonException("Comma outside object!");
+                        if (parent == JaysonType.NULL) {
+                            throw new JaysonException("Comma outside object!");
                         } else if (prev == null) {
-                            throw new JsonException("Comma is first element in " + parent);
+                            throw new JaysonException("Comma is first element in " + parent);
                         } else if (prev == ReaderType.NAME) {
-                            throw new JsonException("Comma following name!");
+                            throw new JaysonException("Comma following name!");
                         } else if (prev == ReaderType.COLON) {
-                            throw new JsonException("Comma following colon!");
+                            throw new JaysonException("Comma following colon!");
                         } else if (prev == ReaderType.COMMA) {
-                            throw new JsonException("Comma outside object!");
+                            throw new JaysonException("Comma outside object!");
                         }
                         prev = ReaderType.COMMA;
                         break;
                     case '"':
                         if((prev != null) && (prev != ReaderType.COLON) && (prev != ReaderType.COMMA)){
-                            throw new JsonException("Found STRING when expected COMMA");
+                            throw new JaysonException("Found STRING when expected COMMA");
                         }
                         readCommentedString('"');
-                        if ((parent == JsonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
+                        if ((parent == JaysonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
                             prev = ReaderType.NAME;
-                            return JsonType.NAME;
+                            return JaysonType.NAME;
                         } else {
                             prev = ReaderType.STRING;
-                            return JsonType.STRING;
+                            return JaysonType.STRING;
                         }
                     default:
                         //could be name, or could be boolean number or null
-                        if ((parent == JsonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
+                        if ((parent == JaysonType.BEGIN_OBJECT) && (prev == null || prev == ReaderType.COMMA)) {
                             readUncommentedString(c);
                             prev = ReaderType.NAME;
-                            return JsonType.NAME;
+                            return JaysonType.NAME;
                         }
                         readUncommentedString(c);
                         String value = str.toString();
@@ -137,27 +137,27 @@ public class JsonReader extends JsonInput {
                             case "true":
                                 bool = true;
                                 prev = ReaderType.BOOLEAN;
-                                return JsonType.BOOLEAN;
+                                return JaysonType.BOOLEAN;
                             case "false":
                                 bool = false;
                                 prev = ReaderType.BOOLEAN;
-                                return JsonType.BOOLEAN;
+                                return JaysonType.BOOLEAN;
                             case "null":
                                 prev = ReaderType.NULL;
-                                return JsonType.NULL;
+                                return JaysonType.NULL;
                             default: // number
                                 try{
                                     num = Double.parseDouble(value);
                                 }catch(NumberFormatException ex){
-                                    throw new JsonException("Error parsing number "+value, ex);
+                                    throw new JaysonException("Error parsing number "+value, ex);
                                 }
                                 prev = ReaderType.NUMBER;
-                                return JsonType.NUMBER;
+                                return JaysonType.NUMBER;
                         }
                 }
             }
         } catch (IOException ex) {
-            throw new JsonException("Error reading Json", ex);
+            throw new JaysonException("Error reading Json", ex);
         }
     }
 
@@ -165,10 +165,10 @@ public class JsonReader extends JsonInput {
         str.setLength(0);
         while (true) {
             if (c < 0) {
-                if(parent == JsonType.NULL){
+                if(parent == JaysonType.NULL){
                     return;
                 }
-                throw new JsonException("Unexpected end of stream!");
+                throw new JaysonException("Unexpected end of stream!");
             } else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$') || (c == '.') || (c == '+')) {
                 str.append((char)c);
             } else {
@@ -184,13 +184,13 @@ public class JsonReader extends JsonInput {
         while (true) {
             int c = reader.read();
             if (c < 0) {
-                throw new JsonException("Unexpected end of stream!");
+                throw new JaysonException("Unexpected end of stream!");
             } else if (c == endChar) {
                 return;
             } else if (c == '\\') {
                 c = reader.read();
                 if (c < 0) {
-                    throw new JsonException("Unexpected end of stream!");
+                    throw new JaysonException("Unexpected end of stream!");
                 }
             }
             str.append((char)c);
@@ -211,19 +211,19 @@ public class JsonReader extends JsonInput {
             }
             c = reader.read();
             if (c < 0) {
-                throw new JsonException("Unexpected end of stream!");
+                throw new JaysonException("Unexpected end of stream!");
             }
             switch (c) {
                 case '*':
                     while (true) {
                         c = reader.read();
                         if (c < 0) {
-                            throw new JsonException("Unexpected end of stream!");
+                            throw new JaysonException("Unexpected end of stream!");
                         }
                         if (c == '*') {
                             c = reader.read();
                             if (c < 0) {
-                                throw new JsonException("Unexpected end of stream!");
+                                throw new JaysonException("Unexpected end of stream!");
                             }
                             if (c == '/') {
                                 break;
@@ -243,7 +243,7 @@ public class JsonReader extends JsonInput {
                     }
                     break;
                 default:
-                    throw new JsonException("Unexpected characters: /" + ((char) c));
+                    throw new JaysonException("Unexpected characters: /" + ((char) c));
             }
         }
     }
@@ -252,14 +252,14 @@ public class JsonReader extends JsonInput {
      * Get current string / name from stream
      *
      * @return
-     * @throws JsonException if current was not string / name
+     * @throws JaysonException if current was not string / name
      */
     @Override
-    public String str() throws JsonException {
+    public String str() throws JaysonException {
         if (prev == ReaderType.NAME || prev == ReaderType.STRING) {
             return str.toString();
         } else {
-            throw new JsonException("Expected STRING found " + prev);
+            throw new JaysonException("Expected STRING found " + prev);
         }
     }
 
@@ -267,14 +267,14 @@ public class JsonReader extends JsonInput {
      * Get current number from stream
      *
      * @return
-     * @throws JsonException if current was not number
+     * @throws JaysonException if current was not number
      */
     @Override
-    public double num() throws JsonException {
+    public double num() throws JaysonException {
         if (prev == ReaderType.NUMBER) {
             return num;
         } else {
-            throw new JsonException("Expected NUMBER found " + prev);
+            throw new JaysonException("Expected NUMBER found " + prev);
         }
     }
 
@@ -282,23 +282,23 @@ public class JsonReader extends JsonInput {
      * Get current boolean from stream
      *
      * @return
-     * @throws JsonException if currrent was not boolean
+     * @throws JaysonException if currrent was not boolean
      */
     @Override
-    public boolean bool() throws JsonException {
+    public boolean bool() throws JaysonException {
         if (prev == ReaderType.BOOLEAN) {
             return bool;
         } else {
-            throw new JsonException("Expected BOOLEAN found " + prev);
+            throw new JaysonException("Expected BOOLEAN found " + prev);
         }
     }
 
     @Override
-    public void close() throws JsonException {
+    public void close() throws JaysonException {
         try {
             reader.close();
         } catch (IOException ex) {
-            throw new JsonException("Error closing", ex);
+            throw new JaysonException("Error closing", ex);
         }
     }
 }

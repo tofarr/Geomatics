@@ -6,11 +6,11 @@ import java.io.IOException;
  *
  * @author tofar
  */
-public class JsonWriter extends JsonOutput {
+public class JaysonWriter extends JaysonOutput {
 
     private final Appendable appendable;
 
-    public JsonWriter(Appendable appendable) throws NullPointerException {
+    public JaysonWriter(Appendable appendable) throws NullPointerException {
         if (appendable == null) {
             throw new NullPointerException();
         }
@@ -18,27 +18,27 @@ public class JsonWriter extends JsonOutput {
     }
 
     @Override
-    protected void writeBeginObject() throws JsonException {
+    protected void writeBeginObject() throws JaysonException {
         append('{');
     }
 
     @Override
-    protected void writeEndObject() throws JsonException {
+    protected void writeEndObject() throws JaysonException {
         append('}');
     }
 
     @Override
-    protected void writeBeginArray() throws JsonException {
+    protected void writeBeginArray() throws JaysonException {
         append('[');
     }
 
     @Override
-    protected void writeEndArray() throws JsonException {
+    protected void writeEndArray() throws JaysonException {
         append(']');
     }
 
     @Override
-    protected void writeName(String name) throws JsonException {
+    protected void writeName(String name) throws JaysonException {
         if(prev != null){
             append(',');
         }
@@ -47,13 +47,13 @@ public class JsonWriter extends JsonOutput {
     }
 
     @Override
-    protected void writeStr(String str) throws JsonException {
+    protected void writeStr(String str) throws JaysonException {
         str = '\"' + str.replace("\"", "\\\"") + '\"';
         append(str);
     }
 
     @Override
-    protected void writeNum(double num) throws JsonException {
+    protected void writeNum(double num) throws JaysonException {
         String str = Double.toString(num);
         if (str.endsWith(".0")) {
             str = str.substring(0, str.length() - 2);
@@ -62,41 +62,41 @@ public class JsonWriter extends JsonOutput {
     }
 
     @Override
-    protected void writeBool(boolean bool) throws JsonException {
+    protected void writeBool(boolean bool) throws JaysonException {
         append(Boolean.toString(bool));
     }
 
     @Override
-    protected void writeNull() throws JsonException {
+    protected void writeNull() throws JaysonException {
         append("null");
     }
 
-    public JsonWriter comment(String comment) throws JsonException {
+    public JaysonWriter comment(String comment) throws JaysonException {
         comment = "/* " + comment.replace("*", "* ") + " */";
         append(comment);
         return this;
     }
 
-    protected void append(char c) throws JsonException {
+    protected void append(char c) throws JaysonException {
         try {
             appendable.append(c);
         } catch (IOException ex) {
-            throw new JsonException("Error writing", ex);
+            throw new JaysonException("Error writing", ex);
         }
     }
 
-    protected void append(String str) throws JsonException {
+    protected void append(String str) throws JaysonException {
         try {
             appendable.append(str);
         } catch (IOException ex) {
-            throw new JsonException("Error writing", ex);
+            throw new JaysonException("Error writing", ex);
         }
     }
 
     protected void beforeValue() {
         super.beforeValue();
         if (prev != null) {
-            append((prev == JsonType.NAME) ? ':' : ',');
+            append((prev == JaysonType.NAME) ? ':' : ',');
         }
     }
 
@@ -118,13 +118,13 @@ public class JsonWriter extends JsonOutput {
     }
 
     @Override
-    public void close() throws JsonException {
+    public void close() throws JaysonException {
         try {
             if(appendable instanceof AutoCloseable){
                 ((AutoCloseable)appendable).close();
             }
         } catch (Exception ex) {
-            throw new JsonException("Error closing", ex);
+            throw new JaysonException("Error closing", ex);
         }
     }
 }

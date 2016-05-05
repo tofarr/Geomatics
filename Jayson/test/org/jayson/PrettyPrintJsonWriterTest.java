@@ -1,6 +1,6 @@
 package org.jayson;
 
-import org.jayson.PrettyPrintJsonWriter;
+import org.jayson.PrettyPrintJaysonWriter;
 import java.io.StringWriter;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -18,7 +18,7 @@ public class PrettyPrintJsonWriterTest {
     @Test
     public void testValidOutput(){
         StringWriter str = new StringWriter();
-        PrettyPrintJsonWriter writer = new PrettyPrintJsonWriter(str);
+        PrettyPrintJaysonWriter writer = new PrettyPrintJaysonWriter(str);
         writer.beginObject().name("foo").str("bar");
         writer.comment("Lorem ipsum dolor sit amet")
             .name("z.a.p").beginArray().num(1).num(2.1)

@@ -2,19 +2,19 @@ package org.jayson.parser;
 
 import java.lang.reflect.Type;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
-import static org.jayson.JsonType.BOOLEAN;
-import static org.jayson.JsonType.NULL;
-import static org.jayson.JsonType.NUMBER;
-import static org.jayson.JsonType.STRING;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
+import static org.jayson.JaysonType.BOOLEAN;
+import static org.jayson.JaysonType.NULL;
+import static org.jayson.JaysonType.NUMBER;
+import static org.jayson.JaysonType.STRING;
 
 /**
  *
  * @author tofarrell
  */
-public final class StringParser extends JsonParser<String> {
+public final class StringParser extends JaysonParser<String> {
 
     public static final StringParser INSTANCE = new StringParser();
 
@@ -22,7 +22,7 @@ public final class StringParser extends JsonParser<String> {
     }
 
     @Override
-    public String parse(JsonType type, Jayson coder, JsonInput input) {
+    public String parse(JaysonType type, Jayson coder, JaysonInput input) {
         switch (type) {
             case BOOLEAN:
                 return Boolean.toString(input.bool());
@@ -33,18 +33,18 @@ public final class StringParser extends JsonParser<String> {
             case STRING:
                 return input.str();
             default:
-                throw new JsonException("Expected STRING, found " + type);
+                throw new JaysonException("Expected STRING, found " + type);
         }
     }
 
-    public static class StringParserFactory extends JsonParserFactory {
+    public static class StringParserFactory extends JaysonParserFactory {
 
-        public StringParserFactory() {
-            super(LATE);
+        public StringParserFactory(int priority) {
+            super(priority);
         }
 
         @Override
-        public JsonParser getParserFor(Type type) throws JsonException {
+        public JaysonParser getParserFor(Type type) throws JaysonException {
             return (type == String.class) ? INSTANCE : null;
         }
 

@@ -4,9 +4,9 @@ package org.jayson;
  *
  * @author tofarrell
  */
-public abstract class JsonConfig extends AbstractPrioritized {
+public abstract class JaysonConfig extends AbstractPrioritized {
 
-    public JsonConfig(int priority) {
+    public JaysonConfig(int priority) {
         super(priority);
     }
 

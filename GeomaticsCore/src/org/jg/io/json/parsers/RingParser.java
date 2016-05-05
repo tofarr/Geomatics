@@ -5,7 +5,7 @@ import org.jg.geom.GeomIOException;
 import org.jg.geom.LineString;
 import org.jg.geom.Ring;
 import org.jsonutil.JsonGeomParser;
-import org.jayson.JsonReader;
+import org.jayson.JaysonReader;
 import org.jg.util.VectList;
 
 /**
@@ -29,7 +29,7 @@ public class RingParser implements JsonGeomParser<Ring> {
     }
 
     @Override
-    public Ring parse(JsonReader reader) throws GeomIOException {
+    public Ring parse(JaysonReader reader) throws GeomIOException {
         VectList vects = VectListParser.INSTANCE.parse(reader);
         Ring ret = factory.ring(vects);
         return ret;

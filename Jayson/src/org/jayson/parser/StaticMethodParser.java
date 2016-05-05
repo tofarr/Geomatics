@@ -7,23 +7,25 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
-import static org.jayson.parser.ConstructorParser.paramsFromObject;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
 
 /**
  *
  * @author tofarrell
+ * @param <E>
  */
-public class StaticMethodParser<E> extends JsonParser<E> {
+public class StaticMethodParser<E> extends JaysonParser<E> {
 
     private final Method initializer;
     private final Type[] paramTypes;
     private final Map<String, Integer> namesToIndices;
+    private final SetterMap setterMap;
 
-    public StaticMethodParser(Method initializer, String... propertyNames) {
+    public StaticMethodParser(Method initializer, SetterMap setterMap, String... propertyNames) {
         if (!Modifier.isPublic(initializer.getModifiers())) {
             throw new IllegalArgumentException("Method is not public " + initializer);
         }
@@ -40,40 +42,55 @@ public class StaticMethodParser<E> extends JsonParser<E> {
             nameToIndexMap.put(propertyNames[p], p);
         }
         this.namesToIndices = Collections.unmodifiableMap(nameToIndexMap);
+        this.setterMap = setterMap;
     }
 
     @Override
-    public E parse(JsonType type, Jayson coder, JsonInput input) {
+    public E parse(JaysonType type, Jayson coder, JaysonInput input) {
         try {
             switch (type) {
                 case NULL:
                     return null;
                 case BEGIN_OBJECT:
-                    Object[] params = paramsFromObject(coder, input, paramTypes, namesToIndices);
-                    return (E) initializer.invoke(null, params);
+                    Object[] params = (paramTypes.length != 0) ? new Object[paramTypes.length] : ConstructorParser.EMPTY;
+                    Map<String,Object> setterValues = (setterMap == null) ? null : new HashMap<>();
+                    ConstructorParser.parseParams(coder, input, paramTypes, namesToIndices, params, setterMap, setterValues);
+                    E ret = (E)initializer.invoke(null, params);
+                    if(setterValues != null){
+                        for(Entry<String,Object> entry : setterValues.entrySet()){
+                            setterMap.apply(entry.getKey(), entry.getValue(), ret);
+                        }
+                    }
+                    return ret;
                 default:
                     throw new IllegalArgumentException("Unexpected type : " + type + " when trying to parse " + initializer);
             }
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new JsonException("Error initializing", ex);
+            throw new JaysonException("Error initializing", ex);
         }
     }
 
-    public static class StaticMethodParserFactory extends JsonParserFactory {
+    public static class StaticMethodParserFactory extends JaysonParserFactory {
 
-        public StaticMethodParserFactory() {
-            super(EARLY);
+        public StaticMethodParserFactory(int priority) {
+            super(priority);
         }
 
         @Override
-        public JsonParser getParserFor(Type type) {
+        public JaysonParser getParserFor(Type type) {
             if (type instanceof Class) {
                 Class<?> clazz = (Class) type;
                 if (!((Class) type).isPrimitive()) {
                     for (Method method : clazz.getDeclaredMethods()) {
                         if (Modifier.isPublic(method.getModifiers())) {
                             StaticFactory staticFactory = method.getAnnotation(StaticFactory.class);
-                            return new StaticMethodParser(method, staticFactory.value());
+                            if(staticFactory != null){
+                                SetterMap setterMap = new SetterMap(clazz);
+                                if(setterMap.isEmpty()){
+                                    setterMap = null;
+                                }
+                                return new StaticMethodParser(method, setterMap, staticFactory.value());
+                            }
                         }
                     }
                 }

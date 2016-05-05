@@ -2,17 +2,17 @@ package org.jayson.render;
 
 import java.lang.reflect.Type;
 import org.jayson.AbstractPrioritized;
-import org.jayson.JsonException;
+import org.jayson.JaysonException;
 
 /**
  *
  * @author tofarrell
  */
-public abstract class JsonRenderFactory extends AbstractPrioritized {
+public abstract class JaysonRenderFactory extends AbstractPrioritized {
 
-    public JsonRenderFactory(int priority) {
+    public JaysonRenderFactory(int priority) {
         super(priority);
     }
 
-    public abstract JsonRender getRenderFor(Type type) throws JsonException;
+    public abstract JaysonRender getRenderFor(Type type) throws JaysonException;
 }

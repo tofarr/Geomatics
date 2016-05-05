@@ -1,9 +1,9 @@
 
 package org.jayson;
 
-import org.jayson.JsonReader;
-import org.jayson.JsonWriter;
-import org.jayson.JsonException;
+import org.jayson.JaysonReader;
+import org.jayson.JaysonWriter;
+import org.jayson.JaysonException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -20,9 +20,9 @@ public class JsonWriterTest {
     @Test
     public void testValidOutput(){
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         try{
-            writer = new JsonWriter(null);
+            writer = new JaysonWriter(null);
             fail("Exception expected");
         }catch(NullPointerException ex){
         }
@@ -36,7 +36,7 @@ public class JsonWriterTest {
     @Test
     public void testComment(){
         StringBuilder str = new StringBuilder();
-        try(JsonWriter writer = new JsonWriter(str)){
+        try(JaysonWriter writer = new JaysonWriter(str)){
             writer.beginObject().name("foo").str("bar");
             writer.comment("Some */ comment").endObject();
             assertEquals("{foo:\"bar\"/* Some * / comment */}", str.toString());
@@ -45,21 +45,21 @@ public class JsonWriterTest {
     
     @Test
     public void testSanitize(){
-        assertEquals("a1", JsonWriter.sanitize("a1"));
-        assertEquals("A1", JsonWriter.sanitize("A1"));
-        assertEquals("$A1", JsonWriter.sanitize("$A1"));
-        assertEquals("\"1a\"", JsonWriter.sanitize("1a"));
-        assertEquals("\"[a\"", JsonWriter.sanitize("[a"));
-        assertEquals("\"{a\"", JsonWriter.sanitize("{a"));
+        assertEquals("a1", JaysonWriter.sanitize("a1"));
+        assertEquals("A1", JaysonWriter.sanitize("A1"));
+        assertEquals("$A1", JaysonWriter.sanitize("$A1"));
+        assertEquals("\"1a\"", JaysonWriter.sanitize("1a"));
+        assertEquals("\"[a\"", JaysonWriter.sanitize("[a"));
+        assertEquals("\"{a\"", JaysonWriter.sanitize("{a"));
         
-        assertEquals("ab", JsonWriter.sanitize("ab"));
-        assertEquals("a5", JsonWriter.sanitize("a5"));
-        assertEquals("a$", JsonWriter.sanitize("a$"));
-        assertEquals("\"a.b\"", JsonWriter.sanitize("a.b"));
-        assertEquals("\"a[\"", JsonWriter.sanitize("a["));
-        assertEquals("\"a{\"", JsonWriter.sanitize("a{"));
+        assertEquals("ab", JaysonWriter.sanitize("ab"));
+        assertEquals("a5", JaysonWriter.sanitize("a5"));
+        assertEquals("a$", JaysonWriter.sanitize("a$"));
+        assertEquals("\"a.b\"", JaysonWriter.sanitize("a.b"));
+        assertEquals("\"a[\"", JaysonWriter.sanitize("a["));
+        assertEquals("\"a{\"", JaysonWriter.sanitize("a{"));
         
-        assertEquals("\"\"", JsonWriter.sanitize(""));
+        assertEquals("\"\"", JaysonWriter.sanitize(""));
     }
     
     @Test
@@ -79,16 +79,16 @@ public class JsonWriterTest {
             }
             
         };
-        try(JsonWriter writer = new JsonWriter(errorWriter)){
+        try(JaysonWriter writer = new JaysonWriter(errorWriter)){
             try{
                 writer.comment("Foo");
                 fail("Exception expected");
-            }catch(JsonException ex){
+            }catch(JaysonException ex){
             }
             try{
                 writer.beginArray();
                 fail("Exception expected");
-            }catch(JsonException ex){
+            }catch(JaysonException ex){
             }
         }
     }
@@ -96,9 +96,9 @@ public class JsonWriterTest {
     @Test
     public void testWriteRemaining(){
         String json = "{foo:1,bar:{bang:\"pop\"},zap:[true,false,null]}";
-        JsonReader reader = new JsonReader(new StringReader(json));
+        JaysonReader reader = new JaysonReader(new StringReader(json));
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         reader.next();
         writer.beginObject();
         writer.copyRemaining(reader);
@@ -108,71 +108,71 @@ public class JsonWriterTest {
     @Test
     public void testBadEndObject(){
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         try{
             writer.endObject();
             fail("Exception expected!");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
         writer.beginObject().name("foo");
         try{
             writer.endObject();
             fail("Exception expected!");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
     }
     
     @Test
     public void testBadEndArray(){
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         try{
             writer.endArray();
             fail("Exception expected!");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
     }
     
     @Test
     public void testBadName(){
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         try{
             writer.name("foo");
             fail("Exception expected!");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
         writer.beginObject().name("foo");
         try{
             writer.name("bar");
             fail("Exception expected!");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
     }
     
     @Test
     public void teetBadValue(){
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         writer.beginObject();
         try{
             writer.str("foo");
             fail("Exception expected!");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
     }
     
     @Test
     public void testWriteRemainingFail(){
         String json = "{foo:1}";
-        JsonReader reader = new JsonReader(new StringReader(json));
+        JaysonReader reader = new JaysonReader(new StringReader(json));
         StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
+        JaysonWriter writer = new JaysonWriter(str);
         writer.beginArray();
         try{
             writer.copyRemaining(reader);
             fail("Exception expected");
-        }catch(JsonException ex){
+        }catch(JaysonException ex){
         }
     }
     

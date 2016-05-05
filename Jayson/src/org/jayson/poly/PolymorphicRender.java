@@ -1,21 +1,21 @@
 package org.jayson.poly;
 
 import java.lang.reflect.Type;
-import org.jayson.JsonBuffer;
+import org.jayson.JaysonBuffer;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonOutput;
-import org.jayson.JsonType;
-import org.jayson.render.JsonRender;
-import org.jayson.render.JsonRenderFactory;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonOutput;
+import org.jayson.JaysonType;
+import org.jayson.render.JaysonRenderFactory;
+import org.jayson.render.JaysonRender;
 
 /**
  *
  * @author tofarrell
  * @param <E>
  */
-public class PolymorphicRender<E> implements JsonRender<E> {
+public class PolymorphicRender<E> implements JaysonRender<E> {
 
     private final ClassMap<E> classMap;
 
@@ -28,26 +28,26 @@ public class PolymorphicRender<E> implements JsonRender<E> {
     }
 
     @Override
-    public void render(E value, Jayson coder, JsonOutput out) throws JsonException {
+    public void render(E value, Jayson coder, JaysonOutput out) throws JaysonException {
         Class clazz = value.getClass();
         String name = classMap.getName(clazz);
-        JsonBuffer buffer = new JsonBuffer();
+        JaysonBuffer buffer = new JaysonBuffer();
         coder.render(value, clazz, buffer);
-        JsonInput input = buffer.getInput();
-        JsonType type = input.next();
-        if(type != JsonType.BEGIN_OBJECT){
-            throw new JsonException("Expected BEGIN_OBJECT, found " + type);
+        JaysonInput input = buffer.getInput();
+        JaysonType type = input.next();
+        if(type != JaysonType.BEGIN_OBJECT){
+            throw new JaysonException("Expected BEGIN_OBJECT, found " + type);
         }
         out.beginObject().name("$type").str(name);
         out.copyRemaining(input);
     }    
     
-    public static class PolymorphicRenderFactory extends JsonRenderFactory{
+    public static class PolymorphicRenderFactory extends JaysonRenderFactory{
 
         private final PolymorphicMap map;
         
-        public PolymorphicRenderFactory(PolymorphicMap map) throws NullPointerException {
-            super(EARLY);
+        public PolymorphicRenderFactory(int priority, PolymorphicMap map) throws NullPointerException {
+            super(priority);
             if(map == null){
                 throw new NullPointerException();
             }
@@ -55,7 +55,7 @@ public class PolymorphicRender<E> implements JsonRender<E> {
         }
 
         @Override
-        public JsonRender getRenderFor(Type type) {
+        public JaysonRender getRenderFor(Type type) {
             if(type instanceof Class){
                 Class clazz = (Class)type;
                 ClassMap classMap = map.getClassMap(clazz);

@@ -2,22 +2,22 @@ package org.jayson.parser;
 
 import java.lang.reflect.Type;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonInput;
-import org.jayson.JsonType;
+import org.jayson.JaysonException;
+import org.jayson.JaysonInput;
+import org.jayson.JaysonType;
 
 /**
  *
  * @author tofarrell
  * @param <E>
  */
-public abstract class NumberParser<E extends Number> extends JsonParser<E> {
+public abstract class NumberParser<E extends Number> extends JaysonParser<E> {
 
     protected NumberParser() {
     }
 
     @Override
-    public E parse(JsonType type, Jayson coder, JsonInput input) {
+    public E parse(JaysonType type, Jayson coder, JaysonInput input) {
         switch (type) {
             case NULL:
                 return null;
@@ -25,12 +25,12 @@ public abstract class NumberParser<E extends Number> extends JsonParser<E> {
                 try {
                     return fromStr(input.str());
                 } catch (NumberFormatException ex) {
-                    throw new JsonException("Error initializing number number", ex);
+                    throw new JaysonException("Error initializing number number", ex);
                 }
             case NUMBER:
                 return fromNum(input.num());
             default:
-                throw new JsonException("Expected NUMBER, found " + type);
+                throw new JaysonException("Expected NUMBER, found " + type);
         }
     }
 
@@ -110,14 +110,14 @@ public abstract class NumberParser<E extends Number> extends JsonParser<E> {
         }
     };
 
-    public static class NumberParserFactory extends JsonParserFactory {
+    public static class NumberParserFactory extends JaysonParserFactory {
 
-        public NumberParserFactory() {
-            super(LATE);
+        public NumberParserFactory(int priority) {
+            super(priority);
         }
 
         @Override
-        public JsonParser getParserFor(Type type) {
+        public JaysonParser getParserFor(Type type) {
             if (type == byte.class || type == Byte.class) {
                 return BYTE;
             } else if (type == double.class || type == Double.class) {

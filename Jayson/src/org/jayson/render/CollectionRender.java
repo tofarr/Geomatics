@@ -3,15 +3,15 @@ package org.jayson.render;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import org.jayson.Jayson;
-import org.jayson.JsonException;
-import org.jayson.JsonOutput;
+import org.jayson.JaysonException;
+import org.jayson.JaysonOutput;
 
 /**
  *
  * @author tofarrell
  * @param <E>
  */
-public class CollectionRender<E extends Collection> implements JsonRender<E> {
+public class CollectionRender<E extends Collection> implements JaysonRender<E> {
 
     public static final CollectionRender INSTANCE = new CollectionRender();
 
@@ -19,7 +19,7 @@ public class CollectionRender<E extends Collection> implements JsonRender<E> {
     }
 
     @Override
-    public void render(E values, Jayson coder, JsonOutput out) throws JsonException {
+    public void render(E values, Jayson coder, JaysonOutput out) throws JaysonException {
         out.beginArray();
         for (Object value : values) {
             coder.render(value, out);
@@ -27,14 +27,14 @@ public class CollectionRender<E extends Collection> implements JsonRender<E> {
         out.endArray();
     }
 
-    public static class CollectionRenderFactory extends JsonRenderFactory{
+    public static class CollectionRenderFactory extends JaysonRenderFactory{
 
-        public CollectionRenderFactory() {
-            super(LATE);
+        public CollectionRenderFactory(int priority){
+            super(priority);
         }
         
         @Override
-        public JsonRender getRenderFor(Type type) throws JsonException {
+        public JaysonRender getRenderFor(Type type) throws JaysonException {
             if(type instanceof Class){
                 Class clazz = (Class)type;
                 if(Collection.class.isAssignableFrom(clazz)){
