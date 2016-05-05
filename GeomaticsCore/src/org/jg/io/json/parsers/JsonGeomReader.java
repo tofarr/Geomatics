@@ -11,8 +11,8 @@ import java.util.logging.Logger;
 import org.jg.geom.Geom;
 import org.jg.geom.GeomIOException;
 import org.jsonutil.JsonGeomParser;
-import org.jsonutil.JsonReader;
-import org.jsonutil.JsonType;
+import org.jayson.JsonReader;
+import org.jayson.JsonType;
 
 /**
  * Standard Geom reader is based on Gson.

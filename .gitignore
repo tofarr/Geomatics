@@ -10,9 +10,7 @@
 /GeomWorkshop/build/
 /GeomWorkshop/dist/
 /GeomWorkshop/.jacocoverage/
-/GeomaticsCore/build/
-/GeomaticsCore/dist/
-/JsonUtil/nbproject/private/
-/JsonUtil/build/
-/JsonUtil/dist/
-/JsonUtil/.jacocoverage/
+/Jayson/nbproject/private/
+/Jayson/build/
+/Jayson/dist/
+/Jayson/.jacocoverage/

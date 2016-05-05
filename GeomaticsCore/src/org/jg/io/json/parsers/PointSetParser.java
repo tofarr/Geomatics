@@ -4,8 +4,8 @@ import org.jg.geom.GeomFactory;
 import org.jg.geom.GeomIOException;
 import org.jg.geom.PointSet;
 import org.jsonutil.JsonGeomParser;
-import org.jsonutil.JsonReader;
-import org.jsonutil.JsonType;
+import org.jayson.JsonReader;
+import org.jayson.JsonType;
 import org.jg.util.VectSet;
 
 /**

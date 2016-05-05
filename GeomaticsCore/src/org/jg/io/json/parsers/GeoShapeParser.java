@@ -3,7 +3,7 @@ package org.jg.io.json.parsers;
 import org.jg.geom.GeoShape;
 import org.jg.geom.GeomIOException;
 import org.jsonutil.JsonGeomParser;
-import org.jsonutil.JsonReader;
+import org.jayson.JsonReader;
 
 /**
  *

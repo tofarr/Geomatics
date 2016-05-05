@@ -5,7 +5,7 @@ import org.jg.geom.GeomIOException;
 import org.jg.geom.LineString;
 import org.jg.geom.Ring;
 import org.jsonutil.JsonGeomParser;
-import org.jsonutil.JsonReader;
+import org.jayson.JsonReader;
 import org.jg.util.VectList;
 
 /**
