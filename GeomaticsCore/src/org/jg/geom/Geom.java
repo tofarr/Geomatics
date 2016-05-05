@@ -43,15 +43,6 @@ public interface Geom extends Cloneable, Serializable {
      */
     Geom clone();
 
-    /**
-     * Convert this geometry to a string. String is not WKT, as WKT may not be able to handle all geometry types
-     *
-     * @param appendable appendable
-     * @throws NullPointerException if appendable was null
-     * @throws GeomIOException if there was an IO error
-     */
-    void toString(Appendable appendable) throws NullPointerException, GeomIOException;
-
     /** 
      * Convert this to a standard format GeoShape
      * @param linearizer converter for arcs to lines if required

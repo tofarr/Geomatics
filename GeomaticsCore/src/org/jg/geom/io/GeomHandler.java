@@ -22,6 +22,11 @@ public abstract class GeomHandler<G extends Geom> {
         this.code = code;
         this.type = type;
     }
+    
+    public void render(G value, JaysonOutput out) throws JaysonException{
+        out.beginArray().str(code);
+        renderRemaining(value, out);
+    }
 
     public abstract G parseRemaining(GeomFactory factory, JaysonInput input) throws JaysonException;
 

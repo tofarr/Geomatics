@@ -1,6 +1,5 @@
 package org.jg.geom.io;
 
-import org.jayson.Jayson;
 import org.jayson.JaysonException;
 import org.jayson.JaysonInput;
 import org.jayson.JaysonOutput;

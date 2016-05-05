@@ -10,6 +10,7 @@ import org.jayson.JaysonType;
 import org.jayson.parser.JaysonParser;
 import org.jayson.render.JaysonRender;
 import org.jg.geom.Geom;
+import org.jg.geom.GeomFactory;
 
 /**
  *
@@ -17,15 +18,18 @@ import org.jg.geom.Geom;
  */
 public class GeomJaysonifier extends JaysonParser<Geom> implements JaysonRender<Geom> {
 
+    private final GeomFactory factory;
     private final Map<Class, GeomHandler> byType;
     private final Map<String, GeomHandler> byCode;
+    
 
-    public GeomJaysonifier(GeomHandler... handlers) {
-        byType = new HashMap<>();
-        byCode = new HashMap<>();
+    public GeomJaysonifier(GeomFactory factory, GeomHandler... handlers) {
+        this.factory = factory;
+        this.byType = new HashMap<>();
+        this.byCode = new HashMap<>();
         for(GeomHandler handler : handlers){
-            byType.put(handler.type, handler);
-            byCode.put(handler.code, handler);
+            this.byType.put(handler.type, handler);
+            this.byCode.put(handler.code, handler);
         }
     }
 
@@ -36,7 +40,7 @@ public class GeomJaysonifier extends JaysonParser<Geom> implements JaysonRender<
             throw new JaysonException("Unknown geometryType : "+value.getClass());
         }
         out.beginArray().str(handler.code);
-        handler.renderRemaining(value, coder, out);
+        handler.renderRemaining(value, out);
     }
 
     @Override
@@ -49,7 +53,7 @@ public class GeomJaysonifier extends JaysonParser<Geom> implements JaysonRender<
         if(handler == null){
             throw new JaysonException("Unknown geometryType : "+code);
         }
-        Geom ret = handler.parseRemaining(coder, input);
+        Geom ret = handler.parseRemaining(factory, input);
         return ret;
     }
 

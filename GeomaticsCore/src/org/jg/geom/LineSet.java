@@ -1,8 +1,9 @@
 package org.jg.geom;
 
-import java.io.IOException;
 import java.util.Arrays;
 import org.jg.geom.Network.LinkProcessor;
+import org.jg.geom.io.GeomJaysonWriter;
+import org.jg.geom.io.LineSetHandler;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -170,22 +171,8 @@ public final class LineSet implements Geom {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new LineSetHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
-    }
-
-    @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        try {
-            appendable.append("[\"").append(CODE).append('"');
-            for (LineString lineString : lineStrings) {
-                appendable.append(',');
-                lineString.vects.toString(appendable);
-            }
-            appendable.append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing MultiLineString", ex);
-        }
     }
 
     @Override

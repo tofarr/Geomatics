@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -141,28 +140,7 @@ public class PointSetTest {
     @Test
     public void testToString() {
         PointSet ps = PointSet.valueOf(new VectSet().addAll(new VectList(1, 3, 7, 13, 23, 29)));
-        assertEquals("[\"PS\", 1,3, 7,13, 23,29]", ps.toString());
-        try {
-            ps.toString(new Appendable() {
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Exception expected");
-        } catch (GeomException ex) {
-        }
+        assertEquals("[\"PS\",1,3, 7,13, 23,29]", ps.toString());
     }
 
     @Test

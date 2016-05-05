@@ -4,6 +4,8 @@ import java.beans.Transient;
 import java.io.DataInput;
 import java.io.IOException;
 import java.text.MessageFormat;
+import org.jayson.JaysonWriter;
+import org.jg.geom.io.VectHandler;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -413,12 +415,9 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public String toString() {
-        return toString(x, y);
-    }
-
-    @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomIOException {
-        toString(x, y, appendable);
+        StringBuilder str = new StringBuilder();
+        new VectHandler().render(this, new JaysonWriter(str));
+        return str.toString();
     }
 
     /**
@@ -591,19 +590,5 @@ public final class Vect implements Geom, Comparable<Vect> {
      */
     public static double directionInRadiansTo(double ax, double ay, double bx, double by) throws IllegalArgumentException {
         return directionInRadians(bx - ax, by - ay);
-    }
-
-    static String toString(double x, double y) {
-        StringBuilder str = new StringBuilder();
-        toString(x, y, str);
-        return str.toString();
-    }
-
-    static void toString(double x, double y, Appendable appendable) throws GeomIOException {
-        try {
-            appendable.append("[\"").append(CODE).append("\",").append(ordToStr(x)).append(',').append(ordToStr(y)).append(']');
-        } catch (IOException ex) {
-            throw new GeomIOException("Error writing", ex);
-        }
     }
 }

@@ -560,40 +560,6 @@ public class SpatialNodeTest {
     }
 
     @Test
-    public void testToString_0args() {
-        assertEquals("{a:{itemBounds:[[0,0,30,40],[0,40,30,80]],itemValues:[A,B]},b:{itemBounds:[[30,0,60,40],[30,40,60,80],[20,30,40,50]],itemValues:[C,D,E]}}", createABC().toString());
-    }
-
-    @Test
-    public void testToString_Appendable() {
-        StringBuilder str = new StringBuilder();
-        createABC().toString(str);
-        assertEquals("{a:{itemBounds:[[0,0,30,40],[0,40,30,80]],itemValues:[A,B]},b:{itemBounds:[[30,0,60,40],[30,40,60,80],[20,30,40,50]],itemValues:[C,D,E]}}", str.toString());
-        try {
-            createABC().toString(new Appendable() {
-
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Excception expected");
-        } catch (IllegalStateException ex) {
-        }
-    }
-
-    @Test
     public void testClone() {
         SpatialNode<String> a = createABC();
         SpatialNode<String> b = a.clone();

@@ -1,16 +1,6 @@
 package org.jg.geom;
 
-import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Tolerance;
@@ -551,34 +541,6 @@ public class LineTest {
         assertEquals("[\"LN\",1,2,3,4]", new Line(1, 2, 3, 4).toString());
         assertEquals("[\"LN\",4,3,2,1]", new Line(4, 3, 2, 1).toString());
         assertEquals("[\"LN\",1.2,3.4,5.6,7.8]", new Line(1.2, 3.4, 5.6, 7.8).toString());
-        StringBuilder str = new StringBuilder();
-        new Line(1, 2, 3, 4).toString(str);
-        assertEquals("[\"LN\",1,2,3,4]", str.toString());
-        str.setLength(0);
-        new Line(1.1, 2.2, 3.3, 4.4).toString(str);
-        assertEquals("[\"LN\",1.1,2.2,3.3,4.4]", str.toString());
-        try{
-            new Line(1, 2, 3, 4).toString(new Appendable(){
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-            
-            });
-            fail("Exception Expected");
-        }catch(GeomException ex){
-        }
-        
     }
 
     @Test

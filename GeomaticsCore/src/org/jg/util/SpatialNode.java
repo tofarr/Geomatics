@@ -553,52 +553,6 @@ public final class SpatialNode<E> implements Externalizable, Cloneable {
     }
 
     @Override
-    public String toString() {
-        StringBuilder str = new StringBuilder();
-        toString(str);
-        return str.toString();
-    }
-
-    /**
-     * Convert this spatial node to a string and add it to the appendable given. Leaves are in the
-     * format {itemBounds:[...],itemValues:[...]} and branches are in the format {a:{...},b:{...})
-     *
-     * @param appendable
-     * @throws IllegalStateException if there was an output error
-     * @throws NullPointerException if appendable was null
-     */
-    public void toString(Appendable appendable) throws IllegalStateException, NullPointerException {
-        try {
-            appendable.append('{');
-            if (isBranch()) {
-                appendable.append("a:");
-                a.toString(appendable);
-                appendable.append(",b:");
-                b.toString(appendable);
-            } else {
-                appendable.append("itemBounds:[");
-                for (int i = 0; i < size; i++) {
-                    if (i != 0) {
-                        appendable.append(',');
-                    }
-                    Rect.toString(itemBounds[i], appendable);
-                }
-                appendable.append("],itemValues:[");
-                for (int i = 0; i < size; i++) {
-                    if (i != 0) {
-                        appendable.append(',');
-                    }
-                    appendable.append(Objects.toString(itemValues[i]));
-                }
-                appendable.append(']');
-            }
-            appendable.append('}');
-        } catch (IOException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    @Override
     public SpatialNode<E> clone() {
         if (isBranch()) {
             return new SpatialNode<>(a.clone(), b.clone());

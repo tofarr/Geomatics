@@ -340,7 +340,7 @@ public final class RectBuilder implements Cloneable, Serializable {
 
     @Override
     public String toString() {
-        return Rect.toString(minX, minY, maxX, maxY);
+        return build().toString();
     }
 
     @Override

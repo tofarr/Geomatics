@@ -52,6 +52,7 @@ public class AreaHandler extends GeomHandler<Area> {
         if(shell == null){
             out.nul();
         }else{
+            out.beginArray();
             ringHandler.renderRemaining(shell, out);
         }
         for(int i = 0; i < area.numChildren(); i++){

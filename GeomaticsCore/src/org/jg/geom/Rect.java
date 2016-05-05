@@ -1,9 +1,8 @@
 package org.jg.geom;
 
 import java.beans.Transient;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import org.jayson.JaysonWriter;
+import org.jg.geom.io.RectHandler;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -534,49 +533,9 @@ public final class Rect implements Geom {
 
     @Override
     public String toString() {
-        return toString(minX, minY, maxX, maxY);
-    }
-
-    @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        toString(minX, minY, maxX, maxY, appendable);
-    }
-
-    static String toString(double minX, double minY, double maxX, double maxY) {
         StringBuilder str = new StringBuilder();
-        toString(minX, minY, maxX, maxY, str);
+        new RectHandler().render(this, new JaysonWriter(str));
         return str.toString();
-    }
-
-    static void toString(double minX, double minY, double maxX, double maxY, Appendable appendable) {
-        try {
-            appendable.append("[\"").append(CODE).append("\",")
-                    .append(Vect.ordToStr(minX)).append(',')
-                    .append(Vect.ordToStr(minY)).append(',')
-                    .append(Vect.ordToStr(maxX)).append(',')
-                    .append(Vect.ordToStr(maxY)).append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
-    }
-
-    /**
-     * Write the rectangle given to the appendable given
-     *
-     * @param rect
-     * @param appendable
-     * @throws GeomException if there was an IO error
-     */
-    public static void toString(Rect rect, Appendable appendable) throws GeomException {
-        try {
-            appendable.append('[')
-                    .append(Vect.ordToStr(rect.minX)).append(',')
-                    .append(Vect.ordToStr(rect.minY)).append(',')
-                    .append(Vect.ordToStr(rect.maxX)).append(',')
-                    .append(Vect.ordToStr(rect.maxY)).append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
     }
 
     /**

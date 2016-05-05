@@ -793,8 +793,7 @@ public class VectListTest {
             vects.add(i++, i++);
         }
         StringBuilder str = new StringBuilder("[0,1, 2,3, 4,5, 6,7, 8,9]");
-        assertEquals(str.toString(), vects.toString(false));
-        assertEquals(str.toString(), vects.toString(true));
+        assertEquals(str.toString(), vects.toString());
         str.setLength(str.length()-1);
         for (int i = 10; i < 102;) {
             double x = i++;
@@ -804,9 +803,7 @@ public class VectListTest {
             
         }
         str.append(']');
-        assertEquals("{size:51, bounds:[0,1,100,101]}", vects.toString());
-        assertEquals("{size:51, bounds:[0,1,100,101]}", vects.toString(true));
-        assertEquals(str.toString(), vects.toString(false));
+        assertEquals(str.toString(), vects.toString());
         try {
             vects.toString(new Appendable() {
 

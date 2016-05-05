@@ -1,6 +1,7 @@
 package org.jg.geom;
 
-import java.io.IOException;
+import org.jg.geom.io.GeomJaysonWriter;
+import org.jg.geom.io.PointSetHandler;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -129,22 +130,9 @@ public final class PointSet implements Geom {
     }
 
     @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        try {
-            appendable.append("[\"").append(CODE).append('"');
-            for (int i = 0; i < vects.size(); i++) {
-                appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
-            }
-            appendable.append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing LineStirng", ex);
-        }
-    }
-
-    @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new PointSetHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
     }
 

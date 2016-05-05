@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +8,8 @@ import java.util.Objects;
 import org.jg.algorithm.ConvexHull;
 import org.jg.geom.Network.LinkProcessor;
 import org.jg.geom.Network.VertexProcessor;
+import org.jg.geom.io.AreaHandler;
+import org.jg.geom.io.GeomJaysonWriter;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -349,37 +350,10 @@ public final class Area implements Geom {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new AreaHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
     }
-
-    @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        try {
-            appendable.append("[\"").append(CODE).append("\",");
-            toStringInternal(appendable);
-            appendable.append("]");
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
-    }
-
-    private void toStringInternal(Appendable appendable) throws IOException {
-        if(shell == null){
-            appendable.append("null");
-        }else{
-            appendable.append("[");
-            shell.vects.toString(appendable);
-        }
-        for (int c = 0; c < children.length; c++) {
-            appendable.append(',');
-            children[c].toStringInternal(appendable);
-        }
-        if(shell != null){
-            appendable.append("]");
-        }
-    }
-
+    
     /**
      * Add this area to the network given
      * @param network

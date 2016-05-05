@@ -1,9 +1,10 @@
 package org.jg.geom;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.jg.geom.io.GeomJaysonWriter;
+import org.jg.geom.io.LineStringHandler;
 import org.jg.util.RTree;
 import org.jg.util.SpatialNode;
 import org.jg.util.SpatialNode.NodeProcessor;
@@ -221,19 +222,6 @@ public final class LineString implements Geom {
     }
 
     @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        try {
-            appendable.append("[\"").append(CODE).append("\"");
-            for (int i = 0; i < vects.size(); i++) {
-                appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
-            }
-            appendable.append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing LineStirng", ex);
-        }
-    }
-
-    @Override
     public GeoShape toGeoShape(Linearizer linearizer, Tolerance accuracy) throws NullPointerException {
         LineString[] array = new LineString[]{this};
         LineSet lines = new LineSet(array);
@@ -300,7 +288,7 @@ public final class LineString implements Geom {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new LineStringHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
     }
 

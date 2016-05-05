@@ -1,12 +1,6 @@
 package org.jg.geom;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import org.jg.util.Tolerance;
@@ -259,63 +253,9 @@ public class RectTest {
     }
 
     @Test
-    public void testToString_0args() {
+    public void testToString() {
         assertEquals("[\"RE\",1,2,3,4]", Rect.valueOf(1, 2, 3, 4).toString());
         assertEquals("[\"RE\",1.5,2.5,3.5,4.5]", Rect.valueOf(1.5, 2.5, 3.5, 4.5).toString());
-    }
-
-    @Test
-    public void testToString_Appendable() throws Exception {
-        StringBuilder str = new StringBuilder();
-        Rect.valueOf(1, 2, 3, 4).toString(str);
-        assertEquals("[\"RE\",1,2,3,4]", str.toString());
-        str.setLength(0);
-        Rect.valueOf(1.5, 2.5, 3.5, 4.5).toString(str);
-        assertEquals("[\"RE\",1.5,2.5,3.5,4.5]", str.toString());
-        try {
-            Rect.valueOf(1, 2, 3, 4).toString(new Appendable() {
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Exception expected");
-        } catch (GeomException ex) {
-
-        }
-        try {
-            Rect.toString(Rect.valueOf(1, 2, 3, 4), new Appendable() {
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Exception expected");
-        } catch (GeomException ex) {
-
-        }
     }
 
     @Test

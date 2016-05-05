@@ -155,15 +155,6 @@ public class View implements Serializable, Cloneable {
     }
 
     @Override
-    public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append("{bounds:");
-        Rect.toString(bounds, str);
-        str.append(",widthPx:").append(widthPx).append(",heightPx:").append(heightPx).append('}');
-        return str.toString();
-    }
-
-    @Override
     public View clone() {
         return this;
     }

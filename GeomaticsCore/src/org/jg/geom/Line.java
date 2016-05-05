@@ -1,7 +1,8 @@
 package org.jg.geom;
 
 import java.beans.Transient;
-import java.io.IOException;
+import org.jayson.JaysonWriter;
+import org.jg.geom.io.LineHandler;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -1065,28 +1066,8 @@ public final class Line implements Geom, Comparable<Line> {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new LineHandler().render(this, new JaysonWriter(str));
         return str.toString();
-    }
-
-    /**
-     * Convert this line to a string in the format [ax,ay,bx,by] and add it to the appendable given
-     *
-     * @param appendable
-     * @throws GeomException if there was an output error
-     * @throws NullPointerException if appendable was null
-     */
-    @Override
-    public void toString(Appendable appendable) throws GeomException, NullPointerException {
-        try {
-            appendable.append("[\"").append(CODE).append("\",")
-                    .append(Vect.ordToStr(ax)).append(',')
-                    .append(Vect.ordToStr(ay)).append(',')
-                    .append(Vect.ordToStr(bx)).append(',')
-                    .append(Vect.ordToStr(by)).append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
     }
 
     @Override

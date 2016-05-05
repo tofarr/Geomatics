@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -322,32 +321,6 @@ public class AreaTest {
         network.addAllLinks(new VectList(100,100, 140,100, 140,150, 100,150, 100,100));
         Area area = Area.valueOf(TOL, network);
         assertEquals("[\"AR\",null,[[0,0, 40,0, 40,50, 0,50, 0,0],[[10,10, 30,10, 30,40, 10,40, 10,10]]],[[100,100, 140,100, 140,150, 100,150, 100,100]]]", area.toString());
-        try {
-            area.toString(null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-        }
-        try {
-            area.toString(new Appendable() {
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Exception expected");
-        } catch (GeomException ex) {
-        }
     }
 
     @Test

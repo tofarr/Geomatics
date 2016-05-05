@@ -5,14 +5,14 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jg.geom.GeomException;
 import org.jg.geom.Line;
 import org.jg.geom.Rect;
 import org.jg.geom.RectBuilder;
 import org.jg.geom.Vect;
 import org.jg.geom.VectBuilder;
+import org.jg.geom.io.GeomJaysonWriter;
+import org.jg.geom.io.RectHandler;
 
 /**
  * Packed list of vectors
@@ -923,23 +923,13 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
 
     @Override
     public String toString() {
-        return toString(true);
-    }
-
-    /**
-     * Convert this list to a string
-     * @param summarize true if shortened format may be used, false otherwise
-     * @return string representation of this list
-     */
-    public String toString(boolean summarize) {
         StringBuilder str = new StringBuilder();
-        if (summarize && (size > 50)) { //Large list - just print summary
-            str.append("{size:").append(size).append(", bounds:");
-            Rect.toString(getBounds(), str);
-            str.append("}");
-        } else {
-            toString(str);
+        GeomJaysonWriter writer = new GeomJaysonWriter(str);
+        writer.beginArray();
+        for(int i = 0; i < size; i++){
+            writer.num(getX(i)).num(getY(i));
         }
+        writer.endArray();
         return str.toString();
     }
     

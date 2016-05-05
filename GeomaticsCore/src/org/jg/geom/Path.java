@@ -1,6 +1,7 @@
 package org.jg.geom;
 
-import java.io.IOException;
+import org.jg.geom.io.GeomJaysonWriter;
+import org.jg.geom.io.PathHandler;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -156,6 +157,14 @@ public class Path implements Geom {
     }
 
     @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder();
+        new PathHandler().render(this, new GeomJaysonWriter(str));
+        return str.toString();
+    }
+    
+
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 29 * hash + this.ordinates.hashCode();
@@ -170,65 +179,6 @@ public class Path implements Geom {
             return this.ordinates.equals(other.ordinates) && this.segs.equals(other.segs);
         }
         return false;
-    }
-
-    @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomIOException {
-        try {
-            PathSegType prev = null;
-            appendable.append("[\"").append(CODE).append('"');
-            int ordIndex = 0;
-            for(PathSegType seg : segs){
-                appendable.append(", ");
-                if(seg != prev){
-                    switch(seg){
-                        case CLOSE:
-                            appendable.append("\"Z\"");
-                            break;
-                        case MOVE:
-                            appendable.append("\"M\"");
-                            break;
-                        case LINE:
-                            appendable.append("\"L\"");
-                            break;
-                        case QUAD:
-                            appendable.append("\"Q\"");
-                            break;
-                        case CUBIC:
-                            appendable.append("\"C\"");
-                            break;
-                    }
-                    prev = seg;
-                    appendable.append(", ");
-                }
-                switch(seg){
-                    case CLOSE:
-                        break;
-                    case MOVE:
-                    case LINE:
-                        appendable.append(", ").append(Vect.ordToStr(ordinates.getX(ordIndex))).append(',').append(Vect.ordToStr(ordinates.getY(ordIndex)));
-                        ordIndex++;
-                        break;
-                    case QUAD:
-                        appendable.append(", ").append(Vect.ordToStr(ordinates.getX(ordIndex))).append(',').append(Vect.ordToStr(ordinates.getY(ordIndex)));
-                        ordIndex++;
-                        appendable.append(", ").append(Vect.ordToStr(ordinates.getX(ordIndex))).append(',').append(Vect.ordToStr(ordinates.getY(ordIndex)));
-                        ordIndex++;
-                        break;
-                    case CUBIC:
-                        appendable.append(", ").append(Vect.ordToStr(ordinates.getX(ordIndex))).append(',').append(Vect.ordToStr(ordinates.getY(ordIndex)));
-                        ordIndex++;
-                        appendable.append(", ").append(Vect.ordToStr(ordinates.getX(ordIndex))).append(',').append(Vect.ordToStr(ordinates.getY(ordIndex)));
-                        ordIndex++;
-                        appendable.append(", ").append(Vect.ordToStr(ordinates.getX(ordIndex))).append(',').append(Vect.ordToStr(ordinates.getY(ordIndex)));
-                        ordIndex++;
-                        break;
-                }
-            }
-            appendable.append(']');
-        } catch (IOException ex) {
-            throw new GeomIOException("Error writing path", ex);
-        }
     }
 
     @Override

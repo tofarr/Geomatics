@@ -94,8 +94,8 @@ public class LineSetTest {
     @Test
     public void testGetLineString() {
         LineSet ls = LineSet.valueOf(TOL, 0,20, 80,20, 60,0, 40,20, 20,0, 0,20);
-        assertEquals("[\"LS\", 0,20, 20,0, 40,20, 0,20]", ls.getLineString(0).toString());
-        assertEquals("[\"LS\", 40,20, 60,0, 80,20, 40,20]", ls.getLineString(1).toString());
+        assertEquals("[\"LS\",0,20, 20,0, 40,20, 0,20]", ls.getLineString(0).toString());
+        assertEquals("[\"LS\",40,20, 60,0, 80,20, 40,20]", ls.getLineString(1).toString());
         try{
             ls.getLineString(-1);
             fail("Exception expected");
@@ -178,27 +178,6 @@ public class LineSetTest {
     public void testToString() {
         LineSet ls = LineSet.valueOf(TOL, new VectList(0,0, 100,100, 100,0, 0,100, 0,0));
         assertEquals("[\"LT\",[0,0, 50,50, 0,100, 0,0],[50,50, 100,0, 100,100, 50,50]]", ls.toString());
-        try{
-            ls.toString(new Appendable(){
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-            
-            });
-            fail("Exception expected");
-        }catch(GeomException ex){
-        }
     }
 
     @Test
@@ -332,10 +311,10 @@ public class LineSetTest {
         assertEquals(new GeoShape(d.toArea(), a, null), a.union(d, Linearizer.DEFAULT, TOL));
         assertEquals(Ring.valueOf(TOL, 0,60, 40,60, 40,100, 0,100, 0,60), b.toLineSet().union(d, Linearizer.DEFAULT, TOL));
         Geom e = c.union(d, Linearizer.DEFAULT, TOL);
-        assertEquals("[\"GS\",[\"AR\",[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\",[20,60, 20,20, 60,20],[40,80, 60,80]]]",
+        assertEquals("[\"GS\",[[0,60, 40,60, 40,100, 0,100, 0,60]],[[20,60, 20,20, 60,20],[40,80, 60,80]],null]",
                 e.toString());
         LineSet f = LineSet.valueOf(TOL, 60,140, 80,140, 80,120);
-        assertEquals("[\"GS\",[\"AR\",[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\",[20,60, 20,20, 60,20],[40,80, 60,80],[60,140, 80,140, 80,120]]]",
+        assertEquals("[\"GS\",[[0,60, 40,60, 40,100, 0,100, 0,60]],[[20,60, 20,20, 60,20],[40,80, 60,80],[60,140, 80,140, 80,120]],null]",
                 f.union(e, Linearizer.DEFAULT, TOL).toString());
     }
 
@@ -383,7 +362,7 @@ public class LineSetTest {
         assertEquals(a.union(c, TOL), a.xor(c, Linearizer.DEFAULT, TOL));
         assertEquals(new GeoShape(d.toArea(), a.less(d, Linearizer.DEFAULT, TOL), null), a.xor(d, Linearizer.DEFAULT, TOL));
         assertEquals(d.toRing(), b.toLineSet().xor(d, Linearizer.DEFAULT, TOL));
-        assertEquals("[\"GS\",[\"AR\",[[0,60, 40,60, 40,100, 0,100, 0,60]]],[\"LT\",[20,60, 20,20, 60,20],[40,80, 60,80]]]",
+        assertEquals("[\"GS\",[[0,60, 40,60, 40,100, 0,100, 0,60]],[[20,60, 20,20, 60,20],[40,80, 60,80]],null]",
                 c.xor(d, Linearizer.DEFAULT, TOL).toString());
         assertNull(a.xor(a, Linearizer.DEFAULT, TOL));
         assertNull(a.xor(a.toGeoShape(), Linearizer.DEFAULT, TOL));

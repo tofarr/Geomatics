@@ -27,7 +27,7 @@ public class RingTest {
     @Test
     public void testValueOf() {
         Ring ring = Ring.valueOf(TOL, 0, 0, 50, 100, 100, 0, 0, 0);
-        assertEquals("[\"RG\", 0,0, 100,0, 50,100, 0,0]", ring.toString());
+        assertEquals("[\"RG\",0,0, 100,0, 50,100, 0,0]", ring.toString());
         assertEquals(5000, ring.getArea(), 0.0001);
         assertEquals(Rect.valueOf(0, 0, 100, 100), ring.getBounds());
         assertEquals(Vect.valueOf(50, 100.0 / 3), ring.getCentroid());
@@ -640,35 +640,9 @@ public class RingTest {
     }
 
     @Test
-    public void testToString_0args() {
+    public void testToString() {
         Ring ring = Ring.valueOf(TOL, 0,0, 6,8, 6,14, 0,10, 0,0);
-        assertEquals("[\"RG\", 0,0, 6,8, 6,14, 0,10, 0,0]", ring.toString());
-        try {
-            ring.toString(null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-        }
-        try {
-            ring.toString(new Appendable() {
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Exception expected");
-        } catch (GeomException ex) {
-        }
+        assertEquals("[\"RG\",0,0, 6,8, 6,14, 0,10, 0,0]", ring.toString());
     }
     
     @Test

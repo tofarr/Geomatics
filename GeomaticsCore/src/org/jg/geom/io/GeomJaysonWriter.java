@@ -1,79 +1,75 @@
-
-package org.jg.io.jayson;
+package org.jg.geom.io;
 
 import org.jayson.JaysonException;
 import org.jayson.JaysonWriter;
 
 /**
- * Json writer which adds additional spaces making strings of 2d numbers easier to read
- * @author tofarrell
+ *
+ * @author tofar
  */
-public class GeomJaysonWriter extends JaysonWriter{
-    
-    private int space;
-    
+public class GeomJaysonWriter extends JaysonWriter {
+
+    private int nums;
+
     public GeomJaysonWriter(Appendable appendable) throws NullPointerException {
         super(appendable);
     }
 
     @Override
     protected void writeNull() throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeNull();
     }
 
     @Override
     protected void writeBool(boolean bool) throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeBool(bool);
     }
 
     @Override
     protected void writeNum(double num) throws JaysonException {
-        if(++space >= 2){
+        if(++nums > 2){
             append(' ');
-            space = 0;
+            nums = 1;
         }
         super.writeNum(num);
     }
 
     @Override
     protected void writeStr(String str) throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeStr(str);
     }
 
     @Override
     protected void writeName(String name) throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeName(name);
     }
 
     @Override
     protected void writeEndArray() throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeEndArray();
     }
 
     @Override
     protected void writeBeginArray() throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeBeginArray();
     }
 
     @Override
     protected void writeEndObject() throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeEndObject();
     }
 
     @Override
     protected void writeBeginObject() throws JaysonException {
-        space = 0;
+        nums = 0;
         super.writeBeginObject();
     }
 
-
-    
-    
 }

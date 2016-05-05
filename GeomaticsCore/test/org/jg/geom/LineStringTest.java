@@ -1,9 +1,7 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
@@ -28,7 +26,7 @@ public class LineStringTest {
     
     @Test
     public void testValueOf(){
-        assertEquals("[\"LS\", 0,0, 100,0, 100,100]", LineString.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100).toString());
+        assertEquals("[\"LS\",0,0, 100,0, 100,100]", LineString.valueOf(Tolerance.DEFAULT, 0,0, 100,0, 100,100).toString());
         try{
             LineString.valueOf(Tolerance.DEFAULT, 1,2, 3);
             fail("Exception expected");
@@ -74,19 +72,19 @@ public class LineStringTest {
     @Test
     public void testParseAll_ords() {
         assertEquals(0, LineString.parseAll(Tolerance.DEFAULT).length);
-        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]", Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, 1,2, 3,5, 8,13)));
-        assertEquals("[[\"LS\", 0,20, 20,20], [\"LS\", 20,0, 20,20], [\"LS\", 20,20, 20,40, 40,40, 40,20, 20,20]]",
+        assertEquals("[[\"LS\",1,2, 3,5, 8,13]]", Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, 1,2, 3,5, 8,13)));
+        assertEquals("[[\"LS\",0,20, 20,20], [\"LS\",20,0, 20,20], [\"LS\",20,20, 20,40, 40,40, 40,20, 20,20]]",
                 Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, 20,0, 20,40, 40,40, 40,20, 0,20)));
         assertEquals(0, LineString.parseAll(Tolerance.DEFAULT, 1,2, 1,2, 1,2).length);
-        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]", Arrays.toString(LineString.parseAll(new Tolerance(0.5), 1,2, 1.1,2, 3,5, 8,13)));
+        assertEquals("[[\"LS\",1,2, 3,5, 8,13]]", Arrays.toString(LineString.parseAll(new Tolerance(0.5), 1,2, 1.1,2, 3,5, 8,13)));
     }
     
     @Test
     public void testParseAll_Network() {
         assertEquals(0, LineString.parseAll(Tolerance.DEFAULT, new Network()).length);
-        assertEquals("[[\"LS\", 1,2, 3,5, 8,13]]",
+        assertEquals("[[\"LS\",1,2, 3,5, 8,13]]",
                 Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, new Network().addAllLinks(new VectList(1,2, 3,5, 8,13)))));
-        assertEquals("[[\"LS\", 0,20, 20,20], [\"LS\", 20,0, 20,20], [\"LS\", 20,20, 40,20, 40,40, 20,40, 20,20]]",
+        assertEquals("[[\"LS\",0,20, 20,20], [\"LS\",20,0, 20,20], [\"LS\",20,20, 40,20, 40,40, 20,40, 20,20]]",
                 Arrays.toString(LineString.parseAll(Tolerance.DEFAULT, new Network().addAllLinks(new VectList(20,0, 20,40, 40,40, 40,20, 0,20)))));
         Network network = new Network();
         network.addVertex(1, 2);
@@ -163,35 +161,9 @@ public class LineStringTest {
     }
 
     @Test
-    public void testToString_Appendable() {
+    public void testToString() {
         LineString ls = LineString.valueOf(Tolerance.DEFAULT, 1, 3, 7, 13, 17, 29);
-        assertEquals("[\"LS\", 1,3, 7,13, 17,29]", ls.toString());
-        try {
-            ls.toString(null);
-            fail("Exception expected");
-        } catch (NullPointerException ex) {
-        }
-        try {
-            ls.toString(new Appendable() {
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-
-            });
-            fail("Exception expected");
-        } catch (GeomException ex) {
-        }
+        assertEquals("[\"LS\",1,3, 7,13, 17,29]", ls.toString());
     }
 
     @Test
@@ -649,7 +621,7 @@ public class LineStringTest {
         
         assertNull(a.less(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         assertEquals(a, a.less(b, Linearizer.DEFAULT, Tolerance.DEFAULT));
-        assertEquals("[\"LS\", 0,90, 50,90, 90,90, 90,50, 90,0]",
+        assertEquals("[\"LS\",0,90, 50,90, 90,90, 90,50, 90,0]",
                 a.less(c, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         assertEquals("[\"LT\",[0,90, 50,90],[90,0, 90,50]]",
                 a.less(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
@@ -670,7 +642,7 @@ public class LineStringTest {
                 a.xor(c, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         assertEquals("[\"LT\",[0,90, 50,90],[90,0, 90,50]]",
                 a.xor(d, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
-        assertEquals("[\"GS\",[\"AR\",[[80,80, 100,80, 100,100, 80,100, 80,80]]],[\"LT\",[0,90, 80,90],[90,0, 90,80]]]", a.xor(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"GS\",[[80,80, 100,80, 100,100, 80,100, 80,80]],[[0,90, 80,90],[90,0, 90,80]],null]", a.xor(e, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
     }
           
     @Test

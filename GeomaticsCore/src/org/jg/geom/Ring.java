@@ -1,11 +1,12 @@
 package org.jg.geom;
 
 import java.beans.Transient;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.jg.algorithm.ConvexHull;
+import org.jg.geom.io.GeomJaysonWriter;
+import org.jg.geom.io.RingHandler;
 import org.jg.util.SpatialNode;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
@@ -973,27 +974,7 @@ public class Ring implements Geom {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new RingHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
-    }
-
-    /**
-     * Convert this ring to astirng and place it in the appendable given
-     *
-     * @param appendable
-     * @throws GeomException if there was an IO Error
-     * @throws NullPointerException if appendable was null
-     */
-    @Override
-    public void toString(Appendable appendable) throws GeomException, NullPointerException {
-        try {
-            appendable.append("[\"").append(CODE).append("\"");
-            for (int i = 0; i < vects.size(); i++) {
-                appendable.append(", ").append(Vect.ordToStr(vects.getX(i))).append(',').append(Vect.ordToStr(vects.getY(i)));
-            }
-            appendable.append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing LineStirng", ex);
-        }
     }
 }

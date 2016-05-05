@@ -196,12 +196,6 @@ public class ViewTest {
     }
 
     @Test
-    public void testToString() {
-        View a = new View(Rect.valueOf(2000, 1000, 6000, 7000), 400, 300);
-        assertEquals("{bounds:[2000,1000,6000,7000],widthPx:400,heightPx:300}", a.toString());
-    }
-
-    @Test
     public void testZoom() {
         View a = new View(Rect.valueOf(2000, 1000, 6000, 7000), 400, 300);
         View b = a.zoom(0.5);

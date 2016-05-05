@@ -1,6 +1,5 @@
 package org.jg.geom;
 
-import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -229,46 +228,6 @@ public class VectTest {
     }
 
     @Test
-    public void testToString_double_double() {
-        StringBuilder str = new StringBuilder();
-        Vect.valueOf(3.4, 5.6).toString(str);
-        assertEquals("[\"PT\",3.4,5.6]", str.toString());
-        try {
-            Vect.ZERO.toString(null);
-        } catch (NullPointerException ex) {
-            //Expected
-        }
-    }
-
-    @Test
-    public void testToString_Appendable() {
-        Vect v = new Vect(1, 2.3);
-        StringBuilder str = new StringBuilder();
-        v.toString(str);
-        assertEquals("[\"PT\",1,2.3]", str.toString());
-        try{
-            v.toString(new Appendable(){
-                @Override
-                public Appendable append(CharSequence csq) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(CharSequence csq, int start, int end) throws IOException {
-                    throw new IOException();
-                }
-
-                @Override
-                public Appendable append(char c) throws IOException {
-                    throw new IOException();
-                }
-            });
-            fail("Exception expected");
-        }catch(GeomIOException ex){
-        }
-    }
-
-    @Test
     public void testHashCode() {
         assertEquals(Vect.valueOf(1, 2).hashCode(), Vect.valueOf(1, 2).hashCode()); // equal should have same hashcode
         Set<Integer> hashes = new HashSet<>();
@@ -393,7 +352,7 @@ public class VectTest {
         assertSame(rect, Vect.valueOf(15, 20).union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         Vect a = Vect.valueOf(5, 30);
-        assertEquals("[\"GS\",[\"AR\",[[10,20, 30,20, 30,40, 10,40, 10,20]]],[\"PS\", 5,30]]", a.union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"GS\",[[10,20, 30,20, 30,40, 10,40, 10,20]],null,[5,30]]", a.union(rect, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         assertEquals(a, a.union(a, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         Vect b = Vect.valueOf(10, 25);
@@ -406,7 +365,7 @@ public class VectTest {
         assertSame(gs, b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT));
         
         gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 30)).toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT);
-        assertEquals("[\"PS\", 10,20, 10,25, 10,30]", b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
+        assertEquals("[\"PS\",10,20, 10,25, 10,30]", b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT).toString());
         
         gs = PointSet.valueOf(new VectSet().add(10, 20).add(10, 25)).toGeoShape(Linearizer.DEFAULT, Tolerance.DEFAULT);
         assertSame(gs, b.union(gs, Linearizer.DEFAULT, Tolerance.DEFAULT));

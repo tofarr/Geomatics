@@ -373,10 +373,7 @@ public class VectSetTest {
         expectedB.setLength(expectedB.length() - 2);
         expectedB.append(']');
         String expected = expectedB.toString();
-        assertEquals("{size:51, bounds:[1,2,101,102]}", a.toString());
-        StringBuilder str = new StringBuilder();
-        a.toString(str);
-        assertEquals(expected, str.toString());
+        assertEquals(expected, a.toString());
     }
 
     @Test

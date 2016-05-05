@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import org.jg.geom.Network.LinkProcessor;
 import org.jg.geom.Network.VertexProcessor;
+import org.jg.geom.io.GeoShapeHandler;
+import org.jg.geom.io.GeomJaysonWriter;
 import org.jg.util.Tolerance;
 import org.jg.util.Transform;
 import org.jg.util.VectList;
@@ -245,36 +247,9 @@ public class GeoShape implements Geom {
     }
 
     @Override
-    public void toString(Appendable appendable) throws NullPointerException, GeomException {
-        try {
-            appendable.append("[\"").append(CODE).append("\",");
-            boolean comma = false;
-            if (area != null) {
-                area.toString(appendable);
-                comma = true;
-            }
-            if (lines != null) {
-                if(comma){
-                    appendable.append(',');   
-                }
-                lines.toString(appendable);
-                comma = true;
-            }
-            if (points != null) {
-                if(comma){
-                    appendable.append(',');   
-                }
-                points.toString(appendable);
-            }
-            appendable.append(']');
-        } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
-        }
-    }
-
     public String toString() {
         StringBuilder str = new StringBuilder();
-        toString(str);
+        new GeoShapeHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
     }
 

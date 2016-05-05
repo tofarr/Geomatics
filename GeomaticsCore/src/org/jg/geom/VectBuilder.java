@@ -272,7 +272,7 @@ public final class VectBuilder implements Cloneable, Serializable, Comparable<Ve
 
     @Override
     public String toString() {
-        return Vect.toString(x, y);
+        return build().toString();
     }
 
     @Override

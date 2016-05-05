@@ -143,6 +143,11 @@ public class PathBuilder {
         segs.add(PathSegType.QUAD);
         return this;
     }
+    
+    public PathBuilder close(){
+        segs.add(PathSegType.CLOSE);
+        return this;
+    }
 
     public Path build() {
         return new Path(ordinates.clone(), segs.toArray(new PathSegType[segs.size()]));
