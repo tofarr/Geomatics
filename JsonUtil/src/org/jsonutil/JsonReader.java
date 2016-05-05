@@ -292,4 +292,13 @@ public class JsonReader extends JsonInput {
             throw new JsonException("Expected BOOLEAN found " + prev);
         }
     }
+
+    @Override
+    public void close() throws JsonException {
+        try {
+            reader.close();
+        } catch (IOException ex) {
+            throw new JsonException("Error closing", ex);
+        }
+    }
 }

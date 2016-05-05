@@ -23,20 +23,21 @@ public class JsonWriterTest {
             fail("Exception expected");
         }catch(NullPointerException ex){
         }
-        writer.beginObject().name("foo").str("bar");
-        writer.whitespace().name("z.a.p").beginArray().num(1).num(2.1);
-        writer.whitespace().bool(true).str("three").nul().endArray().endObject();
-        assertEquals("{foo:\"bar\", \"z.a.p\":[1,2.1, true,\"three\",null]}", str.toString());
+        writer.beginObject().name("foo").str("bar")
+            .name("z.a.p").beginArray().num(1).num(2.1)
+            .bool(true).str("three").nul().endArray().endObject();
+        assertEquals("{foo:\"bar\",\"z.a.p\":[1,2.1,true,\"three\",null]}", str.toString());
     }
     
     
     @Test
     public void testComment(){
-        StringWriter str = new StringWriter();
-        JsonWriter writer = new JsonWriter(str);
-        writer.beginObject().name("foo").str("bar");
-        writer.comment("Some */ comment").endObject();
-        assertEquals("{foo:\"bar\"/* Some * / comment */}", str.toString());
+        StringBuilder str = new StringBuilder();
+        try(JsonWriter writer = new JsonWriter(str)){
+            writer.beginObject().name("foo").str("bar");
+            writer.comment("Some */ comment").endObject();
+            assertEquals("{foo:\"bar\"/* Some * / comment */}", str.toString());
+        }
     }
     
     @Test
@@ -75,28 +76,101 @@ public class JsonWriterTest {
             }
             
         };
-        JsonWriter writer = new JsonWriter(errorWriter);
-        try{
-            writer.comment("Foo");
-            fail("Exception expected");
-        }catch(JsonException ex){
-        }
-        try{
-            writer.beginArray();
-            fail("Exception expected");
-        }catch(JsonException ex){
+        try(JsonWriter writer = new JsonWriter(errorWriter)){
+            try{
+                writer.comment("Foo");
+                fail("Exception expected");
+            }catch(JsonException ex){
+            }
+            try{
+                writer.beginArray();
+                fail("Exception expected");
+            }catch(JsonException ex){
+            }
         }
     }
     
     @Test
     public void testWriteRemaining(){
-        String json = "{foo:1,bar:2,zap:[true,false]}";
+        String json = "{foo:1,bar:{bang:\"pop\"},zap:[true,false,null]}";
         JsonReader reader = new JsonReader(new StringReader(json));
         StringWriter str = new StringWriter();
         JsonWriter writer = new JsonWriter(str);
         reader.next();
         writer.beginObject();
-        writer.writeRemaining(reader);
+        writer.copyRemaining(reader);
         assertEquals(json, str.toString());
     }
+    
+    @Test
+    public void testBadEndObject(){
+        StringWriter str = new StringWriter();
+        JsonWriter writer = new JsonWriter(str);
+        try{
+            writer.endObject();
+            fail("Exception expected!");
+        }catch(JsonException ex){
+        }
+        writer.beginObject().name("foo");
+        try{
+            writer.endObject();
+            fail("Exception expected!");
+        }catch(JsonException ex){
+        }
+    }
+    
+    @Test
+    public void testBadEndArray(){
+        StringWriter str = new StringWriter();
+        JsonWriter writer = new JsonWriter(str);
+        try{
+            writer.endArray();
+            fail("Exception expected!");
+        }catch(JsonException ex){
+        }
+    }
+    
+    @Test
+    public void testBadName(){
+        StringWriter str = new StringWriter();
+        JsonWriter writer = new JsonWriter(str);
+        try{
+            writer.name("foo");
+            fail("Exception expected!");
+        }catch(JsonException ex){
+        }
+        writer.beginObject().name("foo");
+        try{
+            writer.name("bar");
+            fail("Exception expected!");
+        }catch(JsonException ex){
+        }
+    }
+    
+    @Test
+    public void teetBadValue(){
+        StringWriter str = new StringWriter();
+        JsonWriter writer = new JsonWriter(str);
+        writer.beginObject();
+        try{
+            writer.str("foo");
+            fail("Exception expected!");
+        }catch(JsonException ex){
+        }
+    }
+    
+    @Test
+    public void testWriteRemainingFail(){
+        String json = "{foo:1}";
+        JsonReader reader = new JsonReader(new StringReader(json));
+        StringWriter str = new StringWriter();
+        JsonWriter writer = new JsonWriter(str);
+        writer.beginArray();
+        try{
+            writer.copyRemaining(reader);
+            fail("Exception expected");
+        }catch(JsonException ex){
+        }
+    }
+    
 }

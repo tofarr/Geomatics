@@ -39,7 +39,7 @@ public class PolymorphicRender<E> implements JsonRender<E> {
             throw new JsonException("Expected BEGIN_OBJECT, found " + type);
         }
         out.beginObject().name("$type").str(name);
-        out.writeRemaining(input);
+        out.copyRemaining(input);
     }    
     
     public static class PolymorphicRenderFactory extends JsonRenderFactory{

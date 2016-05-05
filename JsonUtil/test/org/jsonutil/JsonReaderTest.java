@@ -518,11 +518,12 @@ public class JsonReaderTest {
 
     @Test
     public void testWeirdUncommented() {
-        JsonReader reader = new JsonReader(new StringReader("{$type+4.0:true}"));
-        assertEquals(JsonType.BEGIN_OBJECT, reader.next());
-        assertEquals("$type+4.0", reader.nextStr());
-        assertTrue(reader.nextBool());
-        assertEquals(JsonType.END_OBJECT, reader.next());
+        try(JsonReader reader = new JsonReader(new StringReader("{$type+4.0:true}"))){
+            assertEquals(JsonType.BEGIN_OBJECT, reader.next());
+            assertEquals("$type+4.0", reader.nextStr());
+            assertTrue(reader.nextBool());
+            assertEquals(JsonType.END_OBJECT, reader.next());
+        }
     }
 
     @Test

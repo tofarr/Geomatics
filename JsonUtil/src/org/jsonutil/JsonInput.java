@@ -4,7 +4,7 @@ package org.jsonutil;
  *
  * @author tofarrell
  */
-public abstract class JsonInput {
+public abstract class JsonInput implements AutoCloseable {
 
     /**
      * Get next type from stream. return null when end of stream

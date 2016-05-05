@@ -6,7 +6,7 @@ import java.util.ArrayDeque;
  *
  * @author tofarrell
  */
-public abstract class JsonOutput {
+public abstract class JsonOutput implements AutoCloseable {
 
     protected final ArrayDeque<JsonType> parents;
     protected JsonType parent;
@@ -17,7 +17,7 @@ public abstract class JsonOutput {
         parent = JsonType.NULL;
     }
     
-    public JsonOutput beginObject() throws JsonException, IllegalStateException {
+    public JsonOutput beginObject() throws JsonException {
         beforeValue();
         parents.push(parent);
         parent = JsonType.BEGIN_OBJECT;
@@ -28,12 +28,12 @@ public abstract class JsonOutput {
 
     protected abstract void writeBeginObject() throws JsonException;
 
-    public JsonOutput endObject() throws JsonException, IllegalStateException {
+    public JsonOutput endObject() throws JsonException {
         if (parent != JsonType.BEGIN_OBJECT) {
-            throw new IllegalStateException("Cannot end object!");
+            throw new JsonException("Cannot end object!");
         }
         if (prev == JsonType.NAME) {
-            throw new IllegalStateException("Cannot add key without value!");
+            throw new JsonException("Cannot add key without value!");
         }
         prev = JsonType.END_OBJECT;
         parent = parents.pop();
@@ -43,7 +43,7 @@ public abstract class JsonOutput {
 
     protected abstract void writeEndObject() throws JsonException;
 
-    public JsonOutput beginArray() throws JsonException, IllegalStateException {
+    public JsonOutput beginArray() throws JsonException {
         beforeValue();
         parents.push(parent);
         parent = JsonType.BEGIN_ARRAY;
@@ -54,9 +54,9 @@ public abstract class JsonOutput {
 
     protected abstract void writeBeginArray() throws JsonException;
 
-    public JsonOutput endArray() throws JsonException, IllegalStateException {
+    public JsonOutput endArray() throws JsonException {
         if (parent != JsonType.BEGIN_ARRAY) {
-            throw new IllegalStateException("Cannot end array!");
+            throw new JsonException("Cannot end array!");
         }
         prev = JsonType.END_ARRAY;
         parent = parents.pop();
@@ -66,12 +66,12 @@ public abstract class JsonOutput {
 
     protected abstract void writeEndArray() throws JsonException;
 
-    public JsonOutput name(String name) throws JsonException, NullPointerException, IllegalStateException {
+    public JsonOutput name(String name) throws JsonException, NullPointerException, JsonException {
         if (parent != JsonType.BEGIN_OBJECT) {
-            throw new IllegalStateException("Cannot add key outside object!");
+            throw new JsonException("Cannot add key outside object!");
         }
         if (prev == JsonType.NAME) {
-            throw new IllegalStateException("Cannot add key without value!");
+            throw new JsonException("Cannot add key without value!");
         }
         writeName(name);
         prev = JsonType.NAME;
@@ -118,14 +118,14 @@ public abstract class JsonOutput {
     protected abstract void writeNull() throws JsonException;
     
 
-    protected void beforeValue() throws IllegalStateException, JsonException {
-        if (parent == JsonType.BEGIN_OBJECT && (prev != null) && (prev != JsonType.NAME)) {
-            throw new IllegalStateException("Cannot add value without key!");
+    protected void beforeValue() throws JsonException {
+        if (parent == JsonType.BEGIN_OBJECT && (prev != JsonType.NAME)) {
+            throw new JsonException("Cannot add value without key!");
         }
     }
 
-    public void writeRemaining(JsonInput input) {
-        while (!parents.isEmpty()) {
+    public final void copyRemaining(JsonInput input) {
+        do {
             JsonType type = input.next();
             if (type == null) {
                 throw new JsonException("Unexpected end of stream");
@@ -159,6 +159,6 @@ public abstract class JsonOutput {
                     str(input.str());
                     break;
             }
-        }
+        }while(!parents.isEmpty());
     }
 }

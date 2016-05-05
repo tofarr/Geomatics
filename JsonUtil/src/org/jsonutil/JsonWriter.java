@@ -6,10 +6,9 @@ import java.io.IOException;
  *
  * @author tofar
  */
-public final class JsonWriter extends JsonOutput {
+public class JsonWriter extends JsonOutput {
 
     private final Appendable appendable;
-    private boolean whitespace;
 
     public JsonWriter(Appendable appendable) throws NullPointerException {
         if (appendable == null) {
@@ -43,10 +42,6 @@ public final class JsonWriter extends JsonOutput {
         if(prev != null){
             append(',');
         }
-        if (whitespace) {
-            append(' ');
-            whitespace = false;
-        }
         name = sanitize(name);
         append(name);
     }
@@ -76,23 +71,13 @@ public final class JsonWriter extends JsonOutput {
         append("null");
     }
 
-    /**
-     * In some cases, whitespace can serve to make things easier to read, so we explicitly allow it
-     *
-     * @return
-     */
-    public JsonWriter whitespace() {
-        whitespace = true;
-        return this;
-    }
-
     public JsonWriter comment(String comment) throws JsonException {
         comment = "/* " + comment.replace("*", "* ") + " */";
         append(comment);
         return this;
     }
 
-    private void append(char c) throws JsonException {
+    protected void append(char c) throws JsonException {
         try {
             appendable.append(c);
         } catch (IOException ex) {
@@ -100,7 +85,7 @@ public final class JsonWriter extends JsonOutput {
         }
     }
 
-    private void append(String str) throws JsonException {
+    protected void append(String str) throws JsonException {
         try {
             appendable.append(str);
         } catch (IOException ex) {
@@ -112,10 +97,6 @@ public final class JsonWriter extends JsonOutput {
         super.beforeValue();
         if (prev != null) {
             append((prev == JsonType.NAME) ? ':' : ',');
-        }
-        if (whitespace) {
-            append(' ');
-            whitespace = false;
         }
     }
 
@@ -136,4 +117,14 @@ public final class JsonWriter extends JsonOutput {
         return name;
     }
 
+    @Override
+    public void close() throws JsonException {
+        try {
+            if(appendable instanceof AutoCloseable){
+                ((AutoCloseable)appendable).close();
+            }
+        } catch (Exception ex) {
+            throw new JsonException("Error closing", ex);
+        }
+    }
 }

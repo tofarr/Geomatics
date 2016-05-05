@@ -1,5 +1,6 @@
 package org.jsonutil;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 
 /**
@@ -11,11 +12,20 @@ public class JsonBuffer extends JsonOutput {
     private final ArrayList<JsonType> types;
     private final ArrayList<Object> values;
 
-    public JsonBuffer() throws NullPointerException {
+    public JsonBuffer() {
         types = new ArrayList<>();
         values = new ArrayList<>();
     }
 
+    public JsonBuffer(JsonInput input) throws JsonException{
+        this();
+        this.copyRemaining(input);
+    }
+      
+    public JsonBuffer(String json) throws JsonException{
+        this(new JsonReader(new StringReader(json)));
+    }
+        
     @Override
     protected void writeBeginObject() throws JsonException {
         types.add(JsonType.BEGIN_OBJECT);
@@ -72,7 +82,14 @@ public class JsonBuffer extends JsonOutput {
 
             @Override
             public JsonType next() throws JsonException {
-                JsonType type = types.get(++typeIndex);
+                typeIndex++;
+                if(typeIndex >= types.size()){
+                    if(parent != JsonType.NULL){
+                        throw new JsonException("Unexpected end of stream!");
+                    }
+                    return null;
+                }
+                JsonType type = types.get(typeIndex);
                 switch (type) {
                     case BOOLEAN:
                     case NAME:
@@ -84,47 +101,61 @@ public class JsonBuffer extends JsonOutput {
             }
 
             @Override
-            public String str() throws IllegalStateException {
-                if (types.get(typeIndex) != JsonType.STRING) {
-                    throw new IllegalStateException();
+            public String str() throws JsonException {
+                JsonType type = types.get(typeIndex);
+                if ((type != JsonType.STRING) && (type != JsonType.NAME)) {
+                    throw new JsonException("Expected STRING, found "+type);
                 }
                 return (String) values.get(valueIndex);
             }
 
             @Override
-            public double num() throws IllegalStateException {
+            public double num() throws JsonException {
                 if (types.get(typeIndex) != JsonType.NUMBER) {
-                    throw new IllegalStateException();
+                    throw new JsonException("Expected NUMBER, found "+types.get(typeIndex));
                 }
                 return (Double) values.get(valueIndex);
             }
 
             @Override
-            public boolean bool() throws IllegalStateException {
+            public boolean bool() throws JsonException {
                 if (types.get(typeIndex) != JsonType.BOOLEAN) {
-                    throw new IllegalStateException();
+                    throw new JsonException("Expected STRING, found "+types.get(typeIndex));
                 }
                 return (Boolean) values.get(valueIndex);
             }
 
+            @Override
+            public void close() {
+            }
         };
     }
 
-    public JsonInput getInputAt(String key) {
+    public JsonInput getInputAt(String key, int level) {
         JsonInput input = getInput();
         JsonType type;
         while ((type = input.next()) != null) {
-            if (type == JsonType.NAME) {
-                if (input.str().equals(key)) {
-                    return input;
-                }
+            switch(type){
+                case NAME:
+                    if((level == 0) && (input.str().equals(key))) {
+                        return input;
+                    }
+                    break;
+                case BEGIN_ARRAY:
+                case BEGIN_OBJECT:
+                    level--;
+                    break;
+                case END_ARRAY:
+                case END_OBJECT:
+                    level++;
+                    break;
             }
         }
         return null;
     }
 
-    public String findFirstStr(String key) throws JsonException {
-        JsonInput input = getInputAt(key);
+    public String findFirstStr(String key, int level) throws JsonException {
+        JsonInput input = getInputAt(key, level);
         if (input == null) {
             throw new JsonException("Not found : " + key);
         }
@@ -132,8 +163,8 @@ public class JsonBuffer extends JsonOutput {
         return input.str();
     }
 
-    public double findFirstNum(String key) throws JsonException {
-        JsonInput input = getInputAt(key);
+    public double findFirstNum(String key, int level) throws JsonException {
+        JsonInput input = getInputAt(key, level);
         if (input == null) {
             throw new JsonException("Not found : " + key);
         }
@@ -141,8 +172,8 @@ public class JsonBuffer extends JsonOutput {
         return input.num();
     }
 
-    public boolean findFirstBool(String key) throws JsonException {
-        JsonInput input = getInputAt(key);
+    public boolean findFirstBool(String key, int level) throws JsonException {
+        JsonInput input = getInputAt(key, level);
         if (input == null) {
             throw new JsonException("Not found : " + key);
         }
@@ -150,4 +181,16 @@ public class JsonBuffer extends JsonOutput {
         return input.bool();
     }
 
+    @Override
+    public void close() {
+    }
+
+    public JsonBuffer clear(){
+        types.clear();
+        values.clear();
+        prev = null;
+        parent = JsonType.NULL;
+        parents.clear();
+        return this;
+    }
 }

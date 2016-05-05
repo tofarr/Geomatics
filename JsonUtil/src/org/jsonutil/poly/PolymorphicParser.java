@@ -34,9 +34,9 @@ public class PolymorphicParser<E> extends JsonParser<E> {
         // Create a buffer containing the whole json object
         JsonBuffer buffer = new JsonBuffer();
         buffer.beginObject();
-        buffer.writeRemaining(input);
+        buffer.copyRemaining(input);
 
-        String name = buffer.findFirstStr("$type");
+        String name = buffer.findFirstStr("$type", 1);
         Class<? extends E> implClass = classMap.getImplClass(name);
         if (implClass == null) {
             throw new JsonException("Unknown type " + name);
