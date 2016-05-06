@@ -195,7 +195,7 @@ public class RTreeTest {
         b.add(Rect.valueOf(30, 0, 40, 10), 4);
         b.addAll(a);
         String str = Jayson.getInstance().renderStr(b.root);
-        assertEquals("{itemBounds:[[20,0,30,10],[30,0,40,10],[0,0,10,10],[10,0,20,10]],itemValues:[3,4,1,2]}", str);
+        assertEquals("{itemBounds:[[\"RE\",20,0,30,10],[\"RE\",30,0,40,10],[\"RE\",0,0,10,10],[\"RE\",10,0,20,10]],itemValues:[3,4,1,2]}", str);
     }
 
     @Test

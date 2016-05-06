@@ -35,7 +35,7 @@ public class GeomJaysonifier extends JaysonParser<Geom> implements JaysonRender<
 
     @Override
     public void render(Geom value, Jayson coder, JaysonOutput out) throws JaysonException {
-        GeomHandler handler = byCode.get(value.getClass());
+        GeomHandler handler = byType.get(value.getClass());
         if(handler == null){
             throw new JaysonException("Unknown geometryType : "+value.getClass());
         }

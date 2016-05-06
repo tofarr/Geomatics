@@ -77,7 +77,7 @@ public class DefaultRender<E> implements JaysonRender<E> {
                 if (!(clazz.isPrimitive() || clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers()))) {
                     List<Field> fields = new ArrayList<>();
                     for (Field field : clazz.getFields()) {
-                        if (!Modifier.isTransient(field.getModifiers())) {
+                        if ((!Modifier.isTransient(field.getModifiers())) && (!Modifier.isStatic(field.getModifiers()))) {
                             fields.add(field);
                         }
                     }
@@ -88,6 +88,7 @@ public class DefaultRender<E> implements JaysonRender<E> {
                                 && name.startsWith("get")
                                 && (method.getReturnType() != void.class)
                                 && (method.getAnnotation(Transient.class) == null)
+                                && (!Modifier.isStatic(method.getModifiers()))
                                 && (method.getDeclaringClass() != Object.class)) {
                             name = Character.toLowerCase(name.charAt(3)) + name.substring(4);
                             for (Iterator<Field> iter = fields.iterator(); iter.hasNext();) {

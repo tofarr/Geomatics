@@ -27,15 +27,19 @@ public class Jayson {
     public Jayson(JaysonParserFactory[] parserFactories, JaysonRenderFactory[] renderFactories) {
         this.parserFactories = parserFactories.clone();
         this.renderFactories = renderFactories.clone();
-        Arrays.sort(parserFactories);
-        Arrays.sort(renderFactories);
+        Arrays.sort(this.parserFactories);
+        Arrays.sort(this.renderFactories);
         parserCache = new ConcurrentHashMap<>();
         renderCache = new ConcurrentHashMap();
     }
 
     //Gets default instance based on service loaders
     public static Jayson getInstance() {
-        Jayson ret = JaysonBuilder.getInstance().build();
+        Jayson ret = instance;
+        if(ret != null){
+            return ret;
+        }
+        ret = JaysonBuilder.getInstance().build();
         instance = ret;
         return ret;
     }
