@@ -3,13 +3,13 @@ package org.jg.gfx.renderable;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.beans.ConstructorProperties;
-import org.jg.geom.Geom;
-import org.jg.geom.Rect;
+import org.geomatics.geom.Geom;
+import org.geomatics.geom.Rect;
 import org.jg.gfx.util.GeomShape;
 import org.jg.gfx.util.TransformingShape;
 import org.jg.gfx.fill.Fill;
-import org.jg.util.Tolerance;
-import org.jg.util.Transform;
+import org.geomatics.util.Tolerance;
+import org.geomatics.util.Transform;
 
 /**
  *

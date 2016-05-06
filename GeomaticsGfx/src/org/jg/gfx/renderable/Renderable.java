@@ -1,8 +1,8 @@
 package org.jg.gfx.renderable;
 
 import java.awt.Graphics2D;
-import org.jg.geom.Rect;
-import org.jg.util.Transform;
+import org.geomatics.geom.Rect;
+import org.geomatics.util.Transform;
 
 /**
  * Renderable object

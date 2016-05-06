@@ -6,11 +6,11 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.beans.ConstructorProperties;
-import org.jg.geom.Rect;
-import org.jg.geom.Vect;
+import org.geomatics.geom.Rect;
+import org.geomatics.geom.Vect;
 import org.jg.gfx.fill.Fill;
 import org.jg.gfx.font.FontSpec;
-import org.jg.util.Transform;
+import org.geomatics.util.Transform;
 
 /**
  *

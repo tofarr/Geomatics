@@ -1,7 +1,7 @@
 package org.jg.gfx.img;
 
 import java.awt.image.BufferedImage;
-import org.jg.geom.GeomException;
+import org.geomatics.geom.GeomException;
 
 /**
  *

@@ -1,8 +1,8 @@
 package org.jg.gfx.util;
 
 import java.awt.geom.PathIterator;
-import org.jg.geom.PathIter;
-import org.jg.geom.PathSegType;
+import org.geomatics.geom.PathIter;
+import org.geomatics.geom.PathSegType;
 
 /**
  *

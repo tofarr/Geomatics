@@ -125,26 +125,9 @@ public class ConstructorParser<E> extends JaysonParser<E> {
                     continue;
                 }
             }
-            skip(input); // skip not found
+            input.skip(); // skip not found
         }
         assignPrimatives(paramTypes, params);
-    }
-
-    static void skip(JaysonInput input) {
-        int count = 0;
-        do {
-            JaysonType type = input.next();
-            switch (type) {
-                case BEGIN_ARRAY:
-                case BEGIN_OBJECT:
-                    count++;
-                    break;
-                case END_ARRAY:
-                case END_OBJECT:
-                    count--;
-                    break;
-            }
-        } while (count > 0);
     }
 
     static void assignPrimatives(Type[] paramTypes, Object[] params) {

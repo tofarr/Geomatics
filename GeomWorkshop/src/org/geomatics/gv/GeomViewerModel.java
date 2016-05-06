@@ -1,8 +1,8 @@
 package org.geomatics.gv;
 
 import java.beans.ConstructorProperties;
-import org.jg.geom.Rect;
-import org.jg.util.ViewPoint;
+import org.geomatics.geom.Rect;
+import org.geomatics.util.ViewPoint;
 
 /**
  *

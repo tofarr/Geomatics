@@ -7,7 +7,7 @@ import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import org.jg.geom.Vect;
+import org.geomatics.geom.Vect;
 
 /**
  *

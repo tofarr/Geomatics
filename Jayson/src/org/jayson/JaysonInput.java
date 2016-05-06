@@ -83,4 +83,21 @@ public abstract class JaysonInput implements AutoCloseable {
         }
         return this;
     }
+
+    public void skip() {
+        int level = 0;
+        do {
+            JaysonType type = next();
+            switch (type) {
+                case BEGIN_ARRAY:
+                case BEGIN_OBJECT:
+                    level++;
+                    break;
+                case END_ARRAY:
+                case END_OBJECT:
+                    level--;
+                    break;
+            }
+        } while (level > 0);
+    }
 }

@@ -2,10 +2,10 @@ package org.jg.gfx.renderable;
 
 import java.awt.Graphics2D;
 import java.beans.ConstructorProperties;
-import org.jg.geom.Rect;
-import org.jg.geom.Vect;
-import org.jg.util.Transform;
-import org.jg.util.TransformBuilder;
+import org.geomatics.geom.Rect;
+import org.geomatics.geom.Vect;
+import org.geomatics.util.Transform;
+import org.geomatics.util.TransformBuilder;
 
 /**
  *

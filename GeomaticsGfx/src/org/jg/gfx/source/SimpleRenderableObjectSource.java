@@ -1,11 +1,11 @@
 package org.jg.gfx.source;
 
 import java.beans.ConstructorProperties;
-import org.jg.geom.Rect;
-import org.jg.geom.Relation;
+import org.geomatics.geom.Rect;
+import org.geomatics.geom.Relation;
 import org.jg.gfx.renderable.Renderable;
-import org.jg.util.Tolerance;
-import org.jg.util.View;
+import org.geomatics.util.Tolerance;
+import org.geomatics.util.View;
 
 /**
  * No indexing - suitable for a few items to be rendered

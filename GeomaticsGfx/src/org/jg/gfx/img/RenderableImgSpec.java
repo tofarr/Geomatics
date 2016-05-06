@@ -3,10 +3,10 @@ package org.jg.gfx.img;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.beans.ConstructorProperties;
-import org.jg.geom.GeomException;
-import org.jg.geom.Rect;
+import org.geomatics.geom.GeomException;
+import org.geomatics.geom.Rect;
 import org.jg.gfx.renderable.Renderable;
-import org.jg.util.Transform;
+import org.geomatics.util.Transform;
 
 /**
  *

@@ -11,17 +11,17 @@ import java.text.DecimalFormat;
 import javax.swing.BorderFactory;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import org.jg.geom.LineString;
-import org.jg.geom.Rect;
-import org.jg.geom.Ring;
-import org.jg.geom.Vect;
+import org.geomatics.geom.LineString;
+import org.geomatics.geom.Rect;
+import org.geomatics.geom.Ring;
+import org.geomatics.geom.Vect;
 import org.jg.gfx.fill.ColorFill;
 import org.jg.gfx.outline.BasicOutline;
 import org.jg.gfx.renderable.RenderableOutline;
 import org.jg.gfx.source.CompoundRenderableObjectSource;
 import org.jg.gfx.swing.RenderPanel;
-import org.jg.util.Tolerance;
-import org.jg.util.ViewPoint;
+import org.geomatics.util.Tolerance;
+import org.geomatics.util.ViewPoint;
 
 /**
  * Store frame state to file...

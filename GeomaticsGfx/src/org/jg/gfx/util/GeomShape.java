@@ -7,11 +7,11 @@ import java.awt.geom.FlatteningPathIterator;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import org.jg.geom.Geom;
-import org.jg.geom.Rect;
-import org.jg.geom.Relation;
-import org.jg.geom.Vect;
-import org.jg.util.Tolerance;
+import org.geomatics.geom.Geom;
+import org.geomatics.geom.Rect;
+import org.geomatics.geom.Relation;
+import org.geomatics.geom.Vect;
+import org.geomatics.util.Tolerance;
 
 /**
  *

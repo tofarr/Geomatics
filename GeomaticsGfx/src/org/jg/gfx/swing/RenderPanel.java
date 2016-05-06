@@ -8,13 +8,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import javax.swing.JPanel;
-import org.jg.geom.Vect;
+import org.geomatics.geom.Vect;
 import org.jg.gfx.renderable.Renderable;
 import org.jg.gfx.source.RenderableObjectSource;
 import org.jg.gfx.source.SimpleRenderableObjectSource;
-import org.jg.util.Transform;
-import org.jg.util.View;
-import org.jg.util.ViewPoint;
+import org.geomatics.util.Transform;
+import org.geomatics.util.View;
+import org.geomatics.util.ViewPoint;
 
 /**
  *

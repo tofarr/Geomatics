@@ -1,6 +1,6 @@
 package org.jg.gfx.source;
 
-import org.jg.util.View;
+import org.geomatics.util.View;
 
 /**
  *

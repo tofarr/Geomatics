@@ -6,9 +6,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import org.jg.geom.VectBuilder;
-import org.jg.util.Transform;
-import org.jg.util.TransformBuilder;
+import org.geomatics.geom.VectBuilder;
+import org.geomatics.util.Transform;
+import org.geomatics.util.TransformBuilder;
 
 /**
  *

@@ -1,12 +1,12 @@
 package org.geomatics.gv;
 
-import org.jg.geom.Geom;
-import org.jg.geom.Linearizer;
-import org.jg.geom.Network;
-import org.jg.geom.Network.VertexProcessor;
-import org.jg.geom.Rect;
-import org.jg.geom.Relation;
-import org.jg.geom.Vect;
+import org.geomatics.geom.Geom;
+import org.geomatics.geom.Linearizer;
+import org.geomatics.geom.Network;
+import org.geomatics.geom.Network.VertexProcessor;
+import org.geomatics.geom.Rect;
+import org.geomatics.geom.Relation;
+import org.geomatics.geom.Vect;
 import org.jg.gfx.fill.Fill;
 import org.jg.gfx.outline.Outline;
 import org.jg.gfx.renderable.FloatingRenderable;
@@ -14,9 +14,9 @@ import org.jg.gfx.renderable.Renderable;
 import org.jg.gfx.renderable.RenderableFill;
 import org.jg.gfx.renderable.RenderableOutline;
 import org.jg.gfx.source.RenderableObjectSource;
-import org.jg.util.Tolerance;
-import org.jg.util.TransformBuilder;
-import org.jg.util.View;
+import org.geomatics.util.Tolerance;
+import org.geomatics.util.TransformBuilder;
+import org.geomatics.util.View;
 
 /**
  *
