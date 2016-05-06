@@ -1,11 +1,5 @@
-package org.geomatics.gv;
+package org.geomatics.gv.modelold;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.file.Path;
 import org.geomatics.geom.Geom;
 import org.geomatics.geom.Linearizer;
 import org.geomatics.geom.Network;
@@ -20,52 +14,28 @@ import org.geomatics.gfx.renderable.Renderable;
 import org.geomatics.gfx.renderable.RenderableFill;
 import org.geomatics.gfx.renderable.RenderableOutline;
 import org.geomatics.gfx.source.RenderableObjectSource;
+import org.geomatics.gfx.source.RenderableObjectSource.RenderableObjectProcessor;
 import org.geomatics.util.Tolerance;
 import org.geomatics.util.TransformBuilder;
 import org.geomatics.util.View;
-import org.jayson.Jayson;
+import org.geomatics.util.ViewPoint;
 
 /**
  *
  * @author tofarrell
  */
-public class GeomLayer implements RenderableObjectSource {
+public class GeomLayerz implements RenderableObjectSource<Geom> {
 
-    private final String title;
-    /**
-     * layer may or may not be backed by a file
-     */
-    private final String file;
-    /**
-     * explicitly specified geometry - in cases geometry
-     */
     private final Geom geom;
-    /**
-     * fill for geometry
-     */
     private final Fill fill;
-    /**
-     * outline filler
-     */
     private final Fill outlineFill;
-    /**
-     * stroke for geometry
-     */
     private final Outline outline;
-    /**
-     * symbol for geometry
-     */
     private final Renderable symbol;
-    
-    private Geom cachedGeom;
-    
 
-    public GeomLayer(String title, String file, Geom geom, Fill fill, Fill outlineFill, Outline outline, Renderable symbol) {
-        if((file == null) == (geom == null)){
-            throw new IllegalArgumentException("Must specify either file or geom, but not both!");
+    public GeomLayerz(Geom geom, Fill fill, Fill outlineFill, Outline outline, Renderable symbol) {
+        if ((fill == null) && (outlineFill == null) && (outline == null) && (symbol == null)) {
+            throw new NullPointerException("Must define at least one visual element!");
         }
-        this.title = title;
-        this.file = file;
         this.geom = geom;
         this.fill = fill;
         this.outlineFill = outlineFill;
@@ -73,68 +43,26 @@ public class GeomLayer implements RenderableObjectSource {
         this.symbol = symbol;
     }
 
-    public File fileObj() {
-        File ret = (file == null) ? null : new File(file);
-        return ret;
-    }
-
-    public Path path() {
-        Path ret = (file == null) ? null : new File(file).toPath();
-        return ret;
-    }
-    
-    public Geom cachedGeom() throws IOException {
-        Geom ret = cachedGeom;
-        if(ret != null){
-            return ret;
-        }
-        ret = geom;
-        if(ret != null){
-            cachedGeom = ret;
-            return ret;
-        }
-        try(Reader reader = new BufferedReader(new FileReader(file))){
-            Jayson jayson = Jayson.getInstance();
-            ret = jayson.parse(Geom.class, reader);
-            cachedGeom = ret;
-            return ret;
-        }
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getFile() {
-        return file;
-    }
-
-    public Geom getGeom() {
-        return geom;
-    }
-
-    public Fill getFill() {
-        return fill;
-    }
-
-    public Fill getOutlineFill() {
-        return outlineFill;
-    }
-
-    public Outline getOutline() {
-        return outline;
-    }
-
-    public Renderable getSymbol() {
-        return symbol;
-    }
-
     @Override
-    public boolean load(View view, final RenderableObjectProcessor processor) {
+    public boolean load(View view, RenderableObjectProcessor processor) {
         if (geom == null) {
             return true; // no geometry, so nothing to draw
         }
-        Rect bounds = getPaddedBounds(view);
+        Rect bounds = view.getBounds().buffer(getPadding(view.getResolution()));
+        return load(bounds, processor);
+    }
+
+    @Override
+    public boolean load(ViewPoint viewPoint, RenderableObjectProcessor processor) {
+        if (geom == null) {
+            return true; // no geometry, so nothing to draw
+        }
+        Rect bounds = viewPoint.getCenter().getBounds().buffer(getPadding(viewPoint.getResolution()));
+        return load(bounds, processor);
+    }
+
+    private boolean load(Rect bounds, final RenderableObjectProcessor processor) {
+
         if (!Relation.isDisjoint(bounds.relate(geom.getBounds(), Tolerance.DEFAULT))) {
             if (fill != null) {
                 if (!processor.process(new RenderableFill(0, geom, fill))) {
@@ -163,8 +91,7 @@ public class GeomLayer implements RenderableObjectSource {
         return true;
     }
 
-    private Rect getPaddedBounds(View view) {
-        double resolution = view.getResolution();
+    private double getPadding(double resolution) {
         double padding = 0;
         if (outline != null) {
             padding = outline.getPadding() * resolution;
@@ -173,6 +100,11 @@ public class GeomLayer implements RenderableObjectSource {
             Rect bounds = symbol.toBounds(resolution);
             padding = Math.max(padding, Math.max(bounds.getWidth(), bounds.getHeight()));
         }
-        return view.getBounds().buffer(padding);
+        return padding;
+    }
+
+    @Override
+    public Geom getAttributes(long renderableId) {
+        return (renderableId == 0) ? geom : null;
     }
 }

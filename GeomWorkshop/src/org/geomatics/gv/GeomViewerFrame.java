@@ -15,11 +15,11 @@ import org.geomatics.geom.LineString;
 import org.geomatics.geom.Rect;
 import org.geomatics.geom.Ring;
 import org.geomatics.geom.Vect;
-import org.jg.gfx.fill.ColorFill;
-import org.jg.gfx.outline.BasicOutline;
-import org.jg.gfx.renderable.RenderableOutline;
-import org.jg.gfx.source.CompoundRenderableObjectSource;
-import org.jg.gfx.swing.RenderPanel;
+import org.geomatics.gfx.fill.ColorFill;
+import org.geomatics.gfx.outline.BasicOutline;
+import org.geomatics.gfx.renderable.RenderableOutline;
+import org.geomatics.gfx.source.CompoundRenderableObjectSource;
+import org.geomatics.gfx.swing.RenderPanel;
 import org.geomatics.util.Tolerance;
 import org.geomatics.util.ViewPoint;
 
@@ -97,7 +97,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        renderPanel = new org.jg.gfx.swing.RenderPanel();
+        renderPanel = new org.geomatics.gfx.swing.RenderPanel();
         viewLocation = new javax.swing.JTextField();
         mouseLocation = new javax.swing.JLabel();
         mainMenu = new javax.swing.JMenuBar();
@@ -435,7 +435,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem panLeftMenuItem;
     private javax.swing.JMenuItem panRightMenuItem;
     private javax.swing.JMenuItem panUpMenuItem;
-    private org.jg.gfx.swing.RenderPanel renderPanel;
+    private org.geomatics.gfx.swing.RenderPanel renderPanel;
     private javax.swing.JMenuItem resetLocationMenuItem;
     private javax.swing.JCheckBoxMenuItem showMouseLocationMenuItem;
     private javax.swing.JCheckBoxMenuItem showViewLocationMenuItem;
