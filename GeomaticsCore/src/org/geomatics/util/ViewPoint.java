@@ -1,7 +1,9 @@
 package org.geomatics.util;
 
+import java.beans.Transient;
 import java.util.Arrays;
 import org.geomatics.geom.Vect;
+import org.jayson.parser.StaticFactory;
 
 /**
  *
@@ -15,28 +17,33 @@ public class ViewPoint {
     private final double[] levels;
     private final int index;
 
-    private ViewPoint(Vect center, double resolution, int index, double... levels) throws NullPointerException, IllegalArgumentException, IndexOutOfBoundsException {
+    ViewPoint(Vect center, double resolution, int index, double... levels) throws NullPointerException, IllegalArgumentException, IndexOutOfBoundsException {
         this.center = center;
         this.resolution = resolution;
         this.levels = levels;
         this.index = index;
     }
 
-    public static ViewPoint valueOf(Vect center, int index, double... levels) throws NullPointerException, IllegalArgumentException, IndexOutOfBoundsException {
+    @StaticFactory({"center", "resolution", "levels"})
+    public static ViewPoint valueOf(Vect center, double resolution, double...levels) throws NullPointerException, IllegalArgumentException, IndexOutOfBoundsException{
+        if((levels == null) || (levels.length == 0)){
+            return valueOf(center, resolution);
+        }    
         if (center == null) {
             throw new NullPointerException();
         }
+        if (Double.isInfinite(resolution) || Double.isNaN(resolution) || (resolution <= 0)) {
+            throw new IllegalArgumentException("Invalid resolution : " + resolution);
+        }
         levels = levels.clone();
-        double prev = -1;
-        for (double resolution : levels) {
-            if (Double.isInfinite(resolution) || Double.isNaN(resolution) || (resolution <= 0)) {
-                throw new IllegalArgumentException("Invalid resolution : " + resolution);
-            }
-            if (resolution <= prev) {
+        double prev = 0;
+        for (double res : levels) {
+            if (Double.isInfinite(res) || Double.isNaN(res) || (res <= prev)) {
                 throw new IllegalArgumentException("Resolutions should be unique and in ascending order : " + resolution);
             }
             prev = resolution;
         }
+        int index = Math.min(levels.length-1, Math.abs(Arrays.binarySearch(levels, resolution)));
         return new ViewPoint(center, levels[index], index, levels);
     }
 
@@ -62,6 +69,7 @@ public class ViewPoint {
         return (levels == null) ? null : levels.clone();
     }
 
+    @Transient
     public int getIndex() {
         return index;
     }
@@ -120,12 +128,12 @@ public class ViewPoint {
             newIndex = -1;
             newResolution = resolution / Math.pow(2, -delta);
         }
-        
+
         double dx = anchorPx.x - (dimensions.x / 2);
         double dy = (dimensions.y / 2) - anchorPx.y; // Y axis is inverted
         double x = center.x + (dx * resolution) - (dx * newResolution);
         double y = center.y + (dy * resolution) - (dy * newResolution);
-        
+
         return new ViewPoint(Vect.valueOf(x, y), newResolution, newIndex, levels);
     }
 
@@ -136,14 +144,13 @@ public class ViewPoint {
             return (index == levels.length - 1) ? this : new ViewPoint(center, levels[index + 1], index + 1, levels);
         }
     }
-    
-    
-    public ViewPoint panPx(int xPx, int yPx){
+
+    public ViewPoint panPx(int xPx, int yPx) {
         Vect newCenter = Vect.valueOf(center.x + (xPx * resolution), center.y + (yPx * resolution));
         return new ViewPoint(newCenter, resolution, index, levels);
     }
-    
-    public View build(int width, int height) throws IllegalArgumentException {
+
+    public View toView(int width, int height) throws IllegalArgumentException {
         return new View(center, resolution, width, height);
     }
 }

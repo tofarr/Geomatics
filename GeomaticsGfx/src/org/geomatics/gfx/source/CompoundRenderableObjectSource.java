@@ -18,7 +18,7 @@ public class CompoundRenderableObjectSource<E> implements RenderableObjectSource
     public static RenderableObjectSource valueOf(RenderableObjectSource... sources) throws NullPointerException{
         switch(sources.length){
             case 0:
-                return null;
+                return SimpleRenderableObjectSource.EMPTY;
             case 1:
                 return sources[0];
             default:

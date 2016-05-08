@@ -1,0 +1,20 @@
+{
+	title:"Rectangle Layer",
+	geom:["AR",[0,0,400,0,400,300,0,400,0,0]],
+	outlineFill:{
+		color:-1.6777216E7
+	},
+	outline:{
+		width:1
+	},
+	symbol:{
+		fill:{
+			color:-65536
+		},
+		geom:["LS",-5,-5,5,-5,5,5,-5,5,-5,-5],
+		id:0,
+		outline:{
+			width:1
+		}
+	}
+}

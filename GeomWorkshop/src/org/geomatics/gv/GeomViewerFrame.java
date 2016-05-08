@@ -4,22 +4,34 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.ContainerOrderFocusTraversalPolicy;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
+import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import org.geomatics.geom.LineString;
 import org.geomatics.geom.Rect;
-import org.geomatics.geom.Ring;
 import org.geomatics.geom.Vect;
 import org.geomatics.gfx.fill.ColorFill;
 import org.geomatics.gfx.outline.BasicOutline;
 import org.geomatics.gfx.renderable.RenderableOutline;
 import org.geomatics.gfx.source.CompoundRenderableObjectSource;
 import org.geomatics.gfx.swing.RenderPanel;
+import org.geomatics.gv.model.LayerModel;
+import org.geomatics.gv.model.LayerViewModel;
+import org.geomatics.gv.service.GeomViewerService;
+import org.geomatics.gv.service.GeomViewerService.GeomViewerListener;
 import org.geomatics.util.Tolerance;
 import org.geomatics.util.ViewPoint;
 
@@ -33,8 +45,9 @@ import org.geomatics.util.ViewPoint;
  */
 public class GeomViewerFrame extends javax.swing.JFrame {
 
-    public static final String MODEL = "model";
-    private GeomViewerModel model;
+    private static final Logger LOG = Logger.getLogger(GeomViewerFrame.class.getName());
+    public static final String SERVICE = "service";
+    private GeomViewerService service;
 
     /**
      * Creates new form GeomViewerFrame
@@ -62,36 +75,95 @@ public class GeomViewerFrame extends javax.swing.JFrame {
             }
 
         });
+        renderPanel.addMouseListeners();
+        renderPanel.addPropertyChangeListener(RenderPanel.VIEWPOINT, new PropertyChangeListener(){
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(service != null){
+                    service.setViewPoint(renderPanel.getViewPoint());
+                }
+            }
+        });
     }
 
-    public GeomViewerModel getModel() {
-        return model;
+    public GeomViewerService getService() {
+        return service;
     }
 
-    public void setModel(GeomViewerModel model) {
-        renderPanel.setViewPoint(model.getViewPoint());
-        renderPanel.setSource(CompoundRenderableObjectSource.valueOf(model.getLayers()));
-        Component[] components = layersMenu.getMenuComponents();
-        for(int c = components.length; c-- > 2;){
-            layersMenu.remove(components[c]);
+    public void setService(GeomViewerService service) {
+        if (this.service == service) {
+            return;
         }
-        for(GeomLayer layer : model.getLayers()){
-            addLayerMenu(layer);
+        if (this.service != null) {
+            this.service.removeListener(viewListener);
         }
-        this.model = model;
+        service.addListener(viewListener);
+        Rect bounds = service.getBounds();
+        setLocation((int) bounds.minX, (int) bounds.minY);
+        setSize((int) bounds.getWidth(), (int) bounds.getHeight());
+        renderPanel.setViewPoint(service.getViewPoint());
+        updateLayersFromService(service);
+        firePropertyChange(SERVICE, this.service, this.service = service);
     }
     
-    private void addLayerMenu(GeomLayer layer){
-        JMenu menu = new JMenu(layer.getTitle());
+    private void updateLayersFromService(GeomViewerService service){
+        LayerViewModel[] layerViews = service.getLayerViews();
+        List<LayerModel> layers = new ArrayList<>();
+        for(LayerViewModel layerView : layerViews){
+            LayerModel layer = layerView.layer;
+            if(layer != null){
+                layers.add(layer);
+            }
+        }
+        renderPanel.setSource(CompoundRenderableObjectSource.valueOf(layers.toArray(new LayerModel[layers.size()])));
+        Component[] components = layersMenu.getMenuComponents();
+        for (int c = components.length; c-- > 2;) {
+            layersMenu.remove(components[c]);
+        }
+        for(int i = 0; i < layerViews.length; i++){
+            addLayerMenu(i, layerViews[i]);
+        }
+        renderPanel.repaint();
+    }
+
+    private void addLayerMenu(final int index, final LayerViewModel layerView) {
+        final LayerModel layer = layerView.layer;
+        JMenu menu = new JMenu(layer.title);
         menu.add(new JMenuItem("Style"));
         //menu.add(new JMenuItem("Edit")); // not implementing this for now...
-        menu.add(new JMenuItem("Delete"));
+        
+        JMenuItem saveAs = new JMenuItem("Save As");
+        saveAs.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final JFileChooser fc = new JFileChooser();
+                int returnVal = fc.showSaveDialog(GeomViewerFrame.this);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File file = fc.getSelectedFile();
+                    service.setLayerView(index, file.getAbsolutePath(), service.getLayerView(index).layer);
+                }
+                
+            }
+        });
+        menu.add(saveAs);
+        
+        JMenuItem delete = new JMenuItem("Delete");
+        delete.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean purge = (layerView.path != null) && (JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(GeomViewerFrame.this, "Also delete file?"));
+                service.removeLayerView(index, purge);
+            }
+        });
+        menu.add(delete);
+        
         layersMenu.add(menu);
     }
 
     /**
-     * This method is called from within the constructor to initialize the form. WARNING: Do NOT
-     * modify this code. The content of this method is always regenerated by the Form Editor.
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -115,7 +187,6 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         showMouseLocationMenuItem = new javax.swing.JCheckBoxMenuItem();
         layersMenu = new javax.swing.JMenu();
         openLayerMenuItem = new javax.swing.JMenuItem();
-        addBlankLayerMenuItem = new javax.swing.JMenuItem();
         javax.swing.JPopupMenu.Separator jSeparator1 = new javax.swing.JPopupMenu.Separator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -266,11 +337,12 @@ public class GeomViewerFrame extends javax.swing.JFrame {
 
         openLayerMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         openLayerMenuItem.setText("Open Layer");
+        openLayerMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openLayerMenuItemActionPerformed(evt);
+            }
+        });
         layersMenu.add(openLayerMenuItem);
-
-        addBlankLayerMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
-        addBlankLayerMenuItem.setText("New Blank Layer");
-        layersMenu.add(addBlankLayerMenuItem);
         layersMenu.add(jSeparator1);
 
         mainMenu.add(layersMenu);
@@ -281,31 +353,27 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void zoomInMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInMenuItemActionPerformed
-        ViewPoint viewPoint = renderPanel.getViewPoint();
-        viewPoint = viewPoint.zoomIn();
-        renderPanel.setViewPoint(viewPoint);
+        renderPanel.setViewPoint(service.getViewPoint().zoomIn());
     }//GEN-LAST:event_zoomInMenuItemActionPerformed
 
     private void zoomOutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutMenuItemActionPerformed
-        ViewPoint viewPoint = renderPanel.getViewPoint();
-        viewPoint = viewPoint.zoomOut();
-        renderPanel.setViewPoint(viewPoint);
+        renderPanel.setViewPoint(service.getViewPoint().zoomOut());
     }//GEN-LAST:event_zoomOutMenuItemActionPerformed
 
     private void panUpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panUpMenuItemActionPerformed
-        renderPanel.setViewPoint(renderPanel.getViewPoint().panPx(0, -10));
+        renderPanel.setViewPoint(service.getViewPoint().panPx(0, -10));
     }//GEN-LAST:event_panUpMenuItemActionPerformed
 
     private void panDownMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panDownMenuItemActionPerformed
-        renderPanel.setViewPoint(renderPanel.getViewPoint().panPx(0, 10));
+        renderPanel.setViewPoint(service.getViewPoint().panPx(0, 10));
     }//GEN-LAST:event_panDownMenuItemActionPerformed
 
     private void panLeftMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panLeftMenuItemActionPerformed
-        renderPanel.setViewPoint(renderPanel.getViewPoint().panPx(10, 0));
+        renderPanel.setViewPoint(service.getViewPoint().panPx(10, 0));
     }//GEN-LAST:event_panLeftMenuItemActionPerformed
 
     private void panRightMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_panRightMenuItemActionPerformed
-        renderPanel.setViewPoint(renderPanel.getViewPoint().panPx(-10, 0));
+        renderPanel.setViewPoint(service.getViewPoint().panPx(-10, 0));
     }//GEN-LAST:event_panRightMenuItemActionPerformed
 
     private void showViewLocationMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showViewLocationMenuItemActionPerformed
@@ -320,9 +388,8 @@ public class GeomViewerFrame extends javax.swing.JFrame {
             double x = Double.parseDouble(parts[0].trim());
             double y = Double.parseDouble(parts[1].trim());
             double resolution = Double.parseDouble(parts[2].trim());
-            ViewPoint view = renderPanel.getViewPoint();
-            view = view.moveTo(Vect.valueOf(x, y)).zoomTo(resolution);
-            renderPanel.setViewPoint(view);
+            ViewPoint viewPoint = ViewPoint.valueOf(Vect.valueOf(x, y), resolution);
+            service.setViewPoint(viewPoint);
             renderPanel.requestFocus();
         } catch (Exception ex) {
             viewLocation.setBorder(BorderFactory.createLineBorder(Color.RED));
@@ -342,19 +409,31 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_showMouseLocationMenuItemActionPerformed
 
     private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
-        setModel(new GeomViewerModel(getRect(), model.getLayers(), model.getViewPoint()));
+        updateBounds();
     }//GEN-LAST:event_formComponentMoved
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        setModel(new GeomViewerModel(getRect(), model.getLayers(), model.getViewPoint()));
+        updateBounds();
     }//GEN-LAST:event_formComponentResized
 
     private void resetLocationMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetLocationMenuItemActionPerformed
-        setModel(new GeomViewerModel(getRect(), model.getLayers(), ViewPoint.DEFAULT));
+        renderPanel.setViewPoint(ViewPoint.DEFAULT);
     }//GEN-LAST:event_resetLocationMenuItemActionPerformed
 
-    private Rect getRect(){
-        return Rect.valueOf(getX(), getY(), getWidth(), getHeight());
+    private void openLayerMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openLayerMenuItemActionPerformed
+        final JFileChooser fc = new JFileChooser();
+        int returnVal = fc.showOpenDialog(GeomViewerFrame.this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            service.addLayerView(file.getAbsolutePath());
+        }
+    }//GEN-LAST:event_openLayerMenuItemActionPerformed
+
+    private void updateBounds() {
+        if (service != null) {
+            Rect rect = Rect.valueOf(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+            service.setBounds(rect);
+        }
     }
 
     private void updateMouseLocation(MouseEvent evt) {
@@ -367,6 +446,34 @@ public class GeomViewerFrame extends javax.swing.JFrame {
                 + format.format(y) + ")";
         mouseLocation.setText(str);
     }
+
+    private final GeomViewerListener viewListener = new GeomViewerListener() {
+        @Override
+        public void onViewUpdate(Rect bounds, ViewPoint viewPoint) {
+            renderPanel.setViewPoint(viewPoint);
+            setLocation((int) bounds.minX, (int) bounds.minY);
+            setSize((int) bounds.getWidth(), (int) bounds.getHeight());
+        }
+
+        @Override
+        public void onLayerUpdate(int index, LayerViewModel layer) {
+            updateLayersFromService(service);
+        }
+
+        @Override
+        public void onError(Exception ex) {
+            LOG.log(Level.SEVERE, "Error", ex);
+            String msg = ex.getMessage();
+            if(msg != null){
+                JOptionPane.showMessageDialog(GeomViewerFrame.this, msg);
+            }
+        }
+
+        @Override
+        public void onClose() {
+        }
+
+    };
 
     /**
      * @param args the command line arguments
@@ -400,32 +507,27 @@ public class GeomViewerFrame extends javax.swing.JFrame {
             public void run() {
                 GeomViewerFrame frame = new GeomViewerFrame();
 
-                RenderableOutline symbol = new RenderableOutline(0,
-                        LineString.valueOf(Tolerance.DEFAULT, -5, -5, 5, -5, 5, 5, -5, 5, -5, -5),
-                        new ColorFill(0xFFFF0000),
-                        new BasicOutline(1));
-
-                GeomLayer layer = new GeomLayer("Basic Layer", null,
-                        Ring.valueOf(Tolerance.DEFAULT, 0, 0, 100, 0, 100, 100, 0, 100, 0, 0),
-                        null,
-                        new ColorFill(0xFF000000),
-                        new BasicOutline(1),
-                        symbol);
-
-                GeomViewerModel model = new GeomViewerModel(Rect.valueOf(0, 0, 800, 600),
-                        new GeomLayer[]{layer},
-                        ViewPoint.DEFAULT);
-
-                frame.setModel(model);
-
-                frame.renderPanel.addMouseListeners();
+                GeomViewerService service = new GeomViewerService();
+                if (service.numLayers() == 0) { // We add one!
+                    RenderableOutline symbol = new RenderableOutline(0,
+                            LineString.valueOf(Tolerance.DEFAULT, -5, -5, 5, -5, 5, 5, -5, 5, -5, -5),
+                            new ColorFill(0xFFFF0000),
+                            new BasicOutline(1));
+                    LayerModel layer = new LayerModel("Default Layer",
+                            Rect.valueOf(0, 0, 100, 100).toArea(),
+                            null,
+                            new ColorFill(0xFF000000),
+                            new BasicOutline(1),
+                            symbol);
+                    service.addLayerView(layer); // a new layer with a null path!
+                }
+                frame.setService(service);
                 frame.setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenuItem addBlankLayerMenuItem;
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JMenu layersMenu;
     private javax.swing.JMenuBar mainMenu;

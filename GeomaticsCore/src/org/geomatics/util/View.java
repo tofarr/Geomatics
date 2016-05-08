@@ -133,6 +133,10 @@ public class View implements Serializable, Cloneable {
     public View resizeTo(int widthPx, int heightPx) {
         return new View(center, resolutionX, resolutionY, widthPx, heightPx);
     }
+    
+    public ViewPoint toViewPoint(){
+        return new ViewPoint(center, getResolution(), -1, null);
+    }
 
     @Override
     public int hashCode() {

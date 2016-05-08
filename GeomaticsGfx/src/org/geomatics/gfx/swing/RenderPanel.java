@@ -67,7 +67,7 @@ public class RenderPanel extends JPanel {
         int width = getWidth();
         int height = getHeight();
         if((width > 0) && (height > 0)){
-            View view = viewPoint.build(width, height);
+            View view = viewPoint.toView(width, height);
             final Graphics2D g2d = (Graphics2D)g;
             final Transform transform = view.getTransform();
             source.load(view, new RenderableObjectSource.RenderableObjectProcessor() {

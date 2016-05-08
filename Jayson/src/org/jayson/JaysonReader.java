@@ -73,6 +73,7 @@ public class JaysonReader extends JaysonInput {
                             throw new JaysonException("Trailing comma in array!");
                         }
                         parent = parents.pop();
+                        prev = ReaderType.END_ARRAY;
                         return JaysonType.END_ARRAY;
                     case '{':
                         if ((parent == JaysonType.BEGIN_OBJECT) && (prev != ReaderType.COLON)) {
@@ -89,6 +90,7 @@ public class JaysonReader extends JaysonInput {
                             throw new JaysonException("Trailing comma in object!");
                         }
                         parent = parents.pop();
+                        prev = ReaderType.END_OBJECT;
                         return JaysonType.END_OBJECT;
                     case ':':
                         if (parent != JaysonType.BEGIN_OBJECT) {

@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  *
  * @author tofarrell
  */
-public class WatcherService {
+public class WatcherService implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(WatcherService.class.getName());
 
@@ -63,6 +63,13 @@ public class WatcherService {
         if (byKey.isEmpty()) {
             doRun = false;
         }
+    }
+    
+    public synchronized void close() throws IOException{
+        doRun = false;
+        watchService.close();
+        byKey.clear();
+        byPath.clear();
     }
 
     private synchronized boolean check() {
