@@ -196,6 +196,18 @@ public class GeomViewerService implements AutoCloseable {
              }
         }
     }
+    
+    public synchronized String getDefaultPath(){
+        return loadModel().getDefaultPath();
+    }
+    
+    public synchronized void setDefaultPath(String defaultPath){
+        GeomViewerModel _model = loadModel();
+        if(!Objects.equals(_model.getDefaultPath(), defaultPath)){
+            _model = GeomViewerModel.valueOf(_model.getBounds(), _model.getViewPoint(), defaultPath, _model.getPaths().toArray(new String[_model.getPaths().size()]));
+            updateModel(_model);
+        }   
+    }
 
     private synchronized List<LayerViewModel> loadLayers() throws ServiceException {
         if (layers != null) {
@@ -228,7 +240,7 @@ public class GeomViewerService implements AutoCloseable {
             }
         } else {
             Rect bounds = Rect.valueOf(100, 100, 740, 580);
-            updateModel(GeomViewerModel.valueOf(bounds, ViewPoint.DEFAULT));
+            updateModel(GeomViewerModel.valueOf(bounds, ViewPoint.DEFAULT, null));
             return this.model;
         }
     }
@@ -261,7 +273,7 @@ public class GeomViewerService implements AutoCloseable {
             paths.add(layerView.path);
         }
         String[] pathArray = paths.toArray(new String[paths.size()]);
-        GeomViewerModel _model = GeomViewerModel.valueOf(model.getBounds(), model.getViewPoint(), pathArray);
+        GeomViewerModel _model = GeomViewerModel.valueOf(model.getBounds(), model.getViewPoint(), model.getDefaultPath(), pathArray);
         updateModel(_model);
     }
     
@@ -313,7 +325,7 @@ public class GeomViewerService implements AutoCloseable {
         public void onUpdate(Path path) {
             for(int i = 0; i < layers.size(); i++){
                 LayerViewModel layerView = layers.get(i);
-                if (new File(layerView.path).toPath().equals(path)) {
+                if ((layerView.path != null) && new File(layerView.path).toPath().equals(path)) {
                     LayerModel layer = loadLayer(layerView.path);
                     layerView = new LayerViewModel(layerView.path, layer);
                     layers.set(i, layerView);

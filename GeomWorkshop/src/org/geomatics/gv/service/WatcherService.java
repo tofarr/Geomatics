@@ -2,6 +2,7 @@ package org.geomatics.gv.service;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
@@ -36,13 +37,15 @@ public class WatcherService implements AutoCloseable {
             }
             PathWatch watch = byPath.get(path);
             if (watch == null) {
-                WatchKey key = path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+                Path toWatch = Files.isDirectory(path) ? path : path.getParent();
+                WatchKey key = toWatch.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
                 watch = new PathWatch(key, path);
                 byPath.put(path, watch);
                 byKey.put(key, watch);
             }
             watch.addListener(listener);
             if (!running) {
+                doRun = true;
                 new Thread(runnable).start();
             }
         } catch (Exception ex) {
@@ -118,18 +121,21 @@ public class WatcherService implements AutoCloseable {
                 synchronized (watch) {
                     listeners.addAll(watch.listeners); // defensive copy!
                 }
-
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                }
+                
                 for (WatchEvent<?> event : key.pollEvents()) {
-                    if(event.count() <= 1){
-                        Kind kind = event.kind();
-                        if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                            for (PathListener listener : listeners) {
-                                listener.onUpdate(watch.path);
-                            }
-                        } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                            for (PathListener listener : listeners) {
-                                listener.onDelete(watch.path);
-                            }
+                    Kind kind = event.kind();
+                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                        for (PathListener listener : listeners) {
+                            listener.onUpdate(watch.path);
+                        }
+                    } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                        for (PathListener listener : listeners) {
+                            listener.onDelete(watch.path);
                         }
                     }
                 }

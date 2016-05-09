@@ -1,19 +1,24 @@
 {
 	title:"Rectangle Layer",
-	geom:["AR",[0,0,400,0,400,300,0,400,0,0]],
+	geom:["AR",[20,0, 40,0, 40,20, 60,20, 60,40, 40,40, 40,60, 20,60, 20,40, 0,40, 0,20, 20,20, 20,0]],
 	outlineFill:{
+		$type:"ColorFill",
 		color:-1.6777216E7
 	},
 	outline:{
+		$type:"BasicOutline",
 		width:1
 	},
 	symbol:{
+		$type:"RenderableOutline",
 		fill:{
+			$type:"ColorFill",
 			color:-65536
 		},
 		geom:["LS",-5,-5,5,-5,5,5,-5,5,-5,-5],
 		id:0,
 		outline:{
+			$type:"BasicOutline",
 			width:1
 		}
 	}

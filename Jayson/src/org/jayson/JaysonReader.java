@@ -171,7 +171,7 @@ public class JaysonReader extends JaysonInput {
                     return;
                 }
                 throw new JaysonException("Unexpected end of stream!");
-            } else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$') || (c == '.') || (c == '+')) {
+            } else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '$') || (c == '.') || (c == '+') || (c == '-')) {
                 str.append((char)c);
             } else {
                 reader.unread(c);
@@ -190,10 +190,14 @@ public class JaysonReader extends JaysonInput {
             } else if (c == endChar) {
                 return;
             } else if (c == '\\') {
-                c = reader.read();
-                if (c < 0) {
+                int d = reader.read();
+                if (d < 0) {
                     throw new JaysonException("Unexpected end of stream!");
                 }
+                if(d != '"'){
+                    str.append((char)c);
+                }
+                c = d;
             }
             str.append((char)c);
         }

@@ -136,13 +136,20 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         saveAs.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
-                final JFileChooser fc = new JFileChooser();
+                String dir;
+                if(layerView.path == null){
+                    dir = service.getDefaultPath();
+                }else{
+                    File file = new File(layerView.path);
+                    dir = file.getAbsoluteFile().getParent();
+                }
+                final JFileChooser fc = new JFileChooser(dir);
                 int returnVal = fc.showSaveDialog(GeomViewerFrame.this);
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = fc.getSelectedFile();
+                    service.setDefaultPath(file.getParent());
                     service.setLayerView(index, file.getAbsolutePath(), service.getLayerView(index).layer);
                 }
-                
             }
         });
         menu.add(saveAs);
@@ -421,10 +428,11 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_resetLocationMenuItemActionPerformed
 
     private void openLayerMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openLayerMenuItemActionPerformed
-        final JFileChooser fc = new JFileChooser();
+        final JFileChooser fc = new JFileChooser(service.getDefaultPath());
         int returnVal = fc.showOpenDialog(GeomViewerFrame.this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
+            service.setDefaultPath(file.getParent());
             service.addLayerView(file.getAbsolutePath());
         }
     }//GEN-LAST:event_openLayerMenuItemActionPerformed
