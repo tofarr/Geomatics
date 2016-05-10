@@ -48,7 +48,11 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     private static final Logger LOG = Logger.getLogger(GeomViewerFrame.class.getName());
     public static final String SERVICE = "service";
     private GeomViewerService service;
-
+    private StyleDialog styleDialog;
+    private int focusIndex;
+    private BufferDialog bufferDialog;
+    private CombineDialog combineDialog;
+    
     /**
      * Creates new form GeomViewerFrame
      */
@@ -84,6 +88,15 @@ public class GeomViewerFrame extends javax.swing.JFrame {
                 }
             }
         });
+        styleDialog = new StyleDialog(this, true);
+        styleDialog.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                service.setLayerView(focusIndex, styleDialog.getModel());
+            }
+        });
+        bufferDialog = new BufferDialog(this, true);
+        combineDialog = new CombineDialog(this, true);
     }
 
     public GeomViewerService getService() {
@@ -102,6 +115,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         setLocation((int) bounds.minX, (int) bounds.minY);
         setSize((int) bounds.getWidth(), (int) bounds.getHeight());
         renderPanel.setViewPoint(service.getViewPoint());
+        bufferDialog.setService(service);
         updateLayersFromService(service);
         firePropertyChange(SERVICE, this.service, this.service = service);
     }
@@ -128,8 +142,20 @@ public class GeomViewerFrame extends javax.swing.JFrame {
 
     private void addLayerMenu(final int index, final LayerViewModel layerView) {
         final LayerModel layer = layerView.layer;
-        JMenu menu = new JMenu(layer.title);
-        menu.add(new JMenuItem("Style"));
+        String name = (layer == null) ? layerView.path : layer.title;
+        JMenu menu = new JMenu(name);
+        
+        JMenuItem style = new JMenuItem("Style");
+        style.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                focusIndex = index;
+                styleDialog.setModel((layer == null) ? LayerModel.DEFAULT : layer);
+                styleDialog.setVisible(true);
+            }
+        });
+        menu.add(style);
+        
         //menu.add(new JMenuItem("Edit")); // not implementing this for now...
         
         JMenuItem saveAs = new JMenuItem("Save As");
@@ -195,6 +221,9 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         layersMenu = new javax.swing.JMenu();
         openLayerMenuItem = new javax.swing.JMenuItem();
         javax.swing.JPopupMenu.Separator jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        actionsMenu = new javax.swing.JMenu();
+        bufferItem = new javax.swing.JMenuItem();
+        combineItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Geometry Viewer");
@@ -354,6 +383,26 @@ public class GeomViewerFrame extends javax.swing.JFrame {
 
         mainMenu.add(layersMenu);
 
+        actionsMenu.setText("Actions");
+
+        bufferItem.setText("Buffer");
+        bufferItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bufferItemActionPerformed(evt);
+            }
+        });
+        actionsMenu.add(bufferItem);
+
+        combineItem.setText("Combine");
+        combineItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                combineItemActionPerformed(evt);
+            }
+        });
+        actionsMenu.add(combineItem);
+
+        mainMenu.add(actionsMenu);
+
         setJMenuBar(mainMenu);
 
         pack();
@@ -437,6 +486,14 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_openLayerMenuItemActionPerformed
 
+    private void bufferItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bufferItemActionPerformed
+        bufferDialog.setVisible(true);
+    }//GEN-LAST:event_bufferItemActionPerformed
+
+    private void combineItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_combineItemActionPerformed
+        combineDialog.setVisible(true);
+    }//GEN-LAST:event_combineItemActionPerformed
+
     private void updateBounds() {
         if (service != null) {
             Rect rect = Rect.valueOf(getX(), getY(), getX() + getWidth(), getY() + getHeight());
@@ -517,17 +574,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
 
                 GeomViewerService service = new GeomViewerService();
                 if (service.numLayers() == 0) { // We add one!
-                    RenderableOutline symbol = new RenderableOutline(0,
-                            LineString.valueOf(Tolerance.DEFAULT, -5, -5, 5, -5, 5, 5, -5, 5, -5, -5),
-                            new ColorFill(0xFFFF0000),
-                            new BasicOutline(1));
-                    LayerModel layer = new LayerModel("Default Layer",
-                            Rect.valueOf(0, 0, 100, 100).toArea(),
-                            null,
-                            new ColorFill(0xFF000000),
-                            new BasicOutline(1),
-                            symbol);
-                    service.addLayerView(layer); // a new layer with a null path!
+                    service.addLayerView(LayerModel.DEFAULT); // a new layer with a null path!
                 }
                 frame.setService(service);
                 frame.setVisible(true);
@@ -536,6 +583,9 @@ public class GeomViewerFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu actionsMenu;
+    private javax.swing.JMenuItem bufferItem;
+    private javax.swing.JMenuItem combineItem;
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JMenu layersMenu;
     private javax.swing.JMenuBar mainMenu;

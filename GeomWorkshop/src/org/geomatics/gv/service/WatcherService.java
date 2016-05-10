@@ -35,15 +35,16 @@ public class WatcherService implements AutoCloseable {
             if (watchService == null) {
                 watchService = FileSystems.getDefault().newWatchService();
             }
-            PathWatch watch = byPath.get(path);
+            path = path.toAbsolutePath();
+            Path parent = path.getParent();
+            PathWatch watch = byPath.get(parent);
             if (watch == null) {
-                Path toWatch = Files.isDirectory(path) ? path : path.getParent();
-                WatchKey key = toWatch.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
-                watch = new PathWatch(key, path);
-                byPath.put(path, watch);
+                WatchKey key = parent.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+                watch = new PathWatch(key, parent);
+                byPath.put(parent, watch);
                 byKey.put(key, watch);
             }
-            watch.addListener(listener);
+            watch.addListener(path, listener);
             if (!running) {
                 doRun = true;
                 new Thread(runnable).start();
@@ -54,11 +55,13 @@ public class WatcherService implements AutoCloseable {
     }
 
     public synchronized void removeListener(Path path, PathListener listener) {
-        PathWatch watch = byPath.get(path);
+        path = path.toAbsolutePath();
+        Path parent = path.getParent();
+        PathWatch watch = byPath.get(parent);
         if (watch == null) {
             return;
         }
-        watch.removeListener(listener);
+        watch.removeListener(path, listener);
         if (watch.listeners.isEmpty()) {
             byKey.remove(watch.key);
             byPath.remove(watch.path);
@@ -101,6 +104,7 @@ public class WatcherService implements AutoCloseable {
     private final Runnable runnable = new Runnable() {
         @Override
         public void run() {
+            ArrayList<Path> subPaths = new ArrayList<>();
             ArrayList<PathListener> listeners = new ArrayList<>();
             while (check()) {
 
@@ -117,8 +121,10 @@ public class WatcherService implements AutoCloseable {
                     continue;
                 }
 
+                subPaths.clear();
                 listeners.clear();
                 synchronized (watch) {
+                    subPaths.addAll(watch.subPaths);
                     listeners.addAll(watch.listeners); // defensive copy!
                 }
                 try {
@@ -128,15 +134,20 @@ public class WatcherService implements AutoCloseable {
                 }
                 
                 for (WatchEvent<?> event : key.pollEvents()) {
-                    Kind kind = event.kind();
-                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                        for (PathListener listener : listeners) {
-                            listener.onUpdate(watch.path);
+                    if(event.context() instanceof Path){
+                        Path path = (Path) event.context();
+                        path = path.toAbsolutePath();
+                        for(int i = listeners.size(); i-- > 0;){
+                            if(subPaths.get(i).equals(path)){
+                                Kind kind = event.kind();
+                                if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                                    listeners.get(i).onUpdate(path);
+                                } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                                    listeners.get(i).onDelete(path);
+                                }
+                            }
                         }
-                    } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        for (PathListener listener : listeners) {
-                            listener.onDelete(watch.path);
-                        }
+                        
                     }
                 }
 
@@ -152,20 +163,29 @@ public class WatcherService implements AutoCloseable {
 
         final WatchKey key;
         final Path path;
+        final List<Path> subPaths;
         final List<PathListener> listeners;
 
         PathWatch(WatchKey key, Path path) {
             this.key = key;
             this.path = path;
+            this.subPaths = new ArrayList<>();
             this.listeners = new ArrayList<>();
         }
 
-        synchronized void addListener(PathListener listener) {
+        synchronized void addListener(Path subPath, PathListener listener) {
+            subPaths.add(subPath);
             listeners.add(listener);
         }
 
-        synchronized void removeListener(PathListener listener) {
-            listeners.remove(listener);
+        synchronized void removeListener(Path subPath, PathListener listener) {
+            for(int i = listeners.size(); i-- > 0;){
+                if(subPaths.get(i).equals(subPath) && listeners.get(i).equals(listener)){
+                    listeners.remove(i);
+                    subPaths.remove(i);  
+                    break;
+                }
+            }
         }
     }
 

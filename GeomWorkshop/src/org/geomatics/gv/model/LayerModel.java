@@ -2,12 +2,15 @@ package org.geomatics.gv.model;
 
 import java.beans.ConstructorProperties;
 import org.geomatics.geom.Geom;
+import org.geomatics.geom.LineString;
 import org.geomatics.geom.Linearizer;
 import org.geomatics.geom.Network;
 import org.geomatics.geom.Rect;
 import org.geomatics.geom.Relation;
 import org.geomatics.geom.Vect;
+import org.geomatics.gfx.fill.ColorFill;
 import org.geomatics.gfx.fill.Fill;
+import org.geomatics.gfx.outline.BasicOutline;
 import org.geomatics.gfx.outline.Outline;
 import org.geomatics.gfx.renderable.FloatingRenderable;
 import org.geomatics.gfx.renderable.Renderable;
@@ -25,6 +28,20 @@ import org.geomatics.util.ViewPoint;
  */
 public class LayerModel implements RenderableObjectSource<Geom> {
 
+    public static LayerModel DEFAULT;
+
+    static {
+        RenderableOutline symbol = new RenderableOutline(0,
+                LineString.valueOf(Tolerance.DEFAULT, -5, -5, 5, -5, 5, 5, -5, 5, -5, -5),
+                new ColorFill(0xFFFF0000),
+                new BasicOutline(1));
+        DEFAULT = new LayerModel("Default Layer",
+                Rect.valueOf(0, 0, 100, 100).toArea(),
+                null,
+                new ColorFill(0xFF000000),
+                new BasicOutline(1),
+                symbol);
+    }
     public final String title;
     public final Geom geom;
     public final Fill fill;
@@ -32,7 +49,7 @@ public class LayerModel implements RenderableObjectSource<Geom> {
     public final Outline outline;
     public final Renderable symbol;
 
-    @ConstructorProperties({"title","geom","fill","outlineFill","outline","symbol"})
+    @ConstructorProperties({"title", "geom", "fill", "outlineFill", "outline", "symbol"})
     public LayerModel(String title, Geom geom, Fill fill, Fill outlineFill, Outline outline, Renderable symbol) {
         if (fill == null && outlineFill == null && outline == null && symbol == null) {
             throw new NullPointerException("No style specified!");

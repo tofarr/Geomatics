@@ -60,9 +60,12 @@ public class PolymorphicParser<E> extends JaysonParser<E> {
         public JaysonParser getParserFor(Type type) {
             if(type instanceof Class){
                 Class clazz = (Class)type;
-                ClassMap classMap = map.getClassMap(clazz);
-                if(classMap != null){
-                    return new PolymorphicParser(classMap);
+                while((clazz != null) && (clazz != Object.class)){
+                    ClassMap classMap = map.getClassMap(clazz);
+                    if(classMap != null){
+                        return new PolymorphicParser(classMap);
+                    }
+                    clazz = clazz.getSuperclass();
                 }
             }
             return null;

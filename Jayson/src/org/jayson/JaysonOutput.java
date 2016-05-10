@@ -125,7 +125,8 @@ public abstract class JaysonOutput implements AutoCloseable {
     }
 
     public final void copyRemaining(JaysonInput input) {
-        do {
+        int targetLevel = parents.size()-1;
+        while(parents.size() != targetLevel){
             JaysonType type = input.next();
             if (type == null) {
                 throw new JaysonException("Unexpected end of stream");
@@ -159,6 +160,6 @@ public abstract class JaysonOutput implements AutoCloseable {
                     str(input.str());
                     break;
             }
-        }while(!parents.isEmpty());
+        }
     }
 }

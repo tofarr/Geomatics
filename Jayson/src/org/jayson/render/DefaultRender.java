@@ -45,7 +45,7 @@ public class DefaultRender<E> implements JaysonRender<E> {
                 Object fieldValue = field.get(value);
                 if (fieldValue != null) {
                     out.name(field.getName());
-                    coder.render(fieldValue, out);
+                    coder.render(fieldValue, field.getGenericType(), out);
                 }
             } catch (IllegalArgumentException | IllegalAccessException | JaysonException | NullPointerException | IllegalStateException ex) {
                 throw new JaysonException("Error rendering", ex);
@@ -53,10 +53,11 @@ public class DefaultRender<E> implements JaysonRender<E> {
         }
         for (Entry<String, Method> entry : getters.entrySet()) {
             try {
-                Object gotValue = entry.getValue().invoke(value);
+                Method method = entry.getValue();
+                Object gotValue = method.invoke(value);
                 if (gotValue != null) {
                     out.name(entry.getKey());
-                    coder.render(gotValue, out);
+                    coder.render(gotValue, method.getGenericReturnType(), out);
                 }
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | JaysonException | NullPointerException | IllegalStateException ex) {
                 throw new JaysonException("Error rendering", ex);

@@ -1,6 +1,6 @@
 {
-	title:"Cross Layer",
-	geom:["AR",[20,0, 40,0, 40,20, 60,20, 60,40, 40,40, 40,60, 20,60, 20,40, 0,40, 0,20, 20,20, 20,0]],
+	title:"Default Layer",
+	geom:["RG",-10,-10, 70,-10, 70,70, -10,70, -10,-10],
 	outlineFill:{
 		$type:"ColorFill",
 		color:-1.6777216E7

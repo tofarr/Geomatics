@@ -1,5 +1,6 @@
 package org.jayson.render;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import org.jayson.Jayson;
@@ -40,6 +41,9 @@ public class CollectionRender<E extends Collection> implements JaysonRender<E> {
                 if(Collection.class.isAssignableFrom(clazz)){
                     return INSTANCE;
                 }
+            }else if(type instanceof ParameterizedType){
+                ParameterizedType pt = (ParameterizedType)type;
+                return getRenderFor(pt.getRawType());
             }
             return null;
         }

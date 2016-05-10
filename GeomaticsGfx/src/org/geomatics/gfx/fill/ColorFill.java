@@ -7,7 +7,7 @@ import java.beans.ConstructorProperties;
  *
  * @author tofarrell
  */
-public class ColorFill implements Fill {
+public final class ColorFill implements Fill {
 
     private final long color;
     private transient Color paint;

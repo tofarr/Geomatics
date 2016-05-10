@@ -58,9 +58,12 @@ public class PolymorphicRender<E> implements JaysonRender<E> {
         public JaysonRender getRenderFor(Type type) {
             if(type instanceof Class){
                 Class clazz = (Class)type;
-                ClassMap classMap = map.getClassMap(clazz);
-                if(classMap != null){
-                    return new PolymorphicRender(classMap);
+                while((clazz != null) && (clazz != Object.class)){
+                    ClassMap classMap = map.getClassMap(clazz);
+                    if(classMap != null){
+                        return new PolymorphicRender(classMap);
+                    }
+                    clazz = clazz.getSuperclass();
                 }
             }
             return null;
