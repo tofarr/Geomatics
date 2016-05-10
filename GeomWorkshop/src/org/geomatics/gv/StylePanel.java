@@ -374,7 +374,7 @@ public class StylePanel extends javax.swing.JPanel {
             lineWidth.setText("1");
             lineWidth.setBorder(validBorder);
         }
-        setModel(new LayerModel(model.title, model.geom, model.fill, model.outlineFill, model.outline, model.symbol));
+        setModel(new LayerModel(model.title, model.geom, model.fill, model.outlineFill, new BasicOutline(width), model.symbol));
     }//GEN-LAST:event_lineWidthFocusLost
 
 

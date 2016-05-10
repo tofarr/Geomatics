@@ -1,13 +1,17 @@
 {
 	title:"Cross Layer",
-	geom:["AR",[20,0, 40,0, 40,20, 60,20, 60,40, 40,40, 40,60, 20,60, 20,40, 0,40, 0,20, 20,20, 20,0]],
+	geom:["AR",[0,20,20,20,20,0,40,0,40,20,60,20,60,40,40,40,40,60,20,60,20,40,0,40,0,20]],
+	fill:{
+		$type:"ColorFill",
+		color:-26368
+	},
 	outlineFill:{
 		$type:"ColorFill",
 		color:-1.6777216E7
 	},
 	outline:{
 		$type:"BasicOutline",
-		width:1
+		width:2
 	},
 	symbol:{
 		$type:"RenderableOutline",
@@ -15,7 +19,7 @@
 			$type:"ColorFill",
 			color:-65536
 		},
-		geom:["LS",-5,-5,5,-5,5,5,-5,5,-5,-5],
+		geom:["RE",-5,-5,5,5],
 		id:0,
 		outline:{
 			$type:"BasicOutline",

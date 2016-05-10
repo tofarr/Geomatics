@@ -63,6 +63,7 @@ public class BufferDialog extends javax.swing.JDialog {
         cancelBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Buffer");
 
         bufferAmtLabel.setText("Amount");
 
@@ -153,8 +154,8 @@ public class BufferDialog extends javax.swing.JDialog {
         }catch(NumberFormatException ex){
             buffer = Double.NaN;
         }
-        if((buffer <= 0) || Double.isNaN(buffer) || Double.isInfinite(buffer)){
-            JOptionPane.showMessageDialog(this, "Buffer amount must be greater than 0!", "Error", JOptionPane.ERROR_MESSAGE);
+        if(Double.isNaN(buffer) || Double.isInfinite(buffer)){
+            JOptionPane.showMessageDialog(this, "Invalid buffer amount!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         int inIndex = inputLayer.getSelectedIndex();

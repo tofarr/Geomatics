@@ -39,6 +39,7 @@ public class StyleDialog extends javax.swing.JDialog {
         cancelBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Style");
 
         okBtn.setText("OK");
         okBtn.setMaximumSize(new java.awt.Dimension(80, 23));

@@ -64,6 +64,7 @@ public class CombineDialog extends javax.swing.JDialog {
         cancelBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Combine");
 
         layerALabel.setLabelFor(layerA);
         layerALabel.setText("Layer A");

@@ -96,6 +96,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         bufferDialog = new BufferDialog(this, true);
         combineDialog = new CombineDialog(this, true);
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        styleDialog.setLocation(dim.width / 2 - styleDialog.getSize().width / 2, dim.height / 2 - styleDialog.getSize().height / 2);
         bufferDialog.setLocation(dim.width / 2 - bufferDialog.getSize().width / 2, dim.height / 2 - bufferDialog.getSize().height / 2);
         combineDialog.setLocation(dim.width / 2 - combineDialog.getSize().width / 2, dim.height / 2 - combineDialog.getSize().height / 2);
     }

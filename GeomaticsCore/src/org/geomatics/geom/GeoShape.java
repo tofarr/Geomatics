@@ -181,10 +181,9 @@ public class GeoShape implements Geom {
 
             @Override
             public void next() {
+                iter.next();
                 if (iter.isDone()) {
-                    nextPathIterator(state);
-                } else {
-                    iter.next();
+                    state = nextPathIterator(state);
                 }
             }
 
@@ -209,8 +208,13 @@ public class GeoShape implements Geom {
                     default:
                         geom = null;
                 }
-                if ((geom == null) && (state < 3)) {
-                    return nextPathIterator(state);
+                if(geom == null){
+                    if(state < 3){
+                        return nextPathIterator(state);
+                    }else{
+                        iter = null;
+                        return state;
+                    }
                 }
                 iter = geom.iterator();
                 return state;

@@ -1,9 +1,9 @@
 {
-	bounds:["RE",867,119,1843,874],
+	bounds:["RE",953,0,1927,1047],
 	defaultPath:"C:\Users\tofar\dev\java\Geomatics\GeomWorkshop",
-	paths:["C:\Users\tofar\dev\java\Geomatics\GeomWorkshop\cross.json"],
+	paths:["C:\Users\tofar\dev\java\Geomatics\GeomWorkshop\cross.json","C:\Users\tofar\dev\java\Geomatics\GeomWorkshop\newLayer.json"],
 	viewPoint:{
-		center:["PT",68.75,31.25],
-		resolution:0.25
+		center:["PT",38.1171875,29.787109375],
+		resolution:0.125
 	}
 }
