@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.ContainerOrderFocusTraversalPolicy;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -20,19 +22,14 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import org.geomatics.geom.LineString;
 import org.geomatics.geom.Rect;
 import org.geomatics.geom.Vect;
-import org.geomatics.gfx.fill.ColorFill;
-import org.geomatics.gfx.outline.BasicOutline;
-import org.geomatics.gfx.renderable.RenderableOutline;
 import org.geomatics.gfx.source.CompoundRenderableObjectSource;
 import org.geomatics.gfx.swing.RenderPanel;
 import org.geomatics.gv.model.LayerModel;
 import org.geomatics.gv.model.LayerViewModel;
 import org.geomatics.gv.service.GeomViewerService;
 import org.geomatics.gv.service.GeomViewerService.GeomViewerListener;
-import org.geomatics.util.Tolerance;
 import org.geomatics.util.ViewPoint;
 
 /**
@@ -95,8 +92,12 @@ public class GeomViewerFrame extends javax.swing.JFrame {
                 service.setLayerView(focusIndex, styleDialog.getModel());
             }
         });
+        
         bufferDialog = new BufferDialog(this, true);
         combineDialog = new CombineDialog(this, true);
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        bufferDialog.setLocation(dim.width / 2 - bufferDialog.getSize().width / 2, dim.height / 2 - bufferDialog.getSize().height / 2);
+        combineDialog.setLocation(dim.width / 2 - combineDialog.getSize().width / 2, dim.height / 2 - combineDialog.getSize().height / 2);
     }
 
     public GeomViewerService getService() {
@@ -116,6 +117,7 @@ public class GeomViewerFrame extends javax.swing.JFrame {
         setSize((int) bounds.getWidth(), (int) bounds.getHeight());
         renderPanel.setViewPoint(service.getViewPoint());
         bufferDialog.setService(service);
+        combineDialog.setService(service);
         updateLayersFromService(service);
         firePropertyChange(SERVICE, this.service, this.service = service);
     }
