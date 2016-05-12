@@ -1,7 +1,6 @@
 package org.om.schema;
 
 import java.util.Locale;
-import org.om.criteria.Criteria;
 import org.om.element.Element;
 import org.om.element.ElementType;
 
@@ -28,7 +27,7 @@ public abstract class Schema<E extends Element> {
         return description;
     }
 
-    public abstract String vali
+    public abstract String val();
     
     public boolean isValid(E element) {
         if (criteria == null) {

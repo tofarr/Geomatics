@@ -1,8 +1,8 @@
 package org.om.criteria.object;
 
 import java.beans.ConstructorProperties;
+import java.util.ResourceBundle;
 import org.om.criteria.Criteria;
-import org.om.element.ArrElement;
 import org.om.element.Element;
 import org.om.element.ObjElement;
 
@@ -39,5 +39,12 @@ public class AllKeys implements Criteria {
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public String getDescription(ResourceBundle resources) {
+        String msg = resources.getString("CRITERIA_DESC_ALL_KEYS");
+        String criteriaDesc = criteria.getDescription(resources);
+        return msg+System.lineSeparator()+Criteria.indent(criteriaDesc);
     }
 }

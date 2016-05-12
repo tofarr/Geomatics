@@ -1,8 +1,7 @@
 package org.om.criteria;
 
-import org.om.schema.Result;
+import java.util.ResourceBundle;
 import org.om.element.Element;
-import org.om.schema.Path;
 
 /**
  *
@@ -12,5 +11,9 @@ public interface Criteria {
 
     boolean match(Element element);
 
-    Result validate(Path path, Element element);
+    String getDescription(ResourceBundle resources);
+
+    public static String indent(String str) {
+        return "\t" + str.replace("\n", "\n\t");
+    }
 }

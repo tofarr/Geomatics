@@ -1,5 +1,6 @@
 package org.om.criteria;
 
+import java.util.ResourceBundle;
 import org.jayson.parser.StaticFactory;
 import org.om.element.Element;
 
@@ -33,5 +34,12 @@ public class Not implements Criteria {
     @Override
     public boolean match(Element element) {
         return !criteria.match(element);
+    }
+    
+    @Override
+    public String getDescription(ResourceBundle resources) {
+        String lengthMsg = resources.getString("CRITERIA_DESC_NOT");
+        String criteriaDesc = criteria.getDescription(resources);
+        return lengthMsg+System.lineSeparator()+Criteria.indent(criteriaDesc);
     }
 }

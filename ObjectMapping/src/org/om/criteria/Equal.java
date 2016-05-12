@@ -1,10 +1,11 @@
 package org.om.criteria;
 
 import java.beans.ConstructorProperties;
+import java.text.MessageFormat;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import org.om.element.Element;
-import org.om.schema.Path;
-import org.om.schema.Result;
+import org.om.element.ValElement;
 
 /**
  *
@@ -27,17 +28,18 @@ public class Equal implements Criteria {
     public boolean match(Element element) {
         return Objects.equals(this.element, element);
     }
-    
-    as it stands, this is too complex. We need to get a simple description of what this does instead
-    -we can do this using a resource bundle.
-    better to use this than a crazy validation framework
 
     @Override
-    public Result validate(Path path, Element element) {
-        if(!match(element)){
-            return new Result(path, false, "FAIL_"+getClass().getSimpleName(), new String[]{this.element.toString(), element.toString())
+    public String getDescription(ResourceBundle resources) {
+        String value = resources.getString("CRITERIA_DESC_EQUAL");
+        String param;
+        if(element instanceof ValElement){
+            param = element.toString();
+        }else if(element == null){
+            param = "null";
+        }else{
+            param = resources.getString("PRESET_VALUE");
         }
+        return MessageFormat.format(value, param);
     }
-    
-    
 }

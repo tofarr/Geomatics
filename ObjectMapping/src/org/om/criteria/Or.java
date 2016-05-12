@@ -3,6 +3,7 @@ package org.om.criteria;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ResourceBundle;
 import org.jayson.parser.StaticFactory;
 import org.om.element.Element;
 import org.om.schema.Path;
@@ -65,17 +66,14 @@ public class Or implements Criteria {
         }
         return false;
     }
-
+    
     @Override
-    public Result validate(Path path, Element element) {
-        Result[] children = new Result[criteria.length];
-        boolean success = true;
-        for(int c = criteria.length; c-- > 0;){
-            Result result = criteria[c].validate(path, element);
-            success |= result.isSuccess();
-            children[c] = result;
+    public String getDescription(ResourceBundle resources) {
+        StringBuilder str = new StringBuilder();
+        str.append(resources.getString("CRITERIA_DESC_OR")).append(System.lineSeparator());
+        for(Criteria c : criteria){
+            str.append(Criteria.indent(c.getDescription(resources))).append(System.lineSeparator());
         }
-        
-        return new Result(path, success, null, null, children);
+        return str.toString();
     }
 }

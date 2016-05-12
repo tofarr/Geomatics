@@ -1,6 +1,8 @@
 package org.om.criteria.value;
 
 import java.beans.ConstructorProperties;
+import java.text.MessageFormat;
+import java.util.ResourceBundle;
 import org.om.criteria.Criteria;
 import org.om.element.Element;
 import org.om.element.ElementType;
@@ -39,4 +41,15 @@ public class Greater<C extends Comparable> implements Criteria {
         return false;
     }
 
+    @Override
+    public String getDescription(ResourceBundle resources) {
+        String value = resources.getString("CRITERIA_DESC_GREATER");
+        String param;
+        if(element instanceof ValElement){
+            param = element.toString();
+        }else{
+            param = resources.getString("PRESET_VALUE");
+        }
+        return MessageFormat.format(value, param);
+    }
 }

@@ -1,6 +1,7 @@
 package org.om.criteria.array;
 
 import java.beans.ConstructorProperties;
+import java.util.ResourceBundle;
 import org.om.criteria.Criteria;
 import org.om.element.ArrElement;
 import org.om.element.Element;
@@ -9,12 +10,12 @@ import org.om.element.Element;
  *
  * @author tofar
  */
-public class AnyArrayElement implements Criteria {
+public class AnyArrayItem implements Criteria {
 
     private final Criteria criteria;
 
     @ConstructorProperties({"criteria"})
-    public AnyArrayElement(Criteria criteria) throws NullPointerException {
+    public AnyArrayItem(Criteria criteria) throws NullPointerException {
         if (criteria == null) {
             throw new NullPointerException("criteria must not be null");
         }
@@ -37,5 +38,12 @@ public class AnyArrayElement implements Criteria {
             return false;
         }
         return false;
+    }
+    
+    @Override
+    public String getDescription(ResourceBundle resources) {
+        String msg = resources.getString("CRITERIA_DESC_ANY_ARRAY_ITEM");
+        String criteriaDesc = criteria.getDescription(resources);
+        return msg+System.lineSeparator()+Criteria.indent(criteriaDesc);
     }
 }

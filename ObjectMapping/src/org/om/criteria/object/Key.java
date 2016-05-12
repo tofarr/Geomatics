@@ -1,6 +1,8 @@
 package org.om.criteria.object;
 
 import java.beans.ConstructorProperties;
+import java.text.MessageFormat;
+import java.util.ResourceBundle;
 import org.om.criteria.Criteria;
 import org.om.element.Element;
 import org.om.element.ObjElement;
@@ -42,5 +44,13 @@ public class Key implements Criteria {
             return criteria.match(element);
         }
         return false;
+    }
+    
+    @Override
+    public String getDescription(ResourceBundle resources) {
+        String msg = resources.getString("CRITERIA_DESC_KEY");
+        msg = MessageFormat.format(msg, key);
+        String criteriaDesc = criteria.getDescription(resources);
+        return msg+System.lineSeparator()+Criteria.indent(criteriaDesc);
     }
 }

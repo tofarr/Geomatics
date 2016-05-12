@@ -43,8 +43,6 @@ public class OMJaysonConfig extends JaysonConfig {
             }
         
         }, EARLY));
-        
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
