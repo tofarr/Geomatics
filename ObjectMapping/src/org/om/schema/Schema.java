@@ -1,44 +1,25 @@
 package org.om.schema;
 
-import java.util.Locale;
+import javax.servlet.http.HttpServletRequest;
+import org.jayson.JaysonType;
 import org.om.element.Element;
-import org.om.element.ElementType;
+import org.om.swing.FormComponent;
 
 /**
  *
- * @author tofarrell
- * @param <E>
+ * @author tofar
  */
-public abstract class Schema<E extends Element> {
-
-    final String title;
-    final String description;
-
-    Schema(String title, String description) {
-        this.title = title;
-        this.description = description;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public abstract String val();
+public interface Schema {
     
-    public boolean isValid(E element) {
-        if (criteria == null) {
-            return true; // no criteria - no validation!
-        }
-        return criteria.match(element);
-    }
+    JaysonType getElementType();
     
-    public abstract String getErrMsg(Locale locale, E element); //what about languages other than english?
-
-    public abstract ElementType getType();
-
-    public abstract E sanitize(E element);
+    ValidationResult validate(Path path, Element e);
+    
+    Element getDefaultValue();
+    
+    FormComponent toFormComponent();
+    
+    void toFormHtml(Path path, Appendable appendable);
+    
+    Element fromForm(Path path, HttpServletRequest request);
 }

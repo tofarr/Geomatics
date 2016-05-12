@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 import org.jayson.parser.StaticFactory;
 import org.om.element.Element;
-import org.om.schema.Path;
-import org.om.schema.Result;
 
 /**
  *

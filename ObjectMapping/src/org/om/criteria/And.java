@@ -1,13 +1,11 @@
 package org.om.criteria;
 
-import org.om.schema.Result;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 import org.jayson.parser.StaticFactory;
 import org.om.element.Element;
-import org.om.schema.Path;
 
 /**
  *
