@@ -6,7 +6,7 @@ import org.jayson.JaysonOutput;
  *
  * @author tofar
  */
-public final class BoolElement extends Element implements ValueElement<Boolean> {
+public final class BoolElement extends ValueElement<Boolean> {
 
     public static final BoolElement TRUE = new BoolElement(true);
     public static final BoolElement FALSE = new BoolElement(false);

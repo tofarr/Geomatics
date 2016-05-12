@@ -6,7 +6,7 @@ import org.jayson.JaysonOutput;
  *
  * @author tofar
  */
-public final class StrElement extends Element implements ValueElement<String> {
+public final class StrElement extends ValueElement<String> {
 
     public static final StrElement EMPTY = new StrElement("");
 

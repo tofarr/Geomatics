@@ -4,13 +4,16 @@ package org.om.element;
  *
  * @author tofar
  */
-public interface ValueElement<C extends Comparable> {
+public abstract class ValueElement<C extends Comparable> extends Element {
 
-    BoolElement asBool();
+    ValueElement() {
+    }
 
-    StrElement asStr();
+    public abstract BoolElement asBool();
 
-    NumElement asNum() throws NumberFormatException;
+    public abstract StrElement asStr();
+
+    public abstract NumElement asNum() throws NumberFormatException;
     
-    C getValue();
+    public abstract C getValue();
 }

@@ -6,7 +6,7 @@ import org.jayson.JaysonOutput;
  *
  * @author tofar
  */
-public final class NumElement extends Element implements ValueElement<Double> {
+public final class NumElement extends ValueElement<Double> {
     
     public static final NumElement ZERO = new NumElement(0);
     public static final NumElement ONE = new NumElement(1);
