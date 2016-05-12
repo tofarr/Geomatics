@@ -6,24 +6,24 @@ import org.jayson.JaysonOutput;
  *
  * @author tofar
  */
-public final class NumElement extends ValueElement<Double> {
+public final class NumElement extends ValElement<Double> {
     
     public static final NumElement ZERO = new NumElement(0);
     public static final NumElement ONE = new NumElement(1);
     
-    public final double number;
+    final double num;
 
-    private NumElement(double number) {
-        this.number = number;
+    private NumElement(double num) {
+        this.num = num;
     }
     
-    public static NumElement valueOf(double number){
-        if(number == 0){
+    public static NumElement valueOf(double num){
+        if(num == 0){
             return ZERO;
-        }else if(number == 1){
+        }else if(num == 1){
             return ONE;
         }else{
-            return new NumElement(number);
+            return new NumElement(num);
         }
     }
 
@@ -31,15 +31,20 @@ public final class NumElement extends ValueElement<Double> {
     public ElementType getType() {
         return ElementType.NUMBER;
     }
+
+    public double getNum() {
+        return num;
+    }
+    
     
     @Override
     public BoolElement asBool(){
-        return (number != 0) ? BoolElement.TRUE : BoolElement.FALSE;
+        return (num != 0) ? BoolElement.TRUE : BoolElement.FALSE;
     }
 
     @Override
     public StrElement asStr() {
-        return new StrElement(Double.toString(number));
+        return new StrElement(Double.toString(num));
     }
 
     @Override
@@ -49,20 +54,20 @@ public final class NumElement extends ValueElement<Double> {
 
     @Override
     public void toJson(JaysonOutput output) {
-        output.num(number);
+        output.num(num);
     }
 
     @Override
     public boolean matches(Element other) {
-        if(other instanceof ValueElement){
-            StrElement str = ((ValueElement)other).asStr();
-            return Double.toString(number).equals(str.value);
+        if(other instanceof ValElement){
+            StrElement str = ((ValElement)other).asStr();
+            return Double.toString(num).equals(str.str);
         }
         return false;
     }
 
     @Override
-    public Double getValue() {
-        return number;
+    public Double getVal() {
+        return num;
     }
 }

@@ -6,22 +6,26 @@ import org.jayson.JaysonOutput;
  *
  * @author tofar
  */
-public final class StrElement extends ValueElement<String> {
+public final class StrElement extends ValElement<String> {
 
     public static final StrElement EMPTY = new StrElement("");
 
-    public final String value;
+    final String str;
 
-    StrElement(String value) {
-        this.value = value;
+    StrElement(String str) {
+        this.str = str;
     }
 
-    public static StrElement valueOf(String value) throws NullPointerException {
-        if (value.isEmpty()) {
+    public static StrElement valueOf(String str) throws NullPointerException {
+        if (str.isEmpty()) {
             return EMPTY;
         } else {
-            return new StrElement(value);
+            return new StrElement(str);
         }
+    }
+
+    public String getStr() {
+        return str;
     }
 
     @Override
@@ -31,12 +35,12 @@ public final class StrElement extends ValueElement<String> {
 
     @Override
     public BoolElement asBool() {
-        return Boolean.parseBoolean(value) ? BoolElement.TRUE : BoolElement.FALSE;
+        return Boolean.parseBoolean(str) ? BoolElement.TRUE : BoolElement.FALSE;
     }
 
     @Override
     public NumElement asNum() throws NumberFormatException {
-        return NumElement.valueOf(Double.parseDouble(value));
+        return NumElement.valueOf(Double.parseDouble(str));
     }
 
     @Override
@@ -46,20 +50,20 @@ public final class StrElement extends ValueElement<String> {
 
     @Override
     public void toJson(JaysonOutput output) {
-        output.str(value);
+        output.str(str);
     }
 
     @Override
     public boolean matches(Element other) {
-        if(other instanceof ValueElement){
-            StrElement str = ((ValueElement)other).asStr();
-            return value.equals(str.value);
+        if(other instanceof ValElement){
+            StrElement strElem = ((ValElement)other).asStr();
+            return this.str.equals(strElem.str);
         }
         return false;
     }
 
     @Override
-    public String getValue() {
-        return value;
+    public String getVal() {
+        return str;
     }    
 }

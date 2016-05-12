@@ -1,5 +1,6 @@
 package org.jayson.parser;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
@@ -24,6 +25,9 @@ public class InstanceParserFactory<E> extends JaysonParserFactory {
             if(this.type.isAssignableFrom(clazz)){
                 return parser;
             }
+        }else if(type instanceof ParameterizedType){
+            ParameterizedType pt = (ParameterizedType)type;
+            return getParserFor(pt.getRawType());  
         }
         return null;
     }

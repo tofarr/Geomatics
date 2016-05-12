@@ -4,9 +4,9 @@ package org.om.element;
  *
  * @author tofar
  */
-public abstract class ValueElement<C extends Comparable> extends Element {
+public abstract class ValElement<C extends Comparable> extends Element {
 
-    ValueElement() {
+    ValElement() {
     }
 
     public abstract BoolElement asBool();
@@ -15,5 +15,5 @@ public abstract class ValueElement<C extends Comparable> extends Element {
 
     public abstract NumElement asNum() throws NumberFormatException;
     
-    public abstract C getValue();
+    public abstract C getVal();
 }

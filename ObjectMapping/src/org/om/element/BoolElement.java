@@ -6,7 +6,7 @@ import org.jayson.JaysonOutput;
  *
  * @author tofar
  */
-public final class BoolElement extends ValueElement<Boolean> {
+public final class BoolElement extends ValElement<Boolean> {
 
     public static final BoolElement TRUE = new BoolElement(true);
     public static final BoolElement FALSE = new BoolElement(false);
@@ -50,15 +50,15 @@ public final class BoolElement extends ValueElement<Boolean> {
     
     @Override
     public boolean matches(Element other) {
-        if(other instanceof ValueElement){
-            StrElement str = ((ValueElement)other).asStr();
-            return asStr().value.equals(str.value);
+        if(other instanceof ValElement){
+            StrElement strElem = ((ValElement)other).asStr();
+            return asStr().str.equals(strElem.str);
         }
         return false;
     }
 
     @Override
-    public Boolean getValue() {
+    public Boolean getVal() {
         return bool;
     }
 }

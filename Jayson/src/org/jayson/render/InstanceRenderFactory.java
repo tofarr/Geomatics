@@ -1,5 +1,6 @@
 package org.jayson.render;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
@@ -24,6 +25,9 @@ public class InstanceRenderFactory<E> extends JaysonRenderFactory {
             if (this.type.isAssignableFrom(clazz)) {
                 return render;
             }
+        }else if(type instanceof ParameterizedType){
+            ParameterizedType pt = (ParameterizedType)type;
+            return getRenderFor(pt.getRawType());  
         }
         return null;
     }
