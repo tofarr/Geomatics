@@ -1,30 +1,27 @@
 package org.om.schema.impl;
 
-import java.awt.GridLayout;
-import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javax.servlet.http.HttpServletRequest;
-import javax.swing.JLabel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.JTextComponent;
 import org.om.criteria.And;
 import org.om.criteria.Criteria;
+import org.om.criteria.Equal;
 import org.om.criteria.Length;
+import org.om.criteria.Or;
 import org.om.criteria.value.Less;
 import org.om.criteria.value.LessEqual;
 import org.om.element.Element;
-import org.om.element.ElementType;
 import org.om.element.StrElement;
 import org.om.element.ValElement;
+import org.om.html.HtmlWriter;
 import org.om.schema.Path;
 import org.om.schema.Schema;
 import org.om.schema.ValidationResult;
+import org.om.swing.ComboBoxComponent;
 import org.om.swing.OMComponent;
+import org.om.swing.TextComponent;
 
 /**
  *
@@ -46,11 +43,6 @@ public class StrSchema extends Schema {
     }
 
     @Override
-    public ElementType getElementType() {
-        return ElementType.STRING;
-    }
-
-    @Override
     public ValidationResult validate(Path path, Element element, ResourceBundle messages) {
         if (criteria.match(element)) {
             return ValidationResult.SUCCESS;
@@ -65,35 +57,58 @@ public class StrSchema extends Schema {
 
     @Override
     public OMComponent toSwingComponent(Element element) {
-        return new StrComponent(getTitle(), getDescription(), criteria);
+        List<String> values = getComboBoxValues(criteria);
+        if(values != null){
+            return new ComboBoxComponent(getTitle(), getDescription(), criteria, values.toArray(new String[values.size()]));
+        }
+        int maxLength = getMaxLength(criteria);
+        return new TextComponent(getTitle(), getDescription(), criteria, 
+                ((maxLength > 200) && (maxLength != Integer.MAX_VALUE)));
     }
 
-    NEED SPECIAL HTML FRAMEWORK - JS WRITER, JS CONTEXT AND HTMLWRITER
-    
     @Override
-    public void toHtml(Path path, Appendable appendable, Element element) throws IOException {
-        appendable.append("<div id=\"").append(path.toString()).append("_div\" class=\"om_")
-                .append(getClass().getSimpleName()).append('"');
+    public void toHtml(Path path, HtmlWriter writer, ResourceBundle resources, Element element) throws IOException {
+        String pathStr = path.toString();
+        writer.begin("div")
+                .attr("id", writer.createId())
+                .attr("class", writer.getNamespace()+"_"+getClass().getSimpleName());
         if(getDescription() != null){
-            appendable.append(" title=\"").append(escapeAttr(getDescription())).append('"');
+            writer.attr("title", getDescription());
         }
-        appendable.append(">");
+        String id = writer.createId();
         if(getTitle() != null){
-            appendable.append("<label for=\"").append(path.toString()).append("\">").append(escapeText(title)).append("</label>");
+            writer.begin("label").attr("for", id).text(getTitle()).end();
         }
         int maxLength = getMaxLength(criteria); // detect max length based on criteria, and use either a text field or a text area accordingly
         if ((maxLength <= 200) || (maxLength == Integer.MAX_VALUE)) {
-            appendable.append("<input type=\"text\" id=\"").append(path.toString())
-                    .append("\" name=\"").append(path.toString())
-                    .append("\" value=\"").append(escapeAttr(((ValElement)element).asStr().getStr()))
-                    if(criteria != null){
-                        
-                    }
-                    .append("\" />");
+            writer.tag("input")
+                    .attr("type", "text")
+                    .attr("id", id)
+                    .attr("name", pathStr);
+            if(element != null){
+                writer.attr("value", ((ValElement)element).asStr().getStr());
+            }
         } else {
-            textComponent = new JTextArea();
+            writer.begin("textarea")
+                    .attr("id", id)
+                    .attr("name", pathStr);
+            if(element != null){
+                writer.text(((ValElement)element).asStr().getStr());
+            }
+            writer.close();
         }
-        appendable.append("</div>");
+        if(criteria != null){
+            writer.js(writer.getNamespace()).js(".validators.").js(id).js("=function(){")
+                .js("var e = $(\"#"+id+"\");")
+                .js("var v = e.val();")
+                .js("var r = ");
+            criteria.toJavascript("v", writer.getJavascript());
+            writer.js(";")
+                .js("e[r?\"removeClass\":\"addClass\"](\"").js(writer.getNamespace()).js("\");")
+                .js("return r;")
+                .js("}");
+            writer.js(writer.getNamespace()).js(".descriptions.").js(id).js("=\"").js(criteria.getDescription(resources).replace("\"\"", "\\\"")).js("\";");
+        }
     }
 
     @Override
@@ -139,87 +154,25 @@ public class StrSchema extends Schema {
             return Integer.MAX_VALUE;
         }
     }
-
-    public static class StrComponent extends OMComponent {
-
-        private final JTextComponent textComponent;
-        private final Criteria criteria;
-        private final Border validBorder;
-        private final Border invalidBorder;
-        private StrElement element;
-
-        public StrComponent(String title, String description, Criteria criteria) {
-            this(title, description, criteria, INVALID_BORDER);
-        }
-
-        public StrComponent(String title, String description, Criteria criteria, Border invalidBorder) {
-
-            int maxLength = getMaxLength(criteria); // detect max length based on criteria, and use either a text field or a text area accordingly
-            if ((maxLength <= 200) || (maxLength == Integer.MAX_VALUE)) {
-                textComponent = new JTextField();
-            } else {
-                textComponent = new JTextArea();
-            }
-            this.criteria = criteria;
-            this.validBorder = textComponent.getBorder();
-            this.invalidBorder = invalidBorder;
-
-            JLabel label = new JLabel(title);
-            label.setLabelFor(textComponent);
-            label.setToolTipText(description);
-            textComponent.setToolTipText(description);
-            setLayout(new GridLayout(2, 1));
-            add(label);
-            add(textComponent);
-            textComponent.getDocument().addDocumentListener(docListener);
-        }
-
-        @Override
-        public void setElement(Element element) {
-            if (element instanceof ValElement) {
-                ValElement val = (ValElement) element;
-                StrElement str = val.asStr();
-                if (criteria != null) {
-                    textComponent.setBorder(criteria.match(element) ? validBorder : invalidBorder);
+    
+    public static List<String> getComboBoxValues(Criteria criteria){
+        if(criteria instanceof Or){
+            Or or = (Or)criteria;
+            List<String> ret = new ArrayList<>();
+            for(int i = 0; i < or.numCriteria(); i++){
+                Criteria c = or.getCriteria(i);
+                if(!(c instanceof Equal)){
+                    return null;
                 }
-                firePropertyChange(ELEMENT, this.element, this.element = str);
+                Equal equal = (Equal)c;
+                Element element = equal.getElement();
+                if(!(element instanceof ValElement)){
+                    return null;
+                }
+                ret.add(((ValElement)element).asStr().getStr());
             }
+            return ret;
         }
-
-        @Override
-        public Element getElement() {
-            return element;
-        }
-
-        @Override
-        public void addActionListener(ActionListener listener) {
-            if (textComponent instanceof JTextField) {
-                ((JTextField) textComponent).addActionListener(listener);
-            }
-        }
-
-        @Override
-        public void removeActionListener(ActionListener listener) {
-            if (textComponent instanceof JTextField) {
-                ((JTextField) textComponent).removeActionListener(listener);
-            }
-        }
-
-        private final DocumentListener docListener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                setElement(StrElement.valueOf(textComponent.getText()));
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                setElement(StrElement.valueOf(textComponent.getText()));
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                setElement(StrElement.valueOf(textComponent.getText()));
-            }
-        };
+        return null;
     }
 }

@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
  */
 public class Path {
 
-    private static final Pattern pattern = Pattern.compile("[\\d$]+");
     public static final char SEPARATOR = '/';
     public static final Path ROOT = new Path(null, "");
 

@@ -1,5 +1,6 @@
 package org.om.criteria;
 
+import java.io.Writer;
 import java.util.ResourceBundle;
 import org.om.element.Element;
 
@@ -18,4 +19,6 @@ public interface Criteria {
     public static String indent(String str) {
         return "\t" + str.replace("\n", "\n\t");
     }
+
+    void toJavascript(String v, Writer javascript);
 }

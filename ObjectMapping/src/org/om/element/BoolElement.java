@@ -13,7 +13,7 @@ public final class BoolElement extends ValElement<Boolean> {
     public static final StrElement TRUE_STR = new StrElement("true");
     public static final StrElement FALSE_STR = new StrElement("false");
 
-    public final boolean bool;
+    private final boolean bool;
 
     private BoolElement(boolean bool) {
         this.bool = bool;
@@ -21,6 +21,10 @@ public final class BoolElement extends ValElement<Boolean> {
 
     public static BoolElement valueOf(boolean bool) {
         return bool ? TRUE : FALSE;
+    }
+
+    public boolean isBool() {
+        return bool;
     }
 
     @Override
@@ -47,11 +51,11 @@ public final class BoolElement extends ValElement<Boolean> {
     public void toJson(JaysonOutput output) {
         output.bool(bool);
     }
-    
+
     @Override
     public boolean matches(Element other) {
-        if(other instanceof ValElement){
-            StrElement strElem = ((ValElement)other).asStr();
+        if (other instanceof ValElement) {
+            StrElement strElem = ((ValElement) other).asStr();
             return asStr().str.equals(strElem.str);
         }
         return false;

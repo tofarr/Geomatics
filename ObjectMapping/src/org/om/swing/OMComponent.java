@@ -2,10 +2,12 @@ package org.om.swing;
 
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.util.ResourceBundle;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
 import org.om.element.Element;
+import org.om.schema.ValidationResult;
 
 /**
  *
@@ -19,6 +21,10 @@ public abstract class OMComponent extends JComponent {
     public abstract void setElement(Element element);
 
     public abstract Element getElement();
+    
+    public abstract ValidationResult validateContent(ResourceBundle resources);
+    
+    public abstract void requestFocus();
     
     public abstract void addActionListener(ActionListener listener);
 
