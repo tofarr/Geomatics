@@ -1,5 +1,6 @@
 package org.om.schema.impl;
 
+import java.beans.ConstructorProperties;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +28,12 @@ import org.om.swing.TextComponent;
  *
  * @author tofarrell
  */
-public class StrSchema extends Schema {
+public class StrSchema extends Schema<StrElement> {
 
     private final Criteria criteria;
     private final StrElement defaultValue;
 
+    @ConstructorProperties({"title", "description", "criteria", "defaultValue"})
     public StrSchema(String title, String description, Criteria criteria, StrElement defaultValue) {
         super(title, description);
         this.criteria = criteria;
@@ -43,7 +45,7 @@ public class StrSchema extends Schema {
     }
 
     @Override
-    public ValidationResult validate(Path path, Element element, ResourceBundle messages) {
+    public ValidationResult validate(Path path, StrElement element, ResourceBundle messages) {
         if (criteria.match(element)) {
             return ValidationResult.SUCCESS;
         }
@@ -51,32 +53,34 @@ public class StrSchema extends Schema {
     }
 
     @Override
-    public Element getDefaultValue() {
+    public StrElement getDefaultValue() {
         return defaultValue;
     }
 
     @Override
-    public OMComponent toSwingComponent(Element element) {
+    public OMComponent toSwingComponent(StrElement element) {
         List<String> values = getComboBoxValues(criteria);
-        if(values != null){
+        if (values != null) {
             return new ComboBoxComponent(getTitle(), getDescription(), criteria, values.toArray(new String[values.size()]));
         }
         int maxLength = getMaxLength(criteria);
-        return new TextComponent(getTitle(), getDescription(), criteria, 
+        TextComponent ret = new TextComponent(getTitle(), getDescription(), criteria,
                 ((maxLength > 200) && (maxLength != Integer.MAX_VALUE)));
+        ret.setElement(element);
+        return ret;
     }
 
     @Override
-    public void toHtml(Path path, HtmlWriter writer, ResourceBundle resources, Element element) throws IOException {
+    public void toHtml(Path path, HtmlWriter writer, ResourceBundle resources, StrElement element) throws IOException {
         String pathStr = path.toString();
         writer.begin("div")
                 .attr("id", writer.createId())
-                .attr("class", writer.getNamespace()+"_"+getClass().getSimpleName());
-        if(getDescription() != null){
+                .attr("class", writer.getNamespace() + "_" + getClass().getSimpleName());
+        if (getDescription() != null) {
             writer.attr("title", getDescription());
         }
         String id = writer.createId();
-        if(getTitle() != null){
+        if (getTitle() != null) {
             writer.begin("label").attr("for", id).text(getTitle()).end();
         }
         int maxLength = getMaxLength(criteria); // detect max length based on criteria, and use either a text field or a text area accordingly
@@ -85,34 +89,34 @@ public class StrSchema extends Schema {
                     .attr("type", "text")
                     .attr("id", id)
                     .attr("name", pathStr);
-            if(element != null){
-                writer.attr("value", ((ValElement)element).asStr().getStr());
+            if (element != null) {
+                writer.attr("value", ((ValElement) element).asStr().getStr());
             }
         } else {
             writer.begin("textarea")
                     .attr("id", id)
                     .attr("name", pathStr);
-            if(element != null){
-                writer.text(((ValElement)element).asStr().getStr());
+            if (element != null) {
+                writer.text(((ValElement) element).asStr().getStr());
             }
             writer.close();
         }
-        if(criteria != null){
+        if (criteria != null) {
             writer.js(writer.getNamespace()).js(".validators.").js(id).js("=function(){")
-                .js("var e = $(\"#"+id+"\");")
-                .js("var v = e.val();")
-                .js("var r = ");
+                    .js("var e = $(\"#" + id + "\");")
+                    .js("var v = e.val();")
+                    .js("var r = ");
             criteria.toJavascript("v", writer.getJavascript());
             writer.js(";")
-                .js("e[r?\"removeClass\":\"addClass\"](\"").js(writer.getNamespace()).js("\");")
-                .js("return r;")
-                .js("}");
+                    .js("e[r?\"removeClass\":\"addClass\"](\"").js(writer.getNamespace()).js("_invalid\");")
+                    .js("return r;")
+                    .js("}");
             writer.js(writer.getNamespace()).js(".descriptions.").js(id).js("=\"").js(criteria.getDescription(resources).replace("\"\"", "\\\"")).js("\";");
         }
     }
 
     @Override
-    public Element fromFormParams(Path path, HttpServletRequest request) {
+    public StrElement fromFormParams(Path path, HttpServletRequest request) {
         String ret = request.getParameter(path.toString());
         return (ret == null) ? null : StrElement.valueOf(ret);
     }
@@ -154,22 +158,22 @@ public class StrSchema extends Schema {
             return Integer.MAX_VALUE;
         }
     }
-    
-    public static List<String> getComboBoxValues(Criteria criteria){
-        if(criteria instanceof Or){
-            Or or = (Or)criteria;
+
+    public static List<String> getComboBoxValues(Criteria criteria) {
+        if (criteria instanceof Or) {
+            Or or = (Or) criteria;
             List<String> ret = new ArrayList<>();
-            for(int i = 0; i < or.numCriteria(); i++){
+            for (int i = 0; i < or.numCriteria(); i++) {
                 Criteria c = or.getCriteria(i);
-                if(!(c instanceof Equal)){
+                if (!(c instanceof Equal)) {
                     return null;
                 }
-                Equal equal = (Equal)c;
+                Equal equal = (Equal) c;
                 Element element = equal.getElement();
-                if(!(element instanceof ValElement)){
+                if (!(element instanceof ValElement)) {
                     return null;
                 }
-                ret.add(((ValElement)element).asStr().getStr());
+                ret.add(((ValElement) element).asStr().getStr());
             }
             return ret;
         }
