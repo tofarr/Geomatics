@@ -64,14 +64,26 @@ public class Or implements Criteria {
         }
         return false;
     }
-    
+
     @Override
     public String getDescription(ResourceBundle resources) {
         StringBuilder str = new StringBuilder();
         str.append(resources.getString("CRITERIA_DESC_OR")).append(System.lineSeparator());
-        for(Criteria c : criteria){
+        for (Criteria c : criteria) {
             str.append(Criteria.indent(c.getDescription(resources))).append(System.lineSeparator());
         }
         return str.toString();
+    }
+
+    public Criteria[] getCriteria() {
+        return criteria.clone();
+    }
+
+    public int numCriteria() {
+        return criteria.length;
+    }
+
+    public Criteria getCriteria(int index) {
+        return criteria[index];
     }
 }

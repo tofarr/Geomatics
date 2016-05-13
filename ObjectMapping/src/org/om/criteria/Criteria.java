@@ -12,6 +12,8 @@ public interface Criteria {
     boolean match(Element element);
 
     String getDescription(ResourceBundle resources);
+    
+    //void toJavascript(Appendable appendable);
 
     public static String indent(String str) {
         return "\t" + str.replace("\n", "\n\t");

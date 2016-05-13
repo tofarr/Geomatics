@@ -23,6 +23,10 @@ public class Length implements Criteria {
         this.criteria = criteria;
     }
 
+    public Criteria getCriteria() {
+        return criteria;
+    }
+
     @Override
     public boolean match(Element element) {
         if (element instanceof ValElement) {

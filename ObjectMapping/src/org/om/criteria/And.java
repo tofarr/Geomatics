@@ -75,4 +75,15 @@ public class And implements Criteria {
         return str.toString();
     }
 
+    public Criteria[] getCriteria() {
+        return criteria.clone();
+    }
+
+    public int numCriteria() {
+        return criteria.length;
+    }
+
+    public Criteria getCriteria(int index) {
+        return criteria[index];
+    }
 }
