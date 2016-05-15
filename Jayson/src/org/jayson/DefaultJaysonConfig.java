@@ -5,6 +5,8 @@ import org.jayson.parser.BooleanParser;
 import org.jayson.parser.CollectionParser;
 import org.jayson.parser.ConstructorParser;
 import org.jayson.parser.NumberParser;
+import org.jayson.parser.ObjectParser;
+import org.jayson.parser.SimpleMapParser;
 import org.jayson.parser.StaticMethodParser;
 import org.jayson.parser.StringParser;
 import org.jayson.poly.PolymorphicMap;
@@ -37,9 +39,11 @@ public class DefaultJaysonConfig extends JaysonConfig {
         builder.addParserFactory(new BooleanParser.BooleanParserFactory(30000));
         builder.addParserFactory(new NumberParser.NumberParserFactory(40000));
         builder.addParserFactory(new StringParser.StringParserFactory(50000));
-        builder.addParserFactory(new CollectionParser.CollectionParserFactory(60000));
-        builder.addParserFactory(new ConstructorParser.ConstructorParserFactory(70000));
-        builder.addParserFactory(new StaticMethodParser.StaticMethodParserFactory(80000));
+        builder.addParserFactory(new CollectionParser.CollectionParserFactory(60000, polymorphicMap));
+        builder.addParserFactory(new SimpleMapParser.MapParserFactory(70000, polymorphicMap));
+        builder.addParserFactory(new ConstructorParser.ConstructorParserFactory(80000));
+        builder.addParserFactory(new StaticMethodParser.StaticMethodParserFactory(90000));
+        builder.addParserFactory(new ObjectParser.ObjectParserFactory(100000, polymorphicMap));
         
         //Default renders
         builder.addRenderFactory(new PolymorphicRender.PolymorphicRenderFactory(10000, polymorphicMap));

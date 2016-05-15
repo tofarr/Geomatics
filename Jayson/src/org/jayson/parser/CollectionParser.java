@@ -12,6 +12,8 @@ import org.jayson.Jayson;
 import org.jayson.JaysonException;
 import org.jayson.JaysonInput;
 import org.jayson.JaysonType;
+import org.jayson.poly.ClassMap;
+import org.jayson.poly.PolymorphicMap;
 
 
 /**
@@ -57,8 +59,14 @@ public class CollectionParser<E extends Collection> extends JaysonParser<E> {
     
     public static class CollectionParserFactory extends JaysonParserFactory{
 
-        public CollectionParserFactory(int priority) {
+        private final PolymorphicMap polymorphicMap;
+        
+        public CollectionParserFactory(int priority, PolymorphicMap polymorphicMap) {
             super(priority);
+            if(polymorphicMap == null){
+                throw new NullPointerException("polymorphicMap must not be null");
+            }
+            this.polymorphicMap = polymorphicMap;
         }
 
         @Override
@@ -69,21 +77,24 @@ public class CollectionParser<E extends Collection> extends JaysonParser<E> {
                 if(rawType instanceof Class){
                     Class collectionType = (Class)rawType;
                     if(Collection.class.isAssignableFrom(collectionType)){
-                        collectionType = getImpl(collectionType);
+                        collectionType = getImpl(polymorphicMap, collectionType);
                         return new CollectionParser(collectionType, pt.getActualTypeArguments()[0]);
                     }
                 }
+            }else if(type instanceof Class){
+                Class collectionType = (Class)type;
+                    if(Collection.class.isAssignableFrom(collectionType)){
+                        collectionType = getImpl(polymorphicMap, collectionType);
+                        return new CollectionParser(collectionType, Object.class);
+                    }
             }
             return null;
         }
         
-        public static Class getImpl(Class clazz){
-            if(clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers())){
-                if(Set.class.isAssignableFrom(clazz)){
-                    clazz = HashSet.class;
-                }else{
-                    clazz = ArrayList.class;
-                }
+        public static Class getImpl(PolymorphicMap polymorphicMap, Class clazz){
+            ClassMap classMap = polymorphicMap.getClassMap(clazz);
+            if(classMap != null){
+                clazz = classMap.getImplClasses()[0];
             }
             return clazz;
         }

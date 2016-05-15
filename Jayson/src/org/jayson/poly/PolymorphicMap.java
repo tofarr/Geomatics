@@ -61,4 +61,14 @@ public class PolymorphicMap {
     public <T> ClassMap<T> getClassMap(Class<T> baseClass) {
         return classMaps.get(baseClass);
     }
+
+    public Class getImplClass(String typeName) {
+        for(ClassMap classMap : classMaps.values()){
+            Class ret = classMap.getImplClass(typeName);
+            if(ret != null){
+                return ret;
+            }
+        }
+        return null;
+    }
 }
