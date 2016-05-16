@@ -21,48 +21,32 @@ public class Equal<E> implements Criteria<E>{
 
     @Override
     public boolean match(E value){
-        if(value == null){
-            return matchNull(this.value == null, true);
-        }else if(this.value == null){
-            return matchNull(true, false);
+        if(this.value == null){
+            return (value == null);
+        }else if(value == null){
+            return false;
         }else if(this.value.getClass() == value.getClass()){
-            return matchObj(this.value, (E)value);
-        }else if(value instanceof Number){
-            if(this.value instanceof Number){
-                return matchNum(((Number)this.value).doubleValue(), ((Number)value).doubleValue());
+            return this.value.equals(value);
+        }else if(Number.class.isAssignableFrom(this.value.getClass())){
+            double v1 = ((Number)this.value).doubleValue();
+            if(Number.class.isAssignableFrom(value.getClass())){
+                return v1 == ((Number)value).doubleValue();
             }else{
                 try{
-                    double v = Double.parseDouble(this.value.toString());
-                    return matchNum(v, ((Number)value).doubleValue());
+                    double v2 = Double.parseDouble(value.toString());
+                    return v1 == v2;
                 }catch(NumberFormatException ex){
-                    return matchStr(this.value.toString(), value.toString());
-                }    
-            }                
-        }else if(this.value instanceof Number){
-            try{
-                double v = Double.parseDouble(value.toString());
-                return matchNum(v, ((Number)this.value).doubleValue());
-            }catch(NumberFormatException ex){
-                return matchStr(this.value.toString(), value.toString());
+                    return false;
+                } 
             }
-        }else{
-            return matchStr(value.toString(), value.toString());
+        }else if(Number.class.isAssignableFrom(value.getClass())){
+            try{
+                double v1 = Double.parseDouble(this.value.toString());
+                return (v1 == ((Number)value).doubleValue());
+            }catch(NumberFormatException ex){
+                return false; // numbers first
+            } 
         }
-    }
-    
-    protected boolean matchObj(E a, E b){
-        return a.equals(b);
-    }
-    
-    protected boolean matchNum(double a, double b){
-        return a == b;
-    }
-    
-    protected boolean matchStr(String a, String b){
-        return a.equals(b);
-    }
-    
-    protected boolean matchNull(boolean aNull, boolean bNull){
-        return aNull == bNull;
+        return this.value.toString().equals(value.toString());
     }
 }
