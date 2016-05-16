@@ -4,34 +4,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jayson.parser.StaticFactory;
-import org.lcd.Result;
-import org.lcd.ResultIterator;
 
 /**
  *
  * @author tofar
  */
-public class Or implements Criteria {
+public class Or<E> implements Criteria<E> {
 
-    private final Criteria[] criteria;
+    private final Criteria<E>[] criteria;
 
-    private Or(Criteria[] criteria) {
+    private Or(Criteria<E>[] criteria) {
         this.criteria = criteria;
     }
 
     @StaticFactory({"criteria"})
-    public static Criteria valueOf(Criteria... criteria) {
+    public static <E> Criteria<E> valueOf(Criteria<E>... criteria) {
         return valueOf(Arrays.asList(criteria));
     }
 
-    public static Criteria valueOf(List<Criteria> criteria) {
-        List<Criteria> out = new ArrayList<>();
-        for (Criteria c : criteria) {
-            flatten(c, out);
+    public static <E> Criteria<E> valueOf(List<Criteria<E>> criteria) {
+        List<Criteria<E>> out = new ArrayList<>();
+        for (Criteria<E> c : criteria) {
+            if(c == All.INSTANCE){
+                return c;
+            }else if(c != None.INSTANCE){
+                flatten(c, out);
+            }
         }
         switch (out.size()) {
             case 0:
-                return null;
+                return None.INSTANCE;
             case 1:
                 return out.get(0);
             default:
@@ -39,7 +41,7 @@ public class Or implements Criteria {
         }
     }
 
-    static void flatten(Criteria criteria, List<Criteria> results) {
+    static <E> void flatten(Criteria<E> criteria, List<Criteria<E>> results) {
         if (criteria == null) {
             return;
         }
@@ -52,8 +54,8 @@ public class Or implements Criteria {
     }
 
     @Override
-    public boolean match(Result result) {
-        for (Criteria c : criteria) {
+    public boolean match(E result) {
+        for (Criteria<E> c : criteria) {
             if (c.match(result)) {
                 return true;
             }
@@ -61,17 +63,7 @@ public class Or implements Criteria {
         return false;
     }
 
-    @Override
-    public boolean matchCurrent(ResultIterator iter) {
-        for (Criteria c : criteria) {
-            if (c.matchCurrent(iter)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public Criteria[] getCriteria() {
+    public Criteria<E>[] getCriteria() {
         return criteria.clone();
     }
 

@@ -1,73 +1,68 @@
 package org.lcd.criteria;
 
 import java.beans.ConstructorProperties;
-import org.lcd.Result;
-import org.lcd.ResultIterator;
 
 /**
  *
  * @author tofar
  */
-public class Equal<E> implements Criteria{
+public class Equal<E> implements Criteria<E>{
 
-    protected final String attrName;
-    protected final E value;
+    private final E value;
 
-    @ConstructorProperties({"attrName","value"})
-    public Equal(String attrName, E value) {
-        if(attrName.isEmpty()){
-            throw new IllegalArgumentException("attrName must not be empty!");
-        }
-        this.attrName = attrName;
+    @ConstructorProperties({"value"})
+    public Equal(E value) {
         this.value = value;
     }
 
-    public String getAttrName() {
-        return attrName;
-    }
-
-    public E getValue() {
+    public final E getValue() {
         return value;
     }
 
     @Override
-    public boolean match(Result result) {
-        return matchValue(result.getByName(attrName));
-    }
-
-    @Override
-    public boolean matchCurrent(ResultIterator iter) {
-        return matchValue(iter.getByName(attrName));
-    }
-    
-    
-    protected boolean matchValue(Object value){
+    public boolean match(E value){
         if(value == null){
-            return (this.value == null);
+            return matchNull(this.value == null, true);
         }else if(this.value == null){
-            return false;
+            return matchNull(true, false);
         }else if(this.value.getClass() == value.getClass()){
-            return this.value.equals(value);
+            return matchObj(this.value, (E)value);
         }else if(value instanceof Number){
             if(this.value instanceof Number){
-                return ((Number)this.value).doubleValue() == ((Number)value).doubleValue();
+                return matchNum(((Number)this.value).doubleValue(), ((Number)value).doubleValue());
             }else{
                 try{
                     double v = Double.parseDouble(this.value.toString());
-                    return v == ((Number)value).doubleValue();
+                    return matchNum(v, ((Number)value).doubleValue());
                 }catch(NumberFormatException ex){
-                    return false;
+                    return matchStr(this.value.toString(), value.toString());
                 }    
             }                
         }else if(this.value instanceof Number){
             try{
                 double v = Double.parseDouble(value.toString());
-                return v == ((Number)this.value).doubleValue();
+                return matchNum(v, ((Number)this.value).doubleValue());
             }catch(NumberFormatException ex){
-                return false;
+                return matchStr(this.value.toString(), value.toString());
             }
         }else{
-            return value.toString().equals(value.toString());
+            return matchStr(value.toString(), value.toString());
         }
+    }
+    
+    protected boolean matchObj(E a, E b){
+        return a.equals(b);
+    }
+    
+    protected boolean matchNum(double a, double b){
+        return a == b;
+    }
+    
+    protected boolean matchStr(String a, String b){
+        return a.equals(b);
+    }
+    
+    protected boolean matchNull(boolean aNull, boolean bNull){
+        return aNull == bNull;
     }
 }

@@ -1,7 +1,7 @@
 package org.lcd;
 
 import java.util.List;
-import org.lcd.criteria.Criteria;
+import org.lcd.filter.Filter;
 
 /**
  *
@@ -13,13 +13,13 @@ public abstract class WritableDataSource extends DataSource {
         super(attrs);
     }
 
-    public abstract long update(Criteria criteria, Result values);
+    public abstract long update(Filter filter, Result values);
 
     public abstract void create(Result result);
 
-    public abstract void remove(Criteria criteria);
+    public abstract long remove(Filter filter);
     
-    public abstract void createAll(ResultIterator results);
+    public abstract long createAll(ResultIterator results);
     
     public abstract void createAll(List<Result> results);
     

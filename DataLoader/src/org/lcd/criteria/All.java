@@ -1,8 +1,6 @@
 package org.lcd.criteria;
 
 import org.jayson.parser.StaticFactory;
-import org.lcd.Result;
-import org.lcd.ResultIterator;
 
 /**
  *
@@ -21,13 +19,7 @@ public class All implements Criteria{
     }
     
     @Override
-    public boolean match(Result result) {
+    public boolean match(Object result) {
         return true;
     }
-
-    @Override
-    public boolean matchCurrent(ResultIterator iter) {
-        return true;
-    }
-    
 }

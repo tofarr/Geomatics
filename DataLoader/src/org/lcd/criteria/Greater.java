@@ -6,42 +6,33 @@ import java.beans.ConstructorProperties;
 /**
  *
  * @author tofar
+ * @param <C>
  */
 public class Greater<C extends Comparable> extends Equal<C>{
 
-    @ConstructorProperties({"attrName","value"})
-    public Greater(String attrName, C value) {
-        super(attrName, value);
+    @ConstructorProperties({"value"})
+    public Greater(C value) {
+        super(value);
     }    
-    
+
     @Override
-    protected boolean matchValue(Object value){
-        if(value == null){
-            return (this.value == null);
-        }else if(this.value == null){
-            return false;
-        }else if(this.value.getClass() == value.getClass()){
-            return this.value.compareTo(value) > 0;
-        }else if(value instanceof Number){
-            if(this.value instanceof Number){
-                return ((Number)value).doubleValue() > ((Number)this.value).doubleValue();
-            }else{
-                try{
-                    double v = Double.parseDouble(this.value.toString());
-                    return ((Number)value).doubleValue() > v;
-                }catch(NumberFormatException ex){
-                    return false;
-                }    
-            }                
-        }else if(this.value instanceof Number){
-            try{
-                double v = Double.parseDouble(value.toString());
-                return v > ((Number)this.value).doubleValue();
-            }catch(NumberFormatException ex){
-                return false;
-            }
-        }else{
-            return value.toString().compareTo(value.toString()) > 0;
-        }
+    protected boolean matchNull(boolean aNull, boolean bNull) {
+        return !bNull;
     }
+
+    @Override
+    protected boolean matchStr(String a, String b) {
+        return a.compareTo(b) <  0;
+    }
+
+    @Override
+    protected boolean matchNum(double a, double b) {
+        return a < b;
+    }
+
+    @Override
+    protected boolean matchObj(C a, C b) {
+        return a.compareTo(b) < 0;
+    }
+    
 }

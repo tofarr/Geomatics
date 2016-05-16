@@ -1,6 +1,7 @@
 package org.lcd;
 
 import org.lcd.criteria.Criteria;
+import org.lcd.filter.Filter;
 import org.lcd.sort.SortOrder;
 
 /**
@@ -22,8 +23,8 @@ public abstract class DataSource {
         return attrs;
     }
 
-    public boolean load(AttrSet attrs, Criteria criteria, SortOrder sortOrder, ResultProcessor processor) {
-        return load(attrs, criteria, sortOrder, new ResultIteratorProcessor() {
+    public boolean load(AttrSet attrs, Filter filter, SortOrder sortOrder, ResultProcessor processor) {
+        return load(attrs, filter, sortOrder, new ResultIteratorProcessor() {
             @Override
             public boolean process(ResultIterator iterator) {
                 while (iterator.next()) {
@@ -37,7 +38,7 @@ public abstract class DataSource {
         });
     }
 
-    public abstract boolean load(AttrSet attrs, Criteria criteria, SortOrder sortOrder, ResultIteratorProcessor processor);
+    public abstract boolean load(AttrSet attrs, Filter filter, SortOrder sortOrder, ResultIteratorProcessor processor);
 
-    public abstract long count(Criteria criteria);
+    public abstract long count(Filter filter);
 }

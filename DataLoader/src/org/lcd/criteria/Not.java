@@ -8,36 +8,35 @@ import org.lcd.ResultIterator;
  *
  * @author tofar
  */
-public class Not implements Criteria {
+public class Not<E> implements Criteria<E> {
 
-    private final Criteria criteria;
+    private final Criteria<E> criteria;
 
-    private Not(Criteria criteria) throws NullPointerException {
+    private Not(Criteria<E> criteria) throws NullPointerException {
         this.criteria = criteria;
     }
 
     @StaticFactory({"criteria"})
-    public static Criteria valueOf(Criteria criteria) {
+    public static <E> Criteria<E> valueOf(Criteria<E> criteria) {
         if (criteria == null) {
             throw new NullPointerException("criteria must not be null");
         } else if (criteria instanceof Not) {
-            return ((Not) criteria).criteria;
+            return ((Not<E>) criteria).criteria;
+        } else if(criteria == All.INSTANCE){
+            return None.INSTANCE;
+        } else if (criteria == None.INSTANCE) {
+            return All.INSTANCE;
         } else {
-            return new Not(criteria);
+            return new Not<>(criteria);
         }
     }
-
+    
     public Criteria getCriteria() {
         return criteria;
     }
 
     @Override
-    public boolean match(Result result) {
-        return !criteria.match(result);
-    }
-
-    @Override
-    public boolean matchCurrent(ResultIterator iter) {
-        return !criteria.matchCurrent(iter);
+    public boolean match(E value) {
+        return !criteria.match(value);
     }
 }

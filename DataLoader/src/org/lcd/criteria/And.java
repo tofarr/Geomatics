@@ -4,34 +4,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jayson.parser.StaticFactory;
-import org.lcd.Result;
-import org.lcd.ResultIterator;
 
 /**
  *
  * @author tofar
+ * @param <E>
  */
-public class And implements Criteria {
+public class And<E> implements Criteria<E> {
 
-    private final Criteria[] criteria;
+    private final Criteria<E>[] criteria;
 
-    private And(Criteria[] criteria) {
+    private And(Criteria<E>[] criteria) {
         this.criteria = criteria;
     }
 
     @StaticFactory({"criteria"})
-    public static Criteria valueOf(Criteria... criteria) {
+    public static <E> Criteria<E> valueOf(Criteria<E>... criteria) {
         return valueOf(Arrays.asList(criteria));
     }
 
-    public static Criteria valueOf(List<Criteria> criteria) {
-        List<Criteria> out = new ArrayList<>();
-        for (Criteria c : criteria) {
-            flatten(c, out);
+    public static <E> Criteria<E> valueOf(List<Criteria<E>> criteria) {
+        List<Criteria<E>> out = new ArrayList<>();
+        for (Criteria<E> c : criteria) {
+            if(c == None.INSTANCE){
+                return c;
+            }else if(c != All.INSTANCE){
+                flatten(c, out);
+            }
         }
         switch (out.size()) {
             case 0:
-                return null;
+                return All.INSTANCE;
             case 1:
                 return out.get(0);
             default:
@@ -39,7 +42,7 @@ public class And implements Criteria {
         }
     }
 
-    static void flatten(Criteria criteria, List<Criteria> results) {
+    static <E> void flatten(Criteria<E> criteria, List<Criteria<E>> results) {
         if (criteria == null) {
             return;
         }
@@ -52,26 +55,16 @@ public class And implements Criteria {
     }
 
     @Override
-    public boolean match(Result result) {
+    public boolean match(Object value) {
         for (Criteria c : criteria) {
-            if (!c.match(result)) {
+            if (!c.match(value)) {
                 return false;
             }
         }
         return true;
     }
 
-    @Override
-    public boolean matchCurrent(ResultIterator iter) {
-        for (Criteria c : criteria) {
-            if (c.matchCurrent(iter)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public Criteria[] getCriteria() {
+    public Criteria<E>[] getCriteria() {
         return criteria.clone();
     }
 

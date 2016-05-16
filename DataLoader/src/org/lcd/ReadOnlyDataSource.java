@@ -1,6 +1,6 @@
 package org.lcd;
 
-import org.lcd.criteria.Criteria;
+import org.lcd.filter.Filter;
 import org.lcd.sort.SortOrder;
 
 /**
@@ -17,13 +17,13 @@ public class ReadOnlyDataSource extends DataSource {
     }
 
     @Override
-    public boolean load(AttrSet attrs, Criteria criteria, SortOrder sortOrder, ResultIteratorProcessor processor) {
-        return dataSource.load(attrs, criteria, sortOrder, processor);
+    public boolean load(AttrSet attrs, Filter filter, SortOrder sortOrder, ResultIteratorProcessor processor) {
+        return dataSource.load(attrs, filter, sortOrder, processor);
     }
 
     @Override
-    public long count(Criteria criteria) {
-        return dataSource.count(criteria);
+    public long count(Filter filter) {
+        return dataSource.count(filter);
     }
 
 }

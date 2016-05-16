@@ -70,6 +70,14 @@ public final class AttrSet implements Iterable<Attr> {
         }
         return ret;
     }
+    
+    public List<String> nameList(){
+        ArrayList<String> ret = new ArrayList<>();
+        for(Attr attr : attrs){
+            ret.add(attr.getName());
+        }
+        return ret;
+    }
 
     @Override
     public Iterator<Attr> iterator() {
@@ -90,4 +98,20 @@ public final class AttrSet implements Iterable<Attr> {
         };
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 13 * hash + Arrays.hashCode(this.attrs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof AttrSet){
+            return Arrays.equals(this.attrs, ((AttrSet)obj).attrs);
+        }
+        return false;
+    }
+
+    
 }
