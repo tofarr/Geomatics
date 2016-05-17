@@ -11,6 +11,7 @@ import org.om.element.Element;
 /**
  *
  * @author tofar
+ * @param <E>
  */
 public class WritableObjStore<E> extends ObjStore<E> {
 
