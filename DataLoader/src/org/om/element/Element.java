@@ -37,7 +37,7 @@ public abstract class Element {
                 : new JaysonWriter(appendable);
         toJson(output);
     }
-    
+        
     public abstract void toJson(JaysonOutput output);
 
     public abstract ElementType getType();
