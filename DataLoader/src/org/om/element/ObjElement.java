@@ -88,4 +88,16 @@ public class ObjElement extends Element implements Iterable<String> {
         }
         return false;
     }
+
+    @Override
+    public Element merge(Element updates) {
+        if(updates instanceof ObjElement){
+            Map<String,Element> newElements = new HashMap<>(elements);
+            newElements.putAll(((ObjElement)updates).elements);
+            return new ObjElement(newElements);
+        }
+        return updates;
+    }
+    
+    
 }

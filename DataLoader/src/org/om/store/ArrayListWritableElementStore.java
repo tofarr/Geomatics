@@ -31,6 +31,7 @@ public class ArrayListWritableElementStore implements WritableElementStore {
             newElements.add(element);
             elements = newElements;
         }
+        return element;
     }
 
     @Override
@@ -41,7 +42,7 @@ public class ArrayListWritableElementStore implements WritableElementStore {
             int ret = 0;
             for (Element oldElement : oldElements) {
                 if (criteria.match(oldElement)) {
-                    Element element = oldElement.merge(updates);
+                    Element element = (oldElement == null) ? updates : oldElement.merge(updates);
                     validate(element);
                     newElements.add(element);
                     ret++;
@@ -74,6 +75,11 @@ public class ArrayListWritableElementStore implements WritableElementStore {
 
     @Override
     public void createAll(List<Element> elements) throws StoreException {
+        for(Element element : elements){
+            if(!validator.match(element)){
+                throw new StoreException("Element did not match criteria!");
+            }
+        }
         synchronized (this) {
             ArrayList<Element> oldElements = this.elements;
             ArrayList<Element> newElements = new ArrayList<>(oldElements.size() + elements.size());
@@ -134,6 +140,12 @@ public class ArrayListWritableElementStore implements WritableElementStore {
                 }
             }
             return ret;
+        }
+    }
+
+    private void validate(Element element) {
+        if((validator != null) && (!validator.match(element))){
+            throw new StoreException("Element did not match criteria!");
         }
     }
 

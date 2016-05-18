@@ -13,13 +13,13 @@ import org.om.store.ElementStore.ElementProcessor;
  * @author tofar
  * @param <E>
  */
-public class ObjStore<E> {
+public class ResultStore<E> {
 
     private final Type type;
     private final Jayson jayson;
     private final ElementStore store;
 
-    public ObjStore(Type type, Jayson jayson, ElementStore store) throws NullPointerException {
+    public ResultStore(Type type, Jayson jayson, ElementStore store) throws NullPointerException {
         if (type == null) {
             throw new NullPointerException("type must not be null");
         }

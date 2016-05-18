@@ -14,4 +14,8 @@ public class StoreException extends RuntimeException {
         super(message, cause);
     }
 
+    public StoreException(Throwable cause) {
+        super(cause);
+    }
+
 }

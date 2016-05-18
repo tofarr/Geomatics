@@ -13,11 +13,11 @@ import org.om.element.Element;
  * @author tofar
  * @param <E>
  */
-public class WritableObjStore<E> extends ObjStore<E> {
+public class WritableResultStore<E> extends ResultStore<E> {
 
     private final WritableElementStore store;
 
-    public WritableObjStore(Type type, Jayson jayson, WritableElementStore store) throws NullPointerException {
+    public WritableResultStore(Type type, Jayson jayson, WritableElementStore store) throws NullPointerException {
         super(type, jayson, store);
         this.store = store;
     }
@@ -45,15 +45,6 @@ public class WritableObjStore<E> extends ObjStore<E> {
             obj.set(i, toObj(elements.get(i), buffer));
         }
     }
-
-    public String lock(long timeout) throws StoreException {
-        return store.lock(timeout);
-    }
-
-    public void unlock(String key) throws StoreException {
-        store.unlock(key);
-    }
-    
     
     Element toElement(E obj, JaysonBuffer buffer){
         if(obj == null){

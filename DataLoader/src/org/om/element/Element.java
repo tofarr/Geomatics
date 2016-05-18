@@ -104,4 +104,8 @@ public abstract class Element {
             return a.matches(b);
         }
     }
+
+    public Element merge(Element updates) {
+        return updates;
+    }
 }
