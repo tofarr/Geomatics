@@ -1,10 +1,12 @@
 package org.om.store;
 
 import java.util.List;
+import org.om.attr.AttrSet;
 import org.om.criteria.All;
 import org.om.criteria.And;
 import org.om.criteria.Criteria;
 import org.om.element.Element;
+import org.om.element.ObjElement;
 import org.om.sort.Sorter;
 
 /**
@@ -41,9 +43,14 @@ public class ValidatingElementStore implements ElementStore {
     }
 
     @Override
-    public boolean load(Criteria criteria, Sorter sorter, ElementProcessor processor) throws StoreException {
+    public AttrSet getAttrs() {
+        return store.getAttrs();
+    }
+    
+    @Override
+    public boolean load(List<String> attrs, Criteria criteria, Sorter sorter, ElementProcessor processor) throws StoreException {
         criteria = And.valueOf(this.validator, criteria);
-        return store.load(criteria, sorter, processor);
+        return store.load(attrs, criteria, sorter, processor);
     }
 
     @Override
@@ -53,7 +60,7 @@ public class ValidatingElementStore implements ElementStore {
     }
 
     @Override
-    public Element create(Element element) throws StoreException {
+    public ObjElement create(ObjElement element) throws StoreException {
         if(!validator.match(element)){
             throw new StoreException("Could not create item in store!");
         }
@@ -61,7 +68,7 @@ public class ValidatingElementStore implements ElementStore {
     }
 
     @Override
-    public long update(Criteria criteria, Element element) throws StoreException {
+    public long update(Criteria criteria, ObjElement element) throws StoreException {
         criteria = And.valueOf(this.validator, criteria);
         return store.update(criteria, element);
     }
@@ -73,8 +80,8 @@ public class ValidatingElementStore implements ElementStore {
     }
 
     @Override
-    public void createAll(List<Element> elements) throws StoreException {
-        for(Element element : elements){
+    public void createAll(List<ObjElement> elements) throws StoreException {
+        for(ObjElement element : elements){
             if(!validator.match(element)){
                 throw new StoreException("Could not create item in store!");
             }

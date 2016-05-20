@@ -1,8 +1,10 @@
 package org.om.store;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.om.attr.AttrSet;
 import org.om.criteria.Criteria;
 import org.om.element.Element;
 import org.om.element.NumElement;
@@ -39,8 +41,13 @@ public class TimestampingElementStore implements ElementStore {
     }
 
     @Override
-    public boolean load(Criteria criteria, Sorter sorter, ElementProcessor processor) throws StoreException {
-        return store.load(criteria, sorter, processor);
+    public AttrSet getAttrs() {
+        return store.getAttrs();
+    }
+    
+    @Override
+    public boolean load(List<String> attrs, Criteria criteria, Sorter sorter, ElementProcessor processor) throws StoreException {
+        return store.load(attrs, criteria, sorter, processor);
     }
 
     @Override
@@ -49,16 +56,14 @@ public class TimestampingElementStore implements ElementStore {
     }
 
     @Override
-    public Element create(Element element) throws StoreException {
-        if (element instanceof ObjElement) {
-            element = element.merge(createTimestamp());
-        }
+    public ObjElement create(ObjElement element) throws StoreException {
+        element = element.merge(createTimestamp());
         return store.create(element);
     }
 
     @Override
-    public long update(Criteria criteria, Element element) throws StoreException {
-        if ((updatedAttr != null) && (element instanceof ObjElement)) {
+    public long update(Criteria criteria, ObjElement element) throws StoreException {
+        if (updatedAttr != null) {
             //Check update attr on element
             checkUpdateAttr(criteria, element);
             //add update attr to element
@@ -75,13 +80,12 @@ public class TimestampingElementStore implements ElementStore {
     }
 
     @Override
-    public void createAll(List<Element> elements) throws StoreException {
+    public void createAll(List<ObjElement> elements) throws StoreException {
         ObjElement timestamp = createTimestamp();
         for (int i = 0; i < elements.size(); i++) {
-            Element element = elements.get(i);
-            if(element instanceof ObjElement){
-                elements.set(i, element.merge(timestamp));
-            }
+            ObjElement element = elements.get(i);
+            element = element.merge(timestamp);
+            elements.set(i, element);
         }
         store.createAll(elements);
     }
@@ -105,17 +109,14 @@ public class TimestampingElementStore implements ElementStore {
         if ((updated != null) && (updated instanceof NumElement)) {
             final double newLastUpdate = ((NumElement) updated).getNum();
             if (newLastUpdate > 0) {
-                load(criteria, null, new ElementProcessor() {
+                load(Arrays.asList(updatedAttr), criteria, null, new ElementProcessor() {
                     @Override
-                    public boolean process(Element element) {
-                        if (element instanceof ObjElement) {
-                            ObjElement obj = (ObjElement) element;
-                            Element updated = obj.getElement(updatedAttr);
-                            if ((updated != null) && (updated instanceof NumElement)) {
-                                double oldLastUpdate = ((NumElement) updated).getNum();
-                                if (oldLastUpdate > newLastUpdate) { // chances are we have a conflict
-                                    throw new StoreException("Found element newer than timestamp provided!");
-                                }
+                    public boolean process(ObjElement element) {
+                        Element updated = element.getElement(updatedAttr);
+                        if ((updated != null) && (updated instanceof NumElement)) {
+                            double oldLastUpdate = ((NumElement) updated).getNum();
+                            if (oldLastUpdate > newLastUpdate) { // chances are we have a conflict
+                                throw new StoreException("Found element newer than timestamp provided!");
                             }
                         }
                         return true;

@@ -12,28 +12,28 @@ import org.om.element.ObjElement;
 public class AttrSorter implements Sorter {
 
     private final String attrName;
-    private final Sorter order;
+    private final Sorter sorter;
     private transient Integer index;
 
-    @ConstructorProperties({"attrName", "order"})
-    public AttrSorter(String attrName, Sorter order) {
+    @ConstructorProperties({"attrName", "sorter"})
+    public AttrSorter(String attrName, Sorter sorter) {
         this.attrName = attrName;
-        this.order = order;
+        this.sorter = sorter;
     }
 
     public String getAttrName() {
         return attrName;
     }
 
-    public Sorter getOrder() {
-        return order;
+    public Sorter getSorter() {
+        return sorter;
     }
 
     @Override
     public int compare(Element o1, Element o2) {
         o1 = getAttr(o1);
         o2 = getAttr(o2);
-        return order.compare(o1, o2);
+        return sorter.compare(o1, o2);
     }
     
     private Integer getIndex(){

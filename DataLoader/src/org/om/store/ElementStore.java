@@ -1,8 +1,9 @@
 package org.om.store;
 
 import java.util.List;
+import org.om.attr.AttrSet;
 import org.om.criteria.Criteria;
-import org.om.element.Element;
+import org.om.element.ObjElement;
 import org.om.sort.Sorter;
 
 /**
@@ -12,6 +13,8 @@ import org.om.sort.Sorter;
 public interface ElementStore {
     
     /*
+    should everything be an ObjElement? can we think of a good reason why this would not be the case?
+    
     think about locking, temporal, spatial and security
     like it or not, security is part of this.
     I think for a start we need a capabilities object and replace writable        
@@ -43,20 +46,17 @@ public interface ElementStore {
     
     public Capabilities getCapabilities();
     
-    boolean load(Criteria criteria, Sorter sorter, ElementProcessor processor) throws StoreException;
+    AttrSet getAttrs();
     
+    boolean load(List<String> attrs, Criteria criteria, Sorter sorter, ElementProcessor processor) throws StoreException;
+       
     long count(Criteria criteria) throws StoreException;
 
-    Element create(Element element) throws StoreException;
+    ObjElement create(ObjElement element) throws StoreException;
 
-    long update(Criteria criteria, Element element) throws StoreException;
+    long update(Criteria criteria, ObjElement element) throws StoreException;
 
     long remove(Criteria criteria) throws StoreException;
 
-    void createAll(List<Element> elements) throws StoreException;
-
-    interface ElementProcessor {
-
-        boolean process(Element element);
-    }
+    void createAll(List<ObjElement> elements) throws StoreException;
 }

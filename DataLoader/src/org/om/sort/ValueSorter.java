@@ -2,12 +2,9 @@ package org.om.sort;
 
 import org.jayson.parser.StaticFactory;
 import org.om.element.ArrElement;
-import org.om.element.BoolElement;
 import org.om.element.Element;
 import org.om.element.ElementType;
-import org.om.element.NumElement;
 import org.om.element.ObjElement;
-import org.om.element.StrElement;
 import org.om.element.ValElement;
 
 /**

@@ -7,8 +7,8 @@ import org.jayson.Jayson;
 import org.jayson.JaysonBuffer;
 import org.om.criteria.Criteria;
 import org.om.element.Element;
+import org.om.element.ObjElement;
 import org.om.sort.Sorter;
-import org.om.store.ElementStore.ElementProcessor;
 
 /**
  *
@@ -49,12 +49,12 @@ public class ResultStore<E> {
     }
 
     public boolean load(Criteria criteria, Sorter sorter, final ObjProcessor<E> processor) throws StoreException {
-        return store.load(criteria, sorter, new ElementProcessor() {
+        return store.load(null, criteria, sorter, new ElementProcessor() {
 
             final JaysonBuffer buffer = new JaysonBuffer();
 
             @Override
-            public boolean process(Element element) {
+            public boolean process(ObjElement element) {
                 E obj;
                 if (element == null) {
                     obj = null;
@@ -74,14 +74,14 @@ public class ResultStore<E> {
 
     public E create(E obj) throws StoreException {
         JaysonBuffer buffer = new JaysonBuffer();
-        Element element = toElement(obj, buffer);
+        ObjElement element = toElement(obj, buffer);
         element = store.create(element);
         E ret = toObj(element, buffer);
         return ret;
     }
 
     public long update(Criteria criteria, E obj) throws StoreException {
-        Element element = toElement(obj, new JaysonBuffer());
+        ObjElement element = toElement(obj, new JaysonBuffer());
         return store.update(criteria, element);
     }
 
@@ -90,7 +90,7 @@ public class ResultStore<E> {
     }
 
     public void createAll(List<E> obj) throws StoreException {
-        List<Element> elements = new ArrayList<>(obj.size());
+        List<ObjElement> elements = new ArrayList<>(obj.size());
         JaysonBuffer buffer = new JaysonBuffer();
         for (E e : obj) {
             elements.add(toElement(e, buffer));
@@ -101,20 +101,14 @@ public class ResultStore<E> {
         }
     }
 
-    Element toElement(E obj, JaysonBuffer buffer) {
-        if (obj == null) {
-            return null;
-        }
+    ObjElement toElement(E obj, JaysonBuffer buffer) {
         buffer.clear();
         getJayson().render(obj, getType(), buffer);
         Element element = Element.readJson(buffer.getInput());
-        return element;
+        return (ObjElement)element;
     }
 
-    E toObj(Element element, JaysonBuffer buffer) {
-        if (element == null) {
-            return null;
-        }
+    E toObj(ObjElement element, JaysonBuffer buffer) {
         buffer.clear();
         element.toJson(buffer);
         E obj = (E) getJayson().parse(getType(), buffer.getInput());
