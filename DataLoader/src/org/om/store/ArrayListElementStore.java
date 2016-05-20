@@ -11,53 +11,49 @@ import org.om.sort.Sorter;
  *
  * @author tofar
  */
-public class ArrayListWritableElementStore implements WritableElementStore {
+public class ArrayListElementStore implements ElementStore {
 
-    private final Criteria validator;
     private volatile ArrayList<Element> elements;
 
-    public ArrayListWritableElementStore(ArrayList<Element> elements, Criteria validator) {
+    public ArrayListElementStore(ArrayList<Element> elements) {
         this.elements = elements;
-        this.validator = validator;
     }
 
     @Override
-    public Element create(Element element) throws StoreException {
-        validate(element);
-        synchronized (this) {
-            ArrayList<Element> oldElements = elements;
-            ArrayList<Element> newElements = new ArrayList<>(oldElements.size() + 1);
-            newElements.addAll(oldElements);
-            newElements.add(element);
-            elements = newElements;
-        }
+    public Capabilities getCapabilities() {
+        return Capabilities.ALL;
+    }
+
+    @Override
+    public synchronized Element create(Element element) throws StoreException {
+        ArrayList<Element> oldElements = elements;
+        ArrayList<Element> newElements = new ArrayList<>(oldElements.size() + 1);
+        newElements.addAll(oldElements);
+        newElements.add(element);
+        elements = newElements;
         return element;
     }
 
     @Override
     public synchronized long update(Criteria criteria, Element updates) throws StoreException {
-        synchronized (this) {
-            ArrayList<Element> oldElements = elements;
-            ArrayList<Element> newElements = new ArrayList<>(oldElements.size());
-            int ret = 0;
-            for (Element oldElement : oldElements) {
-                if (criteria.match(oldElement)) {
-                    Element element = (oldElement == null) ? updates : oldElement.merge(updates);
-                    validate(element);
-                    newElements.add(element);
-                    ret++;
-                } else {
-                    newElements.add(oldElement);
-                }
+        ArrayList<Element> oldElements = elements;
+        ArrayList<Element> newElements = new ArrayList<>(oldElements.size());
+        int ret = 0;
+        for (Element oldElement : oldElements) {
+            if (criteria.match(oldElement)) {
+                Element element = (oldElement == null) ? updates : oldElement.merge(updates);
+                newElements.add(element);
+                ret++;
+            } else {
+                newElements.add(oldElement);
             }
-            elements = newElements;
-            return ret;
         }
+        elements = newElements;
+        return ret;
     }
 
     @Override
     public synchronized long remove(Criteria criteria) throws StoreException {
-        synchronized (this) {
             ArrayList<Element> oldElements = elements;
             ArrayList<Element> newElements = new ArrayList<>(oldElements.size());
             int ret = 0;
@@ -70,23 +66,15 @@ public class ArrayListWritableElementStore implements WritableElementStore {
             }
             elements = newElements;
             return ret;
-        }
     }
 
     @Override
-    public void createAll(List<Element> elements) throws StoreException {
-        for(Element element : elements){
-            if(!validator.match(element)){
-                throw new StoreException("Element did not match criteria!");
-            }
-        }
-        synchronized (this) {
-            ArrayList<Element> oldElements = this.elements;
-            ArrayList<Element> newElements = new ArrayList<>(oldElements.size() + elements.size());
-            newElements.addAll(oldElements);
-            newElements.addAll(elements);
-            elements = newElements;
-        }
+    public synchronized void createAll(List<Element> elements) throws StoreException {
+        ArrayList<Element> oldElements = this.elements;
+        ArrayList<Element> newElements = new ArrayList<>(oldElements.size() + elements.size());
+        newElements.addAll(oldElements);
+        newElements.addAll(elements);
+        elements = newElements;
     }
 
     @Override
@@ -142,11 +130,4 @@ public class ArrayListWritableElementStore implements WritableElementStore {
             return ret;
         }
     }
-
-    private void validate(Element element) {
-        if((validator != null) && (!validator.match(element))){
-            throw new StoreException("Element did not match criteria!");
-        }
-    }
-
 }

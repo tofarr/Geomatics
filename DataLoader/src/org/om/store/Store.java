@@ -10,12 +10,10 @@ package org.om.store;
  * @author tofar
  */
 public class Store {
-    think about locking, temporal, spatial and security
-    like it or not, security is part of this.
-    I think for a start we need a capabilities object and replace writable        
-            
+   
 
     public Store() {
     }
-.
+
+    
 }

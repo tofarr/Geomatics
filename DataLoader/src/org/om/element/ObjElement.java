@@ -33,15 +33,15 @@ public class ObjElement extends Element implements Iterable<String> {
     public Element getElement(String key) {
         return elements.get(key);
     }
-    
-    public boolean containsKey(String key){
+
+    public boolean containsKey(String key) {
         return elements.containsKey(key);
     }
-    
-    public List<String> getCommonKeys(ObjElement other){
+
+    public List<String> getCommonKeys(ObjElement other) {
         List<String> ret = new ArrayList<>();
-        for(String key : elements.keySet()){
-            if(other.containsKey(key)){
+        for (String key : elements.keySet()) {
+            if (other.containsKey(key)) {
                 ret.add(key);
             }
         }
@@ -57,10 +57,10 @@ public class ObjElement extends Element implements Iterable<String> {
     @Override
     public void toJson(JaysonOutput output) {
         output.beginObject();
-        for(Entry<String,Element> entry : elements.entrySet()){
+        for (Entry<String, Element> entry : elements.entrySet()) {
             output.name(entry.getKey());
             entry.getValue().toJson(output);
-        }       
+        }
         output.endObject();
     }
 
@@ -71,16 +71,16 @@ public class ObjElement extends Element implements Iterable<String> {
 
     @Override
     public boolean matches(Element other) {
-        if(other instanceof ObjElement){
-            ObjElement obj = (ObjElement)other;
-            for(Entry<String,Element> entry : elements.entrySet()){
+        if (other instanceof ObjElement) {
+            ObjElement obj = (ObjElement) other;
+            for (Entry<String, Element> entry : elements.entrySet()) {
                 Element e = obj.elements.get(entry.getKey());
-                if(!Element.match(entry.getValue(), e)){
+                if (!Element.match(entry.getValue(), e)) {
                     return false;
                 }
             }
-            for(Entry<String,Element> entry : obj.elements.entrySet()){
-                if((!elements.containsKey(entry.getKey())) && (entry.getValue() != null)){
+            for (Entry<String, Element> entry : obj.elements.entrySet()) {
+                if ((!elements.containsKey(entry.getKey())) && (entry.getValue() != null)) {
                     return false;
                 }
             }
@@ -91,13 +91,18 @@ public class ObjElement extends Element implements Iterable<String> {
 
     @Override
     public Element merge(Element updates) {
-        if(updates instanceof ObjElement){
-            Map<String,Element> newElements = new HashMap<>(elements);
-            newElements.putAll(((ObjElement)updates).elements);
+        if (updates instanceof ObjElement) {
+            Map<String, Element> newElements = new HashMap<>(elements);
+            newElements.putAll(((ObjElement) updates).elements);
             return new ObjElement(newElements);
         }
         return updates;
     }
-    
-    
+
+    public ObjElement putElement(String key, Element element) {
+        Map<String, Element> newElements = new HashMap<>(elements);
+        newElements.put(key, element);
+        return new ObjElement(newElements);
+    }
+
 }

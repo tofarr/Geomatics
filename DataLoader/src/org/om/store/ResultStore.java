@@ -1,6 +1,8 @@
 package org.om.store;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import org.jayson.Jayson;
 import org.jayson.JaysonBuffer;
 import org.om.criteria.Criteria;
@@ -68,6 +70,55 @@ public class ResultStore<E> {
 
     public long count(Criteria criteria) throws StoreException {
         return store.count(criteria);
+    }
+
+    public E create(E obj) throws StoreException {
+        JaysonBuffer buffer = new JaysonBuffer();
+        Element element = toElement(obj, buffer);
+        element = store.create(element);
+        E ret = toObj(element, buffer);
+        return ret;
+    }
+
+    public long update(Criteria criteria, E obj) throws StoreException {
+        Element element = toElement(obj, new JaysonBuffer());
+        return store.update(criteria, element);
+    }
+
+    public long remove(Criteria criteria) throws StoreException {
+        return store.remove(criteria);
+    }
+
+    public void createAll(List<E> obj) throws StoreException {
+        List<Element> elements = new ArrayList<>(obj.size());
+        JaysonBuffer buffer = new JaysonBuffer();
+        for (E e : obj) {
+            elements.add(toElement(e, buffer));
+        }
+        store.createAll(elements);
+        for (int i = 0; i < elements.size(); i++) {
+            obj.set(i, toObj(elements.get(i), buffer));
+        }
+    }
+
+    Element toElement(E obj, JaysonBuffer buffer) {
+        if (obj == null) {
+            return null;
+        }
+        buffer.clear();
+        getJayson().render(obj, getType(), buffer);
+        Element element = Element.readJson(buffer.getInput());
+        return element;
+    }
+
+    E toObj(Element element, JaysonBuffer buffer) {
+        if (element == null) {
+            return null;
+        }
+        buffer.clear();
+        element.toJson(buffer);
+        E obj = (E) getJayson().parse(getType(), buffer.getInput());
+        return obj;
     }
 
     public interface ObjProcessor<E> {
