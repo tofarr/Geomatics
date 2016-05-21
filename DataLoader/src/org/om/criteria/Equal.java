@@ -10,31 +10,31 @@ import org.om.element.Element;
  */
 public class Equal implements Criteria {
 
-    private final Element element;
+    private final Element value;
 
-    @ConstructorProperties({"element"})
-    public Equal(Element element) {
-        this.element = element;
+    @ConstructorProperties({"value"})
+    public Equal(Element value) {
+        this.value = value;
     }
 
-    public Element getElement() {
-        return element;
+    public Element getValue() {
+        return value;
     }
 
     @Override
     public boolean match(Element element) {
-        return Objects.equals(this.element, element);
+        return Objects.equals(this.value, value);
     }
 
     @Override
     public boolean equals(Object obj) {
-        return (obj instanceof Equal) && Objects.equals(element, ((Equal) obj).element);
+        return (obj instanceof Equal) && Objects.equals(value, ((Equal) obj).value);
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 37 * hash + Objects.hashCode(this.element);
+        hash = 37 * hash + Objects.hashCode(this.value);
         return hash;
     }
 }

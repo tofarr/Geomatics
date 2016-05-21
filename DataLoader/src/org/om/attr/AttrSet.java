@@ -19,17 +19,18 @@ import org.om.store.StoreException;
  */
 public class AttrSet implements Iterable<Attr> {
 
-    private final Map<String, Attr> byName;
+    private final Map<String, Integer> byName;
     private final Attr[] attrs;
 
     private AttrSet(Attr... attrs) throws IllegalArgumentException, NullPointerException {
         this.byName = new HashMap<>();
         this.attrs = attrs;
-        for (Attr attr : attrs) {
+        for (int a = attrs.length; a-- > 0;) {
+            Attr attr = attrs[a];
             if (byName.containsKey(attr.getName())) {
                 throw new IllegalArgumentException("Duplicate attribute : " + attr.getName());
             }
-            byName.put(attr.getName(), attr);
+            byName.put(attr.getName(), a);
         }
     }
 
@@ -42,8 +43,13 @@ public class AttrSet implements Iterable<Attr> {
         return Collections.unmodifiableList(Arrays.asList(attrs));
     }
 
-    public Attr byName(String name) {
+    public Integer indexOf(String name) {
         return byName.get(name);
+    }
+
+    public Attr byName(String name) {
+        Integer index = byName.get(name);
+        return (index == null) ? null : attrs[index];
     }
 
     public Attr byIndex(int index) throws IndexOutOfBoundsException {
@@ -56,11 +62,12 @@ public class AttrSet implements Iterable<Attr> {
 
     public AttrSet filter(Collection<String> attrNames) {
         List<Attr> attrList = new ArrayList<>();
-        for(String attrName : attrNames){
-            Attr attr = byName.get(attrName);
-            if(attr == null){
-                throw new IllegalArgumentException("Unknown attribute : "+attrName);
+        for (String attrName : attrNames) {
+            Integer index = byName.get(attrName);
+            if (index == null) {
+                throw new IllegalArgumentException("Unknown attribute : " + attrName);
             }
+            Attr attr = attrs[index];
             attrList.add(attr);
         }
         return (attrList.size() == attrs.length) ? this : new AttrSet(attrList);
@@ -104,6 +111,24 @@ public class AttrSet implements Iterable<Attr> {
                 }
             }
         }
+    }
+
+    @Override
+    public Iterator<Attr> iterator() {
+        return new Iterator<Attr>() {
+            int index;
+
+            @Override
+            public boolean hasNext() {
+                return index < attrs.length;
+            }
+
+            @Override
+            public Attr next() {
+                return attrs[index++];
+            }
+
+        };
     }
 
     @Override

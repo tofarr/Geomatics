@@ -1,8 +1,8 @@
 package org.om.attr;
 
 import java.beans.ConstructorProperties;
-import org.jayson.JaysonType;
 import org.om.criteria.Criteria;
+import org.om.element.Element;
 import org.om.element.ElementType;
 
 /**
