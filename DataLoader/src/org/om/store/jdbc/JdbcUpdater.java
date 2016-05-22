@@ -21,7 +21,6 @@ public class JdbcUpdater {
     private final String tableName;
     private final Map<String, String> attr2Col;
     private final JdbcCriteriaHandler criteriaHandler;
-    private transient volatile String baseSql;
 
     public JdbcUpdater(DataSource dataSource, String tableName, Map<String, String> attr2Col, JdbcCriteriaHandler criteriaHandler) {
         this.dataSource = dataSource;
@@ -32,7 +31,7 @@ public class JdbcUpdater {
 
     public long update(Criteria criteria, ObjElement obj) {
         try (Connection con = dataSource.getConnection()) {
-            try (PreparedStatement stmt = con.prepareStatement(getSql(criteria))) {
+            try (PreparedStatement stmt = con.prepareStatement(getSql(obj, criteria))) {
                 populate(criteria, obj, stmt);
                 return stmt.executeUpdate();
             }
@@ -40,40 +39,30 @@ public class JdbcUpdater {
             throw new StoreException(ex);
         }
     }
-
+    
     public void populate(Criteria criteria, ObjElement obj, PreparedStatement stmt) throws SQLException {
         int index = JdbcCreator.populate(obj, attr2Col.keySet(), stmt);
         criteriaHandler.populate(index, criteria, stmt);
     }
 
-    public String getSql(Criteria criteria) {
-        if ((criteria == null) || (criteria == All.INSTANCE)) {
-            return getBaseSql();
-        }
-        StringBuilder sql = new StringBuilder();
-        sql.append(getBaseSql());
-        criteriaHandler.buildSql(criteria, sql);
-        return sql.toString();
-    }
-
-    @Transient
-    public String getBaseSql() {
-        String ret = baseSql;
-        if (ret != null) {
-            return ret;
-        }
-        StringBuilder str = new StringBuilder("UPDATE ").append(tableName).append(" SET ");
+    public String getSql(ObjElement element, Criteria criteria) {
+        StringBuilder sql = new StringBuilder("UPDATE ").append(tableName).append(" SET ");
         boolean comma = false;
-        for (String col : attr2Col.values()) {
-            if (comma) {
-                str.append(',');
-            } else {
-                comma = true;
+        for(String key : element){
+            String col = attr2Col.get(key);
+            if(col != null){ // ignore non cols
+                if (comma) {
+                    sql.append(',');
+                } else {
+                    comma = true;
+                }
+                sql.append(col);
             }
-            str.append(col);
         }
-        ret = str.toString();
-        baseSql = ret;
-        return ret;
+        if ((criteria != null) && (criteria != All.INSTANCE)) {
+            sql.append(" WHERE ");
+            criteriaHandler.buildSql(criteria, sql);
+        }
+        return sql.toString();
     }
 }

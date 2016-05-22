@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.om.attr.Attr;
@@ -35,8 +36,6 @@ public class JdbcReader {
     private final AttrSet attrs;
     private final Map<String, String> attr2Col;
     private final JdbcCriteriaHandler criteriaHandler;
-    private transient volatile String baseSql;
-    private transient volatile String countSql;
 
     public JdbcReader(DataSource dataSource, String tableName, AttrSet attrs, Map<String, String> attr2Col, JdbcCriteriaHandler criteriaHandler) {
         this.dataSource = dataSource;
@@ -46,9 +45,10 @@ public class JdbcReader {
         this.criteriaHandler = criteriaHandler;
     }
 
-    public boolean read(Criteria criteria, Sorter sorter, ElementProcessor processor) {
+    public boolean read(List<String> attrs, Criteria criteria, Sorter sorter, ElementProcessor processor) {
+        AttrSet readAttrs = this.attrs.filter(attrs);
         try (Connection con = dataSource.getConnection()) {
-            try (PreparedStatement stmt = con.prepareStatement(getSql(criteria, sorter))) {
+            try (PreparedStatement stmt = con.prepareStatement(getSql(readAttrs, criteria, sorter))) {
                 criteriaHandler.populate(1, criteria, stmt);
                 try(ResultSet rs = stmt.executeQuery()){
                     while(rs.next()){
@@ -79,33 +79,7 @@ public class JdbcReader {
         }
     }
 
-    public String getSql(Criteria criteria, Sorter sorter) {
-        if ((criteria == null) || (criteria == All.INSTANCE)) {
-            return getBaseSql();
-        }
-        StringBuilder sql = new StringBuilder();
-        sql.append(getBaseSql());
-        criteriaHandler.buildSql(criteria, sql);
-        buildOrderSql(sorter, sql);
-        return sql.toString();
-    }  
-    
-    public String getCountSql(Criteria criteria) {
-        if ((criteria == null) || (criteria == All.INSTANCE)) {
-            return getCountSql();
-        }
-        StringBuilder sql = new StringBuilder();
-        sql.append(getCountSql());
-        criteriaHandler.buildSql(criteria, sql);
-        return sql.toString();
-    }
-
-    @Transient
-    public String getBaseSql() {
-        String ret = baseSql;
-        if (ret != null) {
-            return ret;
-        }
+    public String getSql(AttrSet attrs, Criteria criteria, Sorter sorter) {
         StringBuilder str = new StringBuilder("SELECT ");
         boolean comma = false;
         for (Attr attr : attrs) {
@@ -118,21 +92,18 @@ public class JdbcReader {
             str.append(col);
         }
         str.append(" FROM ").append(tableName);
-        ret = str.toString();
-        baseSql = ret;
-        return ret;
-    }
-
-    @Transient
-    public String getCountSql(){
-        String ret = countSql;
-        if (ret != null) {
-            return ret;
+        criteriaHandler.buildSql(criteria, str);
+        buildOrderSql(sorter, str);
+        return str.toString();
+    }  
+    
+    public String getCountSql(Criteria criteria) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM ").append(tableName);
+        if ((criteria != null) && (criteria != All.INSTANCE)) {
+            sql.append(" WHERE ");
+            criteriaHandler.buildSql(criteria, sql);
         }
-        StringBuilder str = new StringBuilder("SELECT COUNT(*) FROM ").append(tableName);
-        ret = str.toString();
-        countSql = ret;
-        return ret;
+        return sql.toString();
     }
     
     private ObjElement parseRow(ResultSet rs) throws SQLException, IOException {
