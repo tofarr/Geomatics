@@ -186,9 +186,9 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public PathIter iterator() {
-        return new PathIter(){
+        return new PathIter() {
             int state;
-            
+
             @Override
             public boolean isDone() {
                 return (state >= 2);
@@ -201,13 +201,13 @@ public final class Vect implements Geom, Comparable<Vect> {
 
             @Override
             public PathSegType currentSegment(double[] coords) throws IllegalStateException {
-                if(state < 2){
+                if (state < 2) {
                     coords[0] = x;
                     coords[1] = y;
                     return (state == 0) ? PathSegType.MOVE : PathSegType.LINE;
                 }
                 throw new IllegalStateException();
-            }      
+            }
         };
     }
 
@@ -321,24 +321,25 @@ public final class Vect implements Geom, Comparable<Vect> {
 
     @Override
     public Geom xor(Geom other, Linearizer linearizer, Tolerance accuracy) throws NullPointerException, IllegalArgumentException {
-        if(other instanceof Vect){
-            return xor((Vect)other, accuracy);
-        }else if (other.relate(this, accuracy) != Relation.DISJOINT) {
+        if (other instanceof Vect) {
+            return xor((Vect) other, accuracy);
+        } else if (other.relate(this, accuracy) != Relation.DISJOINT) {
             return other;
         }
         return other.xor(this, linearizer, accuracy);
     }
-    
+
     /**
      * xor this vect and that given
+     *
      * @param other
      * @param accuracy
      * @return null if points same, pointset if different
      */
-    public Geom xor(Vect other, Tolerance accuracy){
-        if(this.match(other, accuracy)) {
+    public Geom xor(Vect other, Tolerance accuracy) {
+        if (this.match(other, accuracy)) {
             return null;
-        }else{
+        } else {
             VectList vects = new VectList();
             vects.add(this);
             vects.add(other);
@@ -348,10 +349,10 @@ public final class Vect implements Geom, Comparable<Vect> {
     }
 
     @Override
-    public double getArea(Linearizer linearizer, Tolerance accuracy){
+    public double getArea(Linearizer linearizer, Tolerance accuracy) {
         return 0;
     }
-    
+
     /**
      * Determine if this vect matches the vector given within the tolerance
      * given
@@ -420,22 +421,17 @@ public final class Vect implements Geom, Comparable<Vect> {
         return str.toString();
     }
 
-    /**
-     * Read a vector from to the DataInput given
-     *
-     * @param in
-     * @return a vector
-     * @throws NullPointerException if in was null
-     * @throws IllegalArgumentException if the stream contained infinite or NaN
-     * ordinates
-     * @throws GeomException if there was an IO error
-     */
-    public static Vect read(DataInput in) throws NullPointerException, IllegalArgumentException,
-            GeomException {
+    public String toWkt() {
+        StringBuilder str = new StringBuilder();
+        toWkt(str);
+        return str.toString();
+    }
+
+    public void toWkt(Appendable appendable) throws GeomException {
         try {
-            return Vect.valueOf(in.readDouble(), in.readDouble());
+            appendable.append("POINT(").append(ordToStr(x)).append(' ').append(ordToStr(y)).append(')');
         } catch (IOException ex) {
-            throw new GeomException("Error reading vector", ex);
+            throw new GeomException("Error writing", ex);
         }
     }
 

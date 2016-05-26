@@ -1,9 +1,8 @@
-package org.geomatics.geom;
+package org.geomatics.geom.io;
 
 /**
- * Exception occuring when reading or writing a geometry
  *
- * @author tofarrell
+ * @author tofar
  */
 public class GeomIOException extends RuntimeException {
 
@@ -13,6 +12,10 @@ public class GeomIOException extends RuntimeException {
 
     public GeomIOException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public GeomIOException(Throwable cause) {
+        super(cause);
     }
 
 }
