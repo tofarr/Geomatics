@@ -1,9 +1,9 @@
 package org.geomatics.geom;
 
 import java.beans.Transient;
-import java.io.DataInput;
 import java.io.IOException;
 import java.text.MessageFormat;
+import org.geomatics.geom.io.GeomIOException;
 import org.jayson.JaysonWriter;
 import org.geomatics.geom.io.VectHandler;
 import org.geomatics.util.Tolerance;
@@ -427,11 +427,11 @@ public final class Vect implements Geom, Comparable<Vect> {
         return str.toString();
     }
 
-    public void toWkt(Appendable appendable) throws GeomException {
+    public void toWkt(Appendable appendable) throws GeomIOException {
         try {
             appendable.append("POINT(").append(ordToStr(x)).append(' ').append(ordToStr(y)).append(')');
         } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
+            throw new GeomIOException("Error writing", ex);
         }
     }
 

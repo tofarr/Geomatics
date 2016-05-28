@@ -548,11 +548,19 @@ public class GeoShape implements Geom {
     public void toWkt(Appendable appendable) throws GeomException {
         try {
             if ((area == null) && (lines == null)) {
-                toPointWkt(appendable);
+                if(points.numPoints() == 1){
+                    points.getPoint(0).toWkt(appendable);
+                }else{
+                    points.toWkt(appendable);
+                }
             } else if ((area == null) && (points == null)) {
-                toLineWkt(appendable);
+                if(lines.numLineStrings() == 1){
+                    lines.getLineString(0).toWkt(appendable);
+                }else{
+                    lines.toWkt(appendable);
+                }
             } else if ((lines == null) && (points == null)) {
-                toPolygonWkt(appendable);
+                area.toWkt(appendable);
             } else {
                 toCollectionWkt(appendable);
             }
@@ -573,51 +581,6 @@ public class GeoShape implements Geom {
         }
     }
 
-    private void toPointWkt(Appendable appendable) throws IOException {
-        if (points.numPoints() == 1) {
-            toPointWkt(points.getX(0), points.getY(0), appendable);
-        } else {
-            appendable.append("MULTIPOINT");
-            toVectsWkt(points.vects, appendable);
-        }
-    }
-
-    private void toLineWkt(Appendable appendable) throws IOException {
-        if (lines.numLineStrings() == 1) {
-            appendable.append("LINESTRING");
-            toVectsWkt(lines.getLineString(0).vects, appendable);
-        } else {
-            appendable.append("MULTILINESTRING(");
-            for (int i = 0; i < lines.numLineStrings(); i++) {
-                if (i != 0) {
-                    appendable.append(", ");
-                }
-                toVectsWkt(lines.getLineString(i).vects, appendable);
-            }
-            appendable.append(")");
-        }
-    }
-
-    private void toPolygonWkt(Appendable appendable) throws IOException {
-        if ((area.shell != null) && (area.getDepth() < 3)) {
-            toPolygonWkt(area, appendable);
-        } else {
-            appendable.append("MULTIPOLYGON(");
-            if (area.shell != null) {
-                toMultiPolygonWkt(area, appendable);
-            } else {
-                for (int i = 0; i < area.numChildren(); i++) {
-                    if (i != 0) {
-                        appendable.append(',');
-                    }
-                    toMultiPolygonWkt(area.getChild(i), appendable);
-                }
-            }
-            appendable.append(')');
-
-        }
-    }
-
     private void toCollectionWkt(Appendable appendable) throws IOException {
         appendable.append("GEOMETRYCOLLECTION(");
         boolean comma = false;
@@ -629,10 +592,10 @@ public class GeoShape implements Geom {
                     } else {
                         comma = true;
                     }
-                    toPolygonWkt(area.getChild(i), appendable);
+                    area.getChild(i).toPolygonWkt(appendable);
                 }
             } else {
-                toPolygonWkt(area, appendable);
+                area.toPolygonWkt(appendable);
             }
             comma = true;
         }
@@ -643,8 +606,7 @@ public class GeoShape implements Geom {
                 } else {
                     comma = true;
                 }
-                appendable.append("LINESTRING");
-                toVectsWkt(lines.getLineString(i).vects, appendable);
+                lines.getLineString(i).toWkt(appendable);
             }
         }
         if (points != null) {
@@ -654,60 +616,10 @@ public class GeoShape implements Geom {
                 } else {
                     comma = true;
                 }
-                toPointWkt(points.getX(i), points.getY(i), appendable);
+                points.getPoint(i).toWkt(appendable);
             }
         }
         appendable.append(')');
-    }
-
-    private static void toPointWkt(double x, double y, Appendable appendable) throws IOException {
-        appendable.append("POINT(").append(Vect.ordToStr(x)).append(' ').append(Vect.ordToStr(y)).append(')');
-    }
-
-    private static void toVectsWkt(VectList vects, Appendable appendable) throws IOException {
-        appendable.append('(');
-        for (int i = 0; i < vects.size(); i++) {
-            if (i != 0) {
-                appendable.append(", ");
-            }
-            appendable.append(Vect.ordToStr(vects.getX(i)))
-                    .append(' ').append(Vect.ordToStr(vects.getY(i)));
-        }
-        appendable.append(')');
-    }
-
-    private static void toMultiPolygonWkt(Area area, Appendable appendable) throws IOException {
-        appendable.append('(');
-        toVectsWkt(area.shell.vects, appendable);
-        for (int i = 0; i < area.numChildren(); i++) {
-            appendable.append(',');
-            toVectsWkt(area.getChild(i).shell.vects, appendable);
-        }
-        appendable.append(')');
-        for (int i = 0; i < area.numChildren(); i++) {
-            Area child = area.getChild(i);
-            for (int j = 0; j < child.numChildren(); j++) {
-                appendable.append(',');
-                toMultiPolygonWkt(child.getChild(j), appendable);
-            }
-        }
-    }
-
-    private static void toPolygonWkt(Area area, Appendable appendable) throws IOException {
-        appendable.append("POLYGON(");
-        toVectsWkt(area.shell.vects, appendable);
-        for (int i = 0; i < area.numChildren(); i++) {
-            appendable.append(',');
-            toVectsWkt(area.getChild(i).shell.vects, appendable);
-        }
-        appendable.append(')');
-        for (int i = 0; i < area.numChildren(); i++) {
-            Area child = area.getChild(i);
-            for (int j = 0; j < child.numChildren(); j++) {
-                appendable.append(',');
-                toPolygonWkt(child.getChild(j), appendable);
-            }
-        }
     }
 
     void addIntersections(Network network, Tolerance accuracy) {

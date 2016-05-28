@@ -1,7 +1,9 @@
 package org.geomatics.geom;
 
+import java.io.IOException;
 import java.util.Arrays;
 import org.geomatics.geom.Network.LinkProcessor;
+import org.geomatics.geom.io.GeomIOException;
 import org.geomatics.geom.io.GeomJaysonWriter;
 import org.geomatics.geom.io.LineSetHandler;
 import org.geomatics.util.Tolerance;
@@ -173,6 +175,31 @@ public final class LineSet implements Geom {
         StringBuilder str = new StringBuilder();
         new LineSetHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
+    }
+    
+    public String toWkt() {
+        StringBuilder str = new StringBuilder();
+        toWkt(str);
+        return str.toString();
+    }
+    
+    public void toWkt(Appendable appendable) throws GeomIOException {
+        if(lineStrings.length == 1){
+            lineStrings[0].toWkt(appendable);
+            return;
+        }
+        try {
+            appendable.append("MULTILINESTRING(");
+            for(int i = 0; i < lineStrings.length; i++){
+                if(i != 0){
+                    appendable.append(',');
+                }
+                lineStrings[i].vects.toString(appendable, '(', ')', ' ');
+            }
+            appendable.append(')');
+        } catch (IOException ex) {
+            throw new GeomIOException("Error writing", ex);
+        }
     }
 
     @Override

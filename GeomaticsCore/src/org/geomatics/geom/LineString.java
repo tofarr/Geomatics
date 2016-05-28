@@ -1,8 +1,10 @@
 package org.geomatics.geom;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.geomatics.geom.io.GeomIOException;
 import org.geomatics.geom.io.GeomJaysonWriter;
 import org.geomatics.geom.io.LineStringHandler;
 import org.geomatics.util.RTree;
@@ -290,6 +292,21 @@ public final class LineString implements Geom {
         StringBuilder str = new StringBuilder();
         new LineStringHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
+    }
+    
+    public String toWkt() {
+        StringBuilder str = new StringBuilder();
+        toWkt(str);
+        return str.toString();
+    }
+    
+    public void toWkt(Appendable appendable) throws GeomIOException {
+        try {
+            appendable.append("LINESTRING");
+            vects.toString(appendable, '(', ')', ' ');
+        } catch (IOException ex) {
+            throw new GeomIOException("Error writing", ex);
+        }
     }
 
     /**

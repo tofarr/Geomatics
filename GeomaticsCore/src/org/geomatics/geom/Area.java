@@ -1,5 +1,6 @@
 package org.geomatics.geom;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +10,7 @@ import org.geomatics.algorithm.ConvexHull;
 import org.geomatics.geom.Network.LinkProcessor;
 import org.geomatics.geom.Network.VertexProcessor;
 import org.geomatics.geom.io.AreaHandler;
+import org.geomatics.geom.io.GeomIOException;
 import org.geomatics.geom.io.GeomJaysonWriter;
 import org.geomatics.util.RTree;
 import org.geomatics.util.SpatialNode;
@@ -352,6 +354,70 @@ public final class Area implements Geom {
         StringBuilder str = new StringBuilder();
         new AreaHandler().render(this, new GeomJaysonWriter(str));
         return str.toString();
+    }
+        
+    public String toWkt() {
+        StringBuilder str = new StringBuilder();
+        toWkt(str);
+        return str.toString();
+    }
+    
+    public void toWkt(Appendable appendable) throws GeomIOException {
+        try {
+            if ((shell != null) && (getDepth() < 3)) {
+                toPolygonWkt(appendable);
+            } else {
+                appendable.append("MULTIPOLYGON(");
+                if (shell != null) {
+                    toMultiPolygonWkt(appendable);
+                } else {
+                    for (int i = 0; i < numChildren(); i++) {
+                        if (i != 0) {
+                            appendable.append(',');
+                        }
+                        getChild(i).toMultiPolygonWkt(appendable);
+                    }
+                }
+                appendable.append(')');
+            }
+        }catch(IOException ex){
+            throw new GeomIOException(ex);
+        }
+    }
+    
+    
+    private void toMultiPolygonWkt(Appendable appendable) throws IOException {
+        appendable.append('(');
+        shell.vects.toString(appendable, '(', ')', ' ');
+        for (int i = 0; i < numChildren(); i++) {
+            appendable.append(',');
+            getChild(i).shell.vects.toString(appendable, '(', ')', ' ');
+        }
+        appendable.append(')');
+        for (int i = 0; i < numChildren(); i++) {
+            Area child = getChild(i);
+            for (int j = 0; j < child.numChildren(); j++) {
+                appendable.append(',');
+                child.getChild(j).toMultiPolygonWkt(appendable);
+            }
+        }
+    }
+
+    void toPolygonWkt(Appendable appendable) throws IOException {
+        appendable.append("POLYGON(");
+        shell.vects.toString(appendable, '(', ')', ' ');
+        for (int i = 0; i < numChildren(); i++) {
+            appendable.append(',');
+            getChild(i).shell.vects.toString(appendable, '(', ')', ' ');
+        }
+        appendable.append(')');
+        for (int i = 0; i < numChildren(); i++) {
+            Area child = getChild(i);
+            for (int j = 0; j < child.numChildren(); j++) {
+                appendable.append(',');
+                child.getChild(j).toPolygonWkt(appendable);
+            }
+        }
     }
     
     /**

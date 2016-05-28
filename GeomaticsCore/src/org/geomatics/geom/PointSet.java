@@ -1,7 +1,7 @@
 package org.geomatics.geom;
 
 import java.io.IOException;
-import static org.geomatics.geom.Vect.ordToStr;
+import org.geomatics.geom.io.GeomIOException;
 import org.geomatics.geom.io.GeomJaysonWriter;
 import org.geomatics.geom.io.PointSetHandler;
 import org.geomatics.util.Tolerance;
@@ -145,18 +145,12 @@ public final class PointSet implements Geom {
         return str.toString();
     }
 
-    public void toWkt(Appendable appendable) throws GeomException {
+    public void toWkt(Appendable appendable) throws GeomIOException {
         try {
-            appendable.append("MULTIPOINT(");
-            for(int v = 0; v < vects.size(); v++){
-                if(v != 0){
-                    appendable.append(", ");
-                }
-                appendable.append(ordToStr(vects.getX(v))).append(' ').append(ordToStr(vects.getY(v)));
-            }
-            appendable.append(')');
+            appendable.append("MULTIPOINT");
+            vects.toString(appendable, '(', ')', ' ');
         } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
+            throw new GeomIOException("Error writing", ex);
         }
     }
 

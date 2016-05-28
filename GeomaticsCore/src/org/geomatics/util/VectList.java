@@ -11,6 +11,7 @@ import org.geomatics.geom.Rect;
 import org.geomatics.geom.RectBuilder;
 import org.geomatics.geom.Vect;
 import org.geomatics.geom.VectBuilder;
+import org.geomatics.geom.io.GeomIOException;
 import org.geomatics.geom.io.GeomJaysonWriter;
 import org.geomatics.geom.io.RectHandler;
 
@@ -940,11 +941,11 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
      * @param appendable
      * @throws GeomException
      */
-    public void toString(Appendable appendable) throws GeomException {
+    public void toString(Appendable appendable) throws GeomIOException {
         toString(appendable, '[', ']', ',');
     }
     
-    void toString(Appendable appendable, char start, char end, char split) throws GeomException {
+    public void toString(Appendable appendable, char start, char end, char split) throws GeomIOException {
         try {
             appendable.append(start);
             boolean comma = false;
@@ -959,7 +960,7 @@ public final class VectList implements Serializable, Cloneable, Iterable<Vect>, 
             }
             appendable.append(end);
         } catch (IOException ex) {
-            throw new GeomException("Error writing", ex);
+            throw new GeomIOException("Error writing", ex);
         }
     }
     
