@@ -1,7 +1,6 @@
 package org.geomatics.io.shapefile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import org.geomatics.geom.Area;
 import org.geomatics.geom.GeoShape;
@@ -10,7 +9,7 @@ import org.geomatics.geom.LineSet;
 import org.geomatics.geom.LineString;
 import org.geomatics.geom.Linearizer;
 import org.geomatics.geom.PointSet;
-import org.geomatics.geom.Vect;
+import org.geomatics.geom.Ring;
 import org.geomatics.util.Tolerance;
 
 /**
@@ -67,57 +66,24 @@ public class GeomWriter implements AutoCloseable {
             writer.write(recordNumber, ShapeType.POLYLINE, null, ords, geom.getBounds());
         }else if((geoShape.lines == null) && (geoShape.points == null)){
             Area area = geoShape.area;
-            wwarea.numR
+            area.numRings();
+            List<Ring> rings = area.getRings();
+            double[] ords = new double[area.numVects()];
+            int offset = 0;
+            for(Ring ring : rings){
+                for(int j = 0; j < ring.numPoints(); j++){
+                    ords[offset++] = ring.getX(j);
+                    ords[offset++] = ring.getY(j);
+                }
+            }
+            writer.write(recordNumber, ShapeType.POLYGON, null, ords, geom.getBounds());
         }else{
             throw new UnsupportedOperationException("Unsupported type " + geom.getClass());    
         }
-        
-        switch(geom.getClass().getSimpleName()){
-            case "Polygon":{
-                Polygon polygon = (Polygon)geom;
-                int[] segments = new int[polygon.getNumInteriorRing()+1];
-                int offset = writeOrds(polygon.getExteriorRing(), ords, 0);
-                for(int s = 1; s < segments.length; s++){
-                    segments[s] = offset / 2;
-                    offset = writeOrds((LineString)polygon.getInteriorRingN(s-1), ords, offset);
-                }
-                writer.write(recordNumber, ShapeType.POLYGON, segments, ords, Bounds.valueOf(geom.getEnvelopeInternal()));
-                break;
-            }case "MultiPolygon":{
-                List<Integer> segments = new ArrayList<>();
-                int offset = 0;
-                for(int g = 0; g < geom.getNumGeometries(); g++){
-                    Polygon polygon = (Polygon)geom.getGeometryN(g);
-                    segments.add(offset / 2);
-                    offset = writeOrds(polygon.getExteriorRing(), ords, offset);
-                    for(int i = 0; i < polygon.getNumInteriorRing(); i++){
-                        segments.add(offset / 2);
-                        offset = writeOrds((LineString)polygon.getInteriorRingN(i), ords, offset);
-                    }
-                }
-                int[] segmentArray = new int[segments.size()];
-                for(int s = 0; s < segmentArray.length; s++){
-                    segmentArray[s] = segments.get(s);
-                }
-                writer.write(recordNumber, ShapeType.POLYGON, segmentArray, ords, Bounds.valueOf(geom.getEnvelopeInternal()));
-                break;
-            }default:
-                throw new UnsupportedOperationException("Unsupported type " + geom.getGeometryType());
-        }
-
     }
 
     @Override
     public void close() throws IOException {
         writer.close();
-    }
-
-    private int writeOrds(LineString lineString, double[] ords, int offset) {
-        CoordinateSequence coords = lineString.getCoordinateSequence();
-        for (int i = 0; i < coords.size(); i++) {
-            ords[offset++] = coords.getX(i);
-            ords[offset++] = coords.getY(i);
-        }
-        return offset;
     }
 }

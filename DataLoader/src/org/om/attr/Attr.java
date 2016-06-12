@@ -18,16 +18,18 @@ public class Attr {
     private final String description;
     private final Criteria criteria;
     private final Element defaultValue;
+    private final boolean generated;
 
-    @ConstructorProperties({"name", "type", "title", "description", "criteria", "defaultValue"})
+    @ConstructorProperties({"name", "type", "title", "description", "criteria", "defaultValue", "generated"})
     public Attr(String name, ElementType type, String title, String description, Criteria criteria,
-            Element defaultValue) {
+            Element defaultValue, boolean generated) {
         this.name = name;
         this.type = type;
         this.title = title;
         this.description = description;
         this.criteria = criteria;
         this.defaultValue = defaultValue;
+        this.generated = generated;
     }
 
     public String getName() {
@@ -54,4 +56,7 @@ public class Attr {
         return defaultValue;
     }
 
+    public boolean isGenerated() {
+        return generated;
+    }
 }
