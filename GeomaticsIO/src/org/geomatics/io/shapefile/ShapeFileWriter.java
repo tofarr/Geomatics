@@ -1,10 +1,15 @@
 package org.geomatics.io.shapefile;
 
+import org.geomatics.io.shapefile.shp.ShpOnlyWriter;
+import org.geomatics.io.shapefile.dbf.DbfWriter;
+import org.geomatics.io.shapefile.dbf.DbfField;
+import org.geomatics.io.shapefile.dbf.DbfHeader;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import org.geomatics.geom.Geom;
+import org.geomatics.io.shapefile.shp.ShpHeader;
 
 /**
  *

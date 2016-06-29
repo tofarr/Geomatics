@@ -44,7 +44,7 @@ public interface ElementStore {
     
    */      
     
-    public Capabilities getCapabilities();
+    Capabilities getCapabilities();
     
     AttrSet getAttrs();
     

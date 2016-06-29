@@ -1,5 +1,6 @@
 package org.geomatics.io.shapefile;
 
+import org.geomatics.io.shapefile.shp.ShpReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;

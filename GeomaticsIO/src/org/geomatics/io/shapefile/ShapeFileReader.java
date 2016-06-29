@@ -1,5 +1,9 @@
 package org.geomatics.io.shapefile;
 
+import org.geomatics.io.shapefile.GeomReader;
+import org.geomatics.io.shapefile.shp.ShpOnlyReader;
+import org.geomatics.io.shapefile.dbf.DbfReader;
+import org.geomatics.io.shapefile.dbf.DbfField;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,5 +1,6 @@
 package org.geomatics.io.shapefile;
 
+import org.geomatics.io.shapefile.shp.ShpWriter;
 import java.io.IOException;
 import java.util.List;
 import org.geomatics.geom.Area;
@@ -10,6 +11,7 @@ import org.geomatics.geom.LineString;
 import org.geomatics.geom.Linearizer;
 import org.geomatics.geom.PointSet;
 import org.geomatics.geom.Ring;
+import org.geomatics.io.shapefile.shp.ShapeType;
 import org.geomatics.util.Tolerance;
 
 /**
