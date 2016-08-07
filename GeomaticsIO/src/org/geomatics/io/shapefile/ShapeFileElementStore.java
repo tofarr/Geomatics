@@ -8,12 +8,18 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.geomatics.io.shapefile.dbf.DbfField;
+import org.geomatics.io.shapefile.dbf.DbfFileType;
 import org.geomatics.io.shapefile.dbf.DbfHeader;
 import org.geomatics.io.shapefile.shp.ShapeType;
 import org.geomatics.io.shapefile.shp.ShpHeader;
 import org.om.attr.Attr;
 import org.om.attr.AttrSet;
 import org.om.criteria.Criteria;
+import org.om.criteria.Length;
+import org.om.criteria.value.IsInt;
+import org.om.criteria.value.LessEq;
+import org.om.element.ElementType;
+import org.om.element.NumElement;
 import org.om.element.ObjElement;
 import org.om.sort.Sorter;
 import org.om.store.Capabilities;
@@ -31,6 +37,7 @@ public class ShapeFileElementStore implements ElementStore {
     private final String geomAttr;
     private final DbfHeader dbfHeader;
     private final ShpHeader shpHeader;
+    private final AttrSet attrs;
 
     public ShapeFileElementStore(String path, String geomAttr) {
         int index = path.lastIndexOf('.');
@@ -54,16 +61,50 @@ public class ShapeFileElementStore implements ElementStore {
         //derive a criteria from shpHeader.shapeType
         
         //Derive attrs from dbfHeader.getFields()
-        List<Attr> attrs = new ArrayList<>();
+        List<Attr> attrList = new ArrayList<>();
         for(DbfField field : dbfHeader.getFields()){
             field.getName();
-            field.type // use this to convert between json and db, add criteria to attrs where possible.
+            switch(field.type){ // use this to convert between json and db, add criteria to attrs where possible.
+                case DOUBLE:
+                case FLOAT:
+                case NUMERIC:
+                case DOUBLE_DB7: 
+                    attrList.add(new Attr(field.getName(), ElementType.NUMBER, field.getName(), null, null, null, false));
+                    break;
+                case INTEGER:
+                    attrList.add(new Attr(field.getName(), ElementType.NUMBER, field.getName(), null, IsInt.getInstance(), null, false));
+                    break;
+                case AUTOINCREMENT_DB7:
+                    attrList.add(new Attr(field.getName(), ElementType.NUMBER, field.getName(), null, IsInt.getInstance(), null, true));
+                    break;
+                case CHARACTER:
+                    attrList.add(new Attr(field.getName(), ElementType.STRING, field.getName(), null, new Length(new LessEq(NumElement.valueOf(field.lengthInBytes))), null, false));
+                    break;
+                //case CURRENCY:  
+                //case DATE:  
+                //case DATETIME:
+                //case GENERAL:
+                //case LOGICAL:
+                //case MEMO:  
+                //case PICTURE:
+                //case TIMESTAMP_DB7:
+                default:
+                    attrList.add(new Attr(field.getName(), ElementType.STRING, field.getName(), null, new Length(new LessEq(NumElement.valueOf(field.lengthInBytes))), null, false));    
+            } 
         }
-
+        Criteria geomAttrCriteria = null; // TODO: build geom attr criteria from shpHeader.shapeType
+        attrList.add(new Attr(geomAttr, ElementType.ARRAY, geomAttr, null, geomAttrCriteria, null, false));
+        this.attrs = new AttrSet(attrList);
     }
     
     public ShapeFileElementStore(String path, String geomAttr, AttrSet attrs, ShapeType shapeType) {
-        
+        //create dbf header
+        //create shp header
+        //clear existing files
+        this.shpHeader = new ShpHeader(50, shapeType, null, null); // file is initially empty
+        this.attrs = attrs;
+        build dbf header from attrs
+        this.dbfHeader = new DbfHeader(DbfFileType.DBASE4, fields, 0, 0, 0, numBytesPerRecord, 0, 0);
     }
     
     @Override
@@ -73,7 +114,7 @@ public class ShapeFileElementStore implements ElementStore {
 
     @Override
     public AttrSet getAttrs() {
-        return 
+        return attrs;
     }
 
     @Override
