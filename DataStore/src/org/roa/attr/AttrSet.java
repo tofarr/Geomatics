@@ -9,9 +9,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.ds.StoreException;
-import org.ds.element.model.Element;
-import org.ds.element.model.ObjElement;
+import org.roa.ResourceException;
+import org.roa.element.Element;
+import org.roa.element.ObjElement;
 
 /**
  *
@@ -95,19 +95,19 @@ public class AttrSet implements Iterable<Attr> {
         return byName.keySet().containsAll(attrNames);
     }
 
-    public void validate(ObjElement element, boolean allowUnknowns) {
+    public void validate(ObjElement element, boolean allowUnknowns) throws ResourceException {
         for (Attr attr : attrs) {
             if (attr.getCriteria() != null) {
                 Element attrElement = element.getElement(attr.getName());
                 if (!attr.getCriteria().match(element)) {
-                    throw new StoreException("Value did not match attribute : " + attr.getName());
+                    throw new ResourceException("Value did not match attribute : " + attr.getName());
                 }
             }
         }
         if (!allowUnknowns) {
             for (String key : element) {
                 if (byName.containsKey(key)) {
-                    throw new StoreException("Unknown attribute : " + key);
+                    throw new ResourceException("Unknown attribute : " + key);
                 }
             }
         }

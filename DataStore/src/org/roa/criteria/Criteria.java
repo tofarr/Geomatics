@@ -1,6 +1,6 @@
 package org.roa.criteria;
 
-import org.ds.element.model.Element;
+import org.roa.element.Element;
 
 /**
  *

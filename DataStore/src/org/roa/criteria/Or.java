@@ -3,7 +3,7 @@ package org.roa.criteria;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.ds.element.model.Element;
+import org.roa.element.Element;
 import org.jayson.parser.StaticFactory;
 
 /**

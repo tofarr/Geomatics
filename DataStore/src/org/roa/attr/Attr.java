@@ -2,8 +2,8 @@ package org.roa.attr;
 
 import java.beans.ConstructorProperties;
 import org.roa.criteria.Criteria;
-import org.ds.element.model.Element;
-import org.ds.element.model.ElementType;
+import org.roa.element.Element;
+import org.roa.element.ElementType;
 
 /**
  * Attribute

@@ -2,7 +2,7 @@ package org.roa.criteria;
 
 import java.beans.ConstructorProperties;
 import java.util.Objects;
-import org.ds.element.model.Element;
+import org.roa.element.Element;
 
 /**
  *

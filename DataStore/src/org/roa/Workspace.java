@@ -1,82 +1,41 @@
 package org.roa;
 
+import org.roa.trigger.Trigger;
+import org.roa.trigger.TriggerContext;
+import org.roa.trigger.TriggerEvent;
+
 /**
  *
  * @author tofarr
  */
-public interface Workspace extends Resource {
+public interface Workspace {
 
-    void add(StoreSpec spec) throws ResourceException;
+    /**
+     * Get entitlements on this store - 
+     * @return 
+     */
+    Entitlements getEntitlements();
     
-    Store get(String name) throws ResourceException;
+    Store get(SecurityContext context, String name) throws ResourceException;
     
-    boolean exists(String name) throws ResourceException;
+    boolean exists(SecurityContext context, String name) throws ResourceException;
     
-    void update(StoreSpec spec) throws ResourceException;
+    boolean remove(SecurityContext context, String name);
     
-    boolean remove(String name);
+    boolean query(SecurityContext context, Processor<Store> processor) throws ResourceException;
     
-    boolean iterate(Processor<Store> processor) throws ResourceException;
+    void add(SecurityContext context, StoreInfo info) throws ResourceException;
     
-    // triggers can be applied to both repositories and stores.
+    void update(SecurityContext context, StoreInfo info) throws ResourceException;
     
-    // this is a difference between DDL and DML, but we merge both
+    TriggerContext addTrigger(SecurityContext context, Trigger trigger) throws ResourceException;
     
-    // when adding a trigger, it gets added to the current root repository
+    void removeTrigger(long id);
     
-    //you get a factory which yields a repository
+    TriggerContext getTrigger(long id);
     
-    //trigger stores reference to application - so we add top level app / repo when triggering
+    boolean queryTriggers(SecurityContext context, Processor<Store> processor) throws ResourceException;
     
-    //need to spec out security before triggers
+    boolean queryTriggers(SecurityContext context, TriggerEvent event, Processor<Store> processor) throws ResourceException;
     
-    // ok - we have application - it has no constraints
-    
-    //factory
-    //
-    
-    
-    //Factory - getApplication(credentials);
-    //Application - getRepository(name)
-    //Repository - getStore(name)
-    //Store - entries
-    //security and triggers must work together - but how?
-    
-    //trigger - maybe global and integrated?
-    //separate actions and triggers.
-    
-    //workspace
-    
-    //store: system/actions
-
-    //action - added to action space
-    
-    //onBeforeCreate
-    
-    
-    
-    
-    //Entry
-    //Store
-    //Repository
-    //Application
-    
-    
-    //store entitlements by user
-    
-    //users/entitlements
-    
-    //log in, get entitlements
-    
-    
-    
-    //security
-    
-    //each resource has entitlements - add,get,update,remove,iterate 
-   
-    //may have a collection of groups, and which entitlements they posess
-    
-    //every action has a context passed to it. This has the current set of groups
-    
-    //triggers hold on to this context - it is used when they are invoked.
 }

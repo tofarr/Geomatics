@@ -1,44 +1,54 @@
 package org.roa;
 
 import org.roa.criteria.Criteria;
-import org.ds.element.sorter.Sorter;
+import org.roa.sorter.Sorter;
 
 /**
  * 
  * @author tofarr
  * @param <V>
  */
-public interface Store<V> extends Resource {
+public interface Store<V> {
     
-    StoreSpec getSpec();
+    StoreInfo getInfo();
+    
+    Workspace getGroup();
+     
+    long getLastModified();
 
-    void add(long id, V value) throws ResourceException;
+    String getETag();  
+    
+    void lock(SecurityContext context, long id, long timeout) throws ResourceException;
+    
+    void unlock(SecurityContext context, long id) throws ResourceException;
 
-    Entry<V> add(V value) throws ResourceException;
+    void add(SecurityContext context, long id, V value) throws ResourceException;
 
-    Entry<V> get(long id) throws ResourceException;
+    Entry<V> add(SecurityContext context, V value) throws ResourceException;
+
+    Entry<V> get(SecurityContext context, long id) throws ResourceException;
     
     /** 
      * Available with permission get, but may be cheaper in some instances 
+     * @param context
      * @param id
      * @return 
      */
-    boolean exists(long id) throws ResourceException;
+    boolean exists(SecurityContext context, long id) throws ResourceException;
 
-    boolean update(long id, V value) throws ResourceException;
+    boolean update(SecurityContext context, long id, V value) throws ResourceException;
 
-    long update(Criteria criteria, V value) throws ResourceException;
+    long update(SecurityContext context, Criteria criteria, V value) throws ResourceException;
 
-    boolean remove(long id) throws ResourceException;
+    boolean remove(SecurityContext context, long id) throws ResourceException;
 
-    long remove(Criteria criteria);
+    long remove(SecurityContext context, Criteria criteria);
 
-    boolean iterate(Processor<Entry<V>> processor) throws ResourceException;
+    boolean query(SecurityContext context, Processor<Entry<V>> processor) throws ResourceException;
 
-    boolean iterate(Criteria criteria, Sorter sorter, Processor<Entry<V>> processor) throws ResourceException;
+    boolean query(SecurityContext context, Criteria criteria, Sorter sorter, Processor<Entry<V>> processor) throws ResourceException;
 
-    long count() throws ResourceException;
+    long count(SecurityContext context) throws ResourceException;
 
-    long count(Criteria criteria) throws ResourceException;
-    
+    long count(SecurityContext context, Criteria criteria) throws ResourceException; 
 }

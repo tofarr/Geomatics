@@ -1,23 +1,41 @@
 package org.roa;
 
-import org.ds.element.model.ObjElement;
+import org.roa.element.ObjElement;
 
 /**
  *
  * @author tofarr
- * @param <V>
  */
-public interface Entry<V> extends Resource {
-    
+public interface Entry<E> {
+
     long getId();
 
-    V getValue();
+    long getLastModified();
+
+    String getETag();
+
+    /**
+     * Get set of entitlements for this resource - governing what can be done
+     * with it. Depending on the store this may be from element data or just
+     * from the store itself
+     *
+     * @return
+     */
+    Entitlements getEntitlements();
+    
+    Store<E> getStore();
+
+    void lock(SecurityContext context, LockType lockType, long timeout);
+
+    void unlock(SecurityContext context);
 
     boolean exists();
+    
+    E getValue();
 
-    void setValue(V value);
+    void setValue(SecurityContext context, E value);
 
-    boolean remove();
+    boolean remove(SecurityContext context);
 
     ObjElement toElement();
 }

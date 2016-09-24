@@ -1,10 +1,10 @@
 package org.roa.criteria;
 
 import java.beans.ConstructorProperties;
-import org.ds.element.model.ArrElement;
-import org.ds.element.model.Element;
-import org.ds.element.model.NumElement;
-import org.ds.element.model.ValElement;
+import org.roa.element.ArrElement;
+import org.roa.element.Element;
+import org.roa.element.NumElement;
+import org.roa.element.ValElement;
 
 /**
  *
