@@ -162,4 +162,7 @@ public abstract class JaysonOutput implements AutoCloseable {
             }
         }
     }
+    
+    @Override
+    public abstract void close() throws JaysonException;
 }

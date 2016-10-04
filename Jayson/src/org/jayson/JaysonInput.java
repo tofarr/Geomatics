@@ -100,4 +100,7 @@ public abstract class JaysonInput implements AutoCloseable {
             }
         } while (level > 0);
     }
+    
+    @Override
+    public abstract void close() throws JaysonException;
 }

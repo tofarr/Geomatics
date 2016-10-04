@@ -1,7 +1,7 @@
 package org.roa;
 
 import org.roa.criteria.Criteria;
-import org.roa.sorter.Sorter;
+import org.rdb.sorter.Sorter;
 
 /**
  * 

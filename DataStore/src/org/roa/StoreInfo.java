@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import org.roa.attr.AttrSet;
 import org.roa.criteria.Criteria;
-import org.roa.trigger.TriggerContext;
+import org.rdb.trigger.TriggerContext;
 
 /**
  *

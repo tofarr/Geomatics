@@ -1,8 +1,8 @@
 package org.roa;
 
-import org.roa.trigger.Trigger;
-import org.roa.trigger.TriggerContext;
-import org.roa.trigger.TriggerEvent;
+import org.rdb.trigger.Trigger;
+import org.rdb.trigger.TriggerContext;
+import org.rdb.trigger.TriggerEvent;
 
 /**
  *
